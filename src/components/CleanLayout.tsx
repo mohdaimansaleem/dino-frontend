@@ -30,6 +30,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { PERMISSIONS } from '../types/auth';
 import CleanDinoLogo from './CleanDinoLogo';
 import NotificationCenter from './NotificationCenter';
 
@@ -40,7 +41,7 @@ interface CleanLayoutProps {
 const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission, isAdmin, isOperator } = useAuth();
   const { getTotalItems } = useCart();
   const [cafeOpen, setCafeOpen] = useState(true);
   
@@ -105,37 +106,75 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
     }
 
     if (isAdminRoute && user) {
-      const adminNavItems = [
-        { label: 'Dashboard', path: '/admin', icon: <Dashboard /> },
-        { label: 'Orders', path: '/admin/orders', icon: <Assignment /> },
-        { label: 'Menu', path: '/admin/menu', icon: <Restaurant /> },
-        { label: 'Tables', path: '/admin/tables', icon: <TableRestaurant /> },
-        { label: 'Settings', path: '/admin/settings', icon: <Settings /> },
+      // Define all possible admin navigation items with their required permissions
+      const allAdminNavItems = [
+        { 
+          label: 'Dashboard', 
+          path: '/admin', 
+          icon: <Dashboard />, 
+          permission: PERMISSIONS.DASHBOARD_VIEW,
+          roles: ['admin'] 
+        },
+        { 
+          label: 'Orders', 
+          path: '/admin/orders', 
+          icon: <Assignment />, 
+          permission: PERMISSIONS.ORDERS_VIEW,
+          roles: ['admin', 'operator'] 
+        },
+        { 
+          label: 'Menu', 
+          path: '/admin/menu', 
+          icon: <Restaurant />, 
+          permission: PERMISSIONS.MENU_VIEW,
+          roles: ['admin'] 
+        },
+        { 
+          label: 'Tables', 
+          path: '/admin/tables', 
+          icon: <TableRestaurant />, 
+          permission: PERMISSIONS.TABLES_VIEW,
+          roles: ['admin'] 
+        },
+        { 
+          label: 'Settings', 
+          path: '/admin/settings', 
+          icon: <Settings />, 
+          permission: PERMISSIONS.SETTINGS_VIEW,
+          roles: ['admin'] 
+        },
       ];
+
+      // Filter navigation items based on user permissions
+      const adminNavItems = allAdminNavItems.filter(item => 
+        hasPermission(item.permission)
+      );
 
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
-          {/* Cafe Status Toggle */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Chip
-              label={cafeOpen ? 'OPEN' : 'CLOSED'}
-              size="small"
-              color={cafeOpen ? 'success' : 'error'}
-              sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={cafeOpen}
-                  onChange={(e) => setCafeOpen(e.target.checked)}
-                  size="small"
-                  color="success"
-                />
-              }
-              label=""
-              sx={{ m: 0 }}
-            />
-          </Box>
+          {/* Cafe Status Toggle - Only for Admin */}
+          {isAdmin() && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip
+                label={cafeOpen ? 'OPEN' : 'CLOSED'}
+                size="small"
+                color={cafeOpen ? 'success' : 'error'}
+                sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={cafeOpen}
+                    onChange={(e) => setCafeOpen(e.target.checked)}
+                    size="small"
+                    color="success"
+                  />
+                }
+                label=""
+                sx={{ m: 0 }}
+              />
+            </Box>
+          )}
 
           <Box sx={{ 
             display: 'flex', 
@@ -246,7 +285,10 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   const getPageTitle = () => {
     if (isPublicMenuRoute) return 'Dino E-Menu';
     if (isCheckoutRoute) return 'Checkout';
-    if (isAdminRoute) return 'Dino Admin';
+    if (isAdminRoute) {
+      if (isOperator()) return 'Dino Operator';
+      return 'Dino Admin';
+    }
     return 'Dino E-Menu';
   };
 

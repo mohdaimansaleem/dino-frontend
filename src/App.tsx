@@ -25,8 +25,10 @@ import EnhancedCafeSettings from './pages/admin/EnhancedCafeSettings';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
+import RoleProtectedRoute from './components/RoleProtectedRoute';
 import CleanLayout from './components/CleanLayout';
 import UserProfile from './components/UserProfile';
+import { PERMISSIONS } from './types/auth';
 
 function App() {
   return (
@@ -59,31 +61,31 @@ function App() {
                   </ProtectedRoute>
                 } />
                 
-                {/* Admin Routes */}
+                {/* Admin Routes - Role-based access control */}
                 <Route path="/admin" element={
-                  <ProtectedRoute adminOnly>
+                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.DASHBOARD_VIEW]}>
                     <AdminDashboard />
-                  </ProtectedRoute>
+                  </RoleProtectedRoute>
                 } />
                 <Route path="/admin/orders" element={
-                  <ProtectedRoute adminOnly>
+                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.ORDERS_VIEW]}>
                     <OrdersManagement />
-                  </ProtectedRoute>
+                  </RoleProtectedRoute>
                 } />
                 <Route path="/admin/menu" element={
-                  <ProtectedRoute adminOnly>
+                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.MENU_VIEW]}>
                     <MenuManagement />
-                  </ProtectedRoute>
+                  </RoleProtectedRoute>
                 } />
                 <Route path="/admin/tables" element={
-                  <ProtectedRoute adminOnly>
+                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.TABLES_VIEW]}>
                     <EnhancedTableManagement />
-                  </ProtectedRoute>
+                  </RoleProtectedRoute>
                 } />
                 <Route path="/admin/settings" element={
-                  <ProtectedRoute adminOnly>
+                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.SETTINGS_VIEW]}>
                     <EnhancedCafeSettings />
-                  </ProtectedRoute>
+                  </RoleProtectedRoute>
                 } />
                 
                 {/* Catch all route */}

@@ -24,8 +24,6 @@ import {
   FormControlLabel,
   Alert,
   Snackbar,
-  ToggleButton,
-  ToggleButtonGroup,
   Tooltip,
 } from '@mui/material';
 import {
@@ -36,11 +34,9 @@ import {
   VisibilityOff,
   Category,
   Search,
-  FilterList,
   Restaurant,
   Nature,
   LocalDining,
-  PowerSettingsNew,
 } from '@mui/icons-material';
 
 interface MenuItemType {
@@ -269,17 +265,7 @@ const MenuManagement: React.FC = () => {
     setOpenCategoryDialog(false);
   };
 
-  const handleToggleCategoryStatus = (categoryId: string) => {
-    const category = categories.find(cat => cat.id === categoryId);
-    setCategories(prev => prev.map(cat => 
-      cat.id === categoryId ? { ...cat, active: !cat.active } : cat
-    ));
-    setSnackbar({ 
-      open: true, 
-      message: `${category?.name} category ${category?.active ? 'deactivated' : 'activated'}`, 
-      severity: 'success' 
-    });
-  };
+
 
   const filteredItems = menuItems.filter(item => {
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;

@@ -44,7 +44,6 @@ import {
   Cancel,
   Schedule,
   QrCodeScanner,
-  PrintDisabled,
 } from '@mui/icons-material';
 
 interface Table {

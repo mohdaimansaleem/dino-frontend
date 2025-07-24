@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserProfile, UserRegistration } from '../types';
+import { User as AuthUser, ROLES, PermissionName, RoleName } from '../types/auth';
 import { authService } from '../services/authService';
+import PermissionService from '../services/permissionService';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -11,6 +13,15 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   loading: boolean;
   isAuthenticated: boolean;
+  // Role-based access control methods
+  hasPermission: (permission: PermissionName) => boolean;
+  hasRole: (role: string) => boolean;
+  canAccessRoute: (route: string) => boolean;
+  isAdmin: () => boolean;
+  isOperator: () => boolean;
+  getUserWithRole: () => AuthUser | null;
+  // Demo mode method
+  setDemoUser: (demoUser: UserProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -140,6 +151,81 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Convert UserProfile to AuthUser with role information
+  const getUserWithRole = (): AuthUser | null => {
+    if (!user) return null;
+
+    // Check if user already has an RBAC role property (from demo mode)
+    let roleName: RoleName = ROLES.ADMIN;
+    
+    // If user has an rbacRole property (demo mode), use it
+    if ((user as any).rbacRole) {
+      roleName = (user as any).rbacRole as RoleName;
+    } else if ((user as any).role === 'staff') {
+      // Map staff role to operator for RBAC
+      roleName = ROLES.OPERATOR;
+    } else if ((user as any).role === 'admin') {
+      // Map admin role to admin for RBAC
+      roleName = ROLES.ADMIN;
+    } else {
+      // For regular users, assign roles based on email or default to admin
+      if (user.email?.includes('operator')) {
+        roleName = ROLES.OPERATOR;
+      }
+    }
+
+    const role = PermissionService.getRoleDefinition(roleName);
+    if (!role) return null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: role,
+      permissions: role.permissions,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  };
+
+  // Role-based access control methods
+  const hasPermission = (permission: PermissionName): boolean => {
+    const authUser = getUserWithRole();
+    return PermissionService.hasPermission(authUser, permission);
+  };
+
+  const hasRole = (role: string): boolean => {
+    const authUser = getUserWithRole();
+    return PermissionService.hasRole(authUser, role);
+  };
+
+  const canAccessRoute = (route: string): boolean => {
+    const authUser = getUserWithRole();
+    return PermissionService.canAccessRoute(authUser, route);
+  };
+
+  const isAdmin = (): boolean => {
+    const authUser = getUserWithRole();
+    return PermissionService.isAdmin(authUser);
+  };
+
+  const isOperator = (): boolean => {
+    const authUser = getUserWithRole();
+    return PermissionService.isOperator(authUser);
+  };
+
+  const setDemoUser = (demoUser: UserProfile): void => {
+    // Store demo session data
+    localStorage.setItem('dino_token', 'demo-token-bypass');
+    localStorage.setItem('dino_user', JSON.stringify(demoUser));
+    localStorage.setItem('dino_demo_mode', 'true');
+    
+    // Set user in state
+    setUser(demoUser);
+  };
+
   const value: AuthContextType = {
     user,
     login,
@@ -148,7 +234,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updateUser,
     refreshUser,
     loading,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    hasPermission,
+    hasRole,
+    canAccessRoute,
+    isAdmin,
+    isOperator,
+    getUserWithRole,
+    setDemoUser,
   };
 
   return (

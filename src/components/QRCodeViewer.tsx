@@ -10,7 +10,6 @@ import {
   Paper,
   Grid,
   IconButton,
-  Chip,
   Divider,
   CircularProgress,
   Alert,
@@ -38,7 +37,6 @@ import {
   Launch,
 } from '@mui/icons-material';
 import { QRCodeData, qrService } from '../services/qrService';
-import CleanDinoLogo from './CleanDinoLogo';
 
 interface QRCodeViewerProps {
   open: boolean;
@@ -160,7 +158,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
     if (open && !qrData && tableId && cafeId && cafeName && tableNumber) {
       generateQRCode();
     }
-  }, [open, qrData, generateQRCode]);
+  }, [open, qrData, generateQRCode, tableId, cafeId, cafeName, tableNumber]);
 
   const handleRegenerateQR = async () => {
     if (!qrData) return;

@@ -22,7 +22,7 @@ import { UserRole, UserCreate } from '../types';
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, setDemoUser } = useAuth();
 
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -38,6 +38,8 @@ const LoginPage: React.FC = () => {
     role: 'admin' as UserRole,
     agreeToTerms: false,
   });
+
+  const [demoRole, setDemoRole] = useState<'admin' | 'operator'>('admin');
 
   const from = location.state?.from?.pathname || '/admin';
 
@@ -81,11 +83,11 @@ const LoginPage: React.FC = () => {
   const handleDemoBypass = () => {
     // Create a demo user session without backend authentication
     const demoUser = {
-      id: 'demo-user-123',
-      email: 'admin@demo.com',
+      id: `demo-user-${demoRole}-123`,
+      email: demoRole === 'admin' ? 'admin@demo.com' : 'operator@demo.com',
       firstName: 'Demo',
-      lastName: 'Admin',
-      role: 'admin' as const,
+      lastName: demoRole === 'admin' ? 'Admin' : 'Operator',
+      role: demoRole === 'admin' ? 'admin' as const : 'staff' as const, // Map operator to staff for UserProfile compatibility
       phone: '+1234567890',
       isActive: true,
       isVerified: true,
@@ -102,16 +104,16 @@ const LoginPage: React.FC = () => {
       loginCount: 1,
       totalOrders: 0,
       totalSpent: 0,
+      // Add custom property for RBAC role
+      rbacRole: demoRole,
     };
 
-    // Store demo session data
-    localStorage.setItem('dino_token', 'demo-token-bypass');
-    localStorage.setItem('dino_user', JSON.stringify(demoUser));
-    localStorage.setItem('dino_demo_mode', 'true');
+    // Set demo user using auth context
+    setDemoUser(demoUser);
     
-    // Navigate to admin dashboard
-    navigate('/admin', { replace: true });
-    window.location.reload(); // Force refresh to update auth context
+    // Navigate based on role
+    const targetPath = demoRole === 'admin' ? '/admin' : '/admin/orders';
+    navigate(targetPath, { replace: true });
   };
 
 
@@ -327,25 +329,47 @@ const LoginPage: React.FC = () => {
             </Button>
 
             {isLogin && (
-              <Button
-                fullWidth
-                variant="outlined"
-                size="large"
-                onClick={handleDemoBypass}
-                sx={{ 
-                  mb: 2, 
-                  py: 1.5,
-                  borderColor: 'warning.main',
-                  color: 'warning.main',
-                  '&:hover': {
-                    borderColor: 'warning.dark',
-                    backgroundColor: 'warning.light',
-                    color: 'warning.dark'
-                  }
-                }}
-              >
-                🚀 Skip Login (Demo Mode)
-              </Button>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Demo Mode - Select Role:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                  <Button
+                    variant={demoRole === 'admin' ? 'contained' : 'outlined'}
+                    size="small"
+                    onClick={() => setDemoRole('admin')}
+                    sx={{ flex: 1 }}
+                  >
+                    Admin
+                  </Button>
+                  <Button
+                    variant={demoRole === 'operator' ? 'contained' : 'outlined'}
+                    size="small"
+                    onClick={() => setDemoRole('operator')}
+                    sx={{ flex: 1 }}
+                  >
+                    Operator
+                  </Button>
+                </Box>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="large"
+                  onClick={handleDemoBypass}
+                  sx={{ 
+                    py: 1.5,
+                    borderColor: 'warning.main',
+                    color: 'warning.main',
+                    '&:hover': {
+                      borderColor: 'warning.dark',
+                      backgroundColor: 'warning.light',
+                      color: 'warning.dark'
+                    }
+                  }}
+                >
+                  🚀 Login as {demoRole === 'admin' ? 'Admin' : 'Operator'} (Demo)
+                </Button>
+              </Box>
             )}
 
 

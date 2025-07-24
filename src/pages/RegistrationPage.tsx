@@ -19,8 +19,7 @@ import {
   StepLabel,
   IconButton,
   InputAdornment,
-  Chip,
-  Autocomplete,
+
   Dialog,
   DialogTitle,
   DialogContent,
@@ -84,37 +83,7 @@ const steps = [
   'Review & Submit'
 ];
 
-const dietaryOptions = [
-  'Vegetarian',
-  'Vegan',
-  'Gluten-Free',
-  'Dairy-Free',
-  'Nut-Free',
-  'Keto',
-  'Paleo',
-  'Halal',
-  'Kosher'
-];
 
-const cuisineOptions = [
-  'Indian',
-  'Chinese',
-  'Italian',
-  'Mexican',
-  'Thai',
-  'Japanese',
-  'Mediterranean',
-  'American',
-  'French',
-  'Korean'
-];
-
-const spiceLevels = [
-  { value: 'mild', label: 'Mild 🌶️' },
-  { value: 'medium', label: 'Medium 🌶️🌶️' },
-  { value: 'hot', label: 'Hot 🌶️🌶️🌶️' },
-  { value: 'extra_hot', label: 'Extra Hot 🌶️🌶️🌶️🌶️' }
-];
 
 const RegistrationPage: React.FC = () => {
   const navigate = useNavigate();

@@ -22,7 +22,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   Divider,
   Avatar,
   Tab,
@@ -30,9 +29,6 @@ import {
   Alert,
   Snackbar,
   Badge,
-  Tooltip,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import {
   Restaurant,
@@ -45,17 +41,23 @@ import {
   Visibility,
   Print,
   Search,
-  FilterList,
   Timer,
-  Person,
   TableRestaurant,
-  Phone,
-  Email,
-  LocationOn,
-  PlayArrow,
-  Pause,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+
+import { useAuth } from '../../contexts/AuthContext';
+import { PERMISSIONS } from '../../types/auth';
+import {
+  ORDER_STATUS,
+  ORDER_STATUS_COLORS,
+  PAYMENT_STATUS,
+  PAYMENT_METHODS,
+  PAGE_TITLES,
+  PLACEHOLDERS,
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethod,
+} from '../../constants';
 
 interface OrderItem {
   id: string;
@@ -70,17 +72,14 @@ interface Order {
   id: string;
   tableNumber: string;
   tableId: string;
-  customerName?: string;
-  customerPhone?: string;
-  customerEmail?: string;
   items: OrderItem[];
   total: number;
-  status: 'ordered' | 'processing' | 'ready' | 'served' | 'cancelled';
+  status: OrderStatus;
   orderTime: string;
   estimatedTime?: number;
   notes?: string;
-  paymentStatus: 'pending' | 'paid' | 'failed';
-  paymentMethod?: 'cash' | 'card' | 'upi' | 'online';
+  paymentStatus: PaymentStatus;
+  paymentMethod?: PaymentMethod;
 }
 
 interface TabPanelProps {
@@ -98,7 +97,8 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const OrdersManagement: React.FC = () => {
-  const navigate = useNavigate();
+
+  const { hasPermission, isOperator, isAdmin } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -107,8 +107,6 @@ const OrdersManagement: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [openOrderDialog, setOpenOrderDialog] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
-  const [ordersEnabled, setOrdersEnabled] = useState(true);
-
   // Demo data for orders
   useEffect(() => {
     const demoOrders: Order[] = [
@@ -116,72 +114,63 @@ const OrdersManagement: React.FC = () => {
         id: 'ORD-001',
         tableNumber: 'dt-001',
         tableId: 'dt-001',
-        customerName: 'Rahul Sharma',
-        customerPhone: '+91 98765 43210',
-        customerEmail: 'rahul@example.com',
         items: [
           { id: '1', name: 'Butter Chicken', quantity: 2, price: 320, isVeg: false },
           { id: '2', name: 'Garlic Naan', quantity: 3, price: 60, isVeg: true },
           { id: '3', name: 'Masala Chai', quantity: 2, price: 40, isVeg: true },
         ],
         total: 800,
-        status: 'processing',
+        status: ORDER_STATUS.PROCESSING,
         orderTime: new Date(Date.now() - 15 * 60000).toISOString(),
         estimatedTime: 25,
-        paymentStatus: 'pending',
-        paymentMethod: 'upi',
+        paymentStatus: PAYMENT_STATUS.PENDING,
+        paymentMethod: PAYMENT_METHODS.UPI,
       },
       {
         id: 'ORD-002',
         tableNumber: 'T-005',
         tableId: 'table-5',
-        customerName: 'Priya Patel',
-        customerPhone: '+91 87654 32109',
         items: [
           { id: '4', name: 'Paneer Tikka', quantity: 1, price: 280, isVeg: true },
           { id: '5', name: 'Dal Makhani', quantity: 1, price: 220, isVeg: true },
           { id: '6', name: 'Jeera Rice', quantity: 1, price: 120, isVeg: true },
         ],
         total: 620,
-        status: 'ready',
+        status: ORDER_STATUS.READY,
         orderTime: new Date(Date.now() - 30 * 60000).toISOString(),
         estimatedTime: 5,
-        paymentStatus: 'paid',
-        paymentMethod: 'card',
+        paymentStatus: PAYMENT_STATUS.PAID,
+        paymentMethod: PAYMENT_METHODS.CARD,
       },
       {
         id: 'ORD-003',
         tableNumber: 'T-012',
         tableId: 'table-12',
-        customerName: 'Amit Kumar',
-        customerPhone: '+91 76543 21098',
         items: [
           { id: '7', name: 'Chicken Biryani', quantity: 1, price: 350, isVeg: false },
           { id: '8', name: 'Raita', quantity: 1, price: 80, isVeg: true },
           { id: '9', name: 'Gulab Jamun', quantity: 2, price: 60, isVeg: true },
         ],
         total: 490,
-        status: 'served',
+        status: ORDER_STATUS.SERVED,
         orderTime: new Date(Date.now() - 60 * 60000).toISOString(),
-        paymentStatus: 'paid',
-        paymentMethod: 'cash',
+        paymentStatus: PAYMENT_STATUS.PAID,
+        paymentMethod: PAYMENT_METHODS.CASH,
       },
       {
         id: 'ORD-004',
         tableNumber: 'T-008',
         tableId: 'table-8',
-        customerName: 'Sneha Reddy',
-        customerPhone: '+91 65432 10987',
         items: [
           { id: '10', name: 'Veg Thali', quantity: 1, price: 250, isVeg: true },
           { id: '11', name: 'Lassi', quantity: 1, price: 80, isVeg: true },
         ],
         total: 330,
-        status: 'ordered',
+        status: ORDER_STATUS.ORDERED,
         orderTime: new Date(Date.now() - 5 * 60000).toISOString(),
         estimatedTime: 30,
-        paymentStatus: 'pending',
-        paymentMethod: 'upi',
+        paymentStatus: PAYMENT_STATUS.PENDING,
+        paymentMethod: PAYMENT_METHODS.UPI,
       },
     ];
     setOrders(demoOrders);
@@ -194,8 +183,10 @@ const OrdersManagement: React.FC = () => {
     if (searchTerm) {
       filtered = filtered.filter(order =>
         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.tableNumber.toLowerCase().includes(searchTerm.toLowerCase())
+        order.tableNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.items.some(item => 
+          item.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
       );
     }
 
@@ -208,32 +199,27 @@ const OrdersManagement: React.FC = () => {
 
   const getActiveOrders = () => {
     return filteredOrders.filter(order => 
-      order.status === 'ordered' || order.status === 'processing' || order.status === 'ready'
+      order.status === ORDER_STATUS.ORDERED || 
+      order.status === ORDER_STATUS.PROCESSING || 
+      order.status === ORDER_STATUS.READY
     );
   };
 
   const getServedOrders = () => {
-    return filteredOrders.filter(order => order.status === 'served');
+    return filteredOrders.filter(order => order.status === ORDER_STATUS.SERVED);
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ordered': return '#FF9800';
-      case 'processing': return '#2196F3';
-      case 'ready': return '#4CAF50';
-      case 'served': return '#9E9E9E';
-      case 'cancelled': return '#F44336';
-      default: return '#9E9E9E';
-    }
+    return ORDER_STATUS_COLORS[status as keyof typeof ORDER_STATUS_COLORS] || '#9E9E9E';
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'ordered': return <Assignment />;
-      case 'processing': return <Restaurant />;
-      case 'ready': return <CheckCircle />;
-      case 'served': return <LocalShipping />;
-      case 'cancelled': return <Visibility />;
+      case ORDER_STATUS.ORDERED: return <Assignment />;
+      case ORDER_STATUS.PROCESSING: return <Restaurant />;
+      case ORDER_STATUS.READY: return <CheckCircle />;
+      case ORDER_STATUS.SERVED: return <LocalShipping />;
+      case ORDER_STATUS.CANCELLED: return <Visibility />;
       default: return <Schedule />;
     }
   };
@@ -283,14 +269,7 @@ const OrdersManagement: React.FC = () => {
     setOpenOrderDialog(true);
   };
 
-  const toggleOrdersEnabled = () => {
-    setOrdersEnabled(!ordersEnabled);
-    setSnackbar({ 
-      open: true, 
-      message: `Orders ${!ordersEnabled ? 'enabled' : 'disabled'} for Dino Cafe`, 
-      severity: 'success' 
-    });
-  };
+
 
   const renderOrderCard = (order: Order) => (
     <Card 
@@ -337,22 +316,7 @@ const OrdersManagement: React.FC = () => {
           />
         </Box>
 
-        {order.customerName && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Person fontSize="small" color="action" />
-            <Typography variant="body2" color="text.secondary">
-              {order.customerName}
-            </Typography>
-            {order.customerPhone && (
-              <>
-                <Phone fontSize="small" color="action" sx={{ ml: 1 }} />
-                <Typography variant="body2" color="text.secondary">
-                  {order.customerPhone}
-                </Typography>
-              </>
-            )}
-          </Box>
-        )}
+
 
         <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle2" fontWeight="600" color="text.primary" sx={{ mb: 1 }}>
@@ -395,7 +359,7 @@ const OrdersManagement: React.FC = () => {
                 <Chip 
                   label={order.paymentStatus} 
                   size="small" 
-                  color={order.paymentStatus === 'paid' ? 'success' : 'warning'}
+                  color={order.paymentStatus === PAYMENT_STATUS.PAID ? 'success' : 'warning'}
                   variant="outlined"
                 />
                 {order.paymentMethod && (
@@ -410,33 +374,37 @@ const OrdersManagement: React.FC = () => {
           </Box>
           
           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => handleViewOrder(order)}
-              startIcon={<Visibility />}
-              sx={{ flex: 1 }}
-            >
-              View
-            </Button>
-            {order.status !== 'served' && order.status !== 'cancelled' && (
+            {/* View button only for admin */}
+            {isAdmin() && (
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => handleViewOrder(order)}
+                startIcon={<Visibility />}
+                sx={{ flex: isOperator() ? 0 : 1 }}
+              >
+                View
+              </Button>
+            )}
+            {order.status !== ORDER_STATUS.SERVED && order.status !== ORDER_STATUS.CANCELLED && (
               <FormControl size="small" sx={{ flex: 1 }}>
                 <Select
                   value={order.status}
                   onChange={(e) => handleStatusUpdate(order.id, e.target.value as Order['status'])}
                   size="small"
+                  disabled={!hasPermission(PERMISSIONS.ORDERS_UPDATE)}
                 >
-                  <MenuItem value="ordered">Ordered</MenuItem>
-                  <MenuItem value="processing">Processing</MenuItem>
-                  <MenuItem value="ready">Ready</MenuItem>
-                  <MenuItem value="served">Served</MenuItem>
+                  <MenuItem value={ORDER_STATUS.ORDERED}>Ordered</MenuItem>
+                  <MenuItem value={ORDER_STATUS.PROCESSING}>Processing</MenuItem>
+                  <MenuItem value={ORDER_STATUS.READY}>Ready</MenuItem>
+                  <MenuItem value={ORDER_STATUS.SERVED}>Served</MenuItem>
                 </Select>
               </FormControl>
             )}
           </Box>
         </Box>
 
-        {order.estimatedTime && order.status !== 'served' && (
+        {order.estimatedTime && order.status !== ORDER_STATUS.SERVED && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, p: 1, backgroundColor: 'info.50', borderRadius: 1 }}>
             <Timer fontSize="small" color="info" />
             <Typography variant="body2" color="info.main">
@@ -455,10 +423,13 @@ const OrdersManagement: React.FC = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
           <Box>
             <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
-              Orders Management
+              {isOperator() ? PAGE_TITLES.OPERATOR_DASHBOARD : PAGE_TITLES.ORDERS_MANAGEMENT}
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Manage and track all orders for Dino Cafe
+              {isOperator() 
+                ? 'View and update order status for Dino Cafe' 
+                : 'Manage and track all orders for Dino Cafe'
+              }
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -474,7 +445,7 @@ const OrdersManagement: React.FC = () => {
         {[
           { label: 'Total Orders Today', value: orders.length, color: '#2196F3', icon: <Assignment /> },
           { label: 'Active Orders', value: getActiveOrders().length, color: '#FF9800', icon: <Restaurant /> },
-          { label: 'Ready to Serve', value: orders.filter(o => o.status === 'ready').length, color: '#4CAF50', icon: <CheckCircle /> },
+          { label: 'Ready to Serve', value: orders.filter(o => o.status === ORDER_STATUS.READY).length, color: '#4CAF50', icon: <CheckCircle /> },
           { 
             label: 'Avg Prep Time', 
             value: `${Math.round(orders.filter(o => o.estimatedTime).reduce((sum, order) => sum + (order.estimatedTime || 0), 0) / Math.max(orders.filter(o => o.estimatedTime).length, 1))} min`, 
@@ -508,7 +479,7 @@ const OrdersManagement: React.FC = () => {
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              placeholder="Search orders, customers, tables..."
+              placeholder={PLACEHOLDERS.SEARCH_ORDERS}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
@@ -525,11 +496,11 @@ const OrdersManagement: React.FC = () => {
                 label="Filter by Status"
               >
                 <MenuItem value="all">All Orders</MenuItem>
-                <MenuItem value="ordered">Ordered</MenuItem>
-                <MenuItem value="processing">Processing</MenuItem>
-                <MenuItem value="ready">Ready</MenuItem>
-                <MenuItem value="served">Served</MenuItem>
-                <MenuItem value="cancelled">Cancelled</MenuItem>
+                <MenuItem value={ORDER_STATUS.ORDERED}>Ordered</MenuItem>
+                <MenuItem value={ORDER_STATUS.PROCESSING}>Processing</MenuItem>
+                <MenuItem value={ORDER_STATUS.READY}>Ready</MenuItem>
+                <MenuItem value={ORDER_STATUS.SERVED}>Served</MenuItem>
+                <MenuItem value={ORDER_STATUS.CANCELLED}>Cancelled</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -626,7 +597,7 @@ const OrdersManagement: React.FC = () => {
         <DialogContent>
           {selectedOrder && (
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={8}>
                 <Typography variant="subtitle1" fontWeight="600" gutterBottom>
                   Order Information
                 </Typography>
@@ -650,26 +621,11 @@ const OrdersManagement: React.FC = () => {
                   )}
                 </List>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={4}>
                 <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  Customer Information
+                  Payment Information
                 </Typography>
                 <List>
-                  {selectedOrder.customerName && (
-                    <ListItem>
-                      <ListItemText primary="Name" secondary={selectedOrder.customerName} />
-                    </ListItem>
-                  )}
-                  {selectedOrder.customerPhone && (
-                    <ListItem>
-                      <ListItemText primary="Phone" secondary={selectedOrder.customerPhone} />
-                    </ListItem>
-                  )}
-                  {selectedOrder.customerEmail && (
-                    <ListItem>
-                      <ListItemText primary="Email" secondary={selectedOrder.customerEmail} />
-                    </ListItem>
-                  )}
                   <ListItem>
                     <ListItemText primary="Payment Status" secondary={selectedOrder.paymentStatus} />
                   </ListItem>
@@ -733,7 +689,7 @@ const OrdersManagement: React.FC = () => {
           <Button variant="outlined" startIcon={<Print />}>
             Print Order
           </Button>
-          {selectedOrder && selectedOrder.status !== 'served' && selectedOrder.status !== 'cancelled' && (
+          {selectedOrder && selectedOrder.status !== ORDER_STATUS.SERVED && selectedOrder.status !== ORDER_STATUS.CANCELLED && (
             <Button variant="contained" startIcon={<Edit />}>
               Update Status
             </Button>
