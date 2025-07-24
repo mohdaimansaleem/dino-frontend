@@ -1,0 +1,94 @@
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+// import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+// import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
+import cleanTheme from './theme/cleanTheme';
+
+// Public Pages
+import CleanHomePage from './pages/CleanHomePage';
+import RegistrationPage from './pages/RegistrationPage';
+import LoginPage from './pages/LoginPage';
+import UserDashboard from './pages/UserDashboard';
+import ZomatoStyleMenuPage from './pages/ZomatoStyleMenuPage';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderTrackingPage from './pages/OrderTrackingPage';
+
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import EnhancedMenuManagement from './pages/admin/EnhancedMenuManagement';
+import EnhancedTableManagement from './pages/admin/EnhancedTableManagement';
+import EnhancedCafeSettings from './pages/admin/EnhancedCafeSettings';
+
+// Components
+import ProtectedRoute from './components/ProtectedRoute';
+import CleanLayout from './components/CleanLayout';
+import UserProfile from './components/UserProfile';
+
+function App() {
+  return (
+    <ThemeProvider theme={cleanTheme}>
+      <CssBaseline />
+      {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
+        <AuthProvider>
+          <CartProvider>
+            <CleanLayout>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<CleanHomePage />} />
+                <Route path="/home" element={<CleanHomePage />} />
+                <Route path="/register" element={<RegistrationPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/menu/:cafeId/:tableId" element={<ZomatoStyleMenuPage />} />
+                <Route path="/checkout/:cafeId/:tableId" element={<CheckoutPage />} />
+                <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
+                <Route path="/order/:orderId" element={<OrderTrackingPage />} />
+                
+                {/* Protected User Routes */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <UserDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <UserProfile />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Admin Routes */}
+                <Route path="/admin" element={
+                  <ProtectedRoute adminOnly>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/menu" element={
+                  <ProtectedRoute adminOnly>
+                    <EnhancedMenuManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/tables" element={
+                  <ProtectedRoute adminOnly>
+                    <EnhancedTableManagement />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/settings" element={
+                  <ProtectedRoute adminOnly>
+                    <EnhancedCafeSettings />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Catch all route */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </CleanLayout>
+          </CartProvider>
+        </AuthProvider>
+      {/* </LocalizationProvider> */}
+    </ThemeProvider>
+  );
+}
+
+export default App;
