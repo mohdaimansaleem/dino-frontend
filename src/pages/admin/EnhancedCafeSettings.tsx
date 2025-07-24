@@ -25,6 +25,7 @@ import {
   ListItemSecondaryAction,
   Tab,
   Tabs,
+  Chip,
 } from '@mui/material';
 import {
   Restaurant,
@@ -41,6 +42,7 @@ import {
   Analytics,
   Settings,
   EmojiEvents,
+  PowerSettingsNew,
 } from '@mui/icons-material';
 
 interface CafeSettings {
@@ -114,7 +116,7 @@ interface TabPanelProps {
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
   return (
     <div hidden={value !== index}>
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 };
@@ -122,12 +124,12 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 const EnhancedCafeSettings: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [settings, setSettings] = useState<CafeSettings>({
-    name: 'Dino Restaurant',
-    description: 'A modern dining experience with digital ordering',
-    address: '123 Main Street, City, State 12345',
-    phone: '+1 (555) 123-4567',
-    email: 'info@dinorestaurant.com',
-    website: 'https://dinorestaurant.com',
+    name: 'Dino Cafe',
+    description: 'Authentic Indian flavors with modern digital ordering experience',
+    address: 'Hyderabad, Telangana, India',
+    phone: '+91 98765 43210',
+    email: 'info@dinocafe.com',
+    website: 'https://dinocafe.com',
     operatingHours: {
       monday: { open: '09:00', close: '22:00', closed: false },
       tuesday: { open: '09:00', close: '22:00', closed: false },
@@ -173,6 +175,8 @@ const EnhancedCafeSettings: React.FC = () => {
   
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [hasChanges, setHasChanges] = useState(false);
+  const [cafeActive, setCafeActive] = useState(true);
+
 
   const handleSettingChange = (section: keyof CafeSettings, field: string, value: any) => {
     setSettings(prev => ({
@@ -197,6 +201,17 @@ const EnhancedCafeSettings: React.FC = () => {
     setSnackbar({ open: true, message: 'Settings reset to defaults', severity: 'success' });
   };
 
+  const handleToggleCafeStatus = () => {
+    setCafeActive(!cafeActive);
+    setSnackbar({ 
+      open: true, 
+      message: `Cafe ${!cafeActive ? 'activated' : 'deactivated'} successfully`, 
+      severity: 'success' 
+    });
+  };
+
+
+
   const colorOptions = [
     '#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#F44336', '#607D8B', '#795548', '#FF5722'
   ];
@@ -209,12 +224,40 @@ const EnhancedCafeSettings: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
-          Restaurant Settings
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Configure your restaurant's information, features, and preferences
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
+            <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
+              Cafe Settings
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Configure your cafe's information, features, and preferences
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column', alignItems: 'flex-end' }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant={cafeActive ? "outlined" : "contained"}
+                color={cafeActive ? "error" : "success"}
+                onClick={handleToggleCafeStatus}
+                startIcon={<PowerSettingsNew />}
+              >
+                {cafeActive ? 'Deactivate Cafe' : 'Activate Cafe'}
+              </Button>
+
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Status:
+              </Typography>
+              <Chip 
+                label={cafeActive ? 'Active' : 'Inactive'} 
+                color={cafeActive ? 'success' : 'error'}
+                size="small"
+              />
+
+            </Box>
+          </Box>
+        </Box>
       </Box>
 
       {/* Save Bar */}
@@ -247,11 +290,15 @@ const EnhancedCafeSettings: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <Paper elevation={1} sx={{ border: '1px solid', borderColor: 'divider' }}>
+      <Paper elevation={1} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
         <Tabs 
           value={tabValue} 
           onChange={(e, newValue) => setTabValue(newValue)}
-          sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
+          sx={{ 
+            borderBottom: '1px solid', 
+            borderColor: 'divider',
+            px: 2,
+          }}
         >
           <Tab icon={<Restaurant />} label="Basic Info" />
           <Tab icon={<Schedule />} label="Hours" />
@@ -266,7 +313,7 @@ const EnhancedCafeSettings: React.FC = () => {
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={4}>
             <Grid item xs={12} md={8}>
-              <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+              <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <CardContent sx={{ p: 4 }}>
                   <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
                     Restaurant Information
@@ -330,7 +377,7 @@ const EnhancedCafeSettings: React.FC = () => {
               </Card>
             </Grid>
             <Grid item xs={12} md={4}>
-              <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+              <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                 <CardContent sx={{ p: 4, textAlign: 'center' }}>
                   <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
                     Restaurant Logo
@@ -367,7 +414,7 @@ const EnhancedCafeSettings: React.FC = () => {
 
         {/* Operating Hours Tab */}
         <TabPanel value={tabValue} index={1}>
-          <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
                 Operating Hours
@@ -375,7 +422,7 @@ const EnhancedCafeSettings: React.FC = () => {
               <Grid container spacing={3}>
                 {days.map(day => (
                   <Grid item xs={12} key={day}>
-                    <Paper elevation={0} sx={{ p: 3, backgroundColor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                    <Paper elevation={0} sx={{ p: 3, backgroundColor: 'grey.50', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                       <Grid container spacing={2} alignItems="center">
                         <Grid item xs={12} sm={2}>
                           <Typography variant="subtitle1" fontWeight="600" color="text.primary">
@@ -467,7 +514,7 @@ const EnhancedCafeSettings: React.FC = () => {
           <Grid container spacing={4}>
             <Grid item xs={12} md={6}>
               <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
-                <CardContent sx={{ p: 4 }}>
+                <CardContent sx={{ p: 3 }}>
                   <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
                     Color Theme
                   </Typography>
@@ -487,17 +534,24 @@ const EnhancedCafeSettings: React.FC = () => {
                               backgroundColor: color,
                               cursor: 'pointer',
                               border: settings.theme.primaryColor === color ? '3px solid #000' : '1px solid #ccc',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                                transition: 'transform 0.2s',
+                              },
                             }}
                             onClick={() => handleSettingChange('theme', 'primaryColor', color)}
                           />
                         ))}
                       </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Current: {settings.theme.primaryColor}
+                      </Typography>
                     </Grid>
                     <Grid item xs={12}>
                       <Typography variant="subtitle2" gutterBottom>
                         Secondary Color
                       </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                         {colorOptions.map(color => (
                           <Box
                             key={color}
@@ -508,11 +562,18 @@ const EnhancedCafeSettings: React.FC = () => {
                               backgroundColor: color,
                               cursor: 'pointer',
                               border: settings.theme.secondaryColor === color ? '3px solid #000' : '1px solid #ccc',
+                              '&:hover': {
+                                transform: 'scale(1.1)',
+                                transition: 'transform 0.2s',
+                              },
                             }}
                             onClick={() => handleSettingChange('theme', 'secondaryColor', color)}
                           />
                         ))}
                       </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Current: {settings.theme.secondaryColor}
+                      </Typography>
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -520,7 +581,7 @@ const EnhancedCafeSettings: React.FC = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
-                <CardContent sx={{ p: 4 }}>
+                <CardContent sx={{ p: 3 }}>
                   <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
                     Logo Settings
                   </Typography>
@@ -551,6 +612,36 @@ const EnhancedCafeSettings: React.FC = () => {
                       </FormControl>
                     </Grid>
                   </Grid>
+                  
+                  {/* Theme Preview */}
+                  <Box sx={{ mt: 3, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Theme Preview
+                    </Typography>
+                    <Box 
+                      sx={{ 
+                        p: 2, 
+                        backgroundColor: settings.theme.primaryColor,
+                        color: 'white',
+                        borderRadius: 1,
+                        mb: 1,
+                        textAlign: settings.theme.logoPosition,
+                      }}
+                    >
+                      {settings.theme.showLogo && '🦕'} Dino Cafe
+                    </Box>
+                    <Box 
+                      sx={{ 
+                        p: 1, 
+                        backgroundColor: settings.theme.secondaryColor,
+                        color: 'white',
+                        borderRadius: 1,
+                        fontSize: '0.875rem',
+                      }}
+                    >
+                      Secondary elements
+                    </Box>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -562,7 +653,7 @@ const EnhancedCafeSettings: React.FC = () => {
           <Grid container spacing={4}>
             {Object.entries(settings.features).map(([key, value]) => (
               <Grid item xs={12} sm={6} md={4} key={key}>
-                <Card sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}>
+                <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, height: '100%' }}>
                   <CardContent sx={{ p: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                       {key === 'onlineOrdering' && <QrCode color="primary" />}
@@ -601,7 +692,7 @@ const EnhancedCafeSettings: React.FC = () => {
 
         {/* Payment Tab */}
         <TabPanel value={tabValue} index={4}>
-          <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
                 Payment Methods
@@ -609,7 +700,7 @@ const EnhancedCafeSettings: React.FC = () => {
               <Grid container spacing={3}>
                 {Object.entries(settings.paymentMethods).map(([key, value]) => (
                   <Grid item xs={12} sm={6} md={3} key={key}>
-                    <Paper elevation={0} sx={{ p: 3, backgroundColor: 'grey.50', border: '1px solid', borderColor: 'divider' }}>
+                    <Paper elevation={0} sx={{ p: 3, backgroundColor: 'grey.50', border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                         <Payment color="primary" />
                         <Typography variant="subtitle1" sx={{ ml: 1, fontWeight: 600, color: 'text.primary' }}>
@@ -635,14 +726,14 @@ const EnhancedCafeSettings: React.FC = () => {
 
         {/* Notifications Tab */}
         <TabPanel value={tabValue} index={5}>
-          <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
                 Notification Settings
               </Typography>
               <List>
                 {Object.entries(settings.notifications).map(([key, value]) => (
-                  <ListItem key={key} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, mb: 2 }}>
+                  <ListItem key={key} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, mb: 2 }}>
                     <ListItemIcon>
                       <Notifications color="primary" />
                     </ListItemIcon>
@@ -670,7 +761,7 @@ const EnhancedCafeSettings: React.FC = () => {
 
         {/* Advanced Tab */}
         <TabPanel value={tabValue} index={6}>
-          <Card sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Card sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
             <CardContent sx={{ p: 4 }}>
               <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
                 Advanced Settings

@@ -117,6 +117,7 @@ class ApiService {
     localStorage.removeItem('dino_refresh_token');
     localStorage.removeItem('dino_user');
     localStorage.removeItem('dino_demo_mode');
+
   }
 
   // Check if in demo mode

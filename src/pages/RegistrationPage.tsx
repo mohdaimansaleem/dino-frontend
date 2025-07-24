@@ -81,7 +81,6 @@ const steps = [
   'Personal Information',
   'Account Security',
   'Address Details',
-  'Preferences',
   'Review & Submit'
 ];
 
@@ -204,11 +203,7 @@ const RegistrationPage: React.FC = () => {
         }
         break;
 
-      case 3: // Preferences
-        // No required fields in preferences
-        break;
-
-      case 4: // Review & Submit
+      case 3: // Review & Submit
         if (!formData.termsAccepted) {
           errors.termsAccepted = 'You must accept the terms and conditions';
         }
@@ -247,7 +242,7 @@ const RegistrationPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(4)) return;
+    if (!validateStep(3)) return;
 
     setLoading(true);
     setError(null);
@@ -562,106 +557,6 @@ const RegistrationPage: React.FC = () => {
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                Food Preferences
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                options={dietaryOptions}
-                value={formData.dietaryRestrictions}
-                onChange={(_, value) => handleInputChange('dietaryRestrictions', value)}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-                  ))
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Dietary Restrictions"
-                    placeholder="Select dietary restrictions"
-                  />
-                )}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                options={cuisineOptions}
-                value={formData.favoriteCuisines}
-                onChange={(_, value) => handleInputChange('favoriteCuisines', value)}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-                  ))
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Favorite Cuisines"
-                    placeholder="Select favorite cuisines"
-                  />
-                )}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Spice Level Preference</InputLabel>
-                <Select
-                  value={formData.spiceLevel}
-                  label="Spice Level Preference"
-                  onChange={(e) => handleInputChange('spiceLevel', e.target.value)}
-                >
-                  {spiceLevels.map((level) => (
-                    <MenuItem key={level.value} value={level.value}>
-                      {level.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                Notification Preferences
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.emailNotifications}
-                    onChange={(e) => handleInputChange('emailNotifications', e.target.checked)}
-                  />
-                }
-                label="Email notifications for order updates"
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.smsNotifications}
-                    onChange={(e) => handleInputChange('smsNotifications', e.target.checked)}
-                  />
-                }
-                label="SMS notifications for order updates"
-              />
-            </Grid>
-          </Grid>
-        );
-
-      case 4:
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
                 Review Your Information
               </Typography>
             </Grid>
@@ -691,18 +586,7 @@ const RegistrationPage: React.FC = () => {
               </Paper>
             </Grid>
             
-            <Grid item xs={12}>
-              <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>Preferences</Typography>
-                <Typography variant="body2">
-                  Dietary Restrictions: {formData.dietaryRestrictions.join(', ') || 'None'}<br />
-                  Favorite Cuisines: {formData.favoriteCuisines.join(', ') || 'None'}<br />
-                  Spice Level: {spiceLevels.find(s => s.value === formData.spiceLevel)?.label}<br />
-                  Email Notifications: {formData.emailNotifications ? 'Yes' : 'No'}<br />
-                  SMS Notifications: {formData.smsNotifications ? 'Yes' : 'No'}
-                </Typography>
-              </Paper>
-            </Grid>
+
             
             <Grid item xs={12}>
               <FormControlLabel

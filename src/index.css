@@ -217,6 +217,57 @@ select:focus-visible {
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
+/* Prevent layout shifts and component movement */
+.MuiButton-root {
+  transform-origin: center;
+}
+
+.MuiChip-root {
+  transform-origin: center;
+}
+
+/* Prevent border width changes from affecting layout */
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-width: 2px;
+  margin: -0.5px; /* Compensate for border width increase */
+}
+
+/* Smooth hover effects without layout shift */
+.MuiCard-root {
+  transform-origin: center;
+}
+
+.MuiIconButton-root {
+  transform-origin: center;
+}
+
+/* Prevent text selection on interactive elements */
+.MuiButton-root,
+.MuiIconButton-root,
+.MuiChip-root {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Smooth state transitions */
+.MuiToggleButton-root {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Prevent menu item movement */
+.MuiMenuItem-root {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+/* Consistent grid layouts - but don't force all grid items to flex column */
+.MuiGrid-container {
+  align-items: stretch;
+}
+
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
   *,

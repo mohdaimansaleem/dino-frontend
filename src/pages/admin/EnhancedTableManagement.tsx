@@ -439,6 +439,8 @@ const EnhancedTableManagement: React.FC = () => {
             <Card 
               sx={{ 
                 height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
                 border: '1px solid', 
                 borderColor: 'divider',
                 borderLeft: `4px solid ${getAreaColor(table.location)}`,
@@ -446,7 +448,7 @@ const EnhancedTableManagement: React.FC = () => {
                 '&:hover': { boxShadow: 2 }
               }}
             >
-              <CardContent sx={{ p: 3 }}>
+              <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 350 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box>
                     <Typography variant="h6" fontWeight="600" color="text.primary">
@@ -498,18 +500,26 @@ const EnhancedTableManagement: React.FC = () => {
                       {table.currentOrder.customerName}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {table.currentOrder.items} items • ${table.currentOrder.total.toFixed(2)}
+                      {table.currentOrder.items} items • ₹{table.currentOrder.total.toFixed(0)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       Started: {new Date(table.currentOrder.startTime).toLocaleTimeString()}
                     </Typography>
                   </Paper>
                 )}
+
+
                 
-                <Divider sx={{ my: 2 }} />
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ mt: 'auto' }}>
+                  <Divider sx={{ my: 2 }} />
+                  
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: 1,
+                    flexWrap: 'wrap'
+                  }}>
                     <Tooltip title="Generate QR Code">
                       <IconButton size="small" onClick={() => generateQRCode(table.id)}>
                         <QrCode fontSize="small" />
@@ -525,14 +535,16 @@ const EnhancedTableManagement: React.FC = () => {
                         {table.active ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
                       </IconButton>
                     </Tooltip>
-                  </Box>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <IconButton size="small" onClick={() => handleEditTable(table)}>
-                      <Edit fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDeleteTable(table.id)}>
-                      <Delete fontSize="small" />
-                    </IconButton>
+                    <Tooltip title="Edit Table">
+                      <IconButton size="small" onClick={() => handleEditTable(table)}>
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Table">
+                      <IconButton size="small" color="error" onClick={() => handleDeleteTable(table.id)}>
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </Box>
               </CardContent>
@@ -576,8 +588,8 @@ const EnhancedTableManagement: React.FC = () => {
           setSelectedTableForQR(null);
         }}
         tableId={selectedTableForQR?.id}
-        cafeId="demo-cafe-1"
-        cafeName="Demo Cafe"
+        cafeId="dino-cafe-1"
+        cafeName="Dino Cafe"
         tableNumber={selectedTableForQR?.number}
       />
 
@@ -588,11 +600,11 @@ const EnhancedTableManagement: React.FC = () => {
         tables={tables.map(table => ({
           id: table.id,
           number: table.number,
-          cafeId: "demo-cafe-1",
-          cafeName: "Demo Cafe"
+          cafeId: "dino-cafe-1",
+          cafeName: "Dino Cafe"
         }))}
-        cafeId="demo-cafe-1"
-        cafeName="Demo Cafe"
+        cafeId="dino-cafe-1"
+        cafeName="Dino Cafe"
       />
     </Container>
   );

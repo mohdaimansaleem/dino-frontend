@@ -88,14 +88,20 @@ const LoginPage: React.FC = () => {
       role: 'admin' as const,
       phone: '+1234567890',
       isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      profileImage: null,
+      isVerified: true,
+      addresses: [],
       preferences: {
-        notifications: true,
-        theme: 'light',
-        language: 'en'
-      }
+        dietaryRestrictions: [],
+        favoriteCuisines: [],
+        spiceLevel: 'medium' as const,
+        notificationsEnabled: true,
+        emailNotifications: true,
+        smsNotifications: false,
+      },
+      createdAt: new Date(),
+      loginCount: 1,
+      totalOrders: 0,
+      totalSpent: 0,
     };
 
     // Store demo session data
@@ -107,6 +113,8 @@ const LoginPage: React.FC = () => {
     navigate('/admin', { replace: true });
     window.location.reload(); // Force refresh to update auth context
   };
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -340,6 +348,8 @@ const LoginPage: React.FC = () => {
               </Button>
             )}
 
+
+
             <Divider sx={{ my: 3 }}>
               <Typography variant="body2" color="text.secondary">
                 OR
@@ -354,33 +364,13 @@ const LoginPage: React.FC = () => {
                 component="button"
                 type="button"
                 variant="body2"
-                onClick={toggleMode}
+                onClick={() => isLogin ? navigate('/register') : toggleMode()}
                 sx={{ mt: 1, fontWeight: 'bold' }}
               >
                 {isLogin ? 'Create Account' : 'Sign In'}
               </Link>
             </Box>
 
-            {isLogin && (
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Link href="#" variant="body2" color="primary">
-                  Forgot your password?
-                </Link>
-              </Box>
-            )}
-          </Box>
-
-          {/* Demo Credentials */}
-          <Box sx={{ mt: 4, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              <strong>Demo Credentials:</strong>
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Email: admin@demo.com
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Password: demo123
-            </Typography>
           </Box>
         </Paper>
 

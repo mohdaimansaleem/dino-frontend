@@ -8,8 +8,6 @@ import {
   Box,
   Typography,
   Grid,
-  Card,
-  CardContent,
   IconButton,
   Chip,
   LinearProgress,
@@ -27,7 +25,6 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   Checkbox,
-  Tooltip,
 } from '@mui/material';
 import {
   Close,
@@ -38,7 +35,6 @@ import {
   Error,
   Refresh,
   SelectAll,
-  PrintDisabled,
 } from '@mui/icons-material';
 import { QRCodeData, qrService, QRGenerationRequest } from '../services/qrService';
 
@@ -344,7 +340,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
             </div>
           ` : ''}
           
-          <div class="qr-url">${qrData.menuUrl}</div>
+          <div class="qr-url">https://google.com</div>
         </div>
       `;
     }).join('');

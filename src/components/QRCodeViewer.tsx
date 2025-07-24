@@ -73,25 +73,88 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
     setError('');
 
     try {
-      const newQrData = await qrService.generateTableQR({
-        cafeId,
-        tableId,
-        cafeName,
-        tableNumber,
-        customization: {
-          template,
-          primaryColor: '#2e7d32',
-          secondaryColor: '#1b5e20',
-        },
-      });
-
-      setQrData(newQrData);
+      // For demo mode, generate a mock QR code
+      const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true' || cafeId === 'dino-cafe-1';
+      
+      if (isDemoMode) {
+        // Generate demo QR data
+        const demoQrData = {
+          id: `qr-${tableId}-${Date.now()}`,
+          cafeId,
+          tableId,
+          cafeName,
+          tableNumber,
+          qrCodeUrl: `/api/qr/demo-${tableId}.png`,
+          qrCodeBase64: generateDemoQRCode(),
+          menuUrl: `${window.location.origin}/menu/${cafeId}/${tableId}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        setQrData(demoQrData);
+      } else {
+        const newQrData = await qrService.generateTableQR({
+          cafeId,
+          tableId,
+          cafeName,
+          tableNumber,
+          customization: {
+            template,
+            primaryColor: '#2e7d32',
+            secondaryColor: '#1b5e20',
+          },
+        });
+        setQrData(newQrData);
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to generate QR code');
     } finally {
       setLoading(false);
     }
   }, [tableId, cafeId, cafeName, tableNumber, template]);
+
+  // Generate a demo QR code as base64 image
+  const generateDemoQRCode = () => {
+    // This is a simple demo QR code - in a real app, you'd use a QR library
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 200;
+    canvas.height = 200;
+    
+    if (ctx) {
+      // Fill with white background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, 200, 200);
+      
+      // Draw a simple QR-like pattern
+      ctx.fillStyle = 'black';
+      for (let i = 0; i < 20; i++) {
+        for (let j = 0; j < 20; j++) {
+          if ((i + j) % 3 === 0) {
+            ctx.fillRect(i * 10, j * 10, 8, 8);
+          }
+        }
+      }
+      
+      // Add corner squares
+      ctx.fillRect(0, 0, 60, 60);
+      ctx.fillRect(140, 0, 60, 60);
+      ctx.fillRect(0, 140, 60, 60);
+      
+      // Add white inner squares
+      ctx.fillStyle = 'white';
+      ctx.fillRect(10, 10, 40, 40);
+      ctx.fillRect(150, 10, 40, 40);
+      ctx.fillRect(10, 150, 40, 40);
+      
+      // Add black center squares
+      ctx.fillStyle = 'black';
+      ctx.fillRect(20, 20, 20, 20);
+      ctx.fillRect(160, 20, 20, 20);
+      ctx.fillRect(20, 160, 20, 20);
+    }
+    
+    return canvas.toDataURL('image/png');
+  };
 
   useEffect(() => {
     if (open && !qrData && tableId && cafeId && cafeName && tableNumber) {

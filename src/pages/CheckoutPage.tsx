@@ -290,78 +290,112 @@ const CheckoutPage: React.FC = () => {
                   
                   <List>
                     {items.map((item) => (
-                      <ListItem key={item.menuItem.id} sx={{ px: 0 }}>
-                        <ListItemAvatar>
-                          <Avatar
-                            src={item.menuItem.image}
-                            sx={{ width: 60, height: 60 }}
-                          >
-                            <Restaurant />
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Typography variant="subtitle1" fontWeight="600">
-                                {item.menuItem.name}
-                              </Typography>
-                              {item.menuItem.isVeg ? (
-                                <Box
-                                  sx={{
-                                    width: 12,
-                                    height: 12,
-                                    border: '1px solid green',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
+                      <ListItem key={item.menuItem.id} sx={{ px: 0, flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' }, py: 2 }}>
+                        <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+                          <ListItemAvatar>
+                            <Avatar
+                              src={item.menuItem.image}
+                              sx={{ width: { xs: 50, sm: 60 }, height: { xs: 50, sm: 60 } }}
+                            >
+                              <Restaurant />
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            sx={{ flex: 1, minWidth: 0 }}
+                            primary={
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                <Typography 
+                                  variant="subtitle1" 
+                                  fontWeight="600"
+                                  sx={{ 
+                                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                                    lineHeight: 1.2,
+                                    wordBreak: 'break-word'
                                   }}
                                 >
-                                  <Box
-                                    sx={{
-                                      width: 6,
-                                      height: 6,
-                                      backgroundColor: 'green',
-                                      borderRadius: '50%',
-                                    }}
-                                  />
-                                </Box>
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: 12,
-                                    height: 12,
-                                    border: '1px solid red',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: 6,
-                                      height: 6,
-                                      backgroundColor: 'red',
-                                      borderRadius: '50%',
-                                    }}
-                                  />
-                                </Box>
-                              )}
-                            </Box>
-                          }
-                          secondary={
-                            <Box>
-                              <Typography variant="body2" color="text.secondary">
-                                {formatPrice(item.menuItem.price)} each
-                              </Typography>
-                              {item.specialInstructions && (
-                                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                  Note: {item.specialInstructions}
+                                  {item.menuItem.name}
                                 </Typography>
-                              )}
-                            </Box>
-                          }
-                        />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {item.menuItem.isVeg ? (
+                                  <Box
+                                    sx={{
+                                      width: 12,
+                                      height: 12,
+                                      border: '1px solid green',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        width: 6,
+                                        height: 6,
+                                        backgroundColor: 'green',
+                                        borderRadius: '50%',
+                                      }}
+                                    />
+                                  </Box>
+                                ) : (
+                                  <Box
+                                    sx={{
+                                      width: 12,
+                                      height: 12,
+                                      border: '1px solid red',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        width: 6,
+                                        height: 6,
+                                        backgroundColor: 'red',
+                                        borderRadius: '50%',
+                                      }}
+                                    />
+                                  </Box>
+                                )}
+                              </Box>
+                            }
+                            secondary={
+                              <Box>
+                                <Typography 
+                                  variant="body2" 
+                                  color="text.secondary"
+                                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                                >
+                                  {formatPrice(item.menuItem.price)} each
+                                </Typography>
+                                {item.specialInstructions && (
+                                  <Typography 
+                                    variant="body2" 
+                                    color="text.secondary" 
+                                    sx={{ 
+                                      fontStyle: 'italic',
+                                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                      wordBreak: 'break-word'
+                                    }}
+                                  >
+                                    Note: {item.specialInstructions}
+                                  </Typography>
+                                )}
+                              </Box>
+                            }
+                          />
+                        </Box>
+                        
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: { xs: 1, sm: 1 },
+                          mt: { xs: 2, sm: 0 },
+                          justifyContent: { xs: 'space-between', sm: 'flex-end' },
+                          width: { xs: '100%', sm: 'auto' },
+                          flexShrink: 0
+                        }}>
                           <Box
                             sx={{
                               display: 'flex',
@@ -374,28 +408,44 @@ const CheckoutPage: React.FC = () => {
                             <IconButton
                               size="small"
                               onClick={() => handleQuantityChange(item.menuItem.id, item.quantity - 1)}
+                              sx={{ p: { xs: 0.5, sm: 1 } }}
                             >
-                              <Remove />
+                              <Remove sx={{ fontSize: { xs: 16, sm: 20 } }} />
                             </IconButton>
-                            <Typography sx={{ mx: 2, minWidth: 20, textAlign: 'center' }}>
+                            <Typography sx={{ 
+                              mx: { xs: 1, sm: 2 }, 
+                              minWidth: { xs: 16, sm: 20 }, 
+                              textAlign: 'center',
+                              fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }}>
                               {item.quantity}
                             </Typography>
                             <IconButton
                               size="small"
                               onClick={() => handleQuantityChange(item.menuItem.id, item.quantity + 1)}
+                              sx={{ p: { xs: 0.5, sm: 1 } }}
                             >
-                              <Add />
+                              <Add sx={{ fontSize: { xs: 16, sm: 20 } }} />
                             </IconButton>
                           </Box>
-                          <Typography variant="subtitle1" fontWeight="600" sx={{ minWidth: 80, textAlign: 'right' }}>
+                          <Typography 
+                            variant="subtitle1" 
+                            fontWeight="600" 
+                            sx={{ 
+                              minWidth: { xs: 60, sm: 80 }, 
+                              textAlign: 'right',
+                              fontSize: { xs: '0.875rem', sm: '1rem' }
+                            }}
+                          >
                             {formatPrice(item.menuItem.price * item.quantity)}
                           </Typography>
                           <IconButton
                             size="small"
                             color="error"
                             onClick={() => removeItem(item.menuItem.id)}
+                            sx={{ p: { xs: 0.5, sm: 1 } }}
                           >
-                            <Delete />
+                            <Delete sx={{ fontSize: { xs: 16, sm: 20 } }} />
                           </IconButton>
                         </Box>
                       </ListItem>
@@ -563,13 +613,27 @@ const CheckoutPage: React.FC = () => {
                 Order Details
               </Typography>
               {items.map((item) => (
-                <Box key={item.menuItem.id} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                <Box key={item.menuItem.id} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5, gap: 1 }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        wordBreak: 'break-word',
+                        lineHeight: 1.3
+                      }}
+                    >
                       {item.menuItem.name} × {item.quantity}
                     </Typography>
                   </Box>
-                  <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      flexShrink: 0,
+                      fontWeight: 500
+                    }}
+                  >
                     {formatPrice(item.menuItem.price * item.quantity)}
                   </Typography>
                 </Box>

@@ -27,45 +27,81 @@ import {
   Add,
   Refresh,
 } from '@mui/icons-material';
-import { PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { 
+  PieChart, 
+  Pie, 
+  Cell, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar,
+  AreaChart,
+  Area,
+  Legend
+} from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
-// Mock data - in real app, this would come from API
+// Demo data for Dino Cafe - Hyderabad
 const mockAnalytics = {
-  totalRevenue: 12450.50,
+  totalRevenue: 45680,
   totalOrders: 156,
-  averageOrderValue: 79.81,
+  averageOrderValue: 293,
   activeOrders: 8,
   popularItems: [
-    { name: 'Margherita Pizza', orders: 45, revenue: 675 },
-    { name: 'Caesar Salad', orders: 32, revenue: 384 },
-    { name: 'Pasta Carbonara', orders: 28, revenue: 420 },
-    { name: 'Grilled Chicken', orders: 25, revenue: 500 },
+    { name: 'Butter Chicken', orders: 45, revenue: 14400 },
+    { name: 'Paneer Tikka', orders: 32, revenue: 8960 },
+    { name: 'Chicken Biryani', orders: 28, revenue: 9800 },
+    { name: 'Dal Makhani', orders: 25, revenue: 5500 },
   ],
   revenueByDay: [
-    { date: '2024-01-15', revenue: 1200, orders: 15 },
-    { date: '2024-01-16', revenue: 1450, orders: 18 },
-    { date: '2024-01-17', revenue: 1100, orders: 14 },
-    { date: '2024-01-18', revenue: 1650, orders: 21 },
-    { date: '2024-01-19', revenue: 1800, orders: 23 },
-    { date: '2024-01-20', revenue: 2100, orders: 26 },
-    { date: '2024-01-21', revenue: 1950, orders: 24 },
+    { date: '2024-01-15', revenue: 4200, orders: 15 },
+    { date: '2024-01-16', revenue: 5450, orders: 18 },
+    { date: '2024-01-17', revenue: 3800, orders: 14 },
+    { date: '2024-01-18', revenue: 6250, orders: 21 },
+    { date: '2024-01-19', revenue: 7100, orders: 23 },
+    { date: '2024-01-20', revenue: 8900, orders: 26 },
+    { date: '2024-01-21', revenue: 6980, orders: 24 },
   ],
   ordersByStatus: [
-    { status: 'Pending', count: 3, color: '#ff9800' },
-    { status: 'Preparing', count: 4, color: '#2196f3' },
-    { status: 'Ready', count: 1, color: '#4caf50' },
-    { status: 'Served', count: 148, color: '#9e9e9e' },
+    { status: 'Pending', count: 3, color: '#1976d2' },
+    { status: 'Preparing', count: 4, color: '#42a5f5' },
+    { status: 'Ready', count: 1, color: '#64b5f6' },
+    { status: 'Served', count: 148, color: '#90caf9' },
+  ],
+  cafePerformance: [
+    { metric: 'Customer Satisfaction', value: 4.5, max: 5 },
+    { metric: 'Order Accuracy', value: 96, max: 100 },
+    { metric: 'Service Speed', value: 88, max: 100 },
+    { metric: 'Food Quality', value: 92, max: 100 },
+  ],
+  hourlyOrders: [
+    { hour: '9 AM', orders: 5, revenue: 1200 },
+    { hour: '10 AM', orders: 8, revenue: 2100 },
+    { hour: '11 AM', orders: 12, revenue: 3200 },
+    { hour: '12 PM', orders: 18, revenue: 4800 },
+    { hour: '1 PM', orders: 25, revenue: 6500 },
+    { hour: '2 PM', orders: 22, revenue: 5800 },
+    { hour: '3 PM', orders: 15, revenue: 3900 },
+    { hour: '4 PM', orders: 10, revenue: 2600 },
+    { hour: '5 PM', orders: 14, revenue: 3700 },
+    { hour: '6 PM', orders: 20, revenue: 5200 },
+    { hour: '7 PM', orders: 28, revenue: 7300 },
+    { hour: '8 PM', orders: 24, revenue: 6200 },
   ],
 };
 
 const mockRecentOrders = [
-  { id: '1', tableNumber: 5, items: 3, total: 45.50, status: 'preparing', time: '2 min ago' },
-  { id: '2', tableNumber: 2, items: 2, total: 32.00, status: 'ready', time: '5 min ago' },
-  { id: '3', tableNumber: 8, items: 4, total: 67.25, status: 'pending', time: '8 min ago' },
-  { id: '4', tableNumber: 1, items: 1, total: 15.00, status: 'served', time: '12 min ago' },
-  { id: '5', tableNumber: 6, items: 5, total: 89.75, status: 'preparing', time: '15 min ago' },
+  { id: 'ORD-001', tableNumber: 'dt-001', items: 3, total: 800, status: 'preparing', time: '2 min ago' },
+  { id: 'ORD-002', tableNumber: 'T-005', items: 2, total: 620, status: 'ready', time: '5 min ago' },
+  { id: 'ORD-003', tableNumber: 'T-008', items: 4, total: 490, status: 'pending', time: '8 min ago' },
+  { id: 'ORD-004', tableNumber: 'T-012', items: 1, total: 350, status: 'served', time: '12 min ago' },
+  { id: 'ORD-005', tableNumber: 'T-003', items: 5, total: 1250, status: 'preparing', time: '15 min ago' },
 ];
 
 const AdminDashboard: React.FC = () => {
@@ -74,6 +110,7 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [analytics] = useState(mockAnalytics);
   const [recentOrders] = useState(mockRecentOrders);
+  const [animationKey, setAnimationKey] = useState(0);
 
   useEffect(() => {
     // Simulate loading
@@ -81,12 +118,20 @@ const AdminDashboard: React.FC = () => {
       setLoading(false);
     }, 1000);
 
-    return () => clearTimeout(timer);
+    // Auto-refresh charts every 10 seconds for dynamic effect
+    const chartRefreshTimer = setInterval(() => {
+      setAnimationKey(prev => prev + 1);
+    }, 10000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(chartRefreshTimer);
+    };
   }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'warning';
+      case 'pending': return 'error';
       case 'preparing': return 'info';
       case 'ready': return 'success';
       case 'served': return 'default';
@@ -95,9 +140,10 @@ const AdminDashboard: React.FC = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'INR',
+      minimumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -196,11 +242,11 @@ const AdminDashboard: React.FC = () => {
                   <Typography color="text.secondary" gutterBottom variant="body2">
                     Active Orders
                   </Typography>
-                  <Typography variant="h5" fontWeight="bold" color="warning.main">
+                  <Typography variant="h5" fontWeight="bold">
                     {analytics.activeOrders}
                   </Typography>
                 </Box>
-                <Schedule sx={{ fontSize: 40, color: 'warning.main' }} />
+                <Schedule sx={{ fontSize: 40, color: 'primary.main' }} />
               </Box>
             </CardContent>
           </Card>
@@ -208,7 +254,7 @@ const AdminDashboard: React.FC = () => {
       </Grid>
 
       <Grid container spacing={3}>
-        {/* Revenue Chart */}
+        {/* Revenue Trend Chart */}
         <Grid item xs={12} md={8}>
           <Card>
             <CardContent>
@@ -216,10 +262,16 @@ const AdminDashboard: React.FC = () => {
                 Revenue Trend (Last 7 Days)
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={analytics.revenueByDay}>
+                <AreaChart data={analytics.revenueByDay} key={`revenue-${animationKey}`}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#1976d2" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#1976d2" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" tickFormatter={(date) => new Date(date).toLocaleDateString()} />
-                  <YAxis tickFormatter={(value) => `$${value}`} />
+                  <YAxis tickFormatter={(value) => `₹${value}`} />
                   <Tooltip 
                     labelFormatter={(date) => new Date(date).toLocaleDateString()}
                     formatter={(value, name) => [
@@ -227,8 +279,16 @@ const AdminDashboard: React.FC = () => {
                       name === 'revenue' ? 'Revenue' : 'Orders'
                     ]}
                   />
-                  <Line type="monotone" dataKey="revenue" stroke="#2196f3" strokeWidth={3} />
-                </LineChart>
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#1976d2" 
+                    fillOpacity={1} 
+                    fill="url(#colorRevenue)"
+                    strokeWidth={3}
+                    animationDuration={2000}
+                  />
+                </AreaChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -242,7 +302,7 @@ const AdminDashboard: React.FC = () => {
                 Order Status
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
+                <PieChart key={`pie-${animationKey}`}>
                   <Pie
                     data={analytics.ordersByStatus}
                     cx="50%"
@@ -251,6 +311,8 @@ const AdminDashboard: React.FC = () => {
                     outerRadius={100}
                     dataKey="count"
                     label={({ status, count }) => `${status}: ${count}`}
+                    animationBegin={0}
+                    animationDuration={1500}
                   >
                     {analytics.ordersByStatus.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -258,6 +320,79 @@ const AdminDashboard: React.FC = () => {
                   </Pie>
                   <Tooltip />
                 </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Hourly Orders Chart */}
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Today's Hourly Performance
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={analytics.hourlyOrders} key={`hourly-${animationKey}`}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="hour" />
+                  <YAxis yAxisId="left" tickFormatter={(value) => `${value}`} />
+                  <YAxis yAxisId="right" orientation="right" tickFormatter={(value) => `₹${value}`} />
+                  <Tooltip 
+                    formatter={(value, name) => [
+                      name === 'revenue' ? formatCurrency(value as number) : value,
+                      name === 'revenue' ? 'Revenue' : 'Orders'
+                    ]}
+                  />
+                  <Legend />
+                  <Bar 
+                    yAxisId="left" 
+                    dataKey="orders" 
+                    fill="#1976d2" 
+                    name="Orders"
+                    animationDuration={1500}
+                  />
+                  <Bar 
+                    yAxisId="right" 
+                    dataKey="revenue" 
+                    fill="#42a5f5" 
+                    name="Revenue"
+                    animationDuration={1500}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Cafe Performance Metrics */}
+        <Grid item xs={12} md={4}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Cafe Performance
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart 
+                  data={analytics.cafePerformance} 
+                  layout="horizontal"
+                  key={`performance-${animationKey}`}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" domain={[0, 100]} />
+                  <YAxis dataKey="metric" type="category" width={80} />
+                  <Tooltip 
+                    formatter={(value, name) => [
+                      `${value}${name === 'value' ? (value <= 5 ? '/5' : '%') : ''}`,
+                      'Score'
+                    ]}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    fill="#1976d2"
+                    animationDuration={2000}
+                  />
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
@@ -305,7 +440,11 @@ const AdminDashboard: React.FC = () => {
                 ))}
               </List>
               <Box sx={{ mt: 2, textAlign: 'center' }}>
-                <Button variant="outlined" fullWidth>
+                <Button 
+                  variant="outlined" 
+                  fullWidth
+                  onClick={() => navigate('/admin/orders')}
+                >
                   View All Orders
                 </Button>
               </Box>
@@ -354,6 +493,24 @@ const AdminDashboard: React.FC = () => {
                   <Button
                     variant="outlined"
                     fullWidth
+                    startIcon={<ShoppingCart />}
+                    onClick={() => navigate('/admin/orders')}
+                    sx={{
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                      '&:hover': {
+                        borderColor: 'primary.dark',
+                        backgroundColor: 'primary.light',
+                      },
+                    }}
+                  >
+                    Manage Orders
+                  </Button>
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                  <Button
+                    variant="outlined"
+                    fullWidth
                     startIcon={<Add />}
                     onClick={() => navigate('/admin/menu')}
                   >
@@ -368,15 +525,6 @@ const AdminDashboard: React.FC = () => {
                     onClick={() => navigate('/admin/tables')}
                   >
                     Manage Tables
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    startIcon={<Visibility />}
-                  >
-                    View Reports
                   </Button>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>

@@ -37,8 +37,11 @@ const QRCodeDemo: React.FC<QRCodeDemoProps> = ({ open, onClose }) => {
 
   const handleViewMenu = () => {
     onClose();
-    // Navigate to the enhanced menu page with demo data
-    navigate('/menu/demo-cafe/table-5');
+    // Set demo mode and navigate to the enhanced menu page
+    localStorage.setItem('dino_demo_mode', 'true');
+    // Clear any existing cart data for clean demo experience
+    localStorage.removeItem('dino_cart');
+    navigate('/menu/dino-cafe/table-5');
   };
 
   const steps = [
@@ -104,7 +107,7 @@ const QRCodeDemo: React.FC<QRCodeDemoProps> = ({ open, onClose }) => {
           }}
         >
           <Typography variant="h6" gutterBottom fontWeight="600">
-            Table 5 - Dino Restaurant
+            Table 5 - Dino Cafe
           </Typography>
           
           {/* Mock QR Code */}
@@ -142,7 +145,7 @@ const QRCodeDemo: React.FC<QRCodeDemoProps> = ({ open, onClose }) => {
             size="large"
             sx={{ px: 4 }}
           >
-            View Menu Demo
+            View Menu
           </Button>
         </Paper>
 

@@ -1,0 +1,864 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Container,
+  Typography,
+  Button,
+  Grid,
+  Card,
+  CardContent,
+  CardMedia,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  IconButton,
+  Paper,
+  Switch,
+  FormControlLabel,
+  Alert,
+  Snackbar,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+} from '@mui/material';
+import {
+  Add,
+  Edit,
+  Delete,
+  Visibility,
+  VisibilityOff,
+  Category,
+  Search,
+  FilterList,
+  Restaurant,
+  Nature,
+  LocalDining,
+  PowerSettingsNew,
+} from '@mui/icons-material';
+
+interface MenuItemType {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image?: string;
+  available: boolean;
+  featured: boolean;
+  allergens: string[];
+  preparationTime: number;
+  calories?: number;
+  spicyLevel?: number;
+  isVeg: boolean;
+  dietaryInfo?: string[];
+}
+
+interface CategoryType {
+  id: string;
+  name: string;
+  description: string;
+  order: number;
+  active: boolean;
+}
+
+const MenuManagement: React.FC = () => {
+  const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
+  const [categories, setCategories] = useState<CategoryType[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [vegFilter, setVegFilter] = useState<string>('all');
+  const [availabilityFilter, setAvailabilityFilter] = useState<string>('all');
+  const [openItemDialog, setOpenItemDialog] = useState(false);
+  const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<MenuItemType | null>(null);
+  const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+
+  // Demo data for Dino Cafe
+  useEffect(() => {
+    setCategories([
+      { id: '1', name: 'Appetizers', description: 'Start your meal right', order: 1, active: true },
+      { id: '2', name: 'Main Courses', description: 'Hearty main dishes', order: 2, active: true },
+      { id: '3', name: 'Desserts', description: 'Sweet endings', order: 3, active: true },
+      { id: '4', name: 'Beverages', description: 'Refreshing drinks', order: 4, active: true },
+    ]);
+
+    setMenuItems([
+      {
+        id: '1',
+        name: 'Paneer Tikka',
+        description: 'Grilled cottage cheese cubes marinated in spices and yogurt',
+        price: 280,
+        category: '1',
+        available: true,
+        featured: true,
+        allergens: ['dairy'],
+        preparationTime: 15,
+        calories: 350,
+        spicyLevel: 2,
+        isVeg: true,
+        dietaryInfo: ['vegetarian', 'protein-rich'],
+      },
+      {
+        id: '2',
+        name: 'Butter Chicken',
+        description: 'Tender chicken in rich tomato-based curry with butter and cream',
+        price: 320,
+        category: '2',
+        available: true,
+        featured: true,
+        allergens: ['dairy'],
+        preparationTime: 20,
+        calories: 450,
+        spicyLevel: 2,
+        isVeg: false,
+        dietaryInfo: ['non-vegetarian', 'protein-rich'],
+      },
+      {
+        id: '3',
+        name: 'Dal Makhani',
+        description: 'Creamy black lentils slow-cooked with butter and aromatic spices',
+        price: 220,
+        category: '2',
+        available: true,
+        featured: false,
+        allergens: ['dairy'],
+        preparationTime: 25,
+        calories: 380,
+        spicyLevel: 1,
+        isVeg: true,
+        dietaryInfo: ['vegetarian', 'protein-rich', 'comfort-food'],
+      },
+      {
+        id: '4',
+        name: 'Chicken Biryani',
+        description: 'Aromatic basmati rice layered with spiced chicken and saffron',
+        price: 350,
+        category: '2',
+        available: false,
+        featured: true,
+        allergens: [],
+        preparationTime: 30,
+        calories: 520,
+        spicyLevel: 3,
+        isVeg: false,
+        dietaryInfo: ['non-vegetarian', 'rice-dish'],
+      },
+      {
+        id: '5',
+        name: 'Gulab Jamun',
+        description: 'Soft milk dumplings soaked in rose-flavored sugar syrup',
+        price: 120,
+        category: '3',
+        available: true,
+        featured: false,
+        allergens: ['dairy', 'gluten'],
+        preparationTime: 5,
+        calories: 320,
+        spicyLevel: 0,
+        isVeg: true,
+        dietaryInfo: ['vegetarian', 'dessert'],
+      },
+      {
+        id: '6',
+        name: 'Masala Chai',
+        description: 'Traditional Indian spiced tea brewed with milk and aromatic spices',
+        price: 40,
+        category: '4',
+        available: true,
+        featured: false,
+        allergens: ['dairy'],
+        preparationTime: 5,
+        calories: 80,
+        spicyLevel: 0,
+        isVeg: true,
+        dietaryInfo: ['vegetarian', 'beverage'],
+      },
+    ]);
+  }, []);
+
+  const handleAddItem = () => {
+    setEditingItem(null);
+    setOpenItemDialog(true);
+  };
+
+  const handleEditItem = (item: MenuItemType) => {
+    setEditingItem(item);
+    setOpenItemDialog(true);
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    const item = menuItems.find(item => item.id === itemId);
+    setMenuItems(prev => prev.filter(item => item.id !== itemId));
+    setSnackbar({ open: true, message: `${item?.name} deleted successfully`, severity: 'success' });
+  };
+
+  const handleSaveItem = (itemData: Partial<MenuItemType>) => {
+    if (editingItem) {
+      setMenuItems(prev => prev.map(item => 
+        item.id === editingItem.id ? { ...item, ...itemData } : item
+      ));
+      setSnackbar({ open: true, message: 'Menu item updated successfully', severity: 'success' });
+    } else {
+      const newItem: MenuItemType = {
+        id: Date.now().toString(),
+        name: '',
+        description: '',
+        price: 0,
+        category: '',
+        available: true,
+        featured: false,
+        allergens: [],
+        preparationTime: 0,
+        isVeg: true,
+        ...itemData,
+      };
+      setMenuItems(prev => [...prev, newItem]);
+      setSnackbar({ open: true, message: 'Menu item added successfully', severity: 'success' });
+    }
+    setOpenItemDialog(false);
+  };
+
+  const handleToggleAvailability = (itemId: string) => {
+    const item = menuItems.find(item => item.id === itemId);
+    setMenuItems(prev => prev.map(item => 
+      item.id === itemId ? { ...item, available: !item.available } : item
+    ));
+    setSnackbar({ 
+      open: true, 
+      message: `${item?.name} marked as ${item?.available ? 'unavailable' : 'available'}`, 
+      severity: 'success' 
+    });
+  };
+
+  const handleAddCategory = () => {
+    setEditingCategory(null);
+    setOpenCategoryDialog(true);
+  };
+
+  const handleEditCategory = (category: CategoryType) => {
+    setEditingCategory(category);
+    setOpenCategoryDialog(true);
+  };
+
+  const handleSaveCategory = (categoryData: Partial<CategoryType>) => {
+    if (editingCategory) {
+      setCategories(prev => prev.map(cat => 
+        cat.id === editingCategory.id ? { ...cat, ...categoryData } : cat
+      ));
+      setSnackbar({ open: true, message: 'Category updated successfully', severity: 'success' });
+    } else {
+      const newCategory: CategoryType = {
+        id: Date.now().toString(),
+        name: '',
+        description: '',
+        order: categories.length + 1,
+        active: true,
+        ...categoryData,
+      };
+      setCategories(prev => [...prev, newCategory]);
+      setSnackbar({ open: true, message: 'Category added successfully', severity: 'success' });
+    }
+    setOpenCategoryDialog(false);
+  };
+
+  const handleToggleCategoryStatus = (categoryId: string) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    setCategories(prev => prev.map(cat => 
+      cat.id === categoryId ? { ...cat, active: !cat.active } : cat
+    ));
+    setSnackbar({ 
+      open: true, 
+      message: `${category?.name} category ${category?.active ? 'deactivated' : 'activated'}`, 
+      severity: 'success' 
+    });
+  };
+
+  const filteredItems = menuItems.filter(item => {
+    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesVeg = vegFilter === 'all' || 
+                      (vegFilter === 'veg' && item.isVeg) || 
+                      (vegFilter === 'non-veg' && !item.isVeg);
+    const matchesAvailability = availabilityFilter === 'all' ||
+                               (availabilityFilter === 'available' && item.available) ||
+                               (availabilityFilter === 'unavailable' && !item.available);
+    
+    return matchesCategory && matchesSearch && matchesVeg && matchesAvailability;
+  });
+
+  const getCategoryName = (categoryId: string) => {
+    return categories.find(cat => cat.id === categoryId)?.name || 'Unknown';
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  return (
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
+          Menu Management
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Manage your restaurant's menu items and categories for Dino Cafe
+        </Typography>
+      </Box>
+
+      {/* Enhanced Controls */}
+      <Paper elevation={1} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'divider' }}>
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} md={3}>
+            <TextField
+              fullWidth
+              placeholder="Search menu items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <FormControl fullWidth>
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                label="Category"
+              >
+                <MenuItem value="all">All Categories</MenuItem>
+                {categories.filter(cat => cat.active).map(category => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <FormControl fullWidth>
+              <InputLabel>Veg/Non-Veg</InputLabel>
+              <Select
+                value={vegFilter}
+                onChange={(e) => setVegFilter(e.target.value)}
+                label="Veg/Non-Veg"
+                size="small"
+              >
+                <MenuItem value="all">All Items</MenuItem>
+                <MenuItem value="veg">
+                  <Nature sx={{ mr: 1, fontSize: 16, color: 'green' }} />
+                  Vegetarian
+                </MenuItem>
+                <MenuItem value="non-veg">
+                  <LocalDining sx={{ mr: 1, fontSize: 16, color: 'red' }} />
+                  Non-Vegetarian
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={2}>
+            <FormControl fullWidth>
+              <InputLabel>Availability</InputLabel>
+              <Select
+                value={availabilityFilter}
+                onChange={(e) => setAvailabilityFilter(e.target.value)}
+                label="Availability"
+                size="small"
+              >
+                <MenuItem value="all">All Items</MenuItem>
+                <MenuItem value="available">Available</MenuItem>
+                <MenuItem value="unavailable">Unavailable</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+              <Button
+                variant="outlined"
+                startIcon={<Category />}
+                onClick={handleAddCategory}
+              >
+                Categories
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={handleAddItem}
+              >
+                Add Item
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Categories Overview */}
+      <Paper elevation={1} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
+          Categories
+        </Typography>
+        <Grid container spacing={2}>
+          {categories.map(category => (
+            <Grid item xs={12} sm={6} md={3} key={category.id}>
+              <Card 
+                sx={{ 
+                  border: '1px solid', 
+                  borderColor: 'divider',
+                  opacity: category.active ? 1 : 0.6,
+                  '&:hover': { boxShadow: 2 }
+                }}
+              >
+                <CardContent sx={{ p: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box>
+                      <Typography variant="subtitle1" fontWeight="600" color="text.primary">
+                        {category.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {menuItems.filter(item => item.category === category.id).length} items
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      <IconButton size="small" onClick={() => handleEditCategory(category)}>
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Paper>
+
+      {/* Menu Items */}
+      <Grid container spacing={3}>
+        {filteredItems.map(item => (
+          <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
+            <Card 
+              sx={{ 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1px solid', 
+                borderColor: 'divider',
+                opacity: item.available ? 1 : 0.6,
+                '&:hover': { boxShadow: 2 }
+              }}
+            >
+              {item.image && (
+                <CardMedia
+                  component="img"
+                  height="140"
+                  image={item.image}
+                  alt={item.name}
+                />
+              )}
+              <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                {/* Header */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
+                    {/* Veg/Non-Veg Indicator */}
+                    <Box
+                      sx={{
+                        width: 12,
+                        height: 12,
+                        border: `2px solid ${item.isVeg ? 'green' : 'red'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 6,
+                          height: 6,
+                          backgroundColor: item.isVeg ? 'green' : 'red',
+                          borderRadius: '50%',
+                        }}
+                      />
+                    </Box>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="600" 
+                      color="text.primary" 
+                      sx={{ 
+                        fontSize: '1rem',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {item.name}
+                    </Typography>
+                  </Box>
+                  {item.featured && (
+                    <Chip label="Featured" size="small" color="primary" sx={{ flexShrink: 0, ml: 1 }} />
+                  )}
+                </Box>
+                
+                {/* Description */}
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, minHeight: 40, lineHeight: 1.4 }}>
+                  {item.description}
+                </Typography>
+                
+                {/* Price and Category */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" color="primary.main" fontWeight="600">
+                    {formatCurrency(item.price)}
+                  </Typography>
+                  <Chip 
+                    label={getCategoryName(item.category)} 
+                    size="small" 
+                    variant="outlined"
+                  />
+                </Box>
+                
+                {/* Details */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {item.preparationTime} min
+                  </Typography>
+                  {item.calories && (
+                    <Typography variant="caption" color="text.secondary">
+                      {item.calories} cal
+                    </Typography>
+                  )}
+                  <Chip 
+                    label={item.available ? 'Available' : 'Unavailable'} 
+                    size="small" 
+                    color={item.available ? 'success' : 'error'}
+                    variant="outlined"
+                  />
+                </Box>
+                
+                {/* Actions - Push to bottom */}
+                <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <Tooltip title={item.available ? 'Mark Unavailable' : 'Mark Available'}>
+                      <IconButton size="small" onClick={() => handleToggleAvailability(item.id)}>
+                        {item.available ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                      </IconButton>
+                    </Tooltip>
+                    <IconButton size="small" onClick={() => handleEditItem(item)}>
+                      <Edit fontSize="small" />
+                    </IconButton>
+                  </Box>
+                  <Button
+                    size="small"
+                    color="error"
+                    startIcon={<Delete />}
+                    onClick={() => handleDeleteItem(item.id)}
+                  >
+                    Delete
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+
+      {filteredItems.length === 0 && (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Restaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No menu items found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Try adjusting your filters or add new menu items
+          </Typography>
+        </Box>
+      )}
+
+      {/* Menu Item Dialog */}
+      <MenuItemDialog
+        open={openItemDialog}
+        onClose={() => setOpenItemDialog(false)}
+        onSave={handleSaveItem}
+        item={editingItem}
+        categories={categories.filter(cat => cat.active)}
+      />
+
+      {/* Category Dialog */}
+      <CategoryDialog
+        open={openCategoryDialog}
+        onClose={() => setOpenCategoryDialog(false)}
+        onSave={handleSaveCategory}
+        category={editingCategory}
+      />
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Container>
+  );
+};
+
+// Enhanced Menu Item Dialog Component
+interface MenuItemDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (item: Partial<MenuItemType>) => void;
+  item: MenuItemType | null;
+  categories: CategoryType[];
+}
+
+const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, item, categories }) => {
+  const [formData, setFormData] = useState<Partial<MenuItemType>>({
+    name: '',
+    description: '',
+    price: 0,
+    category: '',
+    available: true,
+    featured: false,
+    allergens: [],
+    preparationTime: 0,
+    calories: 0,
+    spicyLevel: 0,
+    isVeg: true,
+  });
+
+  useEffect(() => {
+    if (item) {
+      setFormData(item);
+    } else {
+      setFormData({
+        name: '',
+        description: '',
+        price: 0,
+        category: '',
+        available: true,
+        featured: false,
+        allergens: [],
+        preparationTime: 0,
+        calories: 0,
+        spicyLevel: 0,
+        isVeg: true,
+      });
+    }
+  }, [item, open]);
+
+  const handleSave = () => {
+    onSave(formData);
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle>
+        {item ? 'Edit Menu Item' : 'Add Menu Item'}
+      </DialogTitle>
+      <DialogContent>
+        <Grid container spacing={3} sx={{ mt: 1 }}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Item Name"
+              value={formData.name || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControl fullWidth>
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={formData.category || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                label="Category"
+              >
+                {categories.map(category => (
+                  <MenuItem key={category.id} value={category.id}>
+                    {category.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={3}
+              value={formData.description || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Price (₹)"
+              type="number"
+              value={formData.price || 0}
+              onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+              InputProps={{
+                startAdornment: '₹',
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Preparation Time (minutes)"
+              type="number"
+              value={formData.preparationTime || 0}
+              onChange={(e) => setFormData(prev => ({ ...prev, preparationTime: parseInt(e.target.value) }))}
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Calories (optional)"
+              type="number"
+              value={formData.calories || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, calories: e.target.value ? parseInt(e.target.value) : undefined }))}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.isVeg || false}
+                  onChange={(e) => setFormData(prev => ({ ...prev, isVeg: e.target.checked }))}
+                />
+              }
+              label="Vegetarian"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.available || false}
+                  onChange={(e) => setFormData(prev => ({ ...prev, available: e.target.checked }))}
+                />
+              }
+              label="Available"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.featured || false}
+                  onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
+                />
+              }
+              label="Featured Item"
+            />
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSave} variant="contained">
+          {item ? 'Update' : 'Add'} Item
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// Category Dialog Component
+interface CategoryDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSave: (category: Partial<CategoryType>) => void;
+  category: CategoryType | null;
+}
+
+const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, category }) => {
+  const [formData, setFormData] = useState<Partial<CategoryType>>({
+    name: '',
+    description: '',
+    active: true,
+  });
+
+  useEffect(() => {
+    if (category) {
+      setFormData(category);
+    } else {
+      setFormData({
+        name: '',
+        description: '',
+        active: true,
+      });
+    }
+  }, [category, open]);
+
+  const handleSave = () => {
+    onSave(formData);
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        {category ? 'Edit Category' : 'Add Category'}
+      </DialogTitle>
+      <DialogContent>
+        <Grid container spacing={3} sx={{ mt: 1 }}>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Category Name"
+              value={formData.name || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Description"
+              multiline
+              rows={2}
+              value={formData.description || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.active || false}
+                  onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                />
+              }
+              label="Active"
+            />
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSave} variant="contained">
+          {category ? 'Update' : 'Add'} Category
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default MenuManagement;

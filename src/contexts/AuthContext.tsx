@@ -55,7 +55,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // Token is invalid, clear storage
               localStorage.removeItem('dino_token');
               localStorage.removeItem('dino_user');
-              localStorage.removeItem('dino_demo_mode');
               setUser(null);
             }
           }

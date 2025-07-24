@@ -12,13 +12,14 @@ import CleanHomePage from './pages/CleanHomePage';
 import RegistrationPage from './pages/RegistrationPage';
 import LoginPage from './pages/LoginPage';
 import UserDashboard from './pages/UserDashboard';
-import ZomatoStyleMenuPage from './pages/ZomatoStyleMenuPage';
+import CustomerMenuPage from './pages/CustomerMenuPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
-import EnhancedMenuManagement from './pages/admin/EnhancedMenuManagement';
+import OrdersManagement from './pages/admin/OrdersManagement';
+import MenuManagement from './pages/admin/MenuManagement';
 import EnhancedTableManagement from './pages/admin/EnhancedTableManagement';
 import EnhancedCafeSettings from './pages/admin/EnhancedCafeSettings';
 
@@ -41,7 +42,7 @@ function App() {
                 <Route path="/home" element={<CleanHomePage />} />
                 <Route path="/register" element={<RegistrationPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/menu/:cafeId/:tableId" element={<ZomatoStyleMenuPage />} />
+                <Route path="/menu/:cafeId/:tableId" element={<CustomerMenuPage />} />
                 <Route path="/checkout/:cafeId/:tableId" element={<CheckoutPage />} />
                 <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
                 <Route path="/order/:orderId" element={<OrderTrackingPage />} />
@@ -64,9 +65,14 @@ function App() {
                     <AdminDashboard />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin/orders" element={
+                  <ProtectedRoute adminOnly>
+                    <OrdersManagement />
+                  </ProtectedRoute>
+                } />
                 <Route path="/admin/menu" element={
                   <ProtectedRoute adminOnly>
-                    <EnhancedMenuManagement />
+                    <MenuManagement />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/tables" element={

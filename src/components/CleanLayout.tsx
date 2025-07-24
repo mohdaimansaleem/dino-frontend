@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { 
   Box, 
   AppBar, 
@@ -12,6 +12,9 @@ import {
   useScrollTrigger,
   Fab,
   Zoom,
+  Switch,
+  FormControlLabel,
+  Chip,
 } from '@mui/material';
 import { 
   ShoppingCart, 
@@ -22,6 +25,7 @@ import {
   Dashboard,
   TableRestaurant,
   Settings,
+  Assignment,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -38,6 +42,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { getTotalItems } = useCart();
+  const [cafeOpen, setCafeOpen] = useState(true);
   
   const trigger = useScrollTrigger({
     disableHysteresis: true,
@@ -50,6 +55,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
   const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true';
 
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -58,6 +64,8 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+
 
   const renderNavigation = () => {
     if (isPublicMenuRoute) {
@@ -99,37 +107,72 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
     if (isAdminRoute && user) {
       const adminNavItems = [
         { label: 'Dashboard', path: '/admin', icon: <Dashboard /> },
+        { label: 'Orders', path: '/admin/orders', icon: <Assignment /> },
         { label: 'Menu', path: '/admin/menu', icon: <Restaurant /> },
         { label: 'Tables', path: '/admin/tables', icon: <TableRestaurant /> },
         { label: 'Settings', path: '/admin/settings', icon: <Settings /> },
       ];
 
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {adminNavItems.map((item) => (
-            <Button
-              key={item.label}
-              color="inherit"
-              onClick={() => navigate(item.path)}
-              startIcon={item.icon}
-              sx={{
-                color: location.pathname === item.path ? 'primary.main' : 'text.primary',
-                backgroundColor: location.pathname === item.path ? 'primary.50' : 'transparent',
-                fontWeight: location.pathname === item.path ? 600 : 400,
-                '&:hover': {
-                  backgroundColor: 'primary.50',
-                },
-              }}
-            >
-              {item.label}
-            </Button>
-          ))}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+          {/* Cafe Status Toggle */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Chip
+              label={cafeOpen ? 'OPEN' : 'CLOSED'}
+              size="small"
+              color={cafeOpen ? 'success' : 'error'}
+              sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={cafeOpen}
+                  onChange={(e) => setCafeOpen(e.target.checked)}
+                  size="small"
+                  color="success"
+                />
+              }
+              label=""
+              sx={{ m: 0 }}
+            />
+          </Box>
+
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            overflow: 'hidden',
+            flexShrink: 1,
+            minWidth: 0
+          }}>
+            {adminNavItems.map((item) => (
+              <Button
+                key={item.label}
+                color="inherit"
+                onClick={() => navigate(item.path)}
+                startIcon={item.icon}
+                sx={{
+                  color: location.pathname === item.path ? 'primary.main' : 'text.primary',
+                  backgroundColor: location.pathname === item.path ? 'primary.50' : 'transparent',
+                  fontWeight: location.pathname === item.path ? 600 : 400,
+                  minWidth: 'auto',
+                  flexShrink: 0,
+                  '&:hover': {
+                    backgroundColor: 'primary.50',
+                  },
+                }}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </Box>
+          
           <IconButton 
             color="inherit" 
             onClick={handleLogout}
             sx={{
-              ml: 1,
               color: 'error.main',
+              flexShrink: 0,
               '&:hover': {
                 backgroundColor: 'error.50',
               },
@@ -180,7 +223,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
                 onClick={() => navigate('/register')}
                 sx={{ mr: 1 }}
               >
-                Sign Up
+                Create Account
               </Button>
               <Button
                 variant="contained"
@@ -222,7 +265,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
         }}
       >
         <Container maxWidth="xl">
-          <Toolbar sx={{ px: { xs: 0, sm: 2 } }}>
+          <Toolbar sx={{ px: { xs: 0, sm: 2 }, minHeight: 64 }}>
             <Box
               sx={{ 
                 display: 'flex',
@@ -230,21 +273,15 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
                 flexGrow: 1, 
                 cursor: 'pointer',
                 gap: 2,
+                minWidth: 0,
                 '&:hover': {
                   opacity: 0.8,
                 },
               }}
               onClick={() => {
                 if (isPublicMenuRoute || isCheckoutRoute) {
-                  // Extract cafeId and tableId from current path
-                  const pathParts = location.pathname.split('/');
-                  const cafeId = pathParts[2];
-                  const tableId = pathParts[3];
-                  if (cafeId && tableId) {
-                    navigate(`/menu/${cafeId}/${tableId}`);
-                  } else {
-                    navigate('/');
-                  }
+                  // Stay on current menu page, don't navigate away
+                  return;
                 } else {
                   navigate('/');
                 }
@@ -283,6 +320,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
                   🧪 DEMO MODE
                 </Box>
               )}
+
             </Box>
             {renderNavigation()}
           </Toolbar>

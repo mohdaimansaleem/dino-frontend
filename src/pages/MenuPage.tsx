@@ -246,15 +246,26 @@ const MenuPage: React.FC = () => {
                           <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
                             {item.name}
                           </Typography>
-                          {item.isVeg && (
-                            <Chip
-                              icon={<Eco />}
-                              label="Veg"
-                              size="small"
-                              color="success"
-                              variant="outlined"
+                          <Box
+                            sx={{
+                              width: 12,
+                              height: 12,
+                              border: `2px solid ${item.isVeg ? 'green' : 'red'}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 6,
+                                height: 6,
+                                backgroundColor: item.isVeg ? 'green' : 'red',
+                                borderRadius: '50%',
+                              }}
                             />
-                          )}
+                          </Box>
                         </Box>
                         
                         <Typography

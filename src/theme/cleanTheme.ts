@@ -251,14 +251,7 @@ const cleanThemeOptions: ThemeOptions = {
         },
       },
     },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          borderRadius: 6,
-          fontWeight: 500,
-        },
-      },
-    },
+
     MuiTextField: {
       styleOverrides: {
         root: {
@@ -280,8 +273,53 @@ const cleanThemeOptions: ThemeOptions = {
         root: {
           borderRadius: 6,
           marginBottom: 2,
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
             backgroundColor: 'rgba(33, 150, 243, 0.04)',
+            transform: 'translateX(4px)',
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: 'scale(1.1)',
+          },
+          '&:active': {
+            transform: 'scale(0.95)',
+          },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+          fontWeight: 500,
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            transform: 'scale(1.05)',
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            backgroundColor: 'rgba(33, 150, 243, 0.08)',
+            transform: 'translateX(4px)',
           },
         },
       },
