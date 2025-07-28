@@ -1,39 +1,43 @@
-import { AppNotification } from '../types';
-import { apiService } from './api';
+import { AppNotification, NotificationTypeEnum } from '../types';
 
-export interface NotificationPreferences {
-  emailNotifications: boolean;
-  smsNotifications: boolean;
-  pushNotifications: boolean;
-  notificationTypes: {
-    orderUpdates: boolean;
-    paymentConfirmations: boolean;
-    promotionalOffers: boolean;
-    systemAlerts: boolean;
-  };
-}
+type NotificationCallback = (notification: AppNotification) => void;
+type ConnectionCallback = (connected: boolean) => void;
 
 class NotificationService {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
-  private listeners: Map<string, Function[]> = new Map();
+  private callbacks: NotificationCallback[] = [];
+  private connectionCallbacks: ConnectionCallback[] = [];
+  private isConnecting = false;
 
-  // WebSocket connection management
-  connectWebSocket(userId: string, userType: string = 'users'): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      return; // Already connected
+  constructor() {
+    this.connect();
+  }
+
+  private connect() {
+    if (this.isConnecting || this.ws?.readyState === WebSocket.OPEN) {
+      return;
+    }
+
+    this.isConnecting = true;
+    const token = localStorage.getItem('dino_token');
+    
+    if (!token) {
+      this.isConnecting = false;
+      return;
     }
 
     try {
-      const wsUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:8000'}/api/v1/notifications/ws/${userType}/${userId}`;
-      this.ws = new WebSocket(wsUrl);
+      const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
+      this.ws = new WebSocket(`${wsUrl}?token=${token}`);
 
       this.ws.onopen = () => {
-        console.log('✅ WebSocket connected');
+        console.log('WebSocket connected');
+        this.isConnecting = false;
         this.reconnectAttempts = 0;
-        this.emit('connected', {});
+        this.notifyConnectionCallbacks(true);
       };
 
       this.ws.onmessage = (event) => {
@@ -45,255 +49,235 @@ class NotificationService {
         }
       };
 
-      this.ws.onclose = (event) => {
-        console.log('❌ WebSocket disconnected:', event.code, event.reason);
-        this.emit('disconnected', { code: event.code, reason: event.reason });
-        
-        // Attempt to reconnect if not a normal closure
-        if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
-          setTimeout(() => {
-            this.reconnectAttempts++;
-            console.log(`🔄 Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-            this.connectWebSocket(userId, userType);
-          }, this.reconnectDelay * this.reconnectAttempts);
-        }
+      this.ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        this.isConnecting = false;
+        this.notifyConnectionCallbacks(false);
+        this.scheduleReconnect();
       };
 
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
-        this.emit('error', error);
+        this.isConnecting = false;
       };
     } catch (error) {
-      console.error('Failed to connect WebSocket:', error);
+      console.error('Failed to create WebSocket connection:', error);
+      this.isConnecting = false;
+      this.scheduleReconnect();
     }
   }
 
-  disconnectWebSocket(): void {
-    if (this.ws) {
-      this.ws.close(1000, 'User disconnected');
-      this.ws = null;
+  private scheduleReconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
+      
+      setTimeout(() => {
+        console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        this.connect();
+      }, delay);
     }
   }
 
-  private handleMessage(data: any): void {
+  private handleMessage(data: any) {
     switch (data.type) {
       case 'notification':
-        this.emit('notification', data.data);
-        this.showBrowserNotification(data.data);
+        this.handleNotification(data.payload);
         break;
-      case 'ping':
-        this.sendPong();
+      case 'order_update':
+        this.handleOrderUpdate(data.payload);
         break;
-      case 'pong':
-        // Handle pong response
+      case 'cafe_status_update':
+        this.handleCafeStatusUpdate(data.payload);
         break;
       default:
         console.log('Unknown message type:', data.type);
     }
   }
 
-  private sendPong(): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({
-        type: 'pong',
-        timestamp: new Date().toISOString()
-      }));
-    }
+  private handleNotification(payload: any) {
+    const notification: AppNotification = {
+      id: payload.id || Date.now().toString(),
+      recipientId: payload.recipientId,
+      recipientType: payload.recipientType || 'user',
+      notificationType: payload.notificationType,
+      title: payload.title,
+      message: payload.message,
+      data: payload.data,
+      isRead: false,
+      priority: payload.priority || 'normal',
+      createdAt: new Date(payload.createdAt || Date.now()),
+    };
+
+    this.notifyCallbacks(notification);
+    this.showBrowserNotification(notification);
   }
 
-  private showBrowserNotification(notification: AppNotification): void {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const browserNotification = new window.Notification(notification.title, {
-        body: notification.message,
-        icon: '/logo192.png',
-        badge: '/logo192.png',
-        tag: notification.id,
-        requireInteraction: notification.priority === 'high' || notification.priority === 'urgent'
-      });
+  private handleOrderUpdate(payload: any) {
+    const notification: AppNotification = {
+      id: Date.now().toString(),
+      recipientId: payload.cafeId,
+      recipientType: 'cafe',
+      notificationType: 'order_placed' as NotificationTypeEnum,
+      title: 'New Order',
+      message: `Order #${payload.orderNumber} has been ${payload.status}`,
+      data: payload,
+      isRead: false,
+      priority: 'high',
+      createdAt: new Date(),
+    };
 
-      browserNotification.onclick = () => {
-        window.focus();
-        this.emit('notificationClick', notification);
-        browserNotification.close();
-      };
-
-      // Auto close after 5 seconds for normal priority
-      if (notification.priority === 'normal' || notification.priority === 'low') {
-        setTimeout(() => {
-          browserNotification.close();
-        }, 5000);
-      }
-    }
-  }
-
-  // Event listener management
-  on(event: string, callback: Function): void {
-    if (!this.listeners.has(event)) {
-      this.listeners.set(event, []);
-    }
-    this.listeners.get(event)!.push(callback);
-  }
-
-  off(event: string, callback: Function): void {
-    const eventListeners = this.listeners.get(event);
-    if (eventListeners) {
-      const index = eventListeners.indexOf(callback);
-      if (index > -1) {
-        eventListeners.splice(index, 1);
-      }
-    }
-  }
-
-  private emit(event: string, data: any): void {
-    const eventListeners = this.listeners.get(event);
-    if (eventListeners) {
-      eventListeners.forEach(callback => callback(data));
-    }
-  }
-
-  // API methods
-  async getNotifications(unreadOnly: boolean = false, limit: number = 50): Promise<AppNotification[]> {
-    try {
-      const params = new URLSearchParams();
-      if (unreadOnly) params.append('unread_only', 'true');
-      params.append('limit', limit.toString());
-
-      const response = await apiService.get<AppNotification[]>(`/notifications?${params}`);
-      
-      if (response.success && response.data) {
-        return response.data;
-      }
-      
-      return [];
-    } catch (error: any) {
-      console.error('Failed to get notifications:', error);
-      return [];
-    }
-  }
-
-  async getUnreadCount(): Promise<number> {
-    try {
-      const response = await apiService.get<{ unread_count: number }>('/notifications/unread-count');
-      
-      if (response.success && response.data) {
-        return response.data.unread_count;
-      }
-      
-      return 0;
-    } catch (error: any) {
-      console.error('Failed to get unread count:', error);
-      return 0;
-    }
-  }
-
-  async markAsRead(notificationId: string): Promise<void> {
-    try {
-      const response = await apiService.put(`/notifications/${notificationId}/read`);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to mark notification as read');
-      }
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to mark notification as read');
-    }
-  }
-
-  async markAllAsRead(): Promise<void> {
-    try {
-      const response = await apiService.put('/notifications/mark-all-read');
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to mark all notifications as read');
-      }
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to mark all notifications as read');
-    }
-  }
-
-  async getPreferences(): Promise<NotificationPreferences> {
-    try {
-      const response = await apiService.get<NotificationPreferences>('/notifications/preferences');
-      
-      if (response.success && response.data) {
-        return response.data;
-      }
-      
-      // Return default preferences
-      return {
-        emailNotifications: true,
-        smsNotifications: false,
-        pushNotifications: true,
-        notificationTypes: {
-          orderUpdates: true,
-          paymentConfirmations: true,
-          promotionalOffers: true,
-          systemAlerts: true
-        }
-      };
-    } catch (error: any) {
-      console.error('Failed to get notification preferences:', error);
-      return {
-        emailNotifications: true,
-        smsNotifications: false,
-        pushNotifications: true,
-        notificationTypes: {
-          orderUpdates: true,
-          paymentConfirmations: true,
-          promotionalOffers: true,
-          systemAlerts: true
-        }
-      };
-    }
-  }
-
-  async updatePreferences(preferences: NotificationPreferences): Promise<void> {
-    try {
-      const response = await apiService.put('/notifications/preferences', preferences);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to update notification preferences');
-      }
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to update notification preferences');
-    }
-  }
-
-  // Browser notification permission
-  async requestPermission(): Promise<NotificationPermission> {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      return permission;
-    }
-    return 'denied';
-  }
-
-  isPermissionGranted(): boolean {
-    return 'Notification' in window && Notification.permission === 'granted';
-  }
-
-  // Utility methods
-  sendMessage(message: any): void {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
-    }
-  }
-
-  getConnectionState(): string {
-    if (!this.ws) return 'disconnected';
+    this.notifyCallbacks(notification);
     
-    switch (this.ws.readyState) {
-      case WebSocket.CONNECTING: return 'connecting';
-      case WebSocket.OPEN: return 'connected';
-      case WebSocket.CLOSING: return 'closing';
-      case WebSocket.CLOSED: return 'disconnected';
-      default: return 'unknown';
+    // Dispatch custom event for order updates
+    window.dispatchEvent(new CustomEvent('orderUpdate', { detail: payload }));
+  }
+
+  private handleCafeStatusUpdate(payload: any) {
+    const notification: AppNotification = {
+      id: Date.now().toString(),
+      recipientId: payload.cafeId,
+      recipientType: 'cafe',
+      notificationType: 'system_alert' as NotificationTypeEnum,
+      title: 'Cafe Status Update',
+      message: `Cafe is now ${payload.isOpen ? 'open' : 'closed'}`,
+      data: payload,
+      isRead: false,
+      priority: 'normal',
+      createdAt: new Date(),
+    };
+
+    this.notifyCallbacks(notification);
+    
+    // Dispatch custom event for cafe status updates
+    window.dispatchEvent(new CustomEvent('cafeStatusUpdate', { detail: payload }));
+  }
+
+  private notifyCallbacks(notification: AppNotification) {
+    this.callbacks.forEach(callback => {
+      try {
+        callback(notification);
+      } catch (error) {
+        console.error('Error in notification callback:', error);
+      }
+    });
+  }
+
+  private notifyConnectionCallbacks(connected: boolean) {
+    this.connectionCallbacks.forEach(callback => {
+      try {
+        callback(connected);
+      } catch (error) {
+        console.error('Error in connection callback:', error);
+      }
+    });
+  }
+
+  private async showBrowserNotification(notification: AppNotification) {
+    if (!('Notification' in window)) {
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.message,
+        icon: '/favicon.ico',
+        tag: notification.id,
+      });
+    } else if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        new Notification(notification.title, {
+          body: notification.message,
+          icon: '/favicon.ico',
+          tag: notification.id,
+        });
+      }
     }
   }
 
-  // Clean up
-  destroy(): void {
-    this.disconnectWebSocket();
-    this.listeners.clear();
+  // Public methods
+  subscribe(callback: NotificationCallback): () => void {
+    this.callbacks.push(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      const index = this.callbacks.indexOf(callback);
+      if (index > -1) {
+        this.callbacks.splice(index, 1);
+      }
+    };
+  }
+
+  onConnectionChange(callback: ConnectionCallback): () => void {
+    this.connectionCallbacks.push(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      const index = this.connectionCallbacks.indexOf(callback);
+      if (index > -1) {
+        this.connectionCallbacks.splice(index, 1);
+      }
+    };
+  }
+
+  isConnected(): boolean {
+    return this.ws?.readyState === WebSocket.OPEN;
+  }
+
+  disconnect() {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    this.callbacks = [];
+    this.connectionCallbacks = [];
+  }
+
+  // Send message to server
+  send(type: string, payload: any) {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type, payload }));
+    } else {
+      console.warn('WebSocket is not connected');
+    }
+  }
+
+  // Request browser notification permission
+  async requestNotificationPermission(): Promise<NotificationPermission> {
+    if (!('Notification' in window)) {
+      return 'denied';
+    }
+
+    if (Notification.permission === 'default') {
+      return await Notification.requestPermission();
+    }
+
+    return Notification.permission;
+  }
+
+  // Create local notification (for testing)
+  createLocalNotification(
+    type: NotificationTypeEnum,
+    title: string,
+    message: string,
+    data?: any
+  ) {
+    const notification: AppNotification = {
+      id: Date.now().toString(),
+      recipientId: 'local',
+      recipientType: 'user',
+      notificationType: type,
+      title,
+      message,
+      data,
+      isRead: false,
+      priority: 'normal',
+      createdAt: new Date(),
+    };
+
+    this.notifyCallbacks(notification);
+    this.showBrowserNotification(notification);
   }
 }
 

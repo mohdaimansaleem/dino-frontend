@@ -39,7 +39,7 @@ const LoginPage: React.FC = () => {
     agreeToTerms: false,
   });
 
-  const [demoRole, setDemoRole] = useState<'admin' | 'operator'>('admin');
+  const [demoRole, setDemoRole] = useState<'admin' | 'operator' | 'superadmin'>('admin');
 
   const from = location.state?.from?.pathname || '/admin';
 
@@ -84,9 +84,9 @@ const LoginPage: React.FC = () => {
     // Create a demo user session without backend authentication
     const demoUser = {
       id: `demo-user-${demoRole}-123`,
-      email: demoRole === 'admin' ? 'admin@demo.com' : 'operator@demo.com',
+      email: demoRole === 'admin' ? 'admin@demo.com' : demoRole === 'operator' ? 'operator@demo.com' : 'superadmin@demo.com',
       firstName: 'Demo',
-      lastName: demoRole === 'admin' ? 'Admin' : 'Operator',
+      lastName: demoRole === 'admin' ? 'Admin' : demoRole === 'operator' ? 'Operator' : 'SuperAdmin',
       role: demoRole === 'admin' ? 'admin' as const : 'staff' as const, // Map operator to staff for UserProfile compatibility
       phone: '+1234567890',
       isActive: true,
@@ -112,7 +112,7 @@ const LoginPage: React.FC = () => {
     setDemoUser(demoUser);
     
     // Navigate based on role
-    const targetPath = demoRole === 'admin' ? '/admin' : '/admin/orders';
+    const targetPath = demoRole === 'operator' ? '/admin/orders' : '/admin';
     navigate(targetPath, { replace: true });
   };
 
@@ -333,12 +333,20 @@ const LoginPage: React.FC = () => {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                   Demo Mode - Select Role:
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                  <Button
+                    variant={demoRole === 'superadmin' ? 'contained' : 'outlined'}
+                    size="small"
+                    onClick={() => setDemoRole('superadmin')}
+                    sx={{ flex: 1, minWidth: '100px' }}
+                  >
+                    SuperAdmin
+                  </Button>
                   <Button
                     variant={demoRole === 'admin' ? 'contained' : 'outlined'}
                     size="small"
                     onClick={() => setDemoRole('admin')}
-                    sx={{ flex: 1 }}
+                    sx={{ flex: 1, minWidth: '100px' }}
                   >
                     Admin
                   </Button>
@@ -346,7 +354,7 @@ const LoginPage: React.FC = () => {
                     variant={demoRole === 'operator' ? 'contained' : 'outlined'}
                     size="small"
                     onClick={() => setDemoRole('operator')}
-                    sx={{ flex: 1 }}
+                    sx={{ flex: 1, minWidth: '100px' }}
                   >
                     Operator
                   </Button>
@@ -367,7 +375,7 @@ const LoginPage: React.FC = () => {
                     }
                   }}
                 >
-                  🚀 Login as {demoRole === 'admin' ? 'Admin' : 'Operator'} (Demo)
+                  🚀 Login as {demoRole === 'admin' ? 'Admin' : demoRole === 'operator' ? 'Operator' : 'SuperAdmin'} (Demo)
                 </Button>
               </Box>
             )}

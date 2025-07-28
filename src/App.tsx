@@ -5,10 +5,16 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 // import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { WorkspaceProvider } from './contexts/WorkspaceContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import cleanTheme from './theme/cleanTheme';
 
 // Public Pages
 import CleanHomePage from './pages/CleanHomePage';
+import FeaturesPage from './pages/FeaturesPage';
+import PricingPage from './pages/PricingPage';
+import ContactPage from './pages/ContactPage';
+import TestimonialsPage from './pages/TestimonialsPage';
 import RegistrationPage from './pages/RegistrationPage';
 import LoginPage from './pages/LoginPage';
 import UserDashboard from './pages/UserDashboard';
@@ -22,6 +28,9 @@ import OrdersManagement from './pages/admin/OrdersManagement';
 import MenuManagement from './pages/admin/MenuManagement';
 import EnhancedTableManagement from './pages/admin/EnhancedTableManagement';
 import EnhancedCafeSettings from './pages/admin/EnhancedCafeSettings';
+import UserManagement from './pages/admin/UserManagement';
+import WorkspaceManagement from './pages/admin/WorkspaceManagement';
+import UserPermissionsDashboard from './pages/admin/UserPermissionsDashboard';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -36,12 +45,18 @@ function App() {
       <CssBaseline />
       {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
         <AuthProvider>
-          <CartProvider>
-            <CleanLayout>
+          <WorkspaceProvider>
+            <NotificationProvider>
+              <CartProvider>
+                <CleanLayout>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<CleanHomePage />} />
                 <Route path="/home" element={<CleanHomePage />} />
+                <Route path="/features" element={<FeaturesPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/testimonials" element={<TestimonialsPage />} />
                 <Route path="/register" element={<RegistrationPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/menu/:cafeId/:tableId" element={<CustomerMenuPage />} />
@@ -87,12 +102,29 @@ function App() {
                     <EnhancedCafeSettings />
                   </RoleProtectedRoute>
                 } />
+                <Route path="/admin/users" element={
+                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
+                    <UserManagement />
+                  </RoleProtectedRoute>
+                } />
+                <Route path="/admin/workspace" element={
+                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.WORKSPACE_VIEW]}>
+                    <WorkspaceManagement />
+                  </RoleProtectedRoute>
+                } />
+                <Route path="/admin/permissions" element={
+                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
+                    <UserPermissionsDashboard />
+                  </RoleProtectedRoute>
+                } />
                 
                 {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-            </CleanLayout>
-          </CartProvider>
+                </CleanLayout>
+              </CartProvider>
+            </NotificationProvider>
+          </WorkspaceProvider>
         </AuthProvider>
       {/* </LocalizationProvider> */}
     </ThemeProvider>

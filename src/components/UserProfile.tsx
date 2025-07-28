@@ -56,6 +56,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { UserProfile as UserProfileType, UserAddress } from '../types';
 import { authService } from '../services/authService';
 import ImageUpload from './ImageUpload';
+import UserPermissions from './UserPermissions';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -320,6 +321,7 @@ const UserProfile: React.FC = () => {
           <Tab icon={<LocationOn />} label="Addresses" />
           <Tab icon={<Security />} label="Security" />
           <Tab icon={<Restaurant />} label="Preferences" />
+          <Tab icon={<Security />} label="Permissions" />
         </Tabs>
 
         {/* Personal Info Tab */}
@@ -639,6 +641,11 @@ const UserProfile: React.FC = () => {
               Save Preferences
             </Button>
           </Box>
+        </TabPanel>
+
+        {/* Permissions Tab */}
+        <TabPanel value={tabValue} index={4}>
+          <UserPermissions />
         </TabPanel>
       </Paper>
 

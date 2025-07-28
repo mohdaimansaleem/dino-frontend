@@ -19,6 +19,8 @@ export interface UserProfile {
   loginCount: number;
   totalOrders: number;
   totalSpent: number;
+  workspaceId?: string;
+  cafeId?: string;
 }
 
 export interface UserAddress {

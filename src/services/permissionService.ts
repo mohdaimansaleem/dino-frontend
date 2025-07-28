@@ -3,6 +3,42 @@ import { User, Permission, UserRole, PERMISSIONS, ROLES, PermissionName, RoleNam
 class PermissionService {
   // Mock role definitions - in real app, this would come from database
   private static roleDefinitions: Record<string, UserRole> = {
+    [ROLES.SUPERADMIN]: {
+      id: 'superadmin-role',
+      name: ROLES.SUPERADMIN,
+      displayName: 'Super Administrator',
+      description: 'Full system access with workspace management',
+      permissions: [
+        { id: '1', name: PERMISSIONS.DASHBOARD_VIEW, resource: 'dashboard', action: 'view', description: 'View dashboard' },
+        { id: '2', name: PERMISSIONS.ORDERS_VIEW, resource: 'orders', action: 'view', description: 'View orders' },
+        { id: '3', name: PERMISSIONS.ORDERS_UPDATE, resource: 'orders', action: 'update', description: 'Update orders' },
+        { id: '4', name: PERMISSIONS.ORDERS_CREATE, resource: 'orders', action: 'create', description: 'Create orders' },
+        { id: '5', name: PERMISSIONS.ORDERS_DELETE, resource: 'orders', action: 'delete', description: 'Delete orders' },
+        { id: '6', name: PERMISSIONS.MENU_VIEW, resource: 'menu', action: 'view', description: 'View menu' },
+        { id: '7', name: PERMISSIONS.MENU_UPDATE, resource: 'menu', action: 'update', description: 'Update menu' },
+        { id: '8', name: PERMISSIONS.MENU_CREATE, resource: 'menu', action: 'create', description: 'Create menu items' },
+        { id: '9', name: PERMISSIONS.MENU_DELETE, resource: 'menu', action: 'delete', description: 'Delete menu items' },
+        { id: '10', name: PERMISSIONS.TABLES_VIEW, resource: 'tables', action: 'view', description: 'View tables' },
+        { id: '11', name: PERMISSIONS.TABLES_UPDATE, resource: 'tables', action: 'update', description: 'Update tables' },
+        { id: '12', name: PERMISSIONS.TABLES_CREATE, resource: 'tables', action: 'create', description: 'Create tables' },
+        { id: '13', name: PERMISSIONS.TABLES_DELETE, resource: 'tables', action: 'delete', description: 'Delete tables' },
+        { id: '14', name: PERMISSIONS.SETTINGS_VIEW, resource: 'settings', action: 'view', description: 'View settings' },
+        { id: '15', name: PERMISSIONS.SETTINGS_UPDATE, resource: 'settings', action: 'update', description: 'Update settings' },
+        { id: '16', name: PERMISSIONS.USERS_VIEW, resource: 'users', action: 'view', description: 'View users' },
+        { id: '17', name: PERMISSIONS.USERS_UPDATE, resource: 'users', action: 'update', description: 'Update users' },
+        { id: '18', name: PERMISSIONS.USERS_CREATE, resource: 'users', action: 'create', description: 'Create users' },
+        { id: '19', name: PERMISSIONS.USERS_DELETE, resource: 'users', action: 'delete', description: 'Delete users' },
+        { id: '20', name: PERMISSIONS.WORKSPACE_VIEW, resource: 'workspace', action: 'view', description: 'View workspaces' },
+        { id: '21', name: PERMISSIONS.WORKSPACE_UPDATE, resource: 'workspace', action: 'update', description: 'Update workspaces' },
+        { id: '22', name: PERMISSIONS.WORKSPACE_CREATE, resource: 'workspace', action: 'create', description: 'Create workspaces' },
+        { id: '23', name: PERMISSIONS.WORKSPACE_DELETE, resource: 'workspace', action: 'delete', description: 'Delete workspaces' },
+        { id: '24', name: PERMISSIONS.WORKSPACE_SWITCH, resource: 'workspace', action: 'switch', description: 'Switch workspaces' },
+        { id: '25', name: PERMISSIONS.CAFE_ACTIVATE, resource: 'cafe', action: 'activate', description: 'Activate cafes' },
+        { id: '26', name: PERMISSIONS.CAFE_DEACTIVATE, resource: 'cafe', action: 'deactivate', description: 'Deactivate cafes' },
+        { id: '27', name: PERMISSIONS.CAFE_VIEW_ALL, resource: 'cafe', action: 'view_all', description: 'View all cafes' },
+        { id: '28', name: PERMISSIONS.CAFE_SWITCH, resource: 'cafe', action: 'switch', description: 'Switch cafes' },
+      ]
+    },
     [ROLES.ADMIN]: {
       id: 'admin-role',
       name: ROLES.ADMIN,
@@ -182,6 +218,46 @@ class PermissionService {
    */
   static isOperator(user: User | null): boolean {
     return this.hasRole(user, ROLES.OPERATOR);
+  }
+
+  /**
+   * Check if user is superadmin
+   */
+  static isSuperAdmin(user: User | null): boolean {
+    return this.hasRole(user, ROLES.SUPERADMIN);
+  }
+
+  /**
+   * Get user's permissions as readable list
+   */
+  static getUserPermissionsList(user: User | null): string[] {
+    if (!user || !user.permissions) {
+      return [];
+    }
+    return user.permissions.map(p => p.description || p.name);
+  }
+
+  /**
+   * Check if user can manage workspace
+   */
+  static canManageWorkspace(user: User | null): boolean {
+    return this.isSuperAdmin(user) || this.hasPermission(user, PERMISSIONS.WORKSPACE_UPDATE);
+  }
+
+  /**
+   * Check if user can switch cafes
+   */
+  static canSwitchCafe(user: User | null): boolean {
+    return this.isSuperAdmin(user) || this.hasPermission(user, PERMISSIONS.CAFE_SWITCH);
+  }
+
+  /**
+   * Check if user can activate/deactivate cafe
+   */
+  static canManageCafeStatus(user: User | null): boolean {
+    return this.isSuperAdmin(user) || 
+           this.hasPermission(user, PERMISSIONS.CAFE_ACTIVATE) ||
+           this.hasPermission(user, PERMISSIONS.CAFE_DEACTIVATE);
   }
 }
 

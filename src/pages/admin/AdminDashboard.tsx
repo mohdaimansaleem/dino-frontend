@@ -43,6 +43,8 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import CafeStatusManager from '../../components/CafeStatusManager';
+import UserPermissions from '../../components/UserPermissions';
 
 // Demo data for Dino Cafe - Hyderabad
 const mockAnalytics = {
@@ -476,6 +478,16 @@ const AdminDashboard: React.FC = () => {
               </List>
             </CardContent>
           </Card>
+        </Grid>
+
+        {/* Cafe Status Management */}
+        <Grid item xs={12} md={8}>
+          <CafeStatusManager />
+        </Grid>
+
+        {/* User Permissions */}
+        <Grid item xs={12} md={4}>
+          <UserPermissions />
         </Grid>
 
         {/* Quick Actions */}

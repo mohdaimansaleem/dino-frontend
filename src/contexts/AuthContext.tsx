@@ -19,6 +19,7 @@ interface AuthContextType {
   canAccessRoute: (route: string) => boolean;
   isAdmin: () => boolean;
   isOperator: () => boolean;
+  isSuperAdmin: () => boolean;
   getUserWithRole: () => AuthUser | null;
   // Demo mode method
   setDemoUser: (demoUser: UserProfile) => void;
@@ -216,6 +217,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return PermissionService.isOperator(authUser);
   };
 
+  const isSuperAdmin = (): boolean => {
+    const authUser = getUserWithRole();
+    return PermissionService.isSuperAdmin(authUser);
+  };
+
   const setDemoUser = (demoUser: UserProfile): void => {
     // Store demo session data
     localStorage.setItem('dino_token', 'demo-token-bypass');
@@ -240,6 +246,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     canAccessRoute,
     isAdmin,
     isOperator,
+    isSuperAdmin,
     getUserWithRole,
     setDemoUser,
   };

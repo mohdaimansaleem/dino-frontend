@@ -26,6 +26,9 @@ import {
   TableRestaurant,
   Settings,
   Assignment,
+  People,
+  Business,
+  Security,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -41,7 +44,7 @@ interface CleanLayoutProps {
 const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, hasPermission, isAdmin, isOperator } = useAuth();
+  const { user, logout, hasPermission, isAdmin, isOperator, isSuperAdmin } = useAuth();
   const { getTotalItems } = useCart();
   const [cafeOpen, setCafeOpen] = useState(true);
   
@@ -142,6 +145,27 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
           icon: <Settings />, 
           permission: PERMISSIONS.SETTINGS_VIEW,
           roles: ['admin'] 
+        },
+        { 
+          label: 'Users', 
+          path: '/admin/users', 
+          icon: <People />, 
+          permission: PERMISSIONS.USERS_VIEW,
+          roles: ['admin', 'superadmin'] 
+        },
+        { 
+          label: 'Permissions', 
+          path: '/admin/permissions', 
+          icon: <Security />, 
+          permission: PERMISSIONS.USERS_VIEW,
+          roles: ['admin', 'superadmin'] 
+        },
+        { 
+          label: 'Workspace', 
+          path: '/admin/workspace', 
+          icon: <Business />, 
+          permission: PERMISSIONS.WORKSPACE_VIEW,
+          roles: ['superadmin'] 
         },
       ];
 

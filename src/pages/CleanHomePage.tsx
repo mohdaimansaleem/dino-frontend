@@ -219,6 +219,38 @@ const CleanHomePage: React.FC = () => {
                     </>
                   )}
                 </Box>
+                
+                {/* Navigation Links */}
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 3 }}>
+                  <Button
+                    color="inherit"
+                    onClick={() => navigate('/features')}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Features
+                  </Button>
+                  <Button
+                    color="inherit"
+                    onClick={() => navigate('/pricing')}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Pricing
+                  </Button>
+                  <Button
+                    color="inherit"
+                    onClick={() => navigate('/testimonials')}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Testimonials
+                  </Button>
+                  <Button
+                    color="inherit"
+                    onClick={() => navigate('/contact')}
+                    sx={{ textTransform: 'none' }}
+                  >
+                    Contact
+                  </Button>
+                </Box>
               </Box>
             </Grid>
             
@@ -428,9 +460,16 @@ const CleanHomePage: React.FC = () => {
           <Typography variant="h3" gutterBottom fontWeight="600" color="text.primary">
             Loved by Restaurant Owners
           </Typography>
-          <Typography variant="h6" color="text.secondary">
+          <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
             See what our customers are saying
           </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => navigate('/testimonials')}
+            sx={{ mb: 2 }}
+          >
+            View All Testimonials
+          </Button>
         </Box>
         
         <Grid container spacing={4}>
