@@ -181,7 +181,15 @@ const UserDashboard: React.FC = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
-      <Paper elevation={2} sx={{ p: 3, mb: 3, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+      <Paper elevation={2} sx={{ 
+        p: 3, 
+        mb: 3, 
+        background: (theme) => theme.palette.mode === 'dark' 
+          ? `linear-gradient(135deg, ${theme.palette.grey[100]} 0%, ${theme.palette.background.paper} 100%)` 
+          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        transition: 'all 0.3s ease'
+      }}>
         <Grid container spacing={3} alignItems="center">
           <Grid item>
             <Avatar

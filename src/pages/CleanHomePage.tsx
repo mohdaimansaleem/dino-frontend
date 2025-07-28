@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Container,
@@ -16,6 +16,9 @@ import {
   Avatar,
   Rating,
   Divider,
+  Fab,
+  Zoom,
+  useScrollTrigger,
 } from '@mui/material';
 import {
   QrCode,
@@ -34,6 +37,10 @@ import {
   EmojiEvents,
   Smartphone,
   AutoAwesome,
+  KeyboardArrowUp,
+  AttachMoney,
+  Business,
+  CorporateFare,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,42 +52,124 @@ const CleanHomePage: React.FC = () => {
   const { user } = useAuth();
   const [showQRDemo, setShowQRDemo] = useState(false);
 
+  // Refs for smooth scrolling
+  const heroRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+  const pricingRef = useRef<HTMLDivElement>(null);
+  const testimonialsRef = useRef<HTMLDivElement>(null);
+  const contactRef = useRef<HTMLDivElement>(null);
+
+  const trigger = useScrollTrigger({
+    disableHysteresis: true,
+    threshold: 100,
+  });
+
+  // Smooth scroll function
+  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+    ref.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const features = [
     {
-      icon: <QrCode sx={{ fontSize: 40, color: '#2196F3' }} />,
+      icon: <QrCode sx={{ fontSize: 40, color: 'primary.main' }} />,
       title: 'Smart QR Ordering',
       description: 'Customers scan QR codes to access your menu and place orders instantly with zero wait time.',
       stats: '99.9% Uptime',
     },
     {
-      icon: <Analytics sx={{ fontSize: 40, color: '#4CAF50' }} />,
+      icon: <Analytics sx={{ fontSize: 40, color: 'success.main' }} />,
       title: 'Advanced Analytics',
       description: 'Real-time insights, predictive analytics, and revenue optimization tools for data-driven decisions.',
       stats: '40% Revenue Boost',
     },
     {
-      icon: <Security sx={{ fontSize: 40, color: '#FF9800' }} />,
+      icon: <Security sx={{ fontSize: 40, color: 'warning.main' }} />,
       title: 'Enterprise Security',
       description: 'Bank-level encryption, PCI compliance, and 24/7 monitoring to keep your data safe.',
       stats: 'ISO 27001 Certified',
     },
     {
-      icon: <Speed sx={{ fontSize: 40, color: '#9C27B0' }} />,
+      icon: <Speed sx={{ fontSize: 40, color: 'secondary.main' }} />,
       title: 'Lightning Fast',
       description: 'Sub-second loading times with global CDN and edge computing for optimal performance.',
       stats: '<100ms Response',
     },
     {
-      icon: <Smartphone sx={{ fontSize: 40, color: '#F44336' }} />,
+      icon: <Smartphone sx={{ fontSize: 40, color: 'error.main' }} />,
       title: 'Mobile First',
       description: 'Progressive web app with offline support and native app experience across all devices.',
       stats: '5-Star Rating',
     },
     {
-      icon: <Support sx={{ fontSize: 40, color: '#607D8B' }} />,
+      icon: <Support sx={{ fontSize: 40, color: 'info.main' }} />,
       title: 'Premium Support',
       description: 'Dedicated success manager, priority support, and custom integrations for enterprise clients.',
       stats: '24/7 Available',
+    },
+  ];
+
+  const pricingPlans = [
+    {
+      name: 'Starter',
+      price: 29,
+      period: 'month',
+      description: 'Perfect for small cafes and restaurants',
+      icon: <Restaurant sx={{ fontSize: 40, color: 'primary.main' }} />,
+      features: [
+        'Up to 2 cafes',
+        'Basic QR menu',
+        'Order management',
+        'Basic analytics',
+        'Email support',
+        'Mobile app access',
+      ],
+      popular: false,
+      color: 'primary',
+    },
+    {
+      name: 'Professional',
+      price: 79,
+      period: 'month',
+      description: 'Ideal for growing restaurant chains',
+      icon: <Business sx={{ fontSize: 40, color: 'secondary.main' }} />,
+      features: [
+        'Up to 10 cafes',
+        'Advanced QR features',
+        'Real-time analytics',
+        'Customer insights',
+        'Priority support',
+        'Custom branding',
+        'Multi-language support',
+        'Integration APIs',
+      ],
+      popular: true,
+      color: 'secondary',
+    },
+    {
+      name: 'Enterprise',
+      price: 199,
+      period: 'month',
+      description: 'For large restaurant enterprises',
+      icon: <CorporateFare sx={{ fontSize: 40, color: 'success.main' }} />,
+      features: [
+        'Unlimited cafes',
+        'White-label solution',
+        'Advanced analytics',
+        'Custom integrations',
+        'Dedicated support',
+        'SLA guarantee',
+        'Custom features',
+        'Training & onboarding',
+      ],
+      popular: false,
+      color: 'success',
     },
   ];
 
@@ -90,7 +179,7 @@ const CleanHomePage: React.FC = () => {
       role: "Restaurant Owner",
       restaurant: "The Golden Spoon",
       rating: 5,
-      comment: "Dino E-Menu transformed our business! Revenue increased by 45% in just 3 months.",
+      comment: "Dino E-Menu transformed our business! Revenue increased by 45% in just 3 months. The QR ordering system is incredibly intuitive.",
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150",
     },
     {
@@ -98,7 +187,7 @@ const CleanHomePage: React.FC = () => {
       role: "Head Chef",
       restaurant: "Fusion Bistro",
       rating: 5,
-      comment: "The analytics helped us optimize our menu. Customer satisfaction is at an all-time high!",
+      comment: "The analytics helped us optimize our menu. Customer satisfaction is at an all-time high! We can track everything in real-time.",
       avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
     },
     {
@@ -106,8 +195,32 @@ const CleanHomePage: React.FC = () => {
       role: "Manager",
       restaurant: "Coastal Cafe",
       rating: 5,
-      comment: "Setup was incredibly easy. Our staff loves the intuitive interface!",
+      comment: "Setup was incredibly easy. Our staff loves the intuitive interface! Customer wait times have decreased by 60%.",
       avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150",
+    },
+    {
+      name: "David Park",
+      role: "Owner",
+      restaurant: "Urban Kitchen",
+      rating: 5,
+      comment: "The best investment we've made. Order accuracy improved dramatically and our customers love the contactless experience.",
+      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+    },
+    {
+      name: "Lisa Thompson",
+      role: "Operations Manager",
+      restaurant: "Metro Diner",
+      rating: 5,
+      comment: "Dino E-Menu scaled perfectly with our business. Managing multiple locations has never been easier.",
+      avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150",
+    },
+    {
+      name: "James Wilson",
+      role: "Franchise Owner",
+      restaurant: "Quick Bites Chain",
+      rating: 5,
+      comment: "The enterprise features are outstanding. Custom branding and analytics across all our locations is game-changing.",
+      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
     },
   ];
 
@@ -133,6 +246,8 @@ const CleanHomePage: React.FC = () => {
     <Box>
       {/* Hero Section */}
       <Box
+        ref={heroRef}
+        id="hero"
         sx={{
           py: { xs: 8, md: 12 },
           backgroundColor: 'background.paper',
@@ -224,28 +339,28 @@ const CleanHomePage: React.FC = () => {
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 3 }}>
                   <Button
                     color="inherit"
-                    onClick={() => navigate('/features')}
+                    onClick={() => scrollToSection(featuresRef)}
                     sx={{ textTransform: 'none' }}
                   >
                     Features
                   </Button>
                   <Button
                     color="inherit"
-                    onClick={() => navigate('/pricing')}
+                    onClick={() => scrollToSection(pricingRef)}
                     sx={{ textTransform: 'none' }}
                   >
                     Pricing
                   </Button>
                   <Button
                     color="inherit"
-                    onClick={() => navigate('/testimonials')}
+                    onClick={() => scrollToSection(testimonialsRef)}
                     sx={{ textTransform: 'none' }}
                   >
                     Testimonials
                   </Button>
                   <Button
                     color="inherit"
-                    onClick={() => navigate('/contact')}
+                    onClick={() => scrollToSection(contactRef)}
                     sx={{ textTransform: 'none' }}
                   >
                     Contact
@@ -281,7 +396,7 @@ const CleanHomePage: React.FC = () => {
                       p: 3,
                       mb: 3,
                       display: 'inline-block',
-                      color: 'white',
+                      color: 'primary.contrastText',
                     }}
                   >
                     <QrCode sx={{ fontSize: 60 }} />
@@ -340,7 +455,7 @@ const CleanHomePage: React.FC = () => {
       </Box>
 
       {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: 10 }}>
+      <Container maxWidth="lg" sx={{ py: 10 }} ref={featuresRef} id="features">
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
             Why Choose Dino E-Menu?
@@ -360,7 +475,9 @@ const CleanHomePage: React.FC = () => {
                   borderColor: 'divider',
                   '&:hover': {
                     boxShadow: 3,
+                    transform: 'translateY(-4px)',
                   },
+                  transition: 'all 0.3s ease',
                 }}
               >
                 <CardContent sx={{ p: 4 }}>
@@ -388,8 +505,120 @@ const CleanHomePage: React.FC = () => {
         </Grid>
       </Container>
 
+      {/* Pricing Section */}
+      <Box sx={{ py: 10, backgroundColor: 'grey.50' }} ref={pricingRef} id="pricing">
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: 8 }}>
+            <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
+              Simple, Transparent Pricing
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+              Choose the perfect plan for your restaurant. All plans include our core features with no hidden fees.
+            </Typography>
+          </Box>
+
+          <Grid container spacing={4} justifyContent="center">
+            {pricingPlans.map((plan, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <Card
+                  sx={{
+                    height: '100%',
+                    position: 'relative',
+                    border: plan.popular ? '2px solid' : '1px solid',
+                    borderColor: plan.popular ? 'secondary.main' : 'divider',
+                    '&:hover': {
+                      boxShadow: 4,
+                      transform: 'translateY(-8px)',
+                    },
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  {plan.popular && (
+                    <Chip
+                      label="Most Popular"
+                      color="secondary"
+                      sx={{
+                        position: 'absolute',
+                        top: -12,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        fontWeight: 600,
+                      }}
+                    />
+                  )}
+                  
+                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                    <Box sx={{ mb: 3 }}>
+                      {plan.icon}
+                    </Box>
+                    
+                    <Typography variant="h5" gutterBottom fontWeight="600" color="text.primary">
+                      {plan.name}
+                    </Typography>
+                    
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                      {plan.description}
+                    </Typography>
+                    
+                    <Box sx={{ mb: 4 }}>
+                      <Typography variant="h3" fontWeight="bold" color="primary.main" component="span">
+                        ${plan.price}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary" component="span">
+                        /{plan.period}
+                      </Typography>
+                    </Box>
+                    
+                    <List sx={{ mb: 4 }}>
+                      {plan.features.map((feature, featureIndex) => (
+                        <ListItem key={featureIndex} sx={{ px: 0, py: 0.5 }}>
+                          <ListItemIcon sx={{ minWidth: 32 }}>
+                            <CheckCircle color="primary" fontSize="small" />
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={feature}
+                            primaryTypographyProps={{
+                              variant: 'body2',
+                              color: 'text.primary',
+                            }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                    
+                    <Button
+                      variant={plan.popular ? 'contained' : 'outlined'}
+                      color={plan.color as any}
+                      fullWidth
+                      size="large"
+                      onClick={() => navigate('/login')}
+                      sx={{ py: 1.5 }}
+                    >
+                      Get Started
+                    </Button>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Box sx={{ textAlign: 'center', mt: 6 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+              All plans include 14-day free trial • No setup fees • Cancel anytime
+            </Typography>
+            <Button
+              variant="text"
+              onClick={() => scrollToSection(contactRef)}
+              sx={{ textDecoration: 'underline' }}
+            >
+              Need a custom plan? Contact us
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+
       {/* Benefits Section */}
-      <Box sx={{ py: 10, backgroundColor: 'grey.50' }}>
+      <Box sx={{ py: 10 }}>
         <Container maxWidth="lg">
           <Grid container spacing={8} alignItems="center">
             <Grid item xs={12} md={6}>
@@ -423,7 +652,7 @@ const CleanHomePage: React.FC = () => {
                   p: 6,
                   textAlign: 'center',
                   backgroundColor: 'primary.main',
-                  color: 'white',
+                  color: 'primary.contrastText',
                   border: '1px solid',
                   borderColor: 'primary.dark',
                 }}
@@ -455,65 +684,65 @@ const CleanHomePage: React.FC = () => {
       </Box>
 
       {/* Testimonials Section */}
-      <Container maxWidth="lg" sx={{ py: 10 }}>
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
-          <Typography variant="h3" gutterBottom fontWeight="600" color="text.primary">
-            Loved by Restaurant Owners
-          </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
-            See what our customers are saying
-          </Typography>
-          <Button
-            variant="outlined"
-            onClick={() => navigate('/testimonials')}
-            sx={{ mb: 2 }}
-          >
-            View All Testimonials
-          </Button>
-        </Box>
-        
-        <Grid container spacing={4}>
-          {testimonials.map((testimonial, index) => (
-            <Grid item xs={12} md={4} key={index}>
-              <Paper
-                elevation={1}
-                sx={{
-                  p: 4,
-                  height: '100%',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                  <Avatar
-                    src={testimonial.avatar}
-                    sx={{ width: 56, height: 56, mr: 2 }}
-                  />
-                  <Box>
-                    <Typography variant="h6" fontWeight="600" color="text.primary">
-                      {testimonial.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {testimonial.role} at {testimonial.restaurant}
-                    </Typography>
-                  </Box>
-                </Box>
-                
-                <Rating value={testimonial.rating} readOnly sx={{ mb: 2 }} />
-                <Typography variant="body2" sx={{ fontStyle: 'italic', lineHeight: 1.6, color: 'text.primary' }}>
-                  "{testimonial.comment}"
-                </Typography>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-
-      {/* Contact Section */}
-      <Box sx={{ py: 10, backgroundColor: 'grey.50' }}>
+      <Box sx={{ py: 10, backgroundColor: 'grey.50' }} ref={testimonialsRef} id="testimonials">
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography variant="h3" gutterBottom fontWeight="600" color="text.primary">
+            <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
+              Loved by Restaurant Owners
+            </Typography>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+              See what our customers are saying about their experience with Dino E-Menu
+            </Typography>
+          </Box>
+          
+          <Grid container spacing={4}>
+            {testimonials.map((testimonial, index) => (
+              <Grid item xs={12} md={6} lg={4} key={index}>
+                <Paper
+                  elevation={1}
+                  sx={{
+                    p: 4,
+                    height: '100%',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    '&:hover': {
+                      boxShadow: 3,
+                      transform: 'translateY(-4px)',
+                    },
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <Avatar
+                      src={testimonial.avatar}
+                      sx={{ width: 56, height: 56, mr: 2 }}
+                    />
+                    <Box>
+                      <Typography variant="h6" fontWeight="600" color="text.primary">
+                        {testimonial.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {testimonial.role} at {testimonial.restaurant}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Rating value={testimonial.rating} readOnly sx={{ mb: 2 }} />
+                  <Typography variant="body2" sx={{ fontStyle: 'italic', lineHeight: 1.6, color: 'text.primary' }}>
+                    "{testimonial.comment}"
+                  </Typography>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Contact Section */}
+      <Box sx={{ py: 10 }} ref={contactRef} id="contact">
+        <Container maxWidth="lg">
+          <Box sx={{ textAlign: 'center', mb: 8 }}>
+            <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
               Ready to Transform Your Restaurant?
             </Typography>
             <Typography variant="h6" color="text.secondary">
@@ -523,9 +752,9 @@ const CleanHomePage: React.FC = () => {
           
           <Grid container spacing={4} sx={{ mb: 8 }}>
             {[
-              { icon: <Phone />, title: 'Call Us', info: '+1 (555) 123-4567' },
-              { icon: <Email />, title: 'Email Us', info: 'hello@dinoemenu.com' },
-              { icon: <LocationOn />, title: 'Visit Us', info: '123 Tech Street, San Francisco, CA' },
+              { icon: <Phone />, title: 'Call Us', info: '+1 (555) 123-4567', action: 'tel:+15551234567' },
+              { icon: <Email />, title: 'Email Us', info: 'hello@dinoemenu.com', action: 'mailto:hello@dinoemenu.com' },
+              { icon: <LocationOn />, title: 'Visit Us', info: '123 Tech Street, San Francisco, CA', action: '#' },
             ].map((contact, index) => (
               <Grid item xs={12} md={4} key={index}>
                 <Paper
@@ -535,6 +764,17 @@ const CleanHomePage: React.FC = () => {
                     textAlign: 'center',
                     border: '1px solid',
                     borderColor: 'divider',
+                    cursor: contact.action !== '#' ? 'pointer' : 'default',
+                    '&:hover': {
+                      boxShadow: 3,
+                      transform: 'translateY(-4px)',
+                    },
+                    transition: 'all 0.3s ease',
+                  }}
+                  onClick={() => {
+                    if (contact.action !== '#') {
+                      window.open(contact.action, '_blank');
+                    }
                   }}
                 >
                   <Avatar
@@ -567,7 +807,7 @@ const CleanHomePage: React.FC = () => {
                   display: 'inline-block',
                   p: 6,
                   backgroundColor: 'primary.main',
-                  color: 'white',
+                  color: 'primary.contrastText',
                   border: '1px solid',
                   borderColor: 'primary.dark',
                 }}
@@ -584,7 +824,7 @@ const CleanHomePage: React.FC = () => {
                   size="large"
                   onClick={() => navigate('/login')}
                   sx={{ 
-                    backgroundColor: 'white',
+                    backgroundColor: 'background.paper',
                     color: 'primary.main',
                     px: 4, 
                     py: 1.5,
@@ -602,6 +842,23 @@ const CleanHomePage: React.FC = () => {
           </Box>
         </Container>
       </Box>
+
+      {/* Scroll to Top Button */}
+      <Zoom in={trigger}>
+        <Fab
+          onClick={scrollToTop}
+          color="primary"
+          size="medium"
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            boxShadow: 2,
+          }}
+        >
+          <KeyboardArrowUp />
+        </Fab>
+      </Zoom>
 
       {/* QR Code Demo Dialog */}
       <QRCodeDemo

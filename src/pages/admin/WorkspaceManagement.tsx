@@ -258,6 +258,7 @@ const WorkspaceManagement: React.FC = () => {
   const canCreateCafes = hasPermission(PERMISSIONS.CAFE_ACTIVATE);
   const canSwitchWorkspaces = hasPermission(PERMISSIONS.WORKSPACE_SWITCH);
   const canDeleteItems = isSuperAdmin(); // Use proper role check
+  const canCreateWorkspaces = false; // SuperAdmin cannot create workspaces
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -344,7 +345,7 @@ const WorkspaceManagement: React.FC = () => {
           <Typography variant="h5" fontWeight="600">
             Workspaces
           </Typography>
-          {canManageWorkspaces && (
+          {canCreateWorkspaces && (
             <Button
               variant="contained"
               startIcon={<Add />}
@@ -352,6 +353,11 @@ const WorkspaceManagement: React.FC = () => {
             >
               Create Workspace
             </Button>
+          )}
+          {!canCreateWorkspaces && isSuperAdmin() && (
+            <Alert severity="info" sx={{ maxWidth: 400 }}>
+              SuperAdmins cannot create workspaces. Contact system administrator.
+            </Alert>
           )}
         </Box>
 

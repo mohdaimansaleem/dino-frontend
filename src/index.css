@@ -15,11 +15,10 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #FAFAFA;
-  color: #212121;
   line-height: 1.6;
   scroll-behavior: smooth;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 code {
@@ -45,6 +44,19 @@ code {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #1976D2;
+}
+
+/* Dark mode scrollbar */
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
 }
 
 /* Performance optimized animations */
@@ -114,6 +126,12 @@ code {
   100% { transform: rotate(360deg); }
 }
 
+/* Dark mode spinner */
+[data-theme="dark"] .spinner {
+  border: 3px solid #3a3a3a;
+  border-top: 3px solid #7bb3f0;
+}
+
 /* Focus styles for accessibility */
 button:focus-visible,
 a:focus-visible,
@@ -121,6 +139,17 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
   outline: 2px solid #2196F3;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Dark mode focus styles */
+[data-theme="dark"] button:focus-visible,
+[data-theme="dark"] a:focus-visible,
+[data-theme="dark"] input:focus-visible,
+[data-theme="dark"] textarea:focus-visible,
+[data-theme="dark"] select:focus-visible {
+  outline: 2px solid #7bb3f0;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -134,6 +163,17 @@ select:focus-visible {
 ::-moz-selection {
   background: rgba(33, 150, 243, 0.2);
   color: #1976D2;
+}
+
+/* Dark mode selection styles */
+[data-theme="dark"] ::selection {
+  background: rgba(123, 179, 240, 0.3);
+  color: #7bb3f0;
+}
+
+[data-theme="dark"] ::-moz-selection {
+  background: rgba(123, 179, 240, 0.3);
+  color: #7bb3f0;
 }
 
 /* Responsive utilities */
@@ -158,63 +198,9 @@ select:focus-visible {
   will-change: opacity;
 }
 
-/* Smooth transitions */
-.smooth-transition {
-  transition: all 0.2s ease-in-out;
-}
-
-/* Card hover effects */
-.card-hover {
-  transition: all 0.2s ease-in-out;
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-/* Button effects */
-.button-hover {
-  transition: all 0.2s ease-in-out;
-}
-
-.button-hover:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Text contrast improvements */
-.text-high-contrast {
-  color: #212121;
-  font-weight: 500;
-}
-
-.text-medium-contrast {
-  color: #424242;
-  font-weight: 400;
-}
-
-.text-low-contrast {
-  color: #616161;
-  font-weight: 400;
-}
-
-/* Clean shadows */
-.shadow-sm {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
-.shadow-md {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.shadow-lg {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-/* Optimized for performance */
+/* Smooth transitions for all elements */
 * {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* Prevent layout shifts and component movement */
@@ -263,7 +249,7 @@ select:focus-visible {
   align-items: center;
 }
 
-/* Consistent grid layouts - but don't force all grid items to flex column */
+/* Consistent grid layouts */
 .MuiGrid-container {
   align-items: stretch;
 }

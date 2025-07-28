@@ -187,7 +187,9 @@ const LoginPage: React.FC = () => {
           sx={{
             p: 4,
             borderRadius: 2,
-            background: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)',
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
           }}
         >
           {/* Header */}

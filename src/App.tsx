@@ -1,13 +1,12 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
 // import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 // import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
 import { NotificationProvider } from './contexts/NotificationContext';
-import cleanTheme from './theme/cleanTheme';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 // Public Pages
 import CleanHomePage from './pages/CleanHomePage';
@@ -41,8 +40,7 @@ import { PERMISSIONS } from './types/auth';
 
 function App() {
   return (
-    <ThemeProvider theme={cleanTheme}>
-      <CssBaseline />
+    <ThemeProvider>
       {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
         <AuthProvider>
           <WorkspaceProvider>

@@ -36,6 +36,8 @@ import { useCart } from '../contexts/CartContext';
 import { PERMISSIONS } from '../types/auth';
 import CleanDinoLogo from './CleanDinoLogo';
 import NotificationCenter from './NotificationCenter';
+import ThemeToggle from './ThemeToggle';
+import { useFeatureFlag } from '../hooks/useFeatureFlag';
 
 interface CleanLayoutProps {
   children: ReactNode;
@@ -47,6 +49,9 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   const { user, logout, hasPermission, isAdmin, isOperator, isSuperAdmin } = useAuth();
   const { getTotalItems } = useCart();
   const [cafeOpen, setCafeOpen] = useState(true);
+  
+  // Feature flags
+  const isThemeToggleEnabled = useFeatureFlag('themeToggle');
   
   const trigger = useScrollTrigger({
     disableHysteresis: true,
@@ -80,6 +85,8 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
       
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {isThemeToggleEnabled && <ThemeToggle variant="icon" size="small" />}
+          
           <IconButton
             color="primary"
             onClick={() => navigate(`/checkout/${cafeId}/${tableId}`)}
@@ -230,6 +237,8 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
             ))}
           </Box>
           
+          {isThemeToggleEnabled && <ThemeToggle variant="switch" size="small" />}
+          
           <IconButton 
             color="inherit" 
             onClick={handleLogout}
@@ -250,6 +259,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
     if (isHomePage) {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {isThemeToggleEnabled && <ThemeToggle variant="switch" size="small" />}
           {user ? (
             <>
               <NotificationCenter />
@@ -416,7 +426,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
             py: 4,
             px: 2,
             mt: 'auto',
-            backgroundColor: 'grey.100',
+            backgroundColor: 'grey.50',
             borderTop: '1px solid',
             borderColor: 'divider',
           }}

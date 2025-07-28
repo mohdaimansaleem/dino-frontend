@@ -43,7 +43,11 @@ import {
   Settings,
   EmojiEvents,
   PowerSettingsNew,
+  DarkMode,
+  LightMode,
 } from '@mui/icons-material';
+import ThemeToggle from '../../components/ThemeToggle';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface CafeSettings {
   // Basic Information

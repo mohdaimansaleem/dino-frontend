@@ -58,12 +58,16 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
+# Environment variables files
+# Keep .env with default values, ignore local overrides
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Sensitive environment files (never commit these)
+.env.production
+.env.staging
 
 # parcel-bundler cache
 .cache
