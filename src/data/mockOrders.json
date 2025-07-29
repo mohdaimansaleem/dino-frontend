@@ -1,0 +1,492 @@
+{
+  "orders": [
+    {
+      "id": "order_001",
+      "order_number": "ORD-20240125-A1B2C3",
+      "venue_id": "venue_demo_001",
+      "table_id": "table_002",
+      "customer_id": "customer_001",
+      "order_type": "dine_in",
+      "items": [
+        {
+          "menu_item_id": "item_001",
+          "menu_item_name": "Margherita Pizza",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 1,
+          "unit_price": 450.0,
+          "total_price": 450.0,
+          "special_instructions": "Extra cheese please"
+        },
+        {
+          "menu_item_id": "item_005",
+          "menu_item_name": "Fresh Orange Juice",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 2,
+          "unit_price": 120.0,
+          "total_price": 240.0,
+          "special_instructions": null
+        }
+      ],
+      "subtotal": 690.0,
+      "tax_amount": 124.2,
+      "discount_amount": 0.0,
+      "total_amount": 814.2,
+      "status": "preparing",
+      "payment_status": "paid",
+      "payment_method": "upi",
+      "special_instructions": "Please serve hot",
+      "estimated_ready_time": "2024-01-25T11:45:00Z",
+      "actual_ready_time": null,
+      "created_at": "2024-01-25T11:30:00Z",
+      "updated_at": "2024-01-25T11:35:00Z"
+    },
+    {
+      "id": "order_002",
+      "order_number": "ORD-20240125-D4E5F6",
+      "venue_id": "venue_demo_001",
+      "table_id": "table_003",
+      "customer_id": "customer_002",
+      "order_type": "dine_in",
+      "items": [
+        {
+          "menu_item_id": "item_002",
+          "menu_item_name": "Chicken Alfredo",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 2,
+          "unit_price": 650.0,
+          "total_price": 1300.0,
+          "special_instructions": "Medium spice level"
+        },
+        {
+          "menu_item_id": "item_003",
+          "menu_item_name": "Caesar Salad",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 1,
+          "unit_price": 320.0,
+          "total_price": 320.0,
+          "special_instructions": "No croutons"
+        },
+        {
+          "menu_item_id": "item_006",
+          "menu_item_name": "Chocolate Brownie",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 2,
+          "unit_price": 250.0,
+          "total_price": 500.0,
+          "special_instructions": "Extra ice cream"
+        }
+      ],
+      "subtotal": 2120.0,
+      "tax_amount": 381.6,
+      "discount_amount": 100.0,
+      "total_amount": 2401.6,
+      "status": "ready",
+      "payment_status": "paid",
+      "payment_method": "card",
+      "special_instructions": "Birthday celebration - please add candles to dessert",
+      "estimated_ready_time": "2024-01-25T12:00:00Z",
+      "actual_ready_time": "2024-01-25T11:58:00Z",
+      "created_at": "2024-01-25T11:15:00Z",
+      "updated_at": "2024-01-25T11:58:00Z"
+    },
+    {
+      "id": "order_003",
+      "order_number": "ORD-20240125-G7H8I9",
+      "venue_id": "venue_demo_002",
+      "table_id": "table_cafe_001",
+      "customer_id": "customer_003",
+      "order_type": "dine_in",
+      "items": [
+        {
+          "menu_item_id": "item_cafe_001",
+          "menu_item_name": "Cappuccino",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 2,
+          "unit_price": 150.0,
+          "total_price": 300.0,
+          "special_instructions": "Extra foam"
+        },
+        {
+          "menu_item_id": "item_cafe_004",
+          "menu_item_name": "Blueberry Muffin",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 1,
+          "unit_price": 120.0,
+          "total_price": 120.0,
+          "special_instructions": "Warm it up"
+        }
+      ],
+      "subtotal": 420.0,
+      "tax_amount": 75.6,
+      "discount_amount": 0.0,
+      "total_amount": 495.6,
+      "status": "served",
+      "payment_status": "paid",
+      "payment_method": "cash",
+      "special_instructions": null,
+      "estimated_ready_time": "2024-01-25T10:15:00Z",
+      "actual_ready_time": "2024-01-25T10:12:00Z",
+      "created_at": "2024-01-25T10:05:00Z",
+      "updated_at": "2024-01-25T10:20:00Z"
+    },
+    {
+      "id": "order_004",
+      "order_number": "ORD-20240125-J1K2L3",
+      "venue_id": "venue_demo_001",
+      "table_id": null,
+      "customer_id": "customer_004",
+      "order_type": "takeaway",
+      "items": [
+        {
+          "menu_item_id": "item_004",
+          "menu_item_name": "Garlic Bread",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 2,
+          "unit_price": 180.0,
+          "total_price": 360.0,
+          "special_instructions": null
+        },
+        {
+          "menu_item_id": "item_005",
+          "menu_item_name": "Fresh Orange Juice",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 1,
+          "unit_price": 120.0,
+          "total_price": 120.0,
+          "special_instructions": null
+        }
+      ],
+      "subtotal": 480.0,
+      "tax_amount": 86.4,
+      "discount_amount": 25.0,
+      "total_amount": 541.4,
+      "status": "confirmed",
+      "payment_status": "pending",
+      "payment_method": null,
+      "special_instructions": "Pack separately",
+      "estimated_ready_time": "2024-01-25T12:30:00Z",
+      "actual_ready_time": null,
+      "created_at": "2024-01-25T12:15:00Z",
+      "updated_at": "2024-01-25T12:18:00Z"
+    },
+    {
+      "id": "order_005",
+      "order_number": "ORD-20240125-M4N5O6",
+      "venue_id": "venue_demo_002",
+      "table_id": "table_cafe_002",
+      "customer_id": "customer_005",
+      "order_type": "dine_in",
+      "items": [
+        {
+          "menu_item_id": "item_cafe_003",
+          "menu_item_name": "Latte",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 1,
+          "unit_price": 170.0,
+          "total_price": 170.0,
+          "special_instructions": "Oat milk please"
+        },
+        {
+          "menu_item_id": "item_cafe_002",
+          "menu_item_name": "Croissant",
+          "variant_id": null,
+          "variant_name": null,
+          "quantity": 1,
+          "unit_price": 80.0,
+          "total_price": 80.0,
+          "special_instructions": null
+        }
+      ],
+      "subtotal": 250.0,
+      "tax_amount": 45.0,
+      "discount_amount": 0.0,
+      "total_amount": 295.0,
+      "status": "pending",
+      "payment_status": "pending",
+      "payment_method": null,
+      "special_instructions": null,
+      "estimated_ready_time": null,
+      "actual_ready_time": null,
+      "created_at": "2024-01-25T12:20:00Z",
+      "updated_at": "2024-01-25T12:20:00Z"
+    }
+  ],
+  "customers": [
+    {
+      "id": "customer_001",
+      "name": "Rajesh Kumar",
+      "phone": "+91-9876543201",
+      "email": "rajesh@example.com",
+      "customer_type": "returning",
+      "total_orders": 12,
+      "total_spent": 8750.50,
+      "last_order_date": "2024-01-25T11:30:00Z",
+      "favorite_venue_id": "venue_demo_001",
+      "preferences": {
+        "dietary_restrictions": ["vegetarian"],
+        "favorite_cuisines": ["Italian", "Indian"],
+        "spice_level": "medium"
+      },
+      "dietary_restrictions": ["vegetarian"],
+      "loyalty_points": 875,
+      "marketing_consent": true,
+      "is_active": true,
+      "created_at": "2023-11-15T00:00:00Z"
+    },
+    {
+      "id": "customer_002",
+      "name": "Priya Sharma",
+      "phone": "+91-9876543202",
+      "email": "priya@example.com",
+      "customer_type": "vip",
+      "total_orders": 25,
+      "total_spent": 15420.75,
+      "last_order_date": "2024-01-25T11:15:00Z",
+      "favorite_venue_id": "venue_demo_001",
+      "preferences": {
+        "dietary_restrictions": [],
+        "favorite_cuisines": ["Continental", "Italian"],
+        "spice_level": "mild"
+      },
+      "dietary_restrictions": [],
+      "loyalty_points": 1542,
+      "marketing_consent": true,
+      "is_active": true,
+      "created_at": "2023-09-20T00:00:00Z"
+    },
+    {
+      "id": "customer_003",
+      "name": "Amit Patel",
+      "phone": "+91-9876543203",
+      "email": "amit@example.com",
+      "customer_type": "new",
+      "total_orders": 3,
+      "total_spent": 1250.25,
+      "last_order_date": "2024-01-25T10:05:00Z",
+      "favorite_venue_id": "venue_demo_002",
+      "preferences": {
+        "dietary_restrictions": [],
+        "favorite_cuisines": ["Coffee", "Bakery"],
+        "spice_level": "mild"
+      },
+      "dietary_restrictions": [],
+      "loyalty_points": 125,
+      "marketing_consent": false,
+      "is_active": true,
+      "created_at": "2024-01-10T00:00:00Z"
+    },
+    {
+      "id": "customer_004",
+      "name": "Sneha Reddy",
+      "phone": "+91-9876543204",
+      "email": "sneha@example.com",
+      "customer_type": "returning",
+      "total_orders": 8,
+      "total_spent": 3200.00,
+      "last_order_date": "2024-01-25T12:15:00Z",
+      "favorite_venue_id": "venue_demo_001",
+      "preferences": {
+        "dietary_restrictions": ["gluten_free"],
+        "favorite_cuisines": ["Continental"],
+        "spice_level": "hot"
+      },
+      "dietary_restrictions": ["gluten_free"],
+      "loyalty_points": 320,
+      "marketing_consent": true,
+      "is_active": true,
+      "created_at": "2023-12-05T00:00:00Z"
+    },
+    {
+      "id": "customer_005",
+      "name": "Vikram Singh",
+      "phone": "+91-9876543205",
+      "email": "vikram@example.com",
+      "customer_type": "new",
+      "total_orders": 1,
+      "total_spent": 295.00,
+      "last_order_date": "2024-01-25T12:20:00Z",
+      "favorite_venue_id": "venue_demo_002",
+      "preferences": {
+        "dietary_restrictions": [],
+        "favorite_cuisines": ["Coffee"],
+        "spice_level": "medium"
+      },
+      "dietary_restrictions": [],
+      "loyalty_points": 29,
+      "marketing_consent": true,
+      "is_active": true,
+      "created_at": "2024-01-25T12:20:00Z"
+    }
+  ],
+  "order_analytics": [
+    {
+      "venue_id": "venue_demo_001",
+      "today": {
+        "total_orders": 3,
+        "total_revenue": 3757.2,
+        "average_order_value": 1252.4,
+        "orders_by_status": {
+          "pending": 0,
+          "confirmed": 1,
+          "preparing": 1,
+          "ready": 1,
+          "served": 0,
+          "cancelled": 0
+        },
+        "orders_by_type": {
+          "dine_in": 2,
+          "takeaway": 1,
+          "delivery": 0
+        },
+        "payment_status": {
+          "paid": 2,
+          "pending": 1,
+          "failed": 0
+        }
+      },
+      "week": {
+        "total_orders": 45,
+        "total_revenue": 52750.80,
+        "average_order_value": 1172.24,
+        "growth_rate": 12.5
+      },
+      "month": {
+        "total_orders": 189,
+        "total_revenue": 215420.50,
+        "average_order_value": 1139.79,
+        "growth_rate": 8.3
+      },
+      "popular_times": [
+        {
+          "hour": 12,
+          "order_count": 8,
+          "revenue": 9250.0
+        },
+        {
+          "hour": 13,
+          "order_count": 12,
+          "revenue": 14750.0
+        },
+        {
+          "hour": 19,
+          "order_count": 15,
+          "revenue": 18500.0
+        },
+        {
+          "hour": 20,
+          "order_count": 18,
+          "revenue": 22100.0
+        }
+      ]
+    },
+    {
+      "venue_id": "venue_demo_002",
+      "today": {
+        "total_orders": 2,
+        "total_revenue": 790.6,
+        "average_order_value": 395.3,
+        "orders_by_status": {
+          "pending": 1,
+          "confirmed": 0,
+          "preparing": 0,
+          "ready": 0,
+          "served": 1,
+          "cancelled": 0
+        },
+        "orders_by_type": {
+          "dine_in": 2,
+          "takeaway": 0,
+          "delivery": 0
+        },
+        "payment_status": {
+          "paid": 1,
+          "pending": 1,
+          "failed": 0
+        }
+      },
+      "week": {
+        "total_orders": 78,
+        "total_revenue": 28450.25,
+        "average_order_value": 364.74,
+        "growth_rate": 15.2
+      },
+      "month": {
+        "total_orders": 312,
+        "total_revenue": 115680.75,
+        "average_order_value": 370.77,
+        "growth_rate": 22.1
+      },
+      "popular_times": [
+        {
+          "hour": 8,
+          "order_count": 12,
+          "revenue": 4250.0
+        },
+        {
+          "hour": 9,
+          "order_count": 15,
+          "revenue": 5100.0
+        },
+        {
+          "hour": 12,
+          "order_count": 8,
+          "revenue": 2850.0
+        },
+        {
+          "hour": 17,
+          "order_count": 10,
+          "revenue": 3650.0
+        }
+      ]
+    },
+    {
+      "venue_id": "venue_demo_003",
+      "today": {
+        "total_orders": 0,
+        "total_revenue": 0.0,
+        "average_order_value": 0.0,
+        "orders_by_status": {
+          "pending": 0,
+          "confirmed": 0,
+          "preparing": 0,
+          "ready": 0,
+          "served": 0,
+          "cancelled": 0
+        },
+        "orders_by_type": {
+          "dine_in": 0,
+          "takeaway": 0,
+          "delivery": 0
+        },
+        "payment_status": {
+          "paid": 0,
+          "pending": 0,
+          "failed": 0
+        }
+      },
+      "week": {
+        "total_orders": 0,
+        "total_revenue": 0.0,
+        "average_order_value": 0.0,
+        "growth_rate": 0.0
+      },
+      "month": {
+        "total_orders": 0,
+        "total_revenue": 0.0,
+        "average_order_value": 0.0,
+        "growth_rate": 0.0
+      },
+      "popular_times": []
+    }
+  ]
+}

@@ -101,7 +101,7 @@ const AccessDeniedPage: React.FC = () => {
         }}>
           <Warning sx={{ color: 'warning.main', mr: 1, verticalAlign: 'middle' }} />
           <Typography variant="body1" component="span" color="warning.dark">
-            <strong>Current Role:</strong> {user?.role || 'Unknown'}
+            {`Current Role: ${user?.role || 'Unknown'}`}
           </Typography>
         </Box>
 

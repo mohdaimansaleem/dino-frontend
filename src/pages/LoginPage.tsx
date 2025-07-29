@@ -35,7 +35,7 @@ const LoginPage: React.FC = () => {
     confirmPassword: '',
     name: '',
     phone: '',
-    role: 'admin' as UserRole,
+    role: 'admin' as const,
     agreeToTerms: false,
   });
 
@@ -109,7 +109,7 @@ const LoginPage: React.FC = () => {
     };
 
     // Set demo user using auth context
-    setDemoUser(demoUser);
+    setDemoUser(demoUser as any);
     
     // Navigate based on role
     const targetPath = demoRole === 'operator' ? '/admin/orders' : '/admin';
@@ -140,7 +140,7 @@ const LoginPage: React.FC = () => {
           firstName: formData.name.split(' ')[0] || formData.name,
           lastName: formData.name.split(' ').slice(1).join(' ') || '',
           phone: formData.phone || '',
-          role: formData.role,
+          role: formData.role as any,
           termsAccepted: formData.agreeToTerms,
           marketingConsent: false,
         };

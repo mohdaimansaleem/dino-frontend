@@ -58,13 +58,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   let hasAccess = true;
   let accessMessage = '';
 
-  if (adminOnly && user.role !== 'admin') {
+  if (adminOnly && (user.role as string) !== 'admin') {
     hasAccess = false;
     accessMessage = 'Admin access required.';
-  } else if (cafeOwnerOnly && !['admin', 'cafe_owner'].includes(user.role)) {
+  } else if (cafeOwnerOnly && !['admin', 'cafe_owner'].includes(user.role as string)) {
     hasAccess = false;
     accessMessage = 'Cafe owner access required.';
-  } else if (requiredRole && user.role !== requiredRole && user.role !== 'admin') {
+  } else if (requiredRole && (user.role as string) !== requiredRole && (user.role as string) !== 'admin') {
     hasAccess = false;
     accessMessage = `${requiredRole.charAt(0).toUpperCase() + requiredRole.slice(1)} access required.`;
   }
@@ -116,7 +116,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         </Box>
 
         <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>
-          Current role: {user.role}
+          {`Current role: ${user.role}`}
         </Typography>
       </Box>
     );

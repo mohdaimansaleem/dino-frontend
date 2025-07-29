@@ -119,6 +119,44 @@ const commonTheme = {
           '& .MuiOutlinedInput-root': {
             borderRadius: 8,
             transition: 'all 0.2s ease-in-out',
+            backgroundColor: '#ffffff',
+            '& input': {
+              color: '#1a1a1a !important',
+              fontSize: '1rem',
+              fontWeight: 400,
+              '&::placeholder': {
+                color: '#666666 !important',
+                opacity: 1,
+              },
+              '&:-webkit-autofill': {
+                WebkitBoxShadow: '0 0 0 1000px #ffffff inset !important',
+                WebkitTextFillColor: '#1a1a1a !important',
+              },
+            },
+            '& textarea': {
+              color: '#1a1a1a !important',
+              fontSize: '1rem',
+              fontWeight: 400,
+            },
+            '& fieldset': {
+              borderColor: '#e0e0e0',
+            },
+            '&:hover fieldset': {
+              borderColor: '#1976d2',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#1976d2',
+              borderWidth: '2px',
+            },
+            '&.Mui-focused': {
+              backgroundColor: '#ffffff',
+            },
+          },
+          '& .MuiInputLabel-root': {
+            color: '#666666',
+            '&.Mui-focused': {
+              color: '#1976d2',
+            },
           },
         },
       },

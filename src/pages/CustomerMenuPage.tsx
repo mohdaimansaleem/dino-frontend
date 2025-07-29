@@ -625,21 +625,108 @@ const CustomerMenuPage: React.FC = () => {
               />
             </Grid>
             <Grid item xs={12} md={3}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Filter</InputLabel>
-                <Select
-                  value={vegFilter}
-                  label="Filter"
-                  onChange={(e) => setVegFilter(e.target.value)}
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Button
+                  variant={vegFilter === 'all' ? 'contained' : 'outlined'}
+                  size="small"
+                  onClick={() => setVegFilter('all')}
+                  sx={{
+                    minWidth: 'auto',
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: '0.75rem',
+                    borderRadius: 1,
+                  }}
                 >
-                  <MuiMenuItem value="all">All Items</MuiMenuItem>
-                  <MuiMenuItem value="veg">
-                    <Eco sx={{ mr: 1, color: 'green' }} />
-                    Vegetarian
-                  </MuiMenuItem>
-                  <MuiMenuItem value="non-veg">Non-Vegetarian</MuiMenuItem>
-                </Select>
-              </FormControl>
+                  All
+                </Button>
+                <Button
+                  variant={vegFilter === 'veg' ? 'contained' : 'outlined'}
+                  size="small"
+                  onClick={() => setVegFilter('veg')}
+                  sx={{
+                    minWidth: 'auto',
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: '0.75rem',
+                    borderRadius: 1,
+                    color: vegFilter === 'veg' ? 'white' : '#388E3C',
+                    backgroundColor: vegFilter === 'veg' ? '#388E3C' : 'transparent',
+                    borderColor: '#388E3C',
+                    '&:hover': {
+                      backgroundColor: vegFilter === 'veg' ? '#2E7D32' : 'rgba(56, 142, 60, 0.1)',
+                      borderColor: '#388E3C',
+                    },
+                  }}
+                  startIcon={
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        border: '1px solid',
+                        borderColor: vegFilter === 'veg' ? 'white' : '#388E3C',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 4,
+                          height: 4,
+                          backgroundColor: vegFilter === 'veg' ? 'white' : '#388E3C',
+                          borderRadius: '50%',
+                        }}
+                      />
+                    </Box>
+                  }
+                >
+                  Veg
+                </Button>
+                <Button
+                  variant={vegFilter === 'non-veg' ? 'contained' : 'outlined'}
+                  size="small"
+                  onClick={() => setVegFilter('non-veg')}
+                  sx={{
+                    minWidth: 'auto',
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: '0.75rem',
+                    borderRadius: 1,
+                    color: vegFilter === 'non-veg' ? 'white' : '#D32F2F',
+                    backgroundColor: vegFilter === 'non-veg' ? '#D32F2F' : 'transparent',
+                    borderColor: '#D32F2F',
+                    '&:hover': {
+                      backgroundColor: vegFilter === 'non-veg' ? '#C62828' : 'rgba(211, 47, 47, 0.1)',
+                      borderColor: '#D32F2F',
+                    },
+                  }}
+                  startIcon={
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        border: '1px solid',
+                        borderColor: vegFilter === 'non-veg' ? 'white' : '#D32F2F',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 4,
+                          height: 4,
+                          backgroundColor: vegFilter === 'non-veg' ? 'white' : '#D32F2F',
+                          borderRadius: '50%',
+                        }}
+                      />
+                    </Box>
+                  }
+                >
+                  Non-Veg
+                </Button>
+              </Box>
             </Grid>
             <Grid item xs={12} md={3}>
               <Typography 

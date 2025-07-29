@@ -293,8 +293,8 @@ const UserPermissionsDashboard: React.FC = () => {
                 </Typography>
                 <Box sx={{ mt: 1 }}>
                   <Chip
-                    label={getRoleDisplayName(currentUserAuth?.role?.name || '')}
-                    color={getRoleColor(currentUserAuth?.role?.name || '') as any}
+                    label={getRoleDisplayName(typeof currentUserAuth?.role === 'string' ? currentUserAuth.role : currentUserAuth?.role?.name || '')}
+                    color={getRoleColor(typeof currentUserAuth?.role === 'string' ? currentUserAuth.role : currentUserAuth?.role?.name || '') as any}
                     size="small"
                     sx={{ mr: 1 }}
                   />
@@ -464,8 +464,14 @@ const UserPermissionsDashboard: React.FC = () => {
                     <TableCell align="right">
                       <Button
                         size="small"
+                        variant="outlined"
                         startIcon={<Visibility />}
                         onClick={() => handleViewPermissions(user)}
+                        sx={{ 
+                          minWidth: 'auto', 
+                          whiteSpace: 'nowrap',
+                          px: 2
+                        }}
                       >
                         View
                       </Button>
@@ -553,16 +559,16 @@ const UserPermissionsDashboard: React.FC = () => {
                         <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
                           <ListItemIcon sx={{ minWidth: 32 }}>
                             <Chip
-                              icon={getActionIcon(permission.action)}
-                              label={permission.action}
+                              icon={getActionIcon(permission.action || '')}
+                              label={permission.action || 'Unknown'}
                               size="small"
-                              color={getActionColor(permission.action) as any}
+                              color={getActionColor(permission.action || '') as any}
                               variant="outlined"
                               sx={{ fontSize: '0.7rem', height: 20 }}
                             />
                           </ListItemIcon>
                           <ListItemText
-                            primary={permission.description}
+                            primary={permission.description || permission.name || 'No description'}
                             primaryTypographyProps={{
                               variant: 'body2',
                               fontSize: '0.875rem'

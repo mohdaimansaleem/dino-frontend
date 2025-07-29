@@ -307,7 +307,7 @@ const CleanHomePage: React.FC = () => {
                     <Button
                       variant="contained"
                       size="large"
-                      onClick={() => navigate(user.role === 'admin' ? '/admin' : '/profile')}
+                      onClick={() => navigate((user.role as string) === 'admin' ? '/admin' : '/profile')}
                       sx={{ px: 4, py: 1.5, fontSize: '1rem' }}
                     >
                       Go to Dashboard

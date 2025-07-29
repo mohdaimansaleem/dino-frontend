@@ -42,28 +42,28 @@ const mockOrder = {
   items: [
     {
       id: '1',
-      name: 'Margherita Pizza',
+      name: 'Butter Chicken',
       quantity: 1,
-      price: 18.99,
+      price: 320,
       image: '/api/placeholder/100/100',
-      specialInstructions: 'Extra cheese please',
+      specialInstructions: 'Extra spicy please',
     },
     {
       id: '2',
-      name: 'Caesar Salad',
+      name: 'Paneer Tikka Masala',
       quantity: 2,
-      price: 12.99,
+      price: 280,
       image: '/api/placeholder/100/100',
     },
     {
       id: '3',
-      name: 'Garlic Bread',
+      name: 'Garlic Naan',
       quantity: 1,
-      price: 6.99,
+      price: 80,
       image: '/api/placeholder/100/100',
     },
   ],
-  totalAmount: 51.96,
+  totalAmount: 960,
   paymentStatus: 'pending',
 };
 
@@ -117,10 +117,7 @@ const OrderTrackingPage: React.FC = () => {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(price);
+    return `₹${price.toFixed(2)}`;
   };
 
   const formatTime = (dateString: string) => {

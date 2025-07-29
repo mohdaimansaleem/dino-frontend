@@ -9,9 +9,9 @@ import {
   Badge,
   Container,
   Fade,
-  useScrollTrigger,
+
   Fab,
-  Zoom,
+
   Switch,
   FormControlLabel,
   Chip,
@@ -53,15 +53,15 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   // Feature flags
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
   
-  const trigger = useScrollTrigger({
-    disableHysteresis: true,
-    threshold: 100,
-  });
+
 
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isPublicMenuRoute = location.pathname.includes('/menu/');
   const isCheckoutRoute = location.pathname.includes('/checkout/');
+  const isOrderTrackingRoute = location.pathname.includes('/order-tracking/') || location.pathname.includes('/order/');
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
+  const isCustomerMenuRoute = location.pathname.includes('/menu/');
+  const isCustomerFacingRoute = isPublicMenuRoute || isCheckoutRoute || isOrderTrackingRoute;
   const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true';
 
 
@@ -70,9 +70,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
     navigate('/');
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+
 
 
 
@@ -265,7 +263,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
               <NotificationCenter />
               <Button
                 color="inherit"
-                onClick={() => navigate(user.role === 'admin' ? '/admin' : '/dashboard')}
+                onClick={() => navigate('/admin')}
                 startIcon={<AccountCircle />}
                 sx={{
                   color: 'text.primary',
@@ -328,18 +326,19 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Clean AppBar */}
-      <AppBar 
-        position="fixed" 
-        elevation={trigger ? 2 : 1}
-        sx={{ 
-          backgroundColor: 'background.paper',
-          color: 'text.primary',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          transition: 'all 0.2s ease-in-out',
-        }}
-      >
+      {/* Clean AppBar - Hidden for customer facing pages */}
+      {!isCustomerFacingRoute && (
+        <AppBar 
+          position="fixed" 
+          elevation={1}
+          sx={{ 
+            backgroundColor: 'background.paper',
+            color: 'text.primary',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            transition: 'all 0.2s ease-in-out',
+          }}
+        >
         <Container maxWidth="xl">
           <Toolbar sx={{ px: { xs: 0, sm: 2 }, minHeight: 64 }}>
             <Box
@@ -378,30 +377,13 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
               >
                 {getPageTitle()}
               </Typography>
-              {isDemoMode && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    px: 1,
-                    py: 0.5,
-                    backgroundColor: 'warning.light',
-                    color: 'warning.dark',
-                    borderRadius: 1,
-                    fontSize: '0.75rem',
-                    fontWeight: 600,
-                  }}
-                >
-                  🧪 DEMO MODE
-                </Box>
-              )}
 
             </Box>
             {renderNavigation()}
           </Toolbar>
         </Container>
-      </AppBar>
+        </AppBar>
+      )}
 
       {/* Main Content */}
       <Box
@@ -410,7 +392,7 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
           flexGrow: 1,
           backgroundColor: 'background.default',
           minHeight: '100vh',
-          pt: 8, // Account for fixed AppBar
+          pt: isCustomerFacingRoute ? 0 : 8, // No padding for customer facing pages, account for fixed AppBar for others
         }}
       >
         <Fade in timeout={300}>
@@ -418,8 +400,8 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
         </Fade>
       </Box>
 
-      {/* Clean Footer */}
-      {(isHomePage || isPublicMenuRoute || isCheckoutRoute) && (
+      {/* Clean Footer - Hidden for customer facing pages */}
+      {(isHomePage) && !isCustomerFacingRoute && (
         <Box
           component="footer"
           sx={{
@@ -441,29 +423,12 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
                 color="text.secondary"
                 sx={{ fontWeight: 500 }}
               >
-                © 2024 Dino E-Menu. Revolutionizing restaurant ordering.
+                © 2024 Dino E-Menu. Made in India with ❤️
               </Typography>
             </Box>
           </Container>
         </Box>
       )}
-
-      {/* Scroll to Top Button */}
-      <Zoom in={trigger}>
-        <Fab
-          onClick={scrollToTop}
-          color="primary"
-          size="medium"
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            boxShadow: 2,
-          }}
-        >
-          <KeyboardArrowUp />
-        </Fab>
-      </Zoom>
     </Box>
   );
 };

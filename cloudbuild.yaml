@@ -1,0 +1,47 @@
+# Cloud Build configuration for frontend
+steps:
+  # Install dependencies
+  - name: 'node:18'
+    entrypoint: 'npm'
+    args: ['ci']
+
+  # Build the React app
+  - name: 'node:18'
+    entrypoint: 'npm'
+    args: ['run', 'build']
+    env:
+      - 'REACT_APP_API_URL=https://dino-backend-$PROJECT_ID.a.run.app'
+      - 'REACT_APP_ENVIRONMENT=production'
+
+  # Deploy to Cloud Storage
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gsutil'
+    args: ['-m', 'rsync', '-r', '-c', '-d', './build', 'gs://$PROJECT_ID-dino-frontend']
+
+  # Set proper cache headers for static assets
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gsutil'
+    args: [
+      '-m', 'setmeta',
+      '-h', 'Cache-Control:public,max-age=31536000',
+      'gs://$PROJECT_ID-dino-frontend/static/**'
+    ]
+
+  # Set cache headers for HTML files
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gsutil'
+    args: [
+      '-m', 'setmeta',
+      '-h', 'Cache-Control:public,max-age=0,must-revalidate',
+      'gs://$PROJECT_ID-dino-frontend/*.html'
+    ]
+
+  # Set default object (index.html)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gsutil'
+    args: ['web', 'set', '-m', 'index.html', '-e', 'index.html', 'gs://$PROJECT_ID-dino-frontend']
+
+# Build options
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'

@@ -1,6 +1,15 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { ApiResponse } from '../types';
 
+// Import mock data
+import mockWorkspaces from '../data/mockWorkspaces.json';
+import mockUsers from '../data/mockUsers.json';
+import mockVenues from '../data/mockVenues.json';
+import mockMenus from '../data/mockMenus.json';
+import mockTables from '../data/mockTables.json';
+import mockOrders from '../data/mockOrders.json';
+import mockAnalytics from '../data/mockAnalytics.json';
+
 class ApiService {
   private api: AxiosInstance;
   private refreshing = false;
@@ -134,100 +143,318 @@ class ApiService {
     };
   }
 
-  // Handle demo mode requests with mock data
+  // Handle demo mode requests with comprehensive mock data
   private async handleDemoRequest<T>(url: string, method: string, data?: any): Promise<ApiResponse<T>> {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Mock responses for common endpoints
-    if (url.includes('/users/profile')) {
-      const demoUser = JSON.parse(localStorage.getItem('dino_user') || '{}');
-      return this.createDemoResponse(demoUser as T);
-    }
+    console.log(`🎭 Demo Mode: ${method} ${url}`, data ? { data } : '');
 
-    if (url.includes('/cafes')) {
-      const mockCafes = [
-        {
-          id: 'demo-cafe-1',
-          name: 'Demo Cafe',
-          description: 'A beautiful demo cafe',
-          address: '123 Demo Street',
-          phone: '+1234567890',
-          email: 'demo@cafe.com',
-          isActive: true,
-          settings: {
-            currency: 'USD',
-            timezone: 'UTC',
-            orderTimeout: 30
+    try {
+      // Authentication endpoints
+      if (url.includes('/auth/login')) {
+        const { email } = data || {};
+        const user = mockUsers.users.find(u => u.email === email);
+        if (user) {
+          const authToken = {
+            access_token: `demo_token_${Date.now()}`,
+            refresh_token: `demo_refresh_${Date.now()}`,
+            token_type: 'bearer',
+            expires_in: 3600,
+            user: user
+          };
+          // Store user in localStorage for demo
+          localStorage.setItem('dino_user', JSON.stringify(user));
+          return this.createDemoResponse(authToken as T);
+        }
+        throw new Error('Invalid credentials');
+      }
+
+      if (url.includes('/auth/me') || url.includes('/users/profile')) {
+        const demoUser = JSON.parse(localStorage.getItem('dino_user') || '{}');
+        if (demoUser.id) {
+          return this.createDemoResponse(demoUser as T);
+        }
+        throw new Error('User not found');
+      }
+
+      // Workspace endpoints
+      if (url.includes('/workspaces')) {
+        if (method === 'GET') {
+          const currentUser = JSON.parse(localStorage.getItem('dino_user') || '{}');
+          let workspaces = mockWorkspaces.workspaces;
+          
+          // Filter by user's workspace if not superadmin
+          if (currentUser.role !== 'superadmin' && currentUser.workspace_id) {
+            workspaces = workspaces.filter(w => w.id === currentUser.workspace_id);
           }
+          
+          return this.createDemoResponse(workspaces as T);
         }
-      ];
-      return this.createDemoResponse(mockCafes as T);
-    }
+      }
 
-    if (url.includes('/menu')) {
-      const mockMenu = [
-        {
-          id: 'demo-item-1',
-          name: 'Demo Burger',
-          description: 'Delicious demo burger',
-          price: 12.99,
-          category: 'Main Course',
-          isAvailable: true,
-          image: null
-        },
-        {
-          id: 'demo-item-2',
-          name: 'Demo Coffee',
-          description: 'Perfect demo coffee',
-          price: 4.99,
-          category: 'Beverages',
-          isAvailable: true,
-          image: null
+      // Venue endpoints
+      if (url.includes('/venues') || url.includes('/cafes')) {
+        if (method === 'GET') {
+          const currentUser = JSON.parse(localStorage.getItem('dino_user') || '{}');
+          let venues = mockVenues.venues;
+          
+          // Filter by user's workspace if not superadmin
+          if (currentUser.role !== 'superadmin' && currentUser.workspace_id) {
+            venues = venues.filter(v => v.workspace_id === currentUser.workspace_id);
+          }
+          
+          // Filter by user's venue if operator
+          if (currentUser.role === 'operator' && currentUser.venue_id) {
+            venues = venues.filter(v => v.id === currentUser.venue_id);
+          }
+          
+          return this.createDemoResponse(venues as T);
         }
-      ];
-      return this.createDemoResponse(mockMenu as T);
-    }
-
-    if (url.includes('/tables')) {
-      const mockTables = [
-        {
-          id: 'demo-table-1',
-          number: 1,
-          capacity: 4,
-          isOccupied: false,
-          qrCode: 'demo-qr-1'
-        },
-        {
-          id: 'demo-table-2',
-          number: 2,
-          capacity: 2,
-          isOccupied: true,
-          qrCode: 'demo-qr-2'
+        
+        if (method === 'POST' && url.includes('/activate')) {
+          const venueId = url.split('/')[2];
+          return this.createDemoResponse({ message: `Venue ${venueId} activated successfully` } as T);
         }
-      ];
-      return this.createDemoResponse(mockTables as T);
-    }
-
-    if (url.includes('/orders')) {
-      const mockOrders = [
-        {
-          id: 'demo-order-1',
-          tableId: 'demo-table-1',
-          status: 'pending',
-          items: [],
-          total: 17.98,
-          createdAt: new Date().toISOString()
+        
+        if (method === 'POST' && url.includes('/deactivate')) {
+          const venueId = url.split('/')[2];
+          return this.createDemoResponse({ message: `Venue ${venueId} deactivated successfully` } as T);
         }
-      ];
-      return this.createDemoResponse(mockOrders as T);
-    }
+      }
 
-    // Default empty response for other endpoints
-    return this.createDemoResponse([] as T);
+      // Menu endpoints
+      if (url.includes('/menu')) {
+        if (url.includes('/categories')) {
+          const venueId = this.extractVenueIdFromUrl(url);
+          let categories = mockMenus.categories;
+          if (venueId) {
+            categories = categories.filter(c => c.venue_id === venueId);
+          }
+          return this.createDemoResponse(categories as T);
+        }
+        
+        if (url.includes('/items')) {
+          const venueId = this.extractVenueIdFromUrl(url);
+          let items = mockMenus.items;
+          if (venueId) {
+            items = items.filter(i => i.venue_id === venueId);
+          }
+          return this.createDemoResponse(items as T);
+        }
+      }
+
+      // Table endpoints
+      if (url.includes('/tables')) {
+        const venueId = this.extractVenueIdFromUrl(url);
+        let tables = mockTables.tables;
+        if (venueId) {
+          tables = tables.filter(t => t.venue_id === venueId);
+        }
+        
+        if (method === 'PUT' && url.includes('/status')) {
+          const tableId = url.split('/')[2];
+          return this.createDemoResponse({ message: `Table ${tableId} status updated` } as T);
+        }
+        
+        return this.createDemoResponse(tables as T);
+      }
+
+      // Order endpoints
+      if (url.includes('/orders')) {
+        if (method === 'GET') {
+          const venueId = this.extractVenueIdFromUrl(url);
+          let orders = mockOrders.orders;
+          
+          if (venueId) {
+            orders = orders.filter(o => o.venue_id === venueId);
+          }
+          
+          // Handle specific order status filters
+          if (url.includes('status=')) {
+            const status = new URLSearchParams(url.split('?')[1]).get('status');
+            if (status) {
+              orders = orders.filter(o => o.status === status);
+            }
+          }
+          
+          return this.createDemoResponse(orders as T);
+        }
+        
+        if (method === 'POST') {
+          if (url.includes('/public/create-order')) {
+            const newOrder = {
+              id: `order_${Date.now()}`,
+              order_number: `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+              ...data,
+              status: 'pending',
+              payment_status: 'pending',
+              created_at: new Date().toISOString()
+            };
+            return this.createDemoResponse(newOrder as T);
+          }
+          
+          // Regular order creation
+          const newOrder = {
+            id: `order_${Date.now()}`,
+            order_number: `ORD-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            ...data,
+            status: 'pending',
+            created_at: new Date().toISOString()
+          };
+          return this.createDemoResponse(newOrder as T);
+        }
+        
+        if (method === 'PUT' && url.includes('/status')) {
+          const orderId = url.split('/')[2];
+          return this.createDemoResponse({ message: `Order ${orderId} status updated` } as T);
+        }
+      }
+
+      // Dashboard endpoints
+      if (url.includes('/dashboard')) {
+        const currentUser = JSON.parse(localStorage.getItem('dino_user') || '{}');
+        const userRole = currentUser.role || 'operator';
+        
+        if (url.includes('/analytics')) {
+          const venueId = currentUser.venue_id || 'venue_demo_001';
+          const analytics = mockAnalytics.dashboard_analytics[userRole as keyof typeof mockAnalytics.dashboard_analytics];
+          return this.createDemoResponse(analytics as T);
+        }
+        
+        if (url.includes('/live/orders')) {
+          const venueId = currentUser.venue_id || 'venue_demo_001';
+          const liveOrders = mockOrders.orders.filter(o => 
+            o.venue_id === venueId && 
+            ['pending', 'confirmed', 'preparing', 'ready'].includes(o.status)
+          );
+          
+          const liveData = {
+            venue_id: venueId,
+            timestamp: new Date().toISOString(),
+            total_active: liveOrders.length,
+            orders_by_status: {
+              pending: liveOrders.filter(o => o.status === 'pending'),
+              confirmed: liveOrders.filter(o => o.status === 'confirmed'),
+              preparing: liveOrders.filter(o => o.status === 'preparing'),
+              ready: liveOrders.filter(o => o.status === 'ready')
+            }
+          };
+          
+          return this.createDemoResponse(liveData as T);
+        }
+        
+        if (url.includes('/live/tables')) {
+          const venueId = currentUser.venue_id || 'venue_demo_001';
+          const venueTables = mockTables.tables.filter(t => t.venue_id === venueId);
+          
+          const tableData = {
+            venue_id: venueId,
+            timestamp: new Date().toISOString(),
+            total_tables: venueTables.length,
+            tables_by_status: {
+              available: venueTables.filter(t => t.table_status === 'available'),
+              occupied: venueTables.filter(t => t.table_status === 'occupied'),
+              reserved: venueTables.filter(t => t.table_status === 'reserved'),
+              cleaning: venueTables.filter(t => t.table_status === 'cleaning')
+            }
+          };
+          
+          return this.createDemoResponse(tableData as T);
+        }
+        
+        // Default dashboard data
+        const dashboardData = mockAnalytics.dashboard_analytics[userRole as keyof typeof mockAnalytics.dashboard_analytics];
+        return this.createDemoResponse(dashboardData as T);
+      }
+
+      // User management endpoints
+      if (url.includes('/users')) {
+        if (method === 'GET') {
+          const currentUser = JSON.parse(localStorage.getItem('dino_user') || '{}');
+          let users = mockUsers.users;
+          
+          // Filter by workspace if not superadmin
+          if (currentUser.role !== 'superadmin' && currentUser.workspace_id) {
+            users = users.filter(u => u.workspace_id === currentUser.workspace_id);
+          }
+          
+          return this.createDemoResponse(users as T);
+        }
+      }
+
+      // Analytics endpoints
+      if (url.includes('/analytics')) {
+        const venueId = this.extractVenueIdFromUrl(url) || 'venue_demo_001';
+        
+        if (url.includes('/revenue')) {
+          const revenueData = mockAnalytics.revenue_analytics.find(r => r.venue_id === venueId);
+          return this.createDemoResponse(revenueData as T);
+        }
+        
+        if (url.includes('/customers')) {
+          const customerData = mockAnalytics.customer_analytics.find(c => c.venue_id === venueId);
+          return this.createDemoResponse(customerData as T);
+        }
+        
+        // Default venue analytics
+        const venueAnalytics = mockVenues.venue_analytics.find(v => v.venue_id === venueId);
+        return this.createDemoResponse(venueAnalytics as T);
+      }
+
+      // QR Code endpoints
+      if (url.includes('/qr/') || url.includes('/public/qr/')) {
+        const qrCode = url.split('/').pop();
+        const table = mockTables.tables.find(t => t.qr_code === qrCode);
+        
+        if (table) {
+          const venue = mockVenues.venues.find(v => v.id === table.venue_id);
+          const menuCategories = mockMenus.categories.filter(c => c.venue_id === table.venue_id);
+          const menuItems = mockMenus.items.filter(i => i.venue_id === table.venue_id);
+          
+          const menuAccess = {
+            venue: venue,
+            table: table,
+            categories: menuCategories,
+            items: menuItems,
+            is_open: venue?.is_active || false
+          };
+          
+          return this.createDemoResponse(menuAccess as T);
+        }
+        
+        throw new Error('Invalid QR code');
+      }
+
+      // Health check
+      if (url.includes('/health')) {
+        return this.createDemoResponse({ status: 'healthy', timestamp: new Date().toISOString() } as T);
+      }
+
+      // Default response for unhandled endpoints
+      console.warn(`🎭 Demo Mode: Unhandled endpoint ${method} ${url}`);
+      return this.createDemoResponse([] as T);
+      
+    } catch (error) {
+      console.error(`🎭 Demo Mode Error: ${method} ${url}`, error);
+      throw error;
+    }
   }
 
-  // Generic GET request
+  // Helper method to extract venue ID from URL
+  private extractVenueIdFromUrl(url: string): string | null {
+    const venueMatch = url.match(/\/venues\/([^\/\?]+)/);
+    if (venueMatch) return venueMatch[1];
+    
+    const cafeMatch = url.match(/\/cafes\/([^\/\?]+)/);
+    if (cafeMatch) return cafeMatch[1];
+    
+    // Check query parameters
+    const urlObj = new URL(url, 'http://localhost');
+    return urlObj.searchParams.get('venue_id');
+  }
+
+  // Generic GET request with automatic fallback
   async get<T>(url: string, params?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     // Handle demo mode
     if (this.isDemoMode()) {
@@ -235,17 +462,27 @@ class ApiService {
     }
 
     try {
+      console.log(`🌐 API Call: GET ${url}`, params ? { params } : '');
       const response: AxiosResponse<ApiResponse<T>> = await this.api.get(url, { 
         params, 
         ...config 
       });
+      console.log(`✅ API Success: GET ${url}`, response.data);
       return response.data;
     } catch (error: any) {
+      console.error(`❌ API Error: GET ${url}`, error.response?.data || error.message);
+      
+      // Auto-fallback to demo mode on API failure
+      if (this.shouldFallbackToDemo(error)) {
+        console.log(`🎭 Auto-fallback to demo mode for: GET ${url}`);
+        return this.handleDemoRequest<T>(url, 'GET', params);
+      }
+      
       return this.handleError<T>(error);
     }
   }
 
-  // Generic POST request
+  // Generic POST request with automatic fallback
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     // Handle demo mode
     if (this.isDemoMode()) {
@@ -253,14 +490,24 @@ class ApiService {
     }
 
     try {
+      console.log(`🌐 API Call: POST ${url}`, data ? { data } : '');
       const response: AxiosResponse<ApiResponse<T>> = await this.api.post(url, data, config);
+      console.log(`✅ API Success: POST ${url}`, response.data);
       return response.data;
     } catch (error: any) {
+      console.error(`❌ API Error: POST ${url}`, error.response?.data || error.message);
+      
+      // Auto-fallback to demo mode on API failure
+      if (this.shouldFallbackToDemo(error)) {
+        console.log(`🎭 Auto-fallback to demo mode for: POST ${url}`);
+        return this.handleDemoRequest<T>(url, 'POST', data);
+      }
+      
       return this.handleError<T>(error);
     }
   }
 
-  // Generic PUT request
+  // Generic PUT request with automatic fallback
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     // Handle demo mode
     if (this.isDemoMode()) {
@@ -268,9 +515,19 @@ class ApiService {
     }
 
     try {
+      console.log(`🌐 API Call: PUT ${url}`, data ? { data } : '');
       const response: AxiosResponse<ApiResponse<T>> = await this.api.put(url, data, config);
+      console.log(`✅ API Success: PUT ${url}`, response.data);
       return response.data;
     } catch (error: any) {
+      console.error(`❌ API Error: PUT ${url}`, error.response?.data || error.message);
+      
+      // Auto-fallback to demo mode on API failure
+      if (this.shouldFallbackToDemo(error)) {
+        console.log(`🎭 Auto-fallback to demo mode for: PUT ${url}`);
+        return this.handleDemoRequest<T>(url, 'PUT', data);
+      }
+      
       return this.handleError<T>(error);
     }
   }
@@ -285,7 +542,7 @@ class ApiService {
     }
   }
 
-  // Generic DELETE request
+  // Generic DELETE request with automatic fallback
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     // Handle demo mode
     if (this.isDemoMode()) {
@@ -293,9 +550,19 @@ class ApiService {
     }
 
     try {
+      console.log(`🌐 API Call: DELETE ${url}`);
       const response: AxiosResponse<ApiResponse<T>> = await this.api.delete(url, config);
+      console.log(`✅ API Success: DELETE ${url}`, response.data);
       return response.data;
     } catch (error: any) {
+      console.error(`❌ API Error: DELETE ${url}`, error.response?.data || error.message);
+      
+      // Auto-fallback to demo mode on API failure
+      if (this.shouldFallbackToDemo(error)) {
+        console.log(`🎭 Auto-fallback to demo mode for: DELETE ${url}`);
+        return this.handleDemoRequest<T>(url, 'DELETE');
+      }
+      
       return this.handleError<T>(error);
     }
   }
@@ -483,6 +750,60 @@ class ApiService {
   // Update timeout
   setTimeout(timeout: number): void {
     this.api.defaults.timeout = timeout;
+  }
+
+  // Check if should fallback to demo mode
+  private shouldFallbackToDemo(error: any): boolean {
+    // Fallback conditions:
+    // 1. Network error (no response)
+    // 2. Server error (5xx)
+    // 3. Connection timeout
+    // 4. CORS error
+    
+    if (!error.response) {
+      // Network error or timeout
+      return true;
+    }
+    
+    if (error.response.status >= 500) {
+      // Server error
+      return true;
+    }
+    
+    if (error.code === 'ECONNABORTED') {
+      // Timeout
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Enable demo mode
+  enableDemoMode(): void {
+    localStorage.setItem('dino_demo_mode', 'true');
+    console.log('🎭 Demo mode enabled');
+  }
+
+  // Disable demo mode
+  disableDemoMode(): void {
+    localStorage.removeItem('dino_demo_mode');
+    console.log('🌐 Demo mode disabled');
+  }
+
+  // Toggle demo mode
+  toggleDemoMode(): boolean {
+    const isDemo = this.isDemoMode();
+    if (isDemo) {
+      this.disableDemoMode();
+    } else {
+      this.enableDemoMode();
+    }
+    return !isDemo;
+  }
+
+  // Get current mode
+  getCurrentMode(): 'api' | 'demo' {
+    return this.isDemoMode() ? 'demo' : 'api';
   }
 }
 

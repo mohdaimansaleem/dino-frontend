@@ -1,0 +1,247 @@
+{
+  "tables": [
+    {
+      "id": "table_001",
+      "table_number": 1,
+      "capacity": 2,
+      "location": "Window Side",
+      "venue_id": "venue_demo_001",
+      "qr_code": "QR_DEMO_001_T01",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_001_T01",
+      "table_status": "available",
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-25T09:15:00Z"
+    },
+    {
+      "id": "table_002",
+      "table_number": 2,
+      "capacity": 4,
+      "location": "Center",
+      "venue_id": "venue_demo_001",
+      "qr_code": "QR_DEMO_001_T02",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_001_T02",
+      "table_status": "occupied",
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-25T10:30:00Z"
+    },
+    {
+      "id": "table_003",
+      "table_number": 3,
+      "capacity": 6,
+      "location": "Corner",
+      "venue_id": "venue_demo_001",
+      "qr_code": "QR_DEMO_001_T03",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_001_T03",
+      "table_status": "reserved",
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-25T08:45:00Z"
+    },
+    {
+      "id": "table_004",
+      "table_number": 4,
+      "capacity": 2,
+      "location": "Patio",
+      "venue_id": "venue_demo_001",
+      "qr_code": "QR_DEMO_001_T04",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_001_T04",
+      "table_status": "available",
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-25T07:20:00Z"
+    },
+    {
+      "id": "table_005",
+      "table_number": 5,
+      "capacity": 4,
+      "location": "Near Bar",
+      "venue_id": "venue_demo_001",
+      "qr_code": "QR_DEMO_001_T05",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_001_T05",
+      "table_status": "cleaning",
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-25T11:00:00Z"
+    },
+    {
+      "id": "table_006",
+      "table_number": 6,
+      "capacity": 8,
+      "location": "Private Room",
+      "venue_id": "venue_demo_001",
+      "qr_code": "QR_DEMO_001_T06",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_001_T06",
+      "table_status": "available",
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-25T06:30:00Z"
+    },
+    {
+      "id": "table_cafe_001",
+      "table_number": 1,
+      "capacity": 2,
+      "location": "Counter",
+      "venue_id": "venue_demo_002",
+      "qr_code": "QR_DEMO_002_T01",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_002_T01",
+      "table_status": "occupied",
+      "is_active": true,
+      "created_at": "2024-01-05T00:00:00Z",
+      "updated_at": "2024-01-25T09:45:00Z"
+    },
+    {
+      "id": "table_cafe_002",
+      "table_number": 2,
+      "capacity": 4,
+      "location": "Window",
+      "venue_id": "venue_demo_002",
+      "qr_code": "QR_DEMO_002_T02",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_002_T02",
+      "table_status": "available",
+      "is_active": true,
+      "created_at": "2024-01-05T00:00:00Z",
+      "updated_at": "2024-01-25T08:20:00Z"
+    },
+    {
+      "id": "table_cafe_003",
+      "table_number": 3,
+      "capacity": 2,
+      "location": "Outdoor",
+      "venue_id": "venue_demo_002",
+      "qr_code": "QR_DEMO_002_T03",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_002_T03",
+      "table_status": "available",
+      "is_active": true,
+      "created_at": "2024-01-05T00:00:00Z",
+      "updated_at": "2024-01-25T07:10:00Z"
+    },
+    {
+      "id": "table_family_001",
+      "table_number": 1,
+      "capacity": 6,
+      "location": "Main Hall",
+      "venue_id": "venue_demo_003",
+      "qr_code": "QR_DEMO_003_T01",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=QR_DEMO_003_T01",
+      "table_status": "out_of_service",
+      "is_active": false,
+      "created_at": "2024-01-10T00:00:00Z",
+      "updated_at": "2024-01-22T16:45:00Z"
+    }
+  ],
+  "table_analytics": [
+    {
+      "venue_id": "venue_demo_001",
+      "total_tables": 6,
+      "available_tables": 3,
+      "occupied_tables": 1,
+      "reserved_tables": 1,
+      "cleaning_tables": 1,
+      "out_of_service_tables": 0,
+      "utilization_rate": 50.0,
+      "average_occupancy_time": 75,
+      "peak_hours": [
+        {
+          "hour": 12,
+          "occupancy_rate": 83.3
+        },
+        {
+          "hour": 13,
+          "occupancy_rate": 100.0
+        },
+        {
+          "hour": 19,
+          "occupancy_rate": 91.7
+        },
+        {
+          "hour": 20,
+          "occupancy_rate": 100.0
+        }
+      ],
+      "table_turnover": [
+        {
+          "table_id": "table_001",
+          "table_number": 1,
+          "daily_turns": 4,
+          "average_duration": 45
+        },
+        {
+          "table_id": "table_002",
+          "table_number": 2,
+          "daily_turns": 3,
+          "average_duration": 65
+        },
+        {
+          "table_id": "table_003",
+          "table_number": 3,
+          "daily_turns": 2,
+          "average_duration": 90
+        }
+      ]
+    },
+    {
+      "venue_id": "venue_demo_002",
+      "total_tables": 3,
+      "available_tables": 2,
+      "occupied_tables": 1,
+      "reserved_tables": 0,
+      "cleaning_tables": 0,
+      "out_of_service_tables": 0,
+      "utilization_rate": 66.7,
+      "average_occupancy_time": 35,
+      "peak_hours": [
+        {
+          "hour": 8,
+          "occupancy_rate": 100.0
+        },
+        {
+          "hour": 9,
+          "occupancy_rate": 100.0
+        },
+        {
+          "hour": 12,
+          "occupancy_rate": 66.7
+        },
+        {
+          "hour": 17,
+          "occupancy_rate": 100.0
+        }
+      ],
+      "table_turnover": [
+        {
+          "table_id": "table_cafe_001",
+          "table_number": 1,
+          "daily_turns": 8,
+          "average_duration": 25
+        },
+        {
+          "table_id": "table_cafe_002",
+          "table_number": 2,
+          "daily_turns": 6,
+          "average_duration": 35
+        },
+        {
+          "table_id": "table_cafe_003",
+          "table_number": 3,
+          "daily_turns": 5,
+          "average_duration": 30
+        }
+      ]
+    },
+    {
+      "venue_id": "venue_demo_003",
+      "total_tables": 1,
+      "available_tables": 0,
+      "occupied_tables": 0,
+      "reserved_tables": 0,
+      "cleaning_tables": 0,
+      "out_of_service_tables": 1,
+      "utilization_rate": 0.0,
+      "average_occupancy_time": 0,
+      "peak_hours": [],
+      "table_turnover": []
+    }
+  ]
+}

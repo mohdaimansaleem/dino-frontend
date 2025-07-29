@@ -2,25 +2,31 @@
 export interface UserProfile {
   id: string;
   email: string;
-  phone: string;
+  phone?: string;
   firstName: string;
   lastName: string;
+  first_name: string; // Add for compatibility
+  last_name: string;  // Add for compatibility
   name?: string;
   dateOfBirth?: Date;
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
-  role: 'customer' | 'admin' | 'cafe_owner' | 'staff';
+  role: UserRole;
+  permissions: Permission[];
   profileImageUrl?: string;
   isActive: boolean;
   isVerified: boolean;
-  addresses: UserAddress[];
-  preferences: UserPreferences;
+  addresses?: UserAddress[];
+  preferences?: UserPreferences;
   createdAt: Date;
+  updatedAt: Date;
   lastLogin?: Date;
-  loginCount: number;
-  totalOrders: number;
-  totalSpent: number;
+  loginCount?: number;
+  totalOrders?: number;
+  totalSpent?: number;
   workspaceId?: string;
+  workspace_id?: string; // Add for compatibility
   cafeId?: string;
+  venue_id?: string; // Add for compatibility
 }
 
 export interface UserAddress {
@@ -67,7 +73,24 @@ export interface UserLogin {
   password: string;
 }
 
-export type UserRole = 'customer' | 'admin' | 'cafe_owner' | 'staff';
+export interface UserRoleObject {
+  id: string;
+  name: string;
+  display_name?: string;
+  description?: string;
+  permissions?: Permission[];
+}
+
+export interface Permission {
+  id: string;
+  name: string;
+  resource: string;
+  action: string;
+  description: string;
+}
+
+export type UserRole = 'customer' | 'admin' | 'cafe_owner' | 'staff' | 'superadmin' | 'operator';
+export type UserRoleName = UserRole;
 
 // Additional User Types
 export interface User extends UserProfile {}
@@ -329,6 +352,7 @@ export interface AuthContextType {
   updateUser: (userData: Partial<UserProfile>) => Promise<void>;
   refreshUser: () => Promise<void>;
   loading: boolean;
+  isLoading: boolean;
   isAuthenticated: boolean;
 }
 

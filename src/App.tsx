@@ -17,7 +17,7 @@ import TestimonialsPage from './pages/TestimonialsPage';
 import RegistrationPage from './pages/RegistrationPage';
 import LoginPage from './pages/LoginPage';
 import UserDashboard from './pages/UserDashboard';
-import CustomerMenuPage from './pages/CustomerMenuPage';
+import EnhancedMenuPage from './pages/EnhancedMenuPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 
@@ -57,17 +57,12 @@ function App() {
                 <Route path="/testimonials" element={<TestimonialsPage />} />
                 <Route path="/register" element={<RegistrationPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/menu/:cafeId/:tableId" element={<CustomerMenuPage />} />
+                <Route path="/menu/:cafeId/:tableId" element={<EnhancedMenuPage />} />
                 <Route path="/checkout/:cafeId/:tableId" element={<CheckoutPage />} />
                 <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
                 <Route path="/order/:orderId" element={<OrderTrackingPage />} />
                 
                 {/* Protected User Routes */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <UserDashboard />
-                  </ProtectedRoute>
-                } />
                 <Route path="/profile" element={
                   <ProtectedRoute>
                     <UserProfile />

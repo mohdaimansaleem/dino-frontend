@@ -49,6 +49,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
+import CustomerNavbar from '../components/CustomerNavbar';
+import Footer from '../components/layout/Footer';
 
 interface CustomerInfo {
   name: string;
@@ -198,82 +200,106 @@ const CheckoutPage: React.FC = () => {
 
   if (items.length === 0 && !orderPlaced) {
     return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <ShoppingCart sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h5" gutterBottom>
-            Your cart is empty
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            Add some delicious items to your cart to get started!
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => navigate(`/menu/${cafeId}/${tableId}`)}
-          >
-            Back to Menu
-          </Button>
-        </Paper>
-      </Container>
+      <Box sx={{ minHeight: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
+        <CustomerNavbar 
+          restaurantName="Dino Cafe"
+          tableId={tableId}
+          showBackButton={true}
+          showCart={false}
+        />
+        <Container maxWidth="md" sx={{ py: 4, flex: 1, display: 'flex', alignItems: 'center' }}>
+          <Paper sx={{ p: 4, textAlign: 'center', width: '100%' }}>
+            <ShoppingCart sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+            <Typography variant="h5" gutterBottom>
+              Your cart is empty
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Add some delicious items to your cart to get started!
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => navigate(`/menu/${cafeId}/${tableId}`)}
+            >
+              Back to Menu
+            </Button>
+          </Paper>
+        </Container>
+        <Footer />
+      </Box>
     );
   }
 
   if (orderPlaced) {
     return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
-          <Typography variant="h4" gutterBottom fontWeight="bold">
-            Order Placed Successfully! 🎉
-          </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-            Order ID: <strong>{orderId}</strong>
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-            Your order has been received and is being prepared. You'll receive updates on the status.
-          </Typography>
-          
-          <Box sx={{ mb: 4, p: 3, backgroundColor: 'grey.50', borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Order Summary
+      <Box sx={{ minHeight: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
+        <CustomerNavbar 
+          restaurantName="Dino Cafe"
+          tableId={tableId}
+          showBackButton={false}
+          showCart={false}
+        />
+        <Container maxWidth="md" sx={{ py: 4, flex: 1, display: 'flex', alignItems: 'center' }}>
+          <Paper sx={{ p: 4, textAlign: 'center', width: '100%' }}>
+            <CheckCircle sx={{ fontSize: 80, color: 'success.main', mb: 3 }} />
+            <Typography variant="h4" gutterBottom fontWeight="bold">
+              Order Placed Successfully! 🎉
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Total Amount: <strong>{formatPrice(total)}</strong>
+            <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
+              Order ID: <strong>{orderId}</strong>
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Estimated Time: <strong>25-30 minutes</strong>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+              Your order has been received and is being prepared. You'll receive updates on the status.
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Table: <strong>{tableId}</strong>
-            </Typography>
-          </Box>
+            
+            <Box sx={{ mb: 4, p: 3, backgroundColor: 'grey.50', borderRadius: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Order Summary
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Total Amount: <strong>{formatPrice(total)}</strong>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Estimated Time: <strong>25-30 minutes</strong>
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Table: <strong>{tableId}</strong>
+              </Typography>
+            </Box>
 
-          <Button
-            variant="contained"
-            onClick={() => navigate(`/order-tracking/${orderId}`)}
-            sx={{ mr: 2, mb: 2 }}
-            startIcon={<Schedule />}
-          >
-            Track Order
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => navigate(`/menu/${cafeId}/${tableId}`)}
-            sx={{ mb: 2 }}
-            startIcon={<Restaurant />}
-          >
-            Order More
-          </Button>
-        </Paper>
-      </Container>
+            <Button
+              variant="contained"
+              onClick={() => navigate(`/order-tracking/${orderId}`)}
+              sx={{ mr: 2, mb: 2 }}
+              startIcon={<Schedule />}
+            >
+              Track Order
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => navigate(`/menu/${cafeId}/${tableId}`)}
+              sx={{ mb: 2 }}
+              startIcon={<Restaurant />}
+            >
+              Order More
+            </Button>
+          </Paper>
+        </Container>
+        <Footer />
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-        Checkout
-      </Typography>
+    <Box sx={{ minHeight: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
+      {/* Customer Navbar */}
+      <CustomerNavbar 
+        restaurantName="Dino Cafe"
+        tableId={tableId}
+        showBackButton={true}
+        showCart={false}
+      />
+
+      <Container maxWidth="lg" sx={{ py: 4, flex: 1 }}>
 
       <Grid container spacing={4}>
         {/* Left Column - Order Steps */}
@@ -290,163 +316,164 @@ const CheckoutPage: React.FC = () => {
                   
                   <List>
                     {items.map((item) => (
-                      <ListItem key={item.menuItem.id} sx={{ px: 0, flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' }, py: 2 }}>
-                        <Box sx={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-                          <ListItemAvatar>
+                      <ListItem key={item.menuItem.id} sx={{ px: 0, py: 2, flexDirection: 'column', alignItems: 'stretch' }}>
+                        <Box sx={{ display: 'flex', width: '100%', alignItems: 'flex-start', gap: 2 }}>
+                          <ListItemAvatar sx={{ minWidth: 'auto' }}>
                             <Avatar
                               src={item.menuItem.image}
-                              sx={{ width: { xs: 50, sm: 60 }, height: { xs: 50, sm: 60 } }}
+                              sx={{ width: { xs: 60, sm: 70 }, height: { xs: 60, sm: 70 } }}
                             >
                               <Restaurant />
                             </Avatar>
                           </ListItemAvatar>
-                          <ListItemText
-                            sx={{ flex: 1, minWidth: 0 }}
-                            primary={
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                                <Typography 
-                                  variant="subtitle1" 
-                                  fontWeight="600"
-                                  sx={{ 
-                                    fontSize: { xs: '0.875rem', sm: '1rem' },
-                                    lineHeight: 1.2,
-                                    wordBreak: 'break-word'
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                              <Typography 
+                                variant="subtitle1" 
+                                fontWeight="600"
+                                sx={{ 
+                                  fontSize: { xs: '1rem', sm: '1.1rem' },
+                                  lineHeight: 1.2,
+                                  wordBreak: 'break-word'
+                                }}
+                              >
+                                {item.menuItem.name}
+                              </Typography>
+                              {item.menuItem.isVeg ? (
+                                <Box
+                                  sx={{
+                                    width: 12,
+                                    height: 12,
+                                    border: '2px solid #388E3C',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
                                   }}
                                 >
-                                  {item.menuItem.name}
-                                </Typography>
-                                {item.menuItem.isVeg ? (
                                   <Box
                                     sx={{
-                                      width: 12,
-                                      height: 12,
-                                      border: '1px solid green',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      flexShrink: 0,
+                                      width: 4,
+                                      height: 4,
+                                      backgroundColor: '#388E3C',
+                                      borderRadius: '50%',
                                     }}
-                                  >
-                                    <Box
-                                      sx={{
-                                        width: 6,
-                                        height: 6,
-                                        backgroundColor: 'green',
-                                        borderRadius: '50%',
-                                      }}
-                                    />
-                                  </Box>
-                                ) : (
+                                  />
+                                </Box>
+                              ) : (
+                                <Box
+                                  sx={{
+                                    width: 12,
+                                    height: 12,
+                                    border: '2px solid #D32F2F',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    flexShrink: 0,
+                                  }}
+                                >
                                   <Box
                                     sx={{
-                                      width: 12,
-                                      height: 12,
-                                      border: '1px solid red',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      flexShrink: 0,
+                                      width: 4,
+                                      height: 4,
+                                      backgroundColor: '#D32F2F',
+                                      borderRadius: '50%',
                                     }}
-                                  >
-                                    <Box
-                                      sx={{
-                                        width: 6,
-                                        height: 6,
-                                        backgroundColor: 'red',
-                                        borderRadius: '50%',
-                                      }}
-                                    />
-                                  </Box>
-                                )}
-                              </Box>
-                            }
-                            secondary={
-                              <Box>
+                                  />
+                                </Box>
+                              )}
+                            </Box>
+                            
+                            <Box sx={{ mb: 1 }}>
+                              <Typography 
+                                variant="body2" 
+                                color="text.secondary"
+                                sx={{ fontSize: '0.875rem' }}
+                              >
+                                {formatPrice(item.menuItem.price)} per item
+                              </Typography>
+                              {item.specialInstructions && (
                                 <Typography 
                                   variant="body2" 
-                                  color="text.secondary"
-                                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                                  color="text.secondary" 
+                                  sx={{ 
+                                    fontStyle: 'italic',
+                                    fontSize: '0.8rem',
+                                    wordBreak: 'break-word',
+                                    mt: 0.5
+                                  }}
                                 >
-                                  {formatPrice(item.menuItem.price)} each
+                                  Note: {item.specialInstructions}
                                 </Typography>
-                                {item.specialInstructions && (
-                                  <Typography 
-                                    variant="body2" 
-                                    color="text.secondary" 
-                                    sx={{ 
-                                      fontStyle: 'italic',
-                                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                                      wordBreak: 'break-word'
-                                    }}
-                                  >
-                                    Note: {item.specialInstructions}
-                                  </Typography>
-                                )}
-                              </Box>
-                            }
-                          />
+                              )}
+                            </Box>
+                          </Box>
                         </Box>
                         
                         <Box sx={{ 
                           display: 'flex', 
                           alignItems: 'center', 
-                          gap: { xs: 1, sm: 1 },
-                          mt: { xs: 2, sm: 0 },
-                          justifyContent: { xs: 'space-between', sm: 'flex-end' },
-                          width: { xs: '100%', sm: 'auto' },
-                          flexShrink: 0
+                          justifyContent: 'space-between',
+                          mt: 2,
+                          pt: 2,
+                          borderTop: '1px solid #E0E0E0',
+                          width: '100%'
                         }}>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              border: '1px solid',
-                              borderColor: 'divider',
-                              borderRadius: 1,
-                            }}
-                          >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: 1,
+                              }}
+                            >
+                              <IconButton
+                                size="small"
+                                onClick={() => handleQuantityChange(item.menuItem.id, item.quantity - 1)}
+                                sx={{ p: 1 }}
+                              >
+                                <Remove sx={{ fontSize: 18 }} />
+                              </IconButton>
+                              <Typography sx={{ 
+                                mx: 2, 
+                                minWidth: 20, 
+                                textAlign: 'center',
+                                fontSize: '1rem',
+                                fontWeight: '600'
+                              }}>
+                                {item.quantity}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleQuantityChange(item.menuItem.id, item.quantity + 1)}
+                                sx={{ p: 1 }}
+                              >
+                                <Add sx={{ fontSize: 18 }} />
+                              </IconButton>
+                            </Box>
+                            
                             <IconButton
                               size="small"
-                              onClick={() => handleQuantityChange(item.menuItem.id, item.quantity - 1)}
-                              sx={{ p: { xs: 0.5, sm: 1 } }}
+                              color="error"
+                              onClick={() => removeItem(item.menuItem.id)}
+                              sx={{ p: 1 }}
                             >
-                              <Remove sx={{ fontSize: { xs: 16, sm: 20 } }} />
-                            </IconButton>
-                            <Typography sx={{ 
-                              mx: { xs: 1, sm: 2 }, 
-                              minWidth: { xs: 16, sm: 20 }, 
-                              textAlign: 'center',
-                              fontSize: { xs: '0.875rem', sm: '1rem' }
-                            }}>
-                              {item.quantity}
-                            </Typography>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleQuantityChange(item.menuItem.id, item.quantity + 1)}
-                              sx={{ p: { xs: 0.5, sm: 1 } }}
-                            >
-                              <Add sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                              <Delete sx={{ fontSize: 18 }} />
                             </IconButton>
                           </Box>
+                          
                           <Typography 
-                            variant="subtitle1" 
-                            fontWeight="600" 
+                            variant="h6" 
+                            fontWeight="bold" 
                             sx={{ 
-                              minWidth: { xs: 60, sm: 80 }, 
-                              textAlign: 'right',
-                              fontSize: { xs: '0.875rem', sm: '1rem' }
+                              color: '#1976D2',
+                              fontSize: '1.1rem'
                             }}
                           >
                             {formatPrice(item.menuItem.price * item.quantity)}
                           </Typography>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => removeItem(item.menuItem.id)}
-                            sx={{ p: { xs: 0.5, sm: 1 } }}
-                          >
-                            <Delete sx={{ fontSize: { xs: 16, sm: 20 } }} />
-                          </IconButton>
                         </Box>
                       </ListItem>
                     ))}
@@ -743,7 +770,11 @@ const CheckoutPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+      </Container>
+
+      {/* Footer */}
+      <Footer />
+    </Box>
   );
 };
 

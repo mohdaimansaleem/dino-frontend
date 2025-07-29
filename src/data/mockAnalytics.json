@@ -1,0 +1,519 @@
+{
+  "dashboard_analytics": {
+    "superadmin": {
+      "workspace_id": "ws_demo_001",
+      "summary": {
+        "total_venues": 2,
+        "active_venues": 2,
+        "total_orders_today": 5,
+        "total_revenue_today": 4547.8,
+        "total_customers": 245,
+        "subscription_plan": "premium"
+      },
+      "recent_orders": [
+        {
+          "id": "order_005",
+          "order_number": "ORD-20240125-M4N5O6",
+          "venue_name": "Demo Cafe Express",
+          "customer_name": "Vikram Singh",
+          "total_amount": 295.0,
+          "status": "pending",
+          "created_at": "2024-01-25T12:20:00Z"
+        },
+        {
+          "id": "order_004",
+          "order_number": "ORD-20240125-J1K2L3",
+          "venue_name": "Demo Bistro Downtown",
+          "customer_name": "Sneha Reddy",
+          "total_amount": 541.4,
+          "status": "confirmed",
+          "created_at": "2024-01-25T12:15:00Z"
+        }
+      ],
+      "venue_performance": [
+        {
+          "venue_id": "venue_demo_001",
+          "venue_name": "Demo Bistro Downtown",
+          "today_orders": 3,
+          "today_revenue": 3757.2,
+          "status": "active",
+          "utilization": 50.0
+        },
+        {
+          "venue_id": "venue_demo_002",
+          "venue_name": "Demo Cafe Express",
+          "today_orders": 2,
+          "today_revenue": 790.6,
+          "status": "active",
+          "utilization": 66.7
+        }
+      ],
+      "alerts": [
+        {
+          "type": "info",
+          "message": "Demo Family Restaurant is currently under maintenance",
+          "venue_id": "venue_demo_003",
+          "created_at": "2024-01-22T16:45:00Z"
+        }
+      ],
+      "quick_actions": [
+        {
+          "label": "Create New Venue",
+          "action": "create_venue",
+          "icon": "plus"
+        },
+        {
+          "label": "View All Orders",
+          "action": "view_orders",
+          "icon": "list"
+        },
+        {
+          "label": "Manage Users",
+          "action": "manage_users",
+          "icon": "users"
+        }
+      ]
+    },
+    "admin": {
+      "venue_id": "venue_demo_001",
+      "summary": {
+        "today_orders": 3,
+        "today_revenue": 3757.2,
+        "active_tables": 6,
+        "occupied_tables": 1,
+        "pending_orders": 0,
+        "preparing_orders": 1,
+        "ready_orders": 1
+      },
+      "recent_orders": [
+        {
+          "id": "order_002",
+          "order_number": "ORD-20240125-D4E5F6",
+          "table_number": 3,
+          "customer_name": "Priya Sharma",
+          "total_amount": 2401.6,
+          "status": "ready",
+          "created_at": "2024-01-25T11:15:00Z"
+        },
+        {
+          "id": "order_001",
+          "order_number": "ORD-20240125-A1B2C3",
+          "table_number": 2,
+          "customer_name": "Rajesh Kumar",
+          "total_amount": 814.2,
+          "status": "preparing",
+          "created_at": "2024-01-25T11:30:00Z"
+        }
+      ],
+      "menu_performance": [
+        {
+          "item_id": "item_001",
+          "item_name": "Margherita Pizza",
+          "orders_today": 1,
+          "revenue_today": 450.0,
+          "rating": 4.5
+        },
+        {
+          "item_id": "item_002",
+          "item_name": "Chicken Alfredo",
+          "orders_today": 2,
+          "revenue_today": 1300.0,
+          "rating": 4.7
+        }
+      ],
+      "table_status": [
+        {
+          "table_id": "table_001",
+          "table_number": 1,
+          "status": "available",
+          "capacity": 2
+        },
+        {
+          "table_id": "table_002",
+          "table_number": 2,
+          "status": "occupied",
+          "capacity": 4,
+          "order_id": "order_001"
+        },
+        {
+          "table_id": "table_003",
+          "table_number": 3,
+          "status": "reserved",
+          "capacity": 6,
+          "order_id": "order_002"
+        }
+      ],
+      "alerts": [
+        {
+          "type": "warning",
+          "message": "Table 5 needs cleaning",
+          "table_id": "table_005",
+          "created_at": "2024-01-25T11:00:00Z"
+        }
+      ],
+      "quick_actions": [
+        {
+          "label": "Add Menu Item",
+          "action": "add_menu_item",
+          "icon": "plus"
+        },
+        {
+          "label": "View Analytics",
+          "action": "view_analytics",
+          "icon": "chart"
+        },
+        {
+          "label": "Manage Tables",
+          "action": "manage_tables",
+          "icon": "grid"
+        }
+      ]
+    },
+    "operator": {
+      "venue_id": "venue_demo_001",
+      "summary": {
+        "active_orders": 2,
+        "pending_orders": 0,
+        "preparing_orders": 1,
+        "ready_orders": 1,
+        "occupied_tables": 1
+      },
+      "active_orders": [
+        {
+          "id": "order_001",
+          "order_number": "ORD-20240125-A1B2C3",
+          "table_number": 2,
+          "customer_name": "Rajesh Kumar",
+          "items": [
+            {
+              "name": "Margherita Pizza",
+              "quantity": 1
+            },
+            {
+              "name": "Fresh Orange Juice",
+              "quantity": 2
+            }
+          ],
+          "total_amount": 814.2,
+          "status": "preparing",
+          "estimated_ready_time": "2024-01-25T11:45:00Z",
+          "created_at": "2024-01-25T11:30:00Z"
+        },
+        {
+          "id": "order_002",
+          "order_number": "ORD-20240125-D4E5F6",
+          "table_number": 3,
+          "customer_name": "Priya Sharma",
+          "items": [
+            {
+              "name": "Chicken Alfredo",
+              "quantity": 2
+            },
+            {
+              "name": "Caesar Salad",
+              "quantity": 1
+            },
+            {
+              "name": "Chocolate Brownie",
+              "quantity": 2
+            }
+          ],
+          "total_amount": 2401.6,
+          "status": "ready",
+          "estimated_ready_time": "2024-01-25T12:00:00Z",
+          "actual_ready_time": "2024-01-25T11:58:00Z",
+          "created_at": "2024-01-25T11:15:00Z"
+        }
+      ],
+      "table_status": [
+        {
+          "table_id": "table_001",
+          "table_number": 1,
+          "status": "available",
+          "capacity": 2
+        },
+        {
+          "table_id": "table_002",
+          "table_number": 2,
+          "status": "occupied",
+          "capacity": 4,
+          "order_id": "order_001"
+        },
+        {
+          "table_id": "table_003",
+          "table_number": 3,
+          "status": "reserved",
+          "capacity": 6,
+          "order_id": "order_002"
+        },
+        {
+          "table_id": "table_004",
+          "table_number": 4,
+          "status": "available",
+          "capacity": 2
+        },
+        {
+          "table_id": "table_005",
+          "table_number": 5,
+          "status": "cleaning",
+          "capacity": 4
+        },
+        {
+          "table_id": "table_006",
+          "table_number": 6,
+          "status": "available",
+          "capacity": 8
+        }
+      ],
+      "alerts": [
+        {
+          "type": "urgent",
+          "message": "Order ORD-20240125-D4E5F6 is ready for serving",
+          "order_id": "order_002",
+          "created_at": "2024-01-25T11:58:00Z"
+        }
+      ],
+      "quick_actions": [
+        {
+          "label": "Update Order Status",
+          "action": "update_order",
+          "icon": "edit"
+        },
+        {
+          "label": "Clean Table",
+          "action": "clean_table",
+          "icon": "refresh"
+        }
+      ]
+    }
+  },
+  "revenue_analytics": [
+    {
+      "venue_id": "venue_demo_001",
+      "daily": [
+        {
+          "date": "2024-01-19",
+          "revenue": 12450.75,
+          "orders": 28
+        },
+        {
+          "date": "2024-01-20",
+          "revenue": 15680.50,
+          "orders": 35
+        },
+        {
+          "date": "2024-01-21",
+          "revenue": 11250.25,
+          "orders": 25
+        },
+        {
+          "date": "2024-01-22",
+          "revenue": 18750.00,
+          "orders": 42
+        },
+        {
+          "date": "2024-01-23",
+          "revenue": 16420.75,
+          "orders": 38
+        },
+        {
+          "date": "2024-01-24",
+          "revenue": 14850.25,
+          "orders": 32
+        },
+        {
+          "date": "2024-01-25",
+          "revenue": 3757.2,
+          "orders": 3
+        }
+      ],
+      "weekly": [
+        {
+          "week": "2024-W01",
+          "revenue": 85420.50,
+          "orders": 195
+        },
+        {
+          "week": "2024-W02",
+          "revenue": 92750.75,
+          "orders": 210
+        },
+        {
+          "week": "2024-W03",
+          "revenue": 88650.25,
+          "orders": 198
+        },
+        {
+          "week": "2024-W04",
+          "revenue": 93158.95,
+          "orders": 203
+        }
+      ],
+      "monthly": [
+        {
+          "month": "2023-11",
+          "revenue": 285420.50,
+          "orders": 650
+        },
+        {
+          "month": "2023-12",
+          "revenue": 325750.75,
+          "orders": 742
+        },
+        {
+          "month": "2024-01",
+          "revenue": 359980.45,
+          "orders": 806
+        }
+      ]
+    },
+    {
+      "venue_id": "venue_demo_002",
+      "daily": [
+        {
+          "date": "2024-01-19",
+          "revenue": 4250.25,
+          "orders": 18
+        },
+        {
+          "date": "2024-01-20",
+          "revenue": 5680.50,
+          "orders": 24
+        },
+        {
+          "date": "2024-01-21",
+          "revenue": 3850.75,
+          "orders": 16
+        },
+        {
+          "date": "2024-01-22",
+          "revenue": 6420.00,
+          "orders": 28
+        },
+        {
+          "date": "2024-01-23",
+          "revenue": 5250.25,
+          "orders": 22
+        },
+        {
+          "date": "2024-01-24",
+          "revenue": 4850.50,
+          "orders": 20
+        },
+        {
+          "date": "2024-01-25",
+          "revenue": 790.6,
+          "orders": 2
+        }
+      ],
+      "weekly": [
+        {
+          "week": "2024-W01",
+          "revenue": 28420.50,
+          "orders": 125
+        },
+        {
+          "week": "2024-W02",
+          "revenue": 32750.75,
+          "orders": 142
+        },
+        {
+          "week": "2024-W03",
+          "revenue": 29650.25,
+          "orders": 128
+        },
+        {
+          "week": "2024-W04",
+          "revenue": 31091.85,
+          "orders": 130
+        }
+      ],
+      "monthly": [
+        {
+          "month": "2023-11",
+          "revenue": 95420.50,
+          "orders": 420
+        },
+        {
+          "month": "2023-12",
+          "revenue": 108750.75,
+          "orders": 485
+        },
+        {
+          "month": "2024-01",
+          "revenue": 121913.35,
+          "orders": 525
+        }
+      ]
+    }
+  ],
+  "customer_analytics": [
+    {
+      "venue_id": "venue_demo_001",
+      "customer_segments": {
+        "new": 45,
+        "returning": 89,
+        "vip": 22
+      },
+      "customer_satisfaction": {
+        "average_rating": 4.5,
+        "total_reviews": 127,
+        "rating_distribution": {
+          "5": 65,
+          "4": 42,
+          "3": 15,
+          "2": 3,
+          "1": 2
+        }
+      },
+      "repeat_rate": 68.5,
+      "average_order_frequency": 2.3,
+      "top_customers": [
+        {
+          "customer_id": "customer_002",
+          "name": "Priya Sharma",
+          "total_spent": 15420.75,
+          "total_orders": 25,
+          "last_visit": "2024-01-25T11:15:00Z"
+        },
+        {
+          "customer_id": "customer_001",
+          "name": "Rajesh Kumar",
+          "total_spent": 8750.50,
+          "total_orders": 12,
+          "last_visit": "2024-01-25T11:30:00Z"
+        }
+      ]
+    },
+    {
+      "venue_id": "venue_demo_002",
+      "customer_segments": {
+        "new": 28,
+        "returning": 45,
+        "vip": 16
+      },
+      "customer_satisfaction": {
+        "average_rating": 4.2,
+        "total_reviews": 89,
+        "rating_distribution": {
+          "5": 38,
+          "4": 32,
+          "3": 14,
+          "2": 4,
+          "1": 1
+        }
+      },
+      "repeat_rate": 71.2,
+      "average_order_frequency": 3.1,
+      "top_customers": [
+        {
+          "customer_id": "customer_003",
+          "name": "Amit Patel",
+          "total_spent": 1250.25,
+          "total_orders": 3,
+          "last_visit": "2024-01-25T10:05:00Z"
+        }
+      ]
+    }
+  ]
+}

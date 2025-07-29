@@ -6,31 +6,22 @@ import {
   Grid,
   Card,
   CardContent,
-  CardMedia,
   Button,
   Chip,
   TextField,
   FormControl,
-  InputLabel,
   Select,
   MenuItem as MuiMenuItem,
-  ToggleButton,
-  ToggleButtonGroup,
-  Fab,
-  Badge,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   IconButton,
-  Divider,
+  Paper,
+  Collapse,
   Alert,
   Skeleton,
-  Paper,
-  AppBar,
-  Toolbar,
-  Slide,
-  useScrollTrigger,
+  Fade,
+  Badge,
+  Avatar,
+  Tooltip,
+  Zoom,
 } from '@mui/material';
 import {
   Add,
@@ -39,22 +30,23 @@ import {
   Search,
   Nature as Eco,
   AccessTime,
-  Close,
   Star,
-  Whatshot,
   Restaurant,
-  Phone,
-  LocationOn,
-  Favorite,
-  FavoriteBorder,
-  FilterList,
+  ExpandMore,
+  ExpandLess,
+  LocalOffer,
+  Whatshot,
+  InfoOutlined,
+  LocalFireDepartment,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { MenuItem } from '../types';
-import CleanDinoLogo from '../components/CleanDinoLogo';
+import CustomerNavbar from '../components/CustomerNavbar';
+// import { apiService } from '../services/api';
+// import { menuService } from '../services/menuService';
 
-// Mock data that would come from the admin-created menu
+// Menu item interfaces
 interface MenuItemType {
   id: string;
   name: string;
@@ -71,6 +63,10 @@ interface MenuItemType {
   isVeg?: boolean;
   rating?: number;
   reviewCount?: number;
+  originalPrice?: number;
+  discount?: number;
+  isPopular?: boolean;
+  isNew?: boolean;
 }
 
 interface CategoryType {
@@ -80,6 +76,7 @@ interface CategoryType {
   order: number;
   active: boolean;
   icon?: string;
+  color?: string;
 }
 
 interface RestaurantInfo {
@@ -93,12 +90,14 @@ interface RestaurantInfo {
   cuisine: string[];
   openTime: string;
   closeTime: string;
+  deliveryTime: string;
+  minimumOrder: number;
 }
 
 const EnhancedMenuPage: React.FC = () => {
   const { cafeId, tableId } = useParams<{ cafeId: string; tableId: string }>();
   const navigate = useNavigate();
-  const { addItem, items: cartItems, getTotalItems } = useCart();
+  const { addItem, removeItem, updateQuantity, items: cartItems, getTotalItems, getTotalAmount } = useCart();
 
   const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
   const [categories, setCategories] = useState<CategoryType[]>([]);
@@ -106,159 +105,198 @@ const EnhancedMenuPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Filters and UI state
+  // UI state
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [vegFilter, setVegFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('popular');
-  const [showFilters, setShowFilters] = useState(false);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-
-  // Dialog state
-  const [selectedItem, setSelectedItem] = useState<MenuItemType | null>(null);
-  const [itemQuantity, setItemQuantity] = useState(1);
-  const [specialInstructions, setSpecialInstructions] = useState('');
-
-  // Scroll trigger for header
-  const trigger = useScrollTrigger({
-    disableHysteresis: true,
-    threshold: 100,
-  });
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [showCartAnimation, setShowCartAnimation] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         
-        // Mock data - in real app, this would come from API using admin-created menu
-        const mockRestaurant: RestaurantInfo = {
-          id: cafeId || '1',
-          name: 'Dino Restaurant',
-          description: 'A modern dining experience with fresh, locally sourced ingredients',
-          address: '123 Main Street, Downtown',
-          phone: '+1 (555) 123-4567',
-          rating: 4.8,
-          reviewCount: 1247,
-          cuisine: ['Italian', 'Mediterranean', 'Modern'],
-          openTime: '11:00 AM',
-          closeTime: '10:00 PM',
-        };
-
-        const mockCategories: CategoryType[] = [
-          { id: '1', name: 'Appetizers', description: 'Start your meal right', order: 1, active: true, icon: '🥗' },
-          { id: '2', name: 'Main Courses', description: 'Hearty main dishes', order: 2, active: true, icon: '🍽️' },
-          { id: '3', name: 'Desserts', description: 'Sweet endings', order: 3, active: true, icon: '🍰' },
-          { id: '4', name: 'Beverages', description: 'Refreshing drinks', order: 4, active: true, icon: '🥤' },
-        ];
-
-        const mockMenuItems: MenuItemType[] = [
-          {
-            id: '1',
-            name: 'Caesar Salad',
-            description: 'Fresh romaine lettuce with parmesan cheese, croutons, and our signature Caesar dressing',
-            price: 12.99,
-            category: '1',
-            image: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=400',
-            available: true,
-            featured: false,
-            allergens: ['dairy', 'gluten'],
-            preparationTime: 10,
-            calories: 350,
-            spicyLevel: 0,
-            isVeg: true,
+        const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true' || 
+                          cafeId === 'dino-cafe' || 
+                          !cafeId;
+        
+        // Use enhanced demo data (API integration will be added later)
+        console.log('Loading demo data for menu');
+          
+          const mockRestaurant: RestaurantInfo = {
+            id: cafeId || 'dino-cafe-1',
+            name: 'Dino Cafe',
+            description: 'Authentic Indian flavors • Fresh ingredients • Quick service',
+            address: 'Hyderabad, Telangana, India',
+            phone: '+91 98765 43210',
             rating: 4.5,
-            reviewCount: 89,
-          },
-          {
-            id: '2',
-            name: 'Grilled Salmon',
-            description: 'Atlantic salmon grilled to perfection with herbs, served with seasonal vegetables and lemon butter sauce',
-            price: 24.99,
-            category: '2',
-            image: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400',
-            available: true,
-            featured: true,
-            allergens: ['fish'],
-            preparationTime: 20,
-            calories: 450,
-            spicyLevel: 0,
-            isVeg: false,
-            rating: 4.8,
-            reviewCount: 156,
-          },
-          {
-            id: '3',
-            name: 'Margherita Pizza',
-            description: 'Classic Italian pizza with fresh mozzarella, tomato sauce, and basil leaves on our wood-fired crust',
-            price: 18.99,
-            category: '2',
-            image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?w=400',
-            available: true,
-            featured: true,
-            allergens: ['dairy', 'gluten'],
-            preparationTime: 15,
-            calories: 520,
-            spicyLevel: 0,
-            isVeg: true,
-            rating: 4.7,
-            reviewCount: 203,
-          },
-          {
-            id: '4',
-            name: 'Chocolate Lava Cake',
-            description: 'Warm chocolate cake with a molten center, served with vanilla ice cream and berry compote',
-            price: 8.99,
-            category: '3',
-            image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400',
-            available: true,
-            featured: false,
-            allergens: ['dairy', 'eggs', 'gluten'],
-            preparationTime: 12,
-            calories: 580,
-            spicyLevel: 0,
-            isVeg: true,
-            rating: 4.9,
-            reviewCount: 312,
-          },
-          {
-            id: '5',
-            name: 'Craft Beer Selection',
-            description: 'Local craft beer on tap - ask your server for today\'s selection',
-            price: 6.99,
-            category: '4',
-            image: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=400',
-            available: true,
-            featured: false,
-            allergens: ['gluten'],
-            preparationTime: 2,
-            calories: 150,
-            spicyLevel: 0,
-            isVeg: true,
-            rating: 4.3,
-            reviewCount: 78,
-          },
-          {
-            id: '6',
-            name: 'Truffle Pasta',
-            description: 'Handmade fettuccine with black truffle, wild mushrooms, and parmesan in a creamy sauce',
-            price: 28.99,
-            category: '2',
-            image: 'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400',
-            available: true,
-            featured: true,
-            allergens: ['dairy', 'gluten', 'eggs'],
-            preparationTime: 18,
-            calories: 680,
-            spicyLevel: 0,
-            isVeg: true,
-            rating: 4.9,
-            reviewCount: 145,
-          },
-        ];
+            reviewCount: 1247,
+            cuisine: ['North Indian', 'South Indian', 'Chinese', 'Continental'],
+            openTime: '11:00 AM',
+            closeTime: '11:00 PM',
+            deliveryTime: '15-20 mins',
+            minimumOrder: 100,
+          };
 
-        setRestaurant(mockRestaurant);
-        setCategories(mockCategories);
-        setMenuItems(mockMenuItems);
+          const mockCategories: CategoryType[] = [
+            { id: '1', name: 'Recommended', description: 'Chef\'s special picks', order: 1, active: true, icon: '⭐', color: '#1976D2' },
+            { id: '2', name: 'Appetizers', description: 'Perfect starters', order: 2, active: true, icon: '🥗', color: '#388E3C' },
+            { id: '3', name: 'Main Course', description: 'Hearty main dishes', order: 3, active: true, icon: '🍽️', color: '#F57C00' },
+            { id: '4', name: 'Desserts', description: 'Sweet endings', order: 4, active: true, icon: '🍰', color: '#7B1FA2' },
+            { id: '5', name: 'Beverages', description: 'Refreshing drinks', order: 5, active: true, icon: '🥤', color: '#5D4037' },
+          ];
+
+          const mockMenuItems: MenuItemType[] = [
+            {
+              id: '1',
+              name: 'Butter Chicken',
+              description: 'Tender chicken in rich tomato-based curry with butter and cream. Served with basmati rice and fresh naan.',
+              price: 320,
+              originalPrice: 380,
+              discount: 15,
+              category: '1',
+              image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400',
+              available: true,
+              featured: true,
+              allergens: ['dairy'],
+              preparationTime: 20,
+              calories: 520,
+              spicyLevel: 2,
+              isVeg: false,
+              rating: 4.6,
+              reviewCount: 234,
+              isPopular: true,
+            },
+            {
+              id: '2',
+              name: 'Paneer Tikka Masala',
+              description: 'Grilled cottage cheese cubes in spiced tomato gravy. A vegetarian favorite with aromatic herbs.',
+              price: 280,
+              category: '1',
+              image: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400',
+              available: true,
+              featured: true,
+              allergens: ['dairy'],
+              preparationTime: 18,
+              calories: 450,
+              spicyLevel: 2,
+              isVeg: true,
+              rating: 4.4,
+              reviewCount: 189,
+              isNew: true,
+            },
+            {
+              id: '3',
+              name: 'Chicken Biryani',
+              description: 'Aromatic basmati rice layered with spiced chicken, herbs, and saffron. Served with raita and pickle.',
+              price: 350,
+              category: '3',
+              image: 'https://images.unsplash.com/photo-1563379091339-03246963d51a?w=400',
+              available: true,
+              featured: true,
+              allergens: [],
+              preparationTime: 25,
+              calories: 680,
+              spicyLevel: 3,
+              isVeg: false,
+              rating: 4.7,
+              reviewCount: 312,
+              isPopular: true,
+            },
+            {
+              id: '4',
+              name: 'Samosa (2 pcs)',
+              description: 'Crispy golden pastry filled with spiced potatoes and peas. Served with mint and tamarind chutney.',
+              price: 60,
+              category: '2',
+              image: 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400',
+              available: true,
+              featured: false,
+              allergens: ['gluten'],
+              preparationTime: 8,
+              calories: 280,
+              spicyLevel: 1,
+              isVeg: true,
+              rating: 4.2,
+              reviewCount: 156,
+            },
+            {
+              id: '5',
+              name: 'Gulab Jamun (4 pcs)',
+              description: 'Soft milk dumplings soaked in rose-flavored sugar syrup. A classic Indian dessert.',
+              price: 120,
+              category: '4',
+              image: 'https://images.unsplash.com/photo-1571167530149-c72f2b3d9f95?w=400',
+              available: true,
+              featured: false,
+              allergens: ['dairy', 'gluten'],
+              preparationTime: 5,
+              calories: 320,
+              spicyLevel: 0,
+              isVeg: true,
+              rating: 4.5,
+              reviewCount: 98,
+            },
+            {
+              id: '6',
+              name: 'Masala Chai',
+              description: 'Traditional Indian spiced tea brewed with milk and aromatic spices. Perfect with snacks.',
+              price: 40,
+              category: '5',
+              image: 'https://images.unsplash.com/photo-1553909489-cd47e0ef937f?w=400',
+              available: true,
+              featured: false,
+              allergens: ['dairy'],
+              preparationTime: 3,
+              calories: 80,
+              spicyLevel: 0,
+              isVeg: true,
+              rating: 4.3,
+              reviewCount: 87,
+            },
+            {
+              id: '7',
+              name: 'Dal Makhani',
+              description: 'Creamy black lentils slow-cooked with butter, cream, and aromatic spices. Rich and flavorful.',
+              price: 220,
+              category: '3',
+              available: true,
+              featured: false,
+              allergens: ['dairy'],
+              preparationTime: 15,
+              calories: 380,
+              spicyLevel: 1,
+              isVeg: true,
+              rating: 4.4,
+              reviewCount: 145,
+            },
+            {
+              id: '8',
+              name: 'Chicken Tikka',
+              description: 'Marinated chicken pieces grilled to perfection in tandoor oven. Served with mint chutney.',
+              price: 300,
+              category: '2',
+              available: true,
+              featured: false,
+              allergens: ['dairy'],
+              preparationTime: 20,
+              calories: 420,
+              spicyLevel: 2,
+              isVeg: false,
+              rating: 4.5,
+              reviewCount: 203,
+            },
+          ];
+
+          // Simulate loading delay for smooth transition
+          await new Promise(resolve => setTimeout(resolve, 800));
+
+          setRestaurant(mockRestaurant);
+          setCategories(mockCategories);
+          setMenuItems(mockMenuItems);
+          
+          // Auto-expand recommended category
+          setExpandedCategories(new Set(['1']));
       } catch (err: any) {
         setError('Failed to load menu. Please try again.');
         console.error('Error loading menu:', err);
@@ -270,107 +308,174 @@ const EnhancedMenuPage: React.FC = () => {
     loadData();
   }, [cafeId]);
 
-
-
   const filteredItems = menuItems.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
     const matchesVeg = vegFilter === 'all' || 
                       (vegFilter === 'veg' && item.isVeg) || 
                       (vegFilter === 'non-veg' && !item.isVeg);
     
-    return matchesSearch && matchesCategory && matchesVeg && item.available;
-  });
-
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    switch (sortBy) {
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
-      case 'rating':
-        return (b.rating || 0) - (a.rating || 0);
-      case 'time':
-        return a.preparationTime - b.preparationTime;
-      default: // popular
-        return (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || (b.rating || 0) - (a.rating || 0);
-    }
+    return matchesSearch && matchesVeg && item.available;
   });
 
   const groupedItems = categories.reduce((acc, category) => {
-    const categoryItems = sortedItems.filter(item => item.category === category.id);
+    const categoryItems = filteredItems.filter(item => item.category === category.id);
     if (categoryItems.length > 0) {
-      acc[category.name] = categoryItems;
+      acc[category.id] = {
+        category,
+        items: categoryItems,
+      };
     }
     return acc;
-  }, {} as Record<string, MenuItemType[]>);
-
-  const handleItemClick = (item: MenuItemType) => {
-    setSelectedItem(item);
-    setItemQuantity(1);
-    setSpecialInstructions('');
-  };
-
-  const handleAddToCart = () => {
-    if (selectedItem) {
-      // Convert to the format expected by cart context (MenuItem type)
-      const cartItem: MenuItem = {
-        id: selectedItem.id,
-        name: selectedItem.name,
-        description: selectedItem.description,
-        price: selectedItem.price,
-        category: selectedItem.category,
-        isVeg: selectedItem.isVeg || false,
-        image: selectedItem.image,
-        isAvailable: selectedItem.available,
-        preparationTime: selectedItem.preparationTime,
-        ingredients: [],
-        allergens: selectedItem.allergens,
-        cafeId: cafeId || 'demo-cafe',
-        order: 0,
-      };
-      addItem(cartItem, itemQuantity);
-      setSelectedItem(null);
-    }
-  };
-
-  const toggleFavorite = (itemId: string) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(itemId)) {
-      newFavorites.delete(itemId);
-    } else {
-      newFavorites.add(itemId);
-    }
-    setFavorites(newFavorites);
-  };
+  }, {} as Record<string, { category: CategoryType; items: MenuItemType[] }>);
 
   const getItemQuantityInCart = (itemId: string): number => {
     const cartItem = cartItems.find(item => item.menuItem.id === itemId);
     return cartItem ? cartItem.quantity : 0;
   };
 
-  const formatPrice = (price: number) => `$${price.toFixed(2)}`;
+  const handleAddToCart = (item: MenuItemType) => {
+    const cartItem: MenuItem = {
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      category: item.category,
+      isVeg: item.isVeg || false,
+      image: item.image,
+      isAvailable: item.available,
+      preparationTime: item.preparationTime,
+      ingredients: [],
+      allergens: item.allergens,
+      cafeId: cafeId || 'dino-cafe',
+      order: 0,
+    };
+    addItem(cartItem, 1);
+    
+    // Trigger cart animation
+    setShowCartAnimation(true);
+    setTimeout(() => setShowCartAnimation(false), 300);
+  };
+
+  const handleRemoveFromCart = (itemId: string) => {
+    const currentQuantity = getItemQuantityInCart(itemId);
+    if (currentQuantity > 1) {
+      updateQuantity(itemId, currentQuantity - 1);
+    } else {
+      removeItem(itemId);
+    }
+  };
+
+  const handleIncreaseQuantity = (itemId: string) => {
+    const currentQuantity = getItemQuantityInCart(itemId);
+    updateQuantity(itemId, currentQuantity + 1);
+  };
+
+  const toggleCategoryExpansion = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
+  const formatPrice = (price: number) => `₹${price}`;
+
+  const getSpicyLevelIcon = (level: number) => {
+    if (level === 0) return null;
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.2 }}>
+        {[...Array(level)].map((_, i) => (
+          <LocalFireDepartment 
+            key={i} 
+            sx={{ 
+              fontSize: 12, 
+              color: level === 1 ? '#FFA726' : level === 2 ? '#FF7043' : '#F44336' 
+            }} 
+          />
+        ))}
+      </Box>
+    );
+  };
 
   if (loading) {
     return (
-      <Box>
-        <Skeleton variant="rectangular" height={200} />
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Grid container spacing={3}>
-            {[...Array(6)].map((_, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Card>
-                  <Skeleton variant="rectangular" height={200} />
-                  <CardContent>
-                    <Skeleton variant="text" height={32} />
-                    <Skeleton variant="text" height={20} />
-                    <Skeleton variant="text" width="60%" />
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+      <Box sx={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#F8F9FA'
+      }}>
+        <Container maxWidth="lg" sx={{ py: 2 }}>
+          {/* Search skeleton */}
+          <Paper 
+            elevation={1} 
+            sx={{ 
+              p: 3, 
+              mb: 3, 
+              borderRadius: 1,
+              backgroundColor: 'white',
+              border: '1px solid #E0E0E0',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <Skeleton variant="rectangular" height={60} sx={{ borderRadius: 1, mb: 2 }} />
+            <Skeleton variant="rectangular" height={40} sx={{ borderRadius: 1 }} />
+          </Paper>
+
+          {/* Categories skeleton */}
+          {[...Array(3)].map((_, index) => (
+            <Paper 
+              key={index} 
+              elevation={1} 
+              sx={{ 
+                mb: 3, 
+                borderRadius: 1, 
+                overflow: 'hidden',
+                backgroundColor: 'white',
+                border: '1px solid #E0E0E0',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              <Box sx={{ p: 2.5, backgroundColor: '#FAFAFA' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box>
+                    <Skeleton variant="text" width={150} height={24} />
+                    <Skeleton variant="text" width={200} height={18} />
+                  </Box>
+                </Box>
+              </Box>
+              <Box sx={{ p: 2 }}>
+                {[...Array(2)].map((_, itemIndex) => (
+                  <Card 
+                    key={itemIndex} 
+                    sx={{ 
+                      mb: 2, 
+                      borderRadius: 1, 
+                      border: '1px solid #E0E0E0', 
+                      backgroundColor: 'white',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                      '&:last-child': { mb: 0 }
+                    }}
+                  >
+                    <CardContent sx={{ p: 2.5 }}>
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Skeleton variant="rectangular" width={100} height={100} sx={{ borderRadius: 1 }} />
+                        <Box sx={{ flex: 1 }}>
+                          <Skeleton variant="text" width="70%" height={20} />
+                          <Skeleton variant="text" width="40%" height={16} sx={{ mt: 1 }} />
+                          <Skeleton variant="text" width="90%" height={14} sx={{ mt: 1 }} />
+                          <Skeleton variant="text" width="60%" height={14} sx={{ mt: 1 }} />
+                          <Skeleton variant="rectangular" width={100} height={36} sx={{ mt: 2, borderRadius: 1 }} />
+                        </Box>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            </Paper>
+          ))}
         </Container>
       </Box>
     );
@@ -385,591 +490,740 @@ const EnhancedMenuPage: React.FC = () => {
   }
 
   return (
-    <Box>
-      {/* Fixed Header */}
-      <Slide appear={false} direction="down" in={!trigger}>
-        <AppBar 
-          position="fixed" 
-          elevation={trigger ? 2 : 0}
-          sx={{ 
-            backgroundColor: trigger ? 'background.paper' : 'transparent',
-            color: trigger ? 'text.primary' : 'white',
-            backdropFilter: trigger ? 'blur(20px)' : 'none',
-            borderBottom: trigger ? '1px solid' : 'none',
-            borderColor: 'divider',
-            transition: 'all 0.3s ease',
-          }}
-        >
-          <Toolbar>
-            <CleanDinoLogo size={32} />
-            <Typography variant="h6" sx={{ flexGrow: 1, ml: 1, fontWeight: 600 }}>
-              {restaurant?.name}
-            </Typography>
-            <IconButton 
-              color="inherit"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <FilterList />
-            </IconButton>
-          </Toolbar>
-        </AppBar>
-      </Slide>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      backgroundColor: 'white',
+      pb: getTotalItems() > 0 ? 10 : 0 
+    }}>
+      {/* Customer Navbar */}
+      <CustomerNavbar 
+        restaurantName={restaurant?.name}
+        tableId={tableId}
+        showBackButton={false}
+        showCart={true}
+        onCartClick={() => navigate(`/checkout/${cafeId}/${tableId}`)}
+      />
 
-      {/* Hero Section */}
+      {/* Hero Food Banner */}
       <Box
         sx={{
-          height: 300,
-          background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
+          position: 'relative',
+          height: { xs: 200, md: 280 },
+          background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.9) 0%, rgba(21, 101, 192, 0.9) 100%), url("https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&h=400&fit=crop") center/cover',
           display: 'flex',
           alignItems: 'center',
           color: 'white',
-          position: 'relative',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.3)',
-          },
+          overflow: 'hidden',
         }}
       >
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={8}>
-              <Typography variant="h3" gutterBottom fontWeight="bold">
-                {restaurant?.name}
-              </Typography>
-              <Typography variant="h6" sx={{ mb: 2, opacity: 0.9 }}>
-                {restaurant?.description}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Star sx={{ color: '#FFD700' }} />
-                  <Typography variant="body1" fontWeight="600">
-                    {restaurant?.rating} ({restaurant?.reviewCount} reviews)
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <AccessTime />
-                  <Typography variant="body1">
-                    {restaurant?.openTime} - {restaurant?.closeTime}
-                  </Typography>
-                </Box>
-                <Typography variant="body1">
-                  Table {tableId}
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Paper
-                elevation={4}
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+          {/* Table Number Badge */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 20,
+              right: 20,
+              zIndex: 3,
+            }}
+          >
+            <Box
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                border: '2px solid rgba(255, 255, 255, 0.8)',
+                borderRadius: 2,
+                px: 2,
+                py: 1,
+                backdropFilter: 'blur(10px)',
+              }}
+            >
+              <Typography
+                variant="body1"
+                fontWeight="bold"
                 sx={{
-                  p: 3,
-                  textAlign: 'center',
-                  backgroundColor: 'rgba(255,255,255,0.95)',
-                  backdropFilter: 'blur(10px)',
+                  color: 'white',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                  fontSize: '0.875rem',
                 }}
               >
-                <Typography variant="h6" gutterBottom color="text.primary">
-                  Quick Info
+                Table {tableId}
+              </Typography>
+            </Box>
+          </Box>
+          
+          <Box sx={{ maxWidth: { xs: '100%', md: '60%' } }}>
+            <Typography 
+              variant="h3" 
+              fontWeight="700" 
+              gutterBottom
+              sx={{ 
+                fontSize: { xs: '1.75rem', md: '2.5rem' },
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                mb: 2
+              }}
+            >
+              Welcome to {restaurant?.name}
+            </Typography>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                fontSize: { xs: '1rem', md: '1.25rem' },
+                opacity: 0.95,
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                mb: 3,
+                lineHeight: 1.4
+              }}
+            >
+              {restaurant?.description}
+            </Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 3,
+              flexWrap: 'wrap'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Star sx={{ color: '#FFD700', fontSize: 20 }} />
+                <Typography variant="body1" fontWeight="600">
+                  {restaurant?.rating} ({restaurant?.reviewCount}+ reviews)
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <LocationOn sx={{ mr: 1, color: 'text.secondary' }} />
-                  <Typography variant="body2" color="text.secondary">
-                    {restaurant?.address}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Phone sx={{ mr: 1, color: 'text.secondary' }} />
-                  <Typography variant="body2" color="text.secondary">
-                    {restaurant?.phone}
-                  </Typography>
-                </Box>
-              </Paper>
-            </Grid>
-          </Grid>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <AccessTime sx={{ fontSize: 18 }} />
+                <Typography variant="body1">
+                  {restaurant?.deliveryTime}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Container>
+        
+        {/* Decorative overlay */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '40%',
+            height: '100%',
+            background: 'url("https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=600&h=400&fit=crop") center/cover',
+            opacity: 0.3,
+            display: { xs: 'none', md: 'block' }
+          }}
+        />
       </Box>
 
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        {/* Filters */}
-        <Slide direction="down" in={showFilters} mountOnEnter unmountOnExit>
-          <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        {/* Search and Filters */}
+        <Fade in timeout={600}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 2.5, 
+              mb: 3, 
+              borderRadius: 2,
+              backgroundColor: 'white',
+              border: '1px solid #E0E0E0',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <Grid container spacing={2} alignItems="center">
+              <Grid item xs={12} md={8}>
                 <TextField
                   fullWidth
-                  placeholder="Search menu items..."
+                  size="medium"
+                  placeholder="Search for delicious dishes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      backgroundColor: '#ffffff',
+                      '& input': {
+                        color: '#1a1a1a !important',
+                        fontSize: '1rem',
+                        fontWeight: 400,
+                        '&::placeholder': {
+                          color: '#666666 !important',
+                          opacity: 1,
+                        },
+                      },
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#1976D2',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#1976D2',
+                        borderWidth: '2px',
+                      },
+                      '&.Mui-focused': {
+                        backgroundColor: '#ffffff',
+                      },
+                    }
+                  }}
                   InputProps={{
                     startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
                   }}
                 />
               </Grid>
-              <Grid item xs={12} md={3}>
-                <FormControl fullWidth>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={selectedCategory}
-                    label="Category"
-                    onChange={(e) => setSelectedCategory(e.target.value)}
+              <Grid item xs={12} md={4}>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                  <Button
+                    variant={vegFilter === 'all' ? 'contained' : 'outlined'}
+                    size="medium"
+                    onClick={() => setVegFilter('all')}
+                    sx={{
+                      minWidth: 'auto',
+                      px: 2,
+                      py: 1,
+                      fontSize: '0.875rem',
+                      borderRadius: 1,
+                      textTransform: 'none',
+                    }}
                   >
-                    <MuiMenuItem value="all">All Categories</MuiMenuItem>
-                    {categories.map((category) => (
-                      <MuiMenuItem key={category.id} value={category.id}>
-                        {category.icon} {category.name}
-                      </MuiMenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
-                  <InputLabel>Sort By</InputLabel>
-                  <Select
-                    value={sortBy}
-                    label="Sort By"
-                    onChange={(e) => setSortBy(e.target.value)}
+                    All
+                  </Button>
+                  <Button
+                    variant={vegFilter === 'veg' ? 'contained' : 'outlined'}
+                    size="medium"
+                    onClick={() => setVegFilter('veg')}
+                    sx={{
+                      minWidth: 'auto',
+                      px: 2,
+                      py: 1,
+                      fontSize: '0.875rem',
+                      borderRadius: 1,
+                      textTransform: 'none',
+                      color: vegFilter === 'veg' ? 'white' : '#388E3C',
+                      backgroundColor: vegFilter === 'veg' ? '#388E3C' : 'transparent',
+                      borderColor: '#388E3C',
+                      '&:hover': {
+                        backgroundColor: vegFilter === 'veg' ? '#2E7D32' : 'rgba(56, 142, 60, 0.1)',
+                        borderColor: '#388E3C',
+                      },
+                    }}
+                    startIcon={
+                      <Box
+                        sx={{
+                          width: 10,
+                          height: 10,
+                          border: '1.5px solid',
+                          borderColor: vegFilter === 'veg' ? 'white' : '#388E3C',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 4,
+                            height: 4,
+                            backgroundColor: vegFilter === 'veg' ? 'white' : '#388E3C',
+                            borderRadius: '50%',
+                          }}
+                        />
+                      </Box>
+                    }
                   >
-                    <MuiMenuItem value="popular">Popular</MuiMenuItem>
-                    <MuiMenuItem value="price-low">Price: Low to High</MuiMenuItem>
-                    <MuiMenuItem value="price-high">Price: High to Low</MuiMenuItem>
-                    <MuiMenuItem value="rating">Highest Rated</MuiMenuItem>
-                    <MuiMenuItem value="time">Fastest</MuiMenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={3}>
-                <ToggleButtonGroup
-                  value={vegFilter}
-                  exclusive
-                  onChange={(_, value) => value && setVegFilter(value)}
-                  size="small"
-                  fullWidth
-                >
-                  <ToggleButton value="all">All</ToggleButton>
-                  <ToggleButton value="veg">
-                    <Eco sx={{ mr: 0.5 }} />
                     Veg
-                  </ToggleButton>
-                  <ToggleButton value="non-veg">Non-Veg</ToggleButton>
-                </ToggleButtonGroup>
+                  </Button>
+                  <Button
+                    variant={vegFilter === 'non-veg' ? 'contained' : 'outlined'}
+                    size="medium"
+                    onClick={() => setVegFilter('non-veg')}
+                    sx={{
+                      minWidth: 'auto',
+                      px: 2,
+                      py: 1,
+                      fontSize: '0.875rem',
+                      borderRadius: 1,
+                      textTransform: 'none',
+                      color: vegFilter === 'non-veg' ? 'white' : '#D32F2F',
+                      backgroundColor: vegFilter === 'non-veg' ? '#D32F2F' : 'transparent',
+                      borderColor: '#D32F2F',
+                      '&:hover': {
+                        backgroundColor: vegFilter === 'non-veg' ? '#C62828' : 'rgba(211, 47, 47, 0.1)',
+                        borderColor: '#D32F2F',
+                      },
+                    }}
+                    startIcon={
+                      <Box
+                        sx={{
+                          width: 10,
+                          height: 10,
+                          border: '1.5px solid',
+                          borderColor: vegFilter === 'non-veg' ? 'white' : '#D32F2F',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 4,
+                            height: 4,
+                            backgroundColor: vegFilter === 'non-veg' ? 'white' : '#D32F2F',
+                            borderRadius: '50%',
+                          }}
+                        />
+                      </Box>
+                    }
+                  >
+                    Non-Veg
+                  </Button>
+                </Box>
               </Grid>
             </Grid>
           </Paper>
-        </Slide>
+        </Fade>
 
-        {/* Featured Items */}
-        {menuItems.some(item => item.featured) && (
-          <Box sx={{ mb: 6 }}>
-            <Typography variant="h4" gutterBottom fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Whatshot color="error" />
-              Featured Items
-            </Typography>
-            <Grid container spacing={3}>
-              {menuItems.filter(item => item.featured).slice(0, 3).map((item) => (
-                <Grid item xs={12} sm={6} md={4} key={item.id}>
-                  <Card
-                    sx={{
-                      height: '100%',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      border: '2px solid',
-                      borderColor: 'primary.main',
-                      position: 'relative',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: 6,
-                      },
+        {/* Enhanced Menu Categories */}
+        {Object.entries(groupedItems).map(([categoryId, { category, items }], index) => (
+          <Fade in timeout={800 + (index * 200)} key={categoryId}>
+            <Paper 
+              elevation={1} 
+              sx={{ 
+                mb: 3, 
+                borderRadius: 1, 
+                overflow: 'hidden',
+                backgroundColor: 'white',
+                border: '1px solid #E0E0E0',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2.5,
+                  backgroundColor: '#FAFAFA',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottom: '1px solid #E0E0E0',
+                  transition: 'background-color 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: '#F5F5F5',
+                  }
+                }}
+                onClick={() => toggleCategoryExpansion(categoryId)}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar 
+                    sx={{ 
+                      backgroundColor: category.color,
+                      width: 40, 
+                      height: 40,
+                      fontSize: '1.2rem',
                     }}
-                    onClick={() => handleItemClick(item)}
                   >
-                    <Chip
-                      label="Featured"
-                      color="primary"
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        left: 8,
-                        zIndex: 1,
-                        fontWeight: 600,
-                      }}
-                    />
-                    <IconButton
-                      sx={{
-                        position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        zIndex: 1,
-                        backgroundColor: 'rgba(255,255,255,0.9)',
-                        '&:hover': { backgroundColor: 'rgba(255,255,255,1)' },
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(item.id);
-                      }}
-                    >
-                      {favorites.has(item.id) ? (
-                        <Favorite color="error" />
-                      ) : (
-                        <FavoriteBorder />
-                      )}
-                    </IconButton>
-                    {item.image && (
-                      <CardMedia
-                        component="img"
-                        height="200"
-                        image={item.image}
-                        alt={item.name}
-                      />
-                    )}
-                    <CardContent>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-                        <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
-                          {item.name}
-                        </Typography>
-                        {item.isVeg && (
-                          <Chip
-                            icon={<Eco />}
-                            label="Veg"
-                            size="small"
-                            color="success"
-                            variant="outlined"
-                          />
-                        )}
-                      </Box>
-                      
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mb: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                      >
-                        {item.description}
-                      </Typography>
-
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Star sx={{ fontSize: 16, color: '#FFD700', mr: 0.5 }} />
-                          <Typography variant="body2" fontWeight="600">
-                            {item.rating}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
-                            ({item.reviewCount})
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <AccessTime sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                          <Typography variant="body2" color="text.secondary">
-                            {item.preparationTime} min
-                          </Typography>
-                        </Box>
-                      </Box>
-
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="h6" color="primary" fontWeight="bold">
-                          {formatPrice(item.price)}
-                        </Typography>
-                        {getItemQuantityInCart(item.id) > 0 && (
-                          <Chip
-                            label={`${getItemQuantityInCart(item.id)} in cart`}
-                            size="small"
-                            color="primary"
-                          />
-                        )}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          </Box>
-        )}
-
-        {/* Menu Items by Category */}
-        {Object.entries(groupedItems).map(([categoryName, items]) => (
-          <Box key={categoryName} sx={{ mb: 6 }}>
-            <Typography variant="h4" component="h2" gutterBottom fontWeight="bold">
-              {categoryName}
-            </Typography>
-            <Grid container spacing={3}>
-              {items.map((item) => {
-                const quantityInCart = getItemQuantityInCart(item.id);
-                return (
-                  <Grid item xs={12} sm={6} md={4} key={item.id}>
-                    <Card
-                      sx={{
-                        height: '100%',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        position: 'relative',
-                        '&:hover': {
-                          transform: 'translateY(-2px)',
-                          boxShadow: 4,
-                        },
-                      }}
-                      onClick={() => handleItemClick(item)}
-                    >
-                      <IconButton
+                    {category.icon}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight="600" color="text.primary">
+                      {category.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                      {category.description} • {items.length} items
+                    </Typography>
+                  </Box>
+                </Box>
+                {expandedCategories.has(categoryId) ? <ExpandLess /> : <ExpandMore />}
+              </Box>
+              
+              <Collapse in={expandedCategories.has(categoryId)}>
+                <Box sx={{ p: 2 }}>
+                  {items.map((item) => {
+                    const quantityInCart = getItemQuantityInCart(item.id);
+                    return (
+                      <Card
+                        key={item.id}
                         sx={{
-                          position: 'absolute',
-                          top: 8,
-                          right: 8,
-                          zIndex: 1,
-                          backgroundColor: 'rgba(255,255,255,0.9)',
-                          '&:hover': { backgroundColor: 'rgba(255,255,255,1)' },
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFavorite(item.id);
+                          mb: 2,
+                          borderRadius: 1,
+                          border: '1px solid #E0E0E0',
+                          backgroundColor: 'white',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                          '&:last-child': { mb: 0 },
+                          '&:hover': {
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            borderColor: '#BDBDBD',
+                          },
+                          transition: 'all 0.2s ease',
+                          overflow: 'hidden',
                         }}
                       >
-                        {favorites.has(item.id) ? (
-                          <Favorite color="error" />
-                        ) : (
-                          <FavoriteBorder />
-                        )}
-                      </IconButton>
-                      {item.image && (
-                        <CardMedia
-                          component="img"
-                          height="200"
-                          image={item.image}
-                          alt={item.name}
-                        />
-                      )}
-                      <CardContent>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
-                          <Typography variant="h6" component="h3" sx={{ flexGrow: 1 }}>
-                            {item.name}
-                          </Typography>
-                          {item.isVeg && (
-                            <Chip
-                              icon={<Eco />}
-                              label="Veg"
-                              size="small"
-                              color="success"
-                              variant="outlined"
-                            />
-                          )}
-                        </Box>
-                        
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{ mb: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
-                        >
-                          {item.description}
-                        </Typography>
-
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Star sx={{ fontSize: 16, color: '#FFD700', mr: 0.5 }} />
-                            <Typography variant="body2" fontWeight="600">
-                              {item.rating}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
-                              ({item.reviewCount})
-                            </Typography>
+                        <CardContent sx={{ p: 2.5 }}>
+                          <Box sx={{ display: 'flex', gap: 2 }}>
+                            {/* Enhanced Item Image */}
+                            {item.image && (
+                              <Box
+                                sx={{
+                                  position: 'relative',
+                                  flexShrink: 0,
+                                  width: 100,
+                                  height: 100,
+                                }}
+                              >
+                                <Box
+                                  component="img"
+                                  src={item.image}
+                                  alt={item.name}
+                                  sx={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    borderRadius: 1,
+                                  }}
+                                />
+                                {/* Badges */}
+                                {item.isPopular && (
+                                  <Chip
+                                    label="Popular"
+                                    size="small"
+                                    icon={<Whatshot />}
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 6,
+                                      left: 6,
+                                      backgroundColor: '#D32F2F',
+                                      color: 'white',
+                                      fontSize: '0.65rem',
+                                      height: 22,
+                                      fontWeight: '500',
+                                    }}
+                                  />
+                                )}
+                                {item.isNew && (
+                                  <Chip
+                                    label="New"
+                                    size="small"
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 6,
+                                      right: 6,
+                                      backgroundColor: '#388E3C',
+                                      color: 'white',
+                                      fontSize: '0.65rem',
+                                      height: 22,
+                                      fontWeight: '500',
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            )}
+                            
+                            {/* Enhanced Item Details */}
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
+                                {/* Veg/Non-Veg Indicator */}
+                                <Box
+                                  sx={{
+                                    width: 12,
+                                    height: 12,
+                                    border: `2px solid ${item.isVeg ? '#388E3C' : '#D32F2F'}`,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    mr: 1,
+                                    mt: 0.5,
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      width: 4,
+                                      height: 4,
+                                      backgroundColor: item.isVeg ? '#388E3C' : '#D32F2F',
+                                      borderRadius: '50%',
+                                    }}
+                                  />
+                                </Box>
+                                
+                                <Box sx={{ flex: 1, minWidth: 0 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                    <Typography 
+                                      variant="subtitle1" 
+                                      fontWeight="bold" 
+                                      sx={{ fontSize: '1rem', lineHeight: 1.2 }}
+                                    >
+                                      {item.name}
+                                    </Typography>
+                                    {item.featured && (
+                                      <Chip
+                                        label="Bestseller"
+                                        size="small"
+                                        color="error"
+                                        sx={{ fontSize: '0.6rem', height: 18 }}
+                                      />
+                                    )}
+                                  </Box>
+                                  
+                                  {/* Enhanced Rating and Details */}
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                      <Star sx={{ fontSize: 14, color: '#FFD700', mr: 0.3 }} />
+                                      <Typography variant="caption" fontWeight="600">
+                                        {item.rating}
+                                      </Typography>
+                                      <Typography variant="caption" color="text.secondary" sx={{ ml: 0.3 }}>
+                                        ({item.reviewCount})
+                                      </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                      <AccessTime sx={{ fontSize: 12, mr: 0.3, color: 'text.secondary' }} />
+                                      <Typography variant="caption" color="text.secondary">
+                                        {item.preparationTime} mins
+                                      </Typography>
+                                    </Box>
+                                    {getSpicyLevelIcon(item.spicyLevel || 0)}
+                                  </Box>
+                                  
+                                  {/* Enhanced Price */}
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                    <Typography 
+                                      variant="h6" 
+                                      fontWeight="bold" 
+                                      color="text.primary"
+                                      sx={{ fontSize: '1.1rem' }}
+                                    >
+                                      {formatPrice(item.price)}
+                                    </Typography>
+                                    {item.originalPrice && (
+                                      <>
+                                        <Typography
+                                          variant="body2"
+                                          sx={{ 
+                                            textDecoration: 'line-through', 
+                                            color: 'text.secondary',
+                                            fontSize: '0.8rem'
+                                          }}
+                                        >
+                                          {formatPrice(item.originalPrice)}
+                                        </Typography>
+                                        <Chip
+                                          label={`${item.discount}% OFF`}
+                                          size="small"
+                                          color="success"
+                                          icon={<LocalOffer />}
+                                          sx={{ fontSize: '0.6rem', height: 18 }}
+                                        />
+                                      </>
+                                    )}
+                                  </Box>
+                                  
+                                  {/* Enhanced Description */}
+                                  <Typography 
+                                    variant="body2" 
+                                    color="text.secondary" 
+                                    sx={{ 
+                                      lineHeight: 1.4,
+                                      fontSize: '0.8rem',
+                                      display: '-webkit-box',
+                                      WebkitLineClamp: 2,
+                                      WebkitBoxOrient: 'vertical',
+                                      overflow: 'hidden',
+                                    }}
+                                  >
+                                    {item.description}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            </Box>
                           </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <AccessTime sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {item.preparationTime} min
-                            </Typography>
+                          
+                          {/* Enhanced Add/Remove Controls */}
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              {item.allergens.length > 0 && (
+                                <Tooltip title={`Contains: ${item.allergens.join(', ')}`}>
+                                  <Chip
+                                    label="Allergen Info"
+                                    size="small"
+                                    icon={<InfoOutlined />}
+                                    variant="outlined"
+                                    sx={{ fontSize: '0.6rem', height: 20 }}
+                                  />
+                                </Tooltip>
+                              )}
+                            </Box>
+                            
+                            {quantityInCart === 0 ? (
+                              <Button
+                                variant="contained"
+                                onClick={() => handleAddToCart(item)}
+                                sx={{
+                                  backgroundColor: '#1976D2',
+                                  color: 'white',
+                                  fontWeight: '600',
+                                  px: 3,
+                                  py: 1,
+                                  borderRadius: 1,
+                                  fontSize: '0.875rem',
+                                  textTransform: 'none',
+                                  boxShadow: '0 2px 4px rgba(25, 118, 210, 0.3)',
+                                  '&:hover': {
+                                    backgroundColor: '#1565C0',
+                                    boxShadow: '0 4px 8px rgba(25, 118, 210, 0.4)',
+                                  },
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                Add to Cart
+                              </Button>
+                            ) : (
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  border: '2px solid #1976D2',
+                                  borderRadius: 1,
+                                  backgroundColor: 'white',
+                                  boxShadow: '0 2px 4px rgba(25, 118, 210, 0.2)',
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleRemoveFromCart(item.id)}
+                                  sx={{ 
+                                    color: '#1976D2', 
+                                    p: 0.5,
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                    }
+                                  }}
+                                >
+                                  <Remove sx={{ fontSize: 18 }} />
+                                </IconButton>
+                                <Typography
+                                  variant="body1"
+                                  fontWeight="600"
+                                  sx={{ 
+                                    mx: 2, 
+                                    minWidth: 24, 
+                                    textAlign: 'center', 
+                                    color: '#1976D2',
+                                    fontSize: '0.875rem'
+                                  }}
+                                >
+                                  {quantityInCart}
+                                </Typography>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleIncreaseQuantity(item.id)}
+                                  sx={{ 
+                                    color: '#1976D2', 
+                                    p: 0.5,
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                    }
+                                  }}
+                                >
+                                  <Add sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              </Box>
+                            )}
                           </Box>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="h6" color="primary" fontWeight="bold">
-                            {formatPrice(item.price)}
-                          </Typography>
-                          {quantityInCart > 0 && (
-                            <Chip
-                              label={`${quantityInCart} in cart`}
-                              size="small"
-                              color="primary"
-                            />
-                          )}
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Box>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </Box>
+              </Collapse>
+            </Paper>
+          </Fade>
         ))}
 
-        {sortedItems.length === 0 && (
+        {filteredItems.length === 0 && (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Restaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" color="text.secondary" gutterBottom>
-              No items found matching your criteria
+              No items found
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Try adjusting your filters or search terms
+              Try adjusting your search or filters
             </Typography>
           </Box>
         )}
       </Container>
 
-      {/* Floating Cart Button */}
+      {/* Enhanced Sticky Cart Summary */}
       {getTotalItems() > 0 && (
-        <Fab
-          color="primary"
-          sx={{
-            position: 'fixed',
-            bottom: 24,
-            right: 24,
-            zIndex: 1000,
-            boxShadow: 4,
-          }}
-          onClick={() => navigate('/checkout')}
-        >
-          <Badge badgeContent={getTotalItems()} color="secondary">
-            <ShoppingCart />
-          </Badge>
-        </Fab>
-      )}
-
-      {/* Item Detail Dialog */}
-      <Dialog
-        open={!!selectedItem}
-        onClose={() => setSelectedItem(null)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: { borderRadius: 3 }
-        }}
-      >
-        {selectedItem && (
-          <>
-            <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
-              <Typography variant="h5" fontWeight="bold">{selectedItem.name}</Typography>
-              <IconButton onClick={() => setSelectedItem(null)}>
-                <Close />
-              </IconButton>
-            </DialogTitle>
-            <DialogContent sx={{ pt: 1 }}>
-              {selectedItem.image && (
-                <Box sx={{ mb: 3 }}>
-                  <img
-                    src={selectedItem.image}
-                    alt={selectedItem.name}
-                    style={{ width: '100%', height: 250, objectFit: 'cover', borderRadius: 12 }}
-                  />
-                </Box>
-              )}
-              
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
-                  {formatPrice(selectedItem.price)}
-                </Typography>
-                {selectedItem.isVeg && (
-                  <Chip icon={<Eco />} label="Vegetarian" color="success" variant="outlined" />
-                )}
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Star sx={{ fontSize: 18, color: '#FFD700', mr: 0.5 }} />
-                  <Typography variant="body1" fontWeight="600">
-                    {selectedItem.rating}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
-                    ({selectedItem.reviewCount} reviews)
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.6 }}>
-                {selectedItem.description}
-              </Typography>
-
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6}>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <AccessTime sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
-                    <Typography variant="body2" color="text.secondary">
-                      {selectedItem.preparationTime} minutes
-                    </Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedItem.calories} calories
-                  </Typography>
-                </Grid>
-              </Grid>
-
-              {selectedItem.allergens && selectedItem.allergens.length > 0 && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Allergens:
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {selectedItem.allergens.map((allergen) => (
-                      <Chip
-                        key={allergen}
-                        label={allergen}
-                        size="small"
-                        variant="outlined"
-                        color="warning"
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              )}
-
-              <Divider sx={{ my: 3 }} />
-
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h6">Quantity:</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <IconButton
-                    onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
-                    disabled={itemQuantity <= 1}
+        <Zoom in={getTotalItems() > 0}>
+          <Paper
+            elevation={8}
+            sx={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 1000,
+              p: 2,
+              backgroundColor: 'white',
+              color: 'text.primary',
+              borderRadius: 0,
+              borderTop: '1px solid #E0E0E0',
+              transform: showCartAnimation ? 'scale(1.01)' : 'scale(1)',
+              transition: 'transform 0.2s ease',
+              boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <Container maxWidth="lg">
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+              }}>
+                <Box sx={{ textAlign: 'left', flex: 1 }}>
+                  <Typography 
+                    variant="body1" 
+                    fontWeight="bold"
+                    sx={{ fontSize: '1rem', color: 'text.primary' }}
                   >
-                    <Remove />
-                  </IconButton>
-                  <Typography variant="h6" sx={{ mx: 3, minWidth: 40, textAlign: 'center' }}>
-                    {itemQuantity}
+                    {getTotalItems()} item{getTotalItems() > 1 ? 's' : ''} | {formatPrice(getTotalAmount())}
                   </Typography>
-                  <IconButton onClick={() => setItemQuantity(itemQuantity + 1)}>
-                    <Add />
-                  </IconButton>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ opacity: 0.7, fontSize: '0.8rem', color: 'text.secondary' }}
+                  >
+                    Extra charges may apply
+                  </Typography>
                 </Box>
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={() => navigate(`/checkout/${cafeId}/${tableId}`)}
+                  sx={{
+                    backgroundColor: '#1976D2',
+                    color: 'white',
+                    fontWeight: '600',
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '0.875rem',
+                    borderRadius: 1,
+                    boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
+                    textTransform: 'none',
+                    '&:hover': {
+                      backgroundColor: '#1565C0',
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
+                    },
+                    transition: 'all 0.2s ease',
+                  }}
+                  startIcon={
+                    <Badge badgeContent={getTotalItems()} color="error">
+                      <ShoppingCart />
+                    </Badge>
+                  }
+                >
+                  VIEW CART
+                </Button>
               </Box>
-
-              <TextField
-                fullWidth
-                label="Special Instructions (Optional)"
-                multiline
-                rows={3}
-                value={specialInstructions}
-                onChange={(e) => setSpecialInstructions(e.target.value)}
-                placeholder="Any special requests for this item..."
-                sx={{ mb: 2 }}
-              />
-            </DialogContent>
-            <DialogActions sx={{ p: 3, pt: 1 }}>
-              <Button onClick={() => setSelectedItem(null)} size="large">
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                onClick={handleAddToCart}
-                startIcon={<Add />}
-                size="large"
-                sx={{ minWidth: 160, py: 1.5 }}
-              >
-                Add {formatPrice(selectedItem.price * itemQuantity)}
-              </Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
+            </Container>
+          </Paper>
+        </Zoom>
+      )}
     </Box>
   );
 };

@@ -1,0 +1,406 @@
+{
+  "users": [
+    {
+      "id": "user_superadmin_001",
+      "email": "superadmin@demo.com",
+      "phone": "+1234567890",
+      "first_name": "Demo",
+      "last_name": "SuperAdmin",
+      "role": "superadmin",
+      "workspace_id": "ws_demo_001",
+      "venue_id": null,
+      "is_active": true,
+      "is_verified": true,
+      "email_verified": true,
+      "phone_verified": true,
+      "profile_image_url": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+      "date_of_birth": "1985-06-15",
+      "gender": "male",
+      "addresses": [
+        {
+          "id": "addr_001",
+          "label": "Office",
+          "address_line_1": "123 Business District",
+          "city": "Mumbai",
+          "state": "Maharashtra",
+          "postal_code": "400001",
+          "country": "India",
+          "is_default": true
+        }
+      ],
+      "preferences": {
+        "dietary_restrictions": [],
+        "favorite_cuisines": ["Italian", "Indian"],
+        "spice_level": "medium",
+        "notifications_enabled": true,
+        "email_notifications": true,
+        "sms_notifications": false
+      },
+      "created_at": "2024-01-01T00:00:00Z",
+      "last_login": "2024-01-25T09:30:00Z",
+      "login_count": 45,
+      "total_orders": 0,
+      "total_spent": 0
+    },
+    {
+      "id": "user_admin_001",
+      "email": "admin@demo.com",
+      "phone": "+1234567891",
+      "first_name": "Demo",
+      "last_name": "Admin",
+      "role": "admin",
+      "workspace_id": "ws_demo_001",
+      "venue_id": "venue_demo_001",
+      "is_active": true,
+      "is_verified": true,
+      "email_verified": true,
+      "phone_verified": true,
+      "profile_image_url": "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150",
+      "date_of_birth": "1990-03-22",
+      "gender": "female",
+      "addresses": [],
+      "preferences": {
+        "dietary_restrictions": ["vegetarian"],
+        "favorite_cuisines": ["Indian", "Continental"],
+        "spice_level": "mild",
+        "notifications_enabled": true,
+        "email_notifications": true,
+        "sms_notifications": true
+      },
+      "created_at": "2024-01-02T00:00:00Z",
+      "last_login": "2024-01-25T08:15:00Z",
+      "login_count": 32,
+      "total_orders": 0,
+      "total_spent": 0
+    },
+    {
+      "id": "user_operator_001",
+      "email": "operator@demo.com",
+      "phone": "+1234567892",
+      "first_name": "Demo",
+      "last_name": "Operator",
+      "role": "operator",
+      "workspace_id": "ws_demo_001",
+      "venue_id": "venue_demo_001",
+      "is_active": true,
+      "is_verified": true,
+      "email_verified": true,
+      "phone_verified": false,
+      "profile_image_url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+      "date_of_birth": "1995-11-08",
+      "gender": "male",
+      "addresses": [],
+      "preferences": {
+        "dietary_restrictions": [],
+        "favorite_cuisines": ["Fast Food", "Indian"],
+        "spice_level": "hot",
+        "notifications_enabled": true,
+        "email_notifications": false,
+        "sms_notifications": true
+      },
+      "created_at": "2024-01-05T00:00:00Z",
+      "last_login": "2024-01-25T07:45:00Z",
+      "login_count": 28,
+      "total_orders": 0,
+      "total_spent": 0
+    },
+    {
+      "id": "user_customer_001",
+      "email": "customer@demo.com",
+      "phone": "+1234567893",
+      "first_name": "Demo",
+      "last_name": "Customer",
+      "role": "customer",
+      "workspace_id": null,
+      "venue_id": null,
+      "is_active": true,
+      "is_verified": true,
+      "email_verified": true,
+      "phone_verified": true,
+      "profile_image_url": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150",
+      "date_of_birth": "1992-07-14",
+      "gender": "female",
+      "addresses": [
+        {
+          "id": "addr_002",
+          "label": "Home",
+          "address_line_1": "456 Residential Area",
+          "city": "Mumbai",
+          "state": "Maharashtra",
+          "postal_code": "400002",
+          "country": "India",
+          "is_default": true
+        }
+      ],
+      "preferences": {
+        "dietary_restrictions": ["gluten_free"],
+        "favorite_cuisines": ["Italian", "Mexican"],
+        "spice_level": "medium",
+        "notifications_enabled": true,
+        "email_notifications": true,
+        "sms_notifications": true
+      },
+      "created_at": "2024-01-10T00:00:00Z",
+      "last_login": "2024-01-24T19:20:00Z",
+      "login_count": 15,
+      "total_orders": 8,
+      "total_spent": 2450.50
+    }
+  ],
+  "roles": [
+    {
+      "id": "role_superadmin",
+      "name": "superadmin",
+      "description": "Full workspace access, create venues, manage all",
+      "permissions": [
+        "workspace:manage",
+        "venue:create",
+        "venue:read",
+        "venue:update",
+        "venue:delete",
+        "user:create",
+        "user:read",
+        "user:update",
+        "user:delete",
+        "menu:create",
+        "menu:read",
+        "menu:update",
+        "menu:delete",
+        "order:create",
+        "order:read",
+        "order:update",
+        "order:delete",
+        "analytics:read",
+        "table:create",
+        "table:read",
+        "table:update",
+        "table:delete"
+      ]
+    },
+    {
+      "id": "role_admin",
+      "name": "admin",
+      "description": "Full venue access, manage operators",
+      "permissions": [
+        "venue:read",
+        "venue:update",
+        "user:create",
+        "user:read",
+        "user:update",
+        "menu:create",
+        "menu:read",
+        "menu:update",
+        "menu:delete",
+        "order:create",
+        "order:read",
+        "order:update",
+        "analytics:read",
+        "table:create",
+        "table:read",
+        "table:update",
+        "table:delete"
+      ]
+    },
+    {
+      "id": "role_operator",
+      "name": "operator",
+      "description": "Limited access, view orders, update tables",
+      "permissions": [
+        "venue:read",
+        "order:read",
+        "order:update",
+        "table:read",
+        "table:update"
+      ]
+    },
+    {
+      "id": "role_customer",
+      "name": "customer",
+      "description": "Customer role for orders",
+      "permissions": [
+        "venue:read",
+        "menu:read",
+        "order:create",
+        "order:read"
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "id": "perm_workspace_manage",
+      "name": "workspace:manage",
+      "description": "Manage workspace settings and configuration",
+      "resource": "workspace",
+      "action": "manage",
+      "scope": "workspace"
+    },
+    {
+      "id": "perm_venue_create",
+      "name": "venue:create",
+      "description": "Create new venues",
+      "resource": "venue",
+      "action": "create",
+      "scope": "workspace"
+    },
+    {
+      "id": "perm_venue_read",
+      "name": "venue:read",
+      "description": "View venue information",
+      "resource": "venue",
+      "action": "read",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_venue_update",
+      "name": "venue:update",
+      "description": "Update venue information",
+      "resource": "venue",
+      "action": "update",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_venue_delete",
+      "name": "venue:delete",
+      "description": "Delete venues",
+      "resource": "venue",
+      "action": "delete",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_user_create",
+      "name": "user:create",
+      "description": "Create new users",
+      "resource": "user",
+      "action": "create",
+      "scope": "workspace"
+    },
+    {
+      "id": "perm_user_read",
+      "name": "user:read",
+      "description": "View user information",
+      "resource": "user",
+      "action": "read",
+      "scope": "workspace"
+    },
+    {
+      "id": "perm_user_update",
+      "name": "user:update",
+      "description": "Update user information",
+      "resource": "user",
+      "action": "update",
+      "scope": "workspace"
+    },
+    {
+      "id": "perm_user_delete",
+      "name": "user:delete",
+      "description": "Delete users",
+      "resource": "user",
+      "action": "delete",
+      "scope": "workspace"
+    },
+    {
+      "id": "perm_menu_create",
+      "name": "menu:create",
+      "description": "Create menu items and categories",
+      "resource": "menu",
+      "action": "create",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_menu_read",
+      "name": "menu:read",
+      "description": "View menu items and categories",
+      "resource": "menu",
+      "action": "read",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_menu_update",
+      "name": "menu:update",
+      "description": "Update menu items and categories",
+      "resource": "menu",
+      "action": "update",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_menu_delete",
+      "name": "menu:delete",
+      "description": "Delete menu items and categories",
+      "resource": "menu",
+      "action": "delete",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_order_create",
+      "name": "order:create",
+      "description": "Create new orders",
+      "resource": "order",
+      "action": "create",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_order_read",
+      "name": "order:read",
+      "description": "View orders",
+      "resource": "order",
+      "action": "read",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_order_update",
+      "name": "order:update",
+      "description": "Update order status",
+      "resource": "order",
+      "action": "update",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_order_delete",
+      "name": "order:delete",
+      "description": "Cancel orders",
+      "resource": "order",
+      "action": "delete",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_analytics_read",
+      "name": "analytics:read",
+      "description": "View analytics and reports",
+      "resource": "analytics",
+      "action": "read",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_table_create",
+      "name": "table:create",
+      "description": "Create new tables",
+      "resource": "table",
+      "action": "create",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_table_read",
+      "name": "table:read",
+      "description": "View table information",
+      "resource": "table",
+      "action": "read",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_table_update",
+      "name": "table:update",
+      "description": "Update table status",
+      "resource": "table",
+      "action": "update",
+      "scope": "venue"
+    },
+    {
+      "id": "perm_table_delete",
+      "name": "table:delete",
+      "description": "Delete tables",
+      "resource": "table",
+      "action": "delete",
+      "scope": "venue"
+    }
+  ]
+}

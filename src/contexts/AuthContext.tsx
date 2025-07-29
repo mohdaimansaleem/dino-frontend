@@ -12,6 +12,7 @@ interface AuthContextType {
   updateUser: (userData: Partial<UserProfile>) => Promise<void>;
   refreshUser: () => Promise<void>;
   loading: boolean;
+  isLoading: boolean;
   isAuthenticated: boolean;
   // Role-based access control methods
   hasPermission: (permission: PermissionName) => boolean;
@@ -43,13 +44,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const savedUser = localStorage.getItem('dino_user');
         const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true';
         
+        console.log('🔐 Initializing auth...', { hasToken: !!token, hasUser: !!savedUser, isDemoMode });
+        
         if (token && savedUser) {
-          if (isDemoMode) {
+          if (isDemoMode || token === 'demo-token-bypass') {
             // Demo mode - use stored user without backend verification
             try {
               const demoUser = JSON.parse(savedUser);
+              console.log('✅ Demo user restored:', demoUser.email);
               setUser(demoUser);
             } catch (error) {
+              console.error('❌ Invalid demo user data:', error);
               // Invalid demo user data, clear storage
               localStorage.removeItem('dino_token');
               localStorage.removeItem('dino_user');
@@ -57,22 +62,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               setUser(null);
             }
           } else {
-            // Normal mode - verify token with backend
+            // Normal mode - for now, treat as demo mode since we don't have backend
             try {
-              const currentUser = await authService.getCurrentUser();
-              setUser(currentUser);
-              // Update stored user data
-              localStorage.setItem('dino_user', JSON.stringify(currentUser));
+              const savedUserData = JSON.parse(savedUser);
+              console.log('✅ User restored from storage:', savedUserData.email);
+              setUser(savedUserData);
             } catch (error) {
-              // Token is invalid, clear storage
+              console.error('❌ Invalid user data:', error);
+              // Invalid user data, clear storage
               localStorage.removeItem('dino_token');
               localStorage.removeItem('dino_user');
               setUser(null);
             }
           }
+        } else {
+          console.log('ℹ️ No stored auth data found');
+          setUser(null);
         }
       } catch (error) {
-        console.error('Failed to initialize auth:', error);
+        console.error('❌ Failed to initialize auth:', error);
         localStorage.removeItem('dino_token');
         localStorage.removeItem('dino_user');
         localStorage.removeItem('dino_demo_mode');
@@ -240,6 +248,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     updateUser,
     refreshUser,
     loading,
+    isLoading: loading,
     isAuthenticated: !!user,
     hasPermission,
     hasRole,

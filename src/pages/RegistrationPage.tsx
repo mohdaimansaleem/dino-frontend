@@ -606,7 +606,7 @@ const RegistrationPage: React.FC = () => {
         </Typography>
         
         <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 4 }}>
-          Join us to start ordering delicious food from your favorite restaurants
+          Register your cafe and start publishing your menu to reach more customers
         </Typography>
 
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
@@ -673,7 +673,7 @@ const RegistrationPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Typography align="center">
-            Your account has been created successfully. You can now start exploring restaurants and placing orders.
+            Your cafe account has been created successfully. You can now start publishing your menu and managing your restaurant.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
