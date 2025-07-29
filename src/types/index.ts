@@ -1,17 +1,15 @@
-// Enhanced User and Authentication Types
+// Core User and Authentication Types
 export interface UserProfile {
   id: string;
   email: string;
   phone?: string;
   firstName: string;
   lastName: string;
-  first_name: string; // Add for compatibility
-  last_name: string;  // Add for compatibility
-  name?: string;
+  first_name: string; // Backend compatibility
+  last_name: string;  // Backend compatibility
   dateOfBirth?: Date;
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
   role: UserRole;
-  permissions: Permission[];
   profileImageUrl?: string;
   isActive: boolean;
   isVerified: boolean;
@@ -24,9 +22,9 @@ export interface UserProfile {
   totalOrders?: number;
   totalSpent?: number;
   workspaceId?: string;
-  workspace_id?: string; // Add for compatibility
-  cafeId?: string;
-  venue_id?: string; // Add for compatibility
+  workspace_id?: string; // Backend compatibility
+  venueId?: string;
+  venue_id?: string; // Backend compatibility
 }
 
 export interface UserAddress {
@@ -52,52 +50,7 @@ export interface UserPreferences {
   smsNotifications: boolean;
 }
 
-export interface UserRegistration {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  dateOfBirth?: Date;
-  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
-  role?: 'customer' | 'admin' | 'cafe_owner' | 'staff';
-  addresses?: UserAddress[];
-  preferences?: UserPreferences;
-  termsAccepted: boolean;
-  marketingConsent: boolean;
-}
-
-export interface UserLogin {
-  email: string;
-  password: string;
-}
-
-export interface UserRoleObject {
-  id: string;
-  name: string;
-  display_name?: string;
-  description?: string;
-  permissions?: Permission[];
-}
-
-export interface Permission {
-  id: string;
-  name: string;
-  resource: string;
-  action: string;
-  description: string;
-}
-
 export type UserRole = 'customer' | 'admin' | 'cafe_owner' | 'staff' | 'superadmin' | 'operator';
-export type UserRoleName = UserRole;
-
-// Additional User Types
-export interface User extends UserProfile {}
-
-export interface UserCreate extends UserRegistration {}
-
-export interface Token extends AuthToken {}
 
 export interface AuthToken {
   access_token: string;
@@ -107,173 +60,217 @@ export interface AuthToken {
   user: UserProfile;
 }
 
-// Cafe Types
-export interface Cafe {
+// Venue Types
+export interface Venue {
   id: string;
   name: string;
   description: string;
-  address: string;
-  phone: string;
-  email: string;
-  ownerId: string;
-  logo?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  workspace_id: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+  };
+  contact: {
+    phone: string;
+    email: string;
+    website?: string;
+  };
+  business_hours: {
+    [key: string]: {
+      open: string;
+      close: string;
+      is_closed: boolean;
+    };
+  };
+  cuisine_types: string[];
+  features: string[];
+  image_urls: string[];
+  logo_url?: string;
+  is_active: boolean;
+  settings: {
+    tax_rate: number;
+    service_charge_rate: number;
+    currency: string;
+    timezone: string;
+    auto_accept_orders: boolean;
+    max_tables: number;
+  };
+  created_at: string;
+  updated_at: string;
 }
 
 // Menu Types
+export interface MenuCategory {
+  id: string;
+  name: string;
+  description: string;
+  venue_id: string;
+  image_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
   description: string;
-  price: number;
-  category: string;
-  isVeg: boolean;
-  image?: string;
-  isAvailable: boolean;
-  preparationTime: number; // in minutes
-  ingredients?: string[];
-  allergens?: string[];
-  cafeId: string;
-  order: number; // for drag-drop ordering
-}
-
-export interface MenuCategory {
-  id: string;
-  name: string;
-  description?: string;
-  order: number;
-  cafeId: string;
-}
-
-export interface MenuItemCreate {
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  isVeg: boolean;
-  image?: string;
-  isAvailable?: boolean;
-  preparationTime: number;
-  ingredients?: string[];
-  allergens?: string[];
-  cafeId: string;
-}
-
-export interface MenuItemUpdate {
-  name?: string;
-  description?: string;
-  price?: number;
-  category?: string;
-  isVeg?: boolean;
-  image?: string;
-  isAvailable?: boolean;
-  preparationTime?: number;
-  ingredients?: string[];
-  allergens?: string[];
-}
-
-export interface MenuCategoryCreate {
-  name: string;
-  description?: string;
-  order: number;
-  cafeId: string;
-}
-
-export interface MenuCategoryUpdate {
-  name?: string;
-  description?: string;
-  order?: number;
+  base_price: number;
+  venue_id: string;
+  category_id: string;
+  image_urls: string[];
+  is_vegetarian: boolean;
+  is_vegan: boolean;
+  is_gluten_free: boolean;
+  spice_level: 'mild' | 'medium' | 'hot' | 'very_hot';
+  preparation_time_minutes: number;
+  nutritional_info?: {
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+  };
+  is_available: boolean;
+  rating: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Table Types
 export interface Table {
   id: string;
-  tableNumber: number;
-  qrCode: string;
-  qrCodeUrl: string;
-  cafeId: string;
-  isActive: boolean;
-  createdAt: Date;
+  table_number: string;
+  venue_id: string;
+  capacity: number;
+  table_status: 'available' | 'occupied' | 'reserved' | 'cleaning' | 'out_of_order';
+  qr_code: string;
+  location: {
+    section?: string;
+    floor?: string;
+    position?: string;
+  };
+  features: string[];
+  current_order_id?: string;
+  last_cleaned?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Order Types
+export interface OrderItem {
+  menu_item_id: string;
+  menu_item_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  special_instructions?: string;
+  customizations?: Record<string, any>;
+}
+
+export interface Order {
+  id: string;
+  order_number: string;
+  venue_id: string;
+  table_id?: string;
+  customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
+  items: OrderItem[];
+  subtotal: number;
+  tax_amount: number;
+  service_charge: number;
+  discount_amount: number;
+  total_amount: number;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  payment_method?: string;
+  special_instructions?: string;
+  estimated_preparation_time?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Cart Types (Frontend only)
 export interface CartItem {
   menuItem: MenuItem;
   quantity: number;
   specialInstructions?: string;
 }
 
-export interface Order {
+// Workspace Types
+export interface Workspace {
   id: string;
-  orderNumber?: string;
-  cafeId: string;
-  tableId: string;
-  customerId?: string;
-  customerPhone?: string;
-  customerName?: string;
-  items: OrderItem[];
-  totalAmount: number;
-  status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  specialInstructions?: string;
-  estimatedTime: number;
-  createdAt: Date;
-  updatedAt: Date;
+  name: string;
+  description: string;
+  owner_id: string;
+  subscription_plan: 'free' | 'basic' | 'premium' | 'enterprise';
+  subscription_status: 'active' | 'inactive' | 'suspended' | 'cancelled';
+  settings: {
+    timezone: string;
+    currency: string;
+    language: string;
+    date_format: string;
+    max_venues: number;
+    max_users: number;
+  };
+  billing_info?: {
+    billing_email: string;
+    billing_address: any;
+    payment_method?: string;
+  };
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
-
-export interface OrderItem {
-  menuItemId: string;
-  menuItemName: string;
-  variantName?: string;
-  quantity: number;
-  price: number;
-  totalPrice?: number;
-  specialInstructions?: string;
-}
-
-export type OrderStatus = 
-  | 'pending' 
-  | 'confirmed' 
-  | 'preparing' 
-  | 'ready' 
-  | 'delivered'
-  | 'served' 
-  | 'cancelled';
-
-export type PaymentStatus = 
-  | 'pending' 
-  | 'paid' 
-  | 'failed' 
-  | 'refunded';
 
 // Analytics Types
-export interface SalesAnalytics {
-  totalRevenue: number;
-  totalOrders: number;
-  averageOrderValue: number;
-  popularItems: PopularItem[];
-  revenueByDay: RevenueData[];
-  ordersByStatus: StatusData[];
-}
-
-export interface PopularItem {
-  menuItemId: string;
-  menuItemName: string;
-  orderCount: number;
-  revenue: number;
-}
-
-export interface RevenueData {
-  date: string;
-  revenue: number;
-  orders: number;
-}
-
-export interface StatusData {
-  status: OrderStatus;
-  count: number;
+export interface DashboardAnalytics {
+  venue_id: string;
+  period: string;
+  revenue: {
+    total: number;
+    today: number;
+    yesterday: number;
+    this_week: number;
+    this_month: number;
+    growth_rate: number;
+  };
+  orders: {
+    total: number;
+    today: number;
+    pending: number;
+    completed: number;
+    cancelled: number;
+    average_order_value: number;
+  };
+  customers: {
+    total: number;
+    new_today: number;
+    returning: number;
+    satisfaction_rate: number;
+  };
+  popular_items: Array<{
+    menu_item_id: string;
+    menu_item_name: string;
+    order_count: number;
+    revenue: number;
+    rating: number;
+  }>;
+  peak_hours: Array<{
+    hour: number;
+    order_count: number;
+    revenue: number;
+  }>;
+  table_utilization: {
+    total_tables: number;
+    occupied: number;
+    available: number;
+    utilization_rate: number;
+  };
 }
 
 // API Response Types
@@ -284,33 +281,32 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
-// Filter Types
-export interface MenuFilters {
-  category?: string;
-  isVeg?: boolean;
-  priceRange?: {
-    min: number;
-    max: number;
-  };
-  searchQuery?: string;
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
-// Enhanced Notification Types
+// Notification Types
 export interface AppNotification {
   id: string;
-  recipientId: string;
-  recipientType: 'user' | 'cafe' | 'admin';
-  notificationType: NotificationTypeEnum;
+  recipient_id: string;
+  recipient_type: 'user' | 'venue' | 'admin';
+  notification_type: NotificationType;
   title: string;
   message: string;
   data?: Record<string, any>;
-  isRead: boolean;
+  is_read: boolean;
   priority: 'low' | 'normal' | 'high' | 'urgent';
-  createdAt: Date;
-  readAt?: Date;
+  created_at: string;
+  read_at?: string;
 }
 
-export type NotificationTypeEnum = 
+export type NotificationType = 
   | 'order_placed'
   | 'order_confirmed' 
   | 'order_ready'
@@ -318,39 +314,15 @@ export type NotificationTypeEnum =
   | 'payment_received'
   | 'system_alert';
 
-export type NotificationType = NotificationTypeEnum;
-
-// Enhanced Transaction Types
-export interface Transaction {
-  id: string;
-  orderId: string;
-  amount: number;
-  transactionType: 'payment' | 'refund' | 'adjustment';
-  paymentMethod: PaymentMethod;
-  paymentGateway?: string;
-  gatewayTransactionId?: string;
-  status: PaymentStatus;
-  description?: string;
-  createdAt: Date;
-  processedAt?: Date;
-  refundedAmount: number;
-}
-
-export type PaymentMethod = 
-  | 'cash'
-  | 'card'
-  | 'upi'
-  | 'wallet'
-  | 'net_banking';
-
 // Context Types
 export interface AuthContextType {
   user: UserProfile | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: UserRegistration) => Promise<void>;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
+  register: (userData: { email: string; password: string; firstName: string; lastName: string; phone?: string }) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<UserProfile>) => Promise<void>;
   refreshUser: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   loading: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -364,4 +336,18 @@ export interface CartContextType {
   clearCart: () => void;
   getTotalAmount: () => number;
   getTotalItems: () => number;
+}
+
+// Filter Types
+export interface MenuFilters {
+  category?: string;
+  is_vegetarian?: boolean;
+  is_vegan?: boolean;
+  is_gluten_free?: boolean;
+  spice_level?: string;
+  price_range?: {
+    min: number;
+    max: number;
+  };
+  search_query?: string;
 }

@@ -1,29 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { UserProfile, UserRegistration } from '../types';
-import { User as AuthUser, ROLES, PermissionName, RoleName } from '../types/auth';
-import { authService } from '../services/authService';
-import PermissionService from '../services/permissionService';
+import { UserProfile } from '../types';
+import { authService, LoginCredentials, RegisterData } from '../services/authService';
 
 interface AuthContextType {
   user: UserProfile | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: UserRegistration) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<UserProfile>) => Promise<void>;
   refreshUser: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   loading: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
-  // Role-based access control methods
-  hasPermission: (permission: PermissionName) => boolean;
-  hasRole: (role: string) => boolean;
-  canAccessRoute: (route: string) => boolean;
-  isAdmin: () => boolean;
-  isOperator: () => boolean;
-  isSuperAdmin: () => boolean;
-  getUserWithRole: () => AuthUser | null;
-  // Demo mode method
-  setDemoUser: (demoUser: UserProfile) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,51 +29,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for existing token on app load
     const initializeAuth = async () => {
       try {
-        const token = localStorage.getItem('dino_token');
-        const savedUser = localStorage.getItem('dino_user');
-        const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true';
-        
-        console.log('🔐 Initializing auth...', { hasToken: !!token, hasUser: !!savedUser, isDemoMode });
-        
-        if (token && savedUser) {
-          if (isDemoMode || token === 'demo-token-bypass') {
-            // Demo mode - use stored user without backend verification
+        if (authService.isAuthenticated()) {
+          const storedUser = authService.getStoredUser();
+          if (storedUser) {
+            setUser(storedUser);
+            
+            // Try to refresh user data from server
             try {
-              const demoUser = JSON.parse(savedUser);
-              console.log('✅ Demo user restored:', demoUser.email);
-              setUser(demoUser);
+              const currentUser = await authService.getCurrentUser();
+              setUser(currentUser);
             } catch (error) {
-              console.error('❌ Invalid demo user data:', error);
-              // Invalid demo user data, clear storage
-              localStorage.removeItem('dino_token');
-              localStorage.removeItem('dino_user');
-              localStorage.removeItem('dino_demo_mode');
-              setUser(null);
-            }
-          } else {
-            // Normal mode - for now, treat as demo mode since we don't have backend
-            try {
-              const savedUserData = JSON.parse(savedUser);
-              console.log('✅ User restored from storage:', savedUserData.email);
-              setUser(savedUserData);
-            } catch (error) {
-              console.error('❌ Invalid user data:', error);
-              // Invalid user data, clear storage
-              localStorage.removeItem('dino_token');
-              localStorage.removeItem('dino_user');
-              setUser(null);
+              console.warn('Failed to refresh user data, using stored data');
             }
           }
-        } else {
-          console.log('ℹ️ No stored auth data found');
-          setUser(null);
         }
       } catch (error) {
-        console.error('❌ Failed to initialize auth:', error);
-        localStorage.removeItem('dino_token');
-        localStorage.removeItem('dino_user');
-        localStorage.removeItem('dino_demo_mode');
-        setUser(null);
+        console.error('Failed to initialize auth:', error);
+        authService.logout();
       } finally {
         setLoading(false);
       }
@@ -93,17 +54,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (credentials: LoginCredentials): Promise<void> => {
     try {
       setLoading(true);
-      const response = await authService.login(email, password);
-      
-      // Store token and user
-      localStorage.setItem('dino_token', response.access_token);
-      localStorage.setItem('dino_user', JSON.stringify(response.user));
-      
-      // Set user
-      setUser(response.user);
+      const authToken = await authService.login(credentials);
+      setUser(authToken.user);
     } catch (error) {
       throw error;
     } finally {
@@ -111,17 +66,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (userData: UserRegistration): Promise<void> => {
+  const register = async (userData: RegisterData): Promise<void> => {
     try {
       setLoading(true);
-      const response = await authService.register(userData);
+      const newUser = await authService.register(userData);
       
-      // Store token and user
-      localStorage.setItem('dino_token', response.access_token);
-      localStorage.setItem('dino_user', JSON.stringify(response.user));
-      
-      // Set user
-      setUser(response.user);
+      // After registration, user needs to login
+      // For now, we'll auto-login with the provided credentials
+      await login({ email: userData.email, password: userData.password });
     } catch (error) {
       throw error;
     } finally {
@@ -130,10 +82,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = (): void => {
-    localStorage.removeItem('dino_token');
-    localStorage.removeItem('dino_user');
-    localStorage.removeItem('dino_refresh_token');
-    localStorage.removeItem('dino_demo_mode');
+    authService.logout();
     setUser(null);
   };
 
@@ -141,7 +90,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const updatedUser = await authService.updateProfile(userData);
       setUser(updatedUser);
-      localStorage.setItem('dino_user', JSON.stringify(updatedUser));
     } catch (error) {
       throw error;
     }
@@ -151,7 +99,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const currentUser = await authService.getCurrentUser();
       setUser(currentUser);
-      localStorage.setItem('dino_user', JSON.stringify(currentUser));
     } catch (error) {
       console.error('Failed to refresh user:', error);
       // If refresh fails, user might need to login again
@@ -160,84 +107,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Convert UserProfile to AuthUser with role information
-  const getUserWithRole = (): AuthUser | null => {
-    if (!user) return null;
-
-    // Check if user already has an RBAC role property (from demo mode)
-    let roleName: RoleName = ROLES.ADMIN;
-    
-    // If user has an rbacRole property (demo mode), use it
-    if ((user as any).rbacRole) {
-      roleName = (user as any).rbacRole as RoleName;
-    } else if ((user as any).role === 'staff') {
-      // Map staff role to operator for RBAC
-      roleName = ROLES.OPERATOR;
-    } else if ((user as any).role === 'admin') {
-      // Map admin role to admin for RBAC
-      roleName = ROLES.ADMIN;
-    } else {
-      // For regular users, assign roles based on email or default to admin
-      if (user.email?.includes('operator')) {
-        roleName = ROLES.OPERATOR;
-      }
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+    try {
+      await authService.changePassword(currentPassword, newPassword);
+    } catch (error) {
+      throw error;
     }
-
-    const role = PermissionService.getRoleDefinition(roleName);
-    if (!role) return null;
-
-    return {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: role,
-      permissions: role.permissions,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-  };
-
-  // Role-based access control methods
-  const hasPermission = (permission: PermissionName): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.hasPermission(authUser, permission);
-  };
-
-  const hasRole = (role: string): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.hasRole(authUser, role);
-  };
-
-  const canAccessRoute = (route: string): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.canAccessRoute(authUser, route);
-  };
-
-  const isAdmin = (): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.isAdmin(authUser);
-  };
-
-  const isOperator = (): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.isOperator(authUser);
-  };
-
-  const isSuperAdmin = (): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.isSuperAdmin(authUser);
-  };
-
-  const setDemoUser = (demoUser: UserProfile): void => {
-    // Store demo session data
-    localStorage.setItem('dino_token', 'demo-token-bypass');
-    localStorage.setItem('dino_user', JSON.stringify(demoUser));
-    localStorage.setItem('dino_demo_mode', 'true');
-    
-    // Set user in state
-    setUser(demoUser);
   };
 
   const value: AuthContextType = {
@@ -247,17 +122,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateUser,
     refreshUser,
+    changePassword,
     loading,
     isLoading: loading,
     isAuthenticated: !!user,
-    hasPermission,
-    hasRole,
-    canAccessRoute,
-    isAdmin,
-    isOperator,
-    isSuperAdmin,
-    getUserWithRole,
-    setDemoUser,
   };
 
   return (

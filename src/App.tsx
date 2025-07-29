@@ -1,7 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-// import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-// import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
@@ -41,8 +39,7 @@ import { PERMISSIONS } from './types/auth';
 function App() {
   return (
     <ThemeProvider>
-      {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
-        <AuthProvider>
+      <AuthProvider>
           <WorkspaceProvider>
             <NotificationProvider>
               <CartProvider>
@@ -119,7 +116,6 @@ function App() {
             </NotificationProvider>
           </WorkspaceProvider>
         </AuthProvider>
-      {/* </LocalizationProvider> */}
     </ThemeProvider>
   );
 }

@@ -1,167 +1,311 @@
 import { apiService } from './api';
-import { 
-  MenuItem, 
-  MenuCategory, 
-  MenuItemCreate, 
-  MenuItemUpdate,
-  MenuCategoryCreate,
-  MenuCategoryUpdate,
-  ApiResponse 
-} from '../types';
+import { ApiResponse } from '../types';
+
+export interface MenuCategory {
+  id: string;
+  name: string;
+  description: string;
+  venue_id: string;
+  image_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  base_price: number;
+  venue_id: string;
+  category_id: string;
+  image_urls: string[];
+  is_vegetarian: boolean;
+  is_vegan: boolean;
+  is_gluten_free: boolean;
+  spice_level: 'mild' | 'medium' | 'hot' | 'very_hot';
+  preparation_time_minutes: number;
+  nutritional_info?: {
+    calories?: number;
+    protein?: number;
+    carbs?: number;
+    fat?: number;
+  };
+  is_available: boolean;
+  rating: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MenuCategoryCreate {
+  name: string;
+  description: string;
+  venue_id: string;
+  image_url?: string;
+}
+
+export interface MenuItemCreate {
+  name: string;
+  description: string;
+  base_price: number;
+  venue_id: string;
+  category_id: string;
+  is_vegetarian?: boolean;
+  is_vegan?: boolean;
+  is_gluten_free?: boolean;
+  spice_level?: 'mild' | 'medium' | 'hot' | 'very_hot';
+  preparation_time_minutes?: number;
+  nutritional_info?: object;
+}
 
 class MenuService {
-  // Menu Categories
-  async getMenuCategories(cafeId: string): Promise<MenuCategory[]> {
-    const response = await apiService.get<MenuCategory[]>(`/menu/categories/${cafeId}`);
-    return response.data || [];
+  // Categories
+  async getCategories(venueId?: string): Promise<MenuCategory[]> {
+    try {
+      const params = venueId ? { venue_id: venueId } : {};
+      const response = await apiService.get<MenuCategory[]>('/menu/categories', params);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch categories');
+      }
+    } catch (error: any) {
+      console.error('Get categories error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch categories');
+    }
   }
 
-  async createMenuCategory(categoryData: MenuCategoryCreate): Promise<ApiResponse<MenuCategory>> {
-    return await apiService.post<MenuCategory>('/menu/categories', categoryData);
+  async getVenueCategories(venueId: string): Promise<MenuCategory[]> {
+    try {
+      const response = await apiService.get<MenuCategory[]>(`/menu/venues/${venueId}/categories`);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch venue categories');
+      }
+    } catch (error: any) {
+      console.error('Get venue categories error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch venue categories');
+    }
   }
 
-  async updateMenuCategory(categoryId: string, categoryData: MenuCategoryUpdate): Promise<ApiResponse<MenuCategory>> {
-    return await apiService.put<MenuCategory>(`/menu/categories/${categoryId}`, categoryData);
+  async createCategory(categoryData: MenuCategoryCreate): Promise<MenuCategory> {
+    try {
+      const response = await apiService.post<MenuCategory>('/menu/categories', categoryData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to create category');
+      }
+    } catch (error: any) {
+      console.error('Create category error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to create category');
+    }
   }
 
-  async deleteMenuCategory(categoryId: string): Promise<ApiResponse<void>> {
-    return await apiService.delete<void>(`/menu/categories/${categoryId}`);
+  async updateCategory(categoryId: string, categoryData: Partial<MenuCategoryCreate>): Promise<MenuCategory> {
+    try {
+      const response = await apiService.put<MenuCategory>(`/menu/categories/${categoryId}`, categoryData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to update category');
+      }
+    } catch (error: any) {
+      console.error('Update category error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update category');
+    }
+  }
+
+  async deleteCategory(categoryId: string): Promise<void> {
+    try {
+      const response = await apiService.delete(`/menu/categories/${categoryId}`);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete category');
+      }
+    } catch (error: any) {
+      console.error('Delete category error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to delete category');
+    }
   }
 
   // Menu Items
-  async getMenuItems(cafeId: string, filters?: {
-    category?: string;
-    isVeg?: boolean;
-    availableOnly?: boolean;
-  }): Promise<MenuItem[]> {
-    const params = new URLSearchParams();
-    if (filters?.category) params.append('category', filters.category);
-    if (filters?.isVeg !== undefined) params.append('is_veg', filters.isVeg.toString());
-    if (filters?.availableOnly !== undefined) params.append('available_only', filters.availableOnly.toString());
+  async getMenuItems(venueId?: string, categoryId?: string): Promise<MenuItem[]> {
+    try {
+      const params: any = {};
+      if (venueId) params.venue_id = venueId;
+      if (categoryId) params.category_id = categoryId;
+      
+      const response = await apiService.get<MenuItem[]>('/menu/items', params);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch menu items');
+      }
+    } catch (error: any) {
+      console.error('Get menu items error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch menu items');
+    }
+  }
 
-    const response = await apiService.get<MenuItem[]>(`/menu/items/${cafeId}?${params.toString()}`);
-    return response.data || [];
+  async getVenueMenuItems(venueId: string, categoryId?: string): Promise<MenuItem[]> {
+    try {
+      const params = categoryId ? { category_id: categoryId } : {};
+      const response = await apiService.get<MenuItem[]>(`/menu/venues/${venueId}/items`, params);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch venue menu items');
+      }
+    } catch (error: any) {
+      console.error('Get venue menu items error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch venue menu items');
+    }
   }
 
   async getMenuItem(itemId: string): Promise<MenuItem> {
-    const response = await apiService.get<MenuItem>(`/menu/items/detail/${itemId}`);
-    return response.data!;
-  }
-
-  async createMenuItem(itemData: MenuItemCreate): Promise<ApiResponse<MenuItem>> {
-    return await apiService.post<MenuItem>('/menu/items', itemData);
-  }
-
-  async updateMenuItem(itemId: string, itemData: MenuItemUpdate): Promise<ApiResponse<MenuItem>> {
-    return await apiService.put<MenuItem>(`/menu/items/${itemId}`, itemData);
-  }
-
-  async deleteMenuItem(itemId: string): Promise<ApiResponse<void>> {
-    return await apiService.delete<void>(`/menu/items/${itemId}`);
-  }
-
-  async uploadMenuItemImage(itemId: string, file: File, onProgress?: (progress: number) => void): Promise<ApiResponse<{ image_url: string }>> {
-    return await apiService.uploadFile<{ image_url: string }>(
-      `/menu/items/${itemId}/image`,
-      file,
-      onProgress
-    );
-  }
-
-  async reorderMenuItems(cafeId: string, itemOrders: Array<{ id: string; order: number }>): Promise<ApiResponse<void>> {
-    return await apiService.post<void>('/menu/items/reorder', {
-      cafe_id: cafeId,
-      item_orders: itemOrders,
-    });
-  }
-
-  // Helper methods for filtering
-  filterMenuItems(items: MenuItem[], filters: {
-    searchQuery?: string;
-    category?: string;
-    isVeg?: boolean;
-    priceRange?: { min: number; max: number };
-  }): MenuItem[] {
-    let filteredItems = [...items];
-
-    // Search filter
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      filteredItems = filteredItems.filter(item =>
-        item.name.toLowerCase().includes(query) ||
-        item.description.toLowerCase().includes(query) ||
-        item.ingredients?.some(ingredient => ingredient.toLowerCase().includes(query))
-      );
-    }
-
-    // Category filter
-    if (filters.category) {
-      filteredItems = filteredItems.filter(item => item.category === filters.category);
-    }
-
-    // Veg filter
-    if (filters.isVeg !== undefined) {
-      filteredItems = filteredItems.filter(item => item.isVeg === filters.isVeg);
-    }
-
-    // Price range filter
-    if (filters.priceRange) {
-      filteredItems = filteredItems.filter(item =>
-        item.price >= filters.priceRange!.min && item.price <= filters.priceRange!.max
-      );
-    }
-
-    return filteredItems;
-  }
-
-  // Group items by category
-  groupItemsByCategory(items: MenuItem[]): Record<string, MenuItem[]> {
-    return items.reduce((groups, item) => {
-      const category = item.category || 'Other';
-      if (!groups[category]) {
-        groups[category] = [];
+    try {
+      const response = await apiService.get<MenuItem>(`/menu/items/${itemId}`);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch menu item');
       }
-      groups[category].push(item);
-      return groups;
-    }, {} as Record<string, MenuItem[]>);
-  }
-
-  // Get price range from items
-  getPriceRange(items: MenuItem[]): { min: number; max: number } {
-    if (items.length === 0) {
-      return { min: 0, max: 100 };
+    } catch (error: any) {
+      console.error('Get menu item error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch menu item');
     }
-
-    const prices = items.map(item => item.price);
-    return {
-      min: Math.min(...prices),
-      max: Math.max(...prices),
-    };
   }
 
-  // Format price
-  formatPrice(price: number, currency: string = 'INR'): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(price);
+  async createMenuItem(itemData: MenuItemCreate): Promise<MenuItem> {
+    try {
+      const response = await apiService.post<MenuItem>('/menu/items', itemData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to create menu item');
+      }
+    } catch (error: any) {
+      console.error('Create menu item error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to create menu item');
+    }
   }
 
-  // Check if item is available
-  isItemAvailable(item: MenuItem): boolean {
-    return item.isAvailable;
+  async updateMenuItem(itemId: string, itemData: Partial<MenuItemCreate>): Promise<MenuItem> {
+    try {
+      const response = await apiService.put<MenuItem>(`/menu/items/${itemId}`, itemData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to update menu item');
+      }
+    } catch (error: any) {
+      console.error('Update menu item error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update menu item');
+    }
   }
 
-  // Get estimated preparation time for multiple items
-  getEstimatedTime(items: Array<{ menuItem: MenuItem; quantity: number }>): number {
-    let maxTime = 0;
-    
-    items.forEach(({ menuItem, quantity }) => {
-      const itemTime = menuItem.preparationTime * quantity;
-      maxTime = Math.max(maxTime, itemTime);
-    });
+  async deleteMenuItem(itemId: string): Promise<void> {
+    try {
+      const response = await apiService.delete(`/menu/items/${itemId}`);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete menu item');
+      }
+    } catch (error: any) {
+      console.error('Delete menu item error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to delete menu item');
+    }
+  }
 
-    return maxTime + 5; // Add 5 minutes for order processing
+  async searchMenuItems(venueId: string, query: string): Promise<MenuItem[]> {
+    try {
+      const response = await apiService.get<MenuItem[]>(`/menu/venues/${venueId}/search`, { q: query });
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to search menu items');
+      }
+    } catch (error: any) {
+      console.error('Search menu items error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to search menu items');
+    }
+  }
+
+  async updateItemAvailability(itemId: string, isAvailable: boolean): Promise<void> {
+    try {
+      const response = await apiService.put(`/menu/items/${itemId}`, { is_available: isAvailable });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update item availability');
+      }
+    } catch (error: any) {
+      console.error('Update item availability error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update item availability');
+    }
+  }
+
+  async bulkUpdateAvailability(itemIds: string[], isAvailable: boolean): Promise<void> {
+    try {
+      const response = await apiService.post('/menu/items/bulk-update-availability', {
+        item_ids: itemIds,
+        is_available: isAvailable,
+      });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to bulk update availability');
+      }
+    } catch (error: any) {
+      console.error('Bulk update availability error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to bulk update availability');
+    }
+  }
+
+  async uploadCategoryImage(categoryId: string, file: File): Promise<string> {
+    try {
+      const response = await apiService.uploadFile<{ image_url: string }>(
+        `/menu/categories/${categoryId}/image`,
+        file
+      );
+      
+      if (response.success && response.data) {
+        return response.data.image_url;
+      } else {
+        throw new Error(response.message || 'Failed to upload category image');
+      }
+    } catch (error: any) {
+      console.error('Upload category image error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to upload category image');
+    }
+  }
+
+  async uploadItemImages(itemId: string, files: File[]): Promise<string[]> {
+    try {
+      const response = await apiService.uploadFiles<{ image_urls: string[] }>(
+        `/menu/items/${itemId}/images`,
+        files
+      );
+      
+      if (response.success && response.data) {
+        return response.data.image_urls;
+      } else {
+        throw new Error(response.message || 'Failed to upload item images');
+      }
+    } catch (error: any) {
+      console.error('Upload item images error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to upload item images');
+    }
   }
 }
 
