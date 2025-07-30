@@ -1,202 +1,64 @@
 import { apiService } from './api';
-import { ApiResponse } from '../types';
+import { 
+  Order,
+  OrderCreate,
+  OrderUpdate,
+  OrderItem,
+  OrderItemCreate,
+  PublicOrderCreate,
+  CustomerCreate,
+  OrderValidation,
+  OrderReceipt,
+  LiveOrderData,
+  VenueAnalyticsData,
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethod,
+  OrderType,
+  PaginatedResponse,
+  ApiResponse,
+  OrderFilters
+} from '../types/api';
 
-// Order-related types
-export interface Order {
-  id: string;
-  order_number: string;
-  venue_id: string;
-  table_id?: string;
-  customer_id: string;
-  order_type: 'dine_in' | 'takeaway' | 'delivery';
-  items: OrderItem[];
-  subtotal: number;
-  tax_amount: number;
-  discount_amount: number;
-  total_amount: number;
-  status: OrderStatus;
-  payment_status: PaymentStatus;
-  payment_method?: PaymentMethod;
-  special_instructions?: string;
-  estimated_ready_time?: string;
-  actual_ready_time?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface OrderItem {
-  menu_item_id: string;
-  menu_item_name: string;
-  variant_id?: string;
-  variant_name?: string;
-  quantity: number;
-  unit_price: number;
-  total_price: number;
-  special_instructions?: string;
-}
-
-export interface OrderCreate {
-  venue_id: string;
-  table_id?: string;
-  customer_id: string;
-  order_type: 'dine_in' | 'takeaway' | 'delivery';
-  items: OrderItemCreate[];
-  special_instructions?: string;
-}
-
-export interface OrderItemCreate {
-  menu_item_id: string;
-  variant_id?: string;
-  quantity: number;
-  customizations?: Record<string, any>;
-  special_instructions?: string;
-}
-
-export interface PublicOrderCreate {
-  venue_id: string;
-  table_id?: string;
-  customer: CustomerCreate;
-  items: OrderItemCreate[];
-  order_type: 'qr_scan' | 'walk_in' | 'online' | 'phone';
-  special_instructions?: string;
-  estimated_guests?: number;
-}
-
-export interface CustomerCreate {
-  name: string;
-  phone: string;
-  email?: string;
-  date_of_birth?: string;
-  preferences?: Record<string, any>;
-  dietary_restrictions?: string[];
-  marketing_consent?: boolean;
-}
-
-export interface OrderUpdate {
-  status?: OrderStatus;
-  payment_status?: PaymentStatus;
-  estimated_ready_time?: string;
-  special_instructions?: string;
-}
-
-export type OrderStatus = 
-  | 'pending' 
-  | 'confirmed' 
-  | 'preparing' 
-  | 'ready' 
-  | 'out_for_delivery'
-  | 'delivered'
-  | 'served' 
-  | 'cancelled';
-
-export type PaymentStatus = 
-  | 'pending' 
-  | 'processing'
-  | 'paid' 
-  | 'failed' 
-  | 'refunded'
-  | 'partially_refunded';
-
-export type PaymentMethod = 
-  | 'cash'
-  | 'card'
-  | 'upi'
-  | 'wallet'
-  | 'net_banking';
-
-export interface OrderAnalytics {
-  venue_id: string;
-  period: {
-    start_date: string;
-    end_date: string;
-  };
-  total_orders: number;
-  total_revenue: number;
-  average_order_value: number;
-  status_breakdown: Record<OrderStatus, number>;
-  payment_breakdown: Record<PaymentStatus, number>;
-}
-
-export interface LiveOrderData {
-  venue_id: string;
-  timestamp: string;
-  summary: {
-    total_active_orders: number;
-    pending_orders: number;
-    preparing_orders: number;
-    ready_orders: number;
-  };
-  orders_by_status: Record<string, Order[]>;
-}
-
-export interface OrderValidation {
-  is_valid: boolean;
-  venue_open: boolean;
-  items_available: string[];
-  items_unavailable: string[];
-  estimated_total: number;
-  estimated_preparation_time?: number;
-  message?: string;
-  errors: string[];
-}
-
-export interface OrderReceipt {
-  order_id: string;
-  order_number: string;
-  venue: {
-    name: string;
-    address: string;
-    phone: string;
-  };
-  items: OrderItem[];
-  subtotal: number;
-  tax_amount: number;
-  total_amount: number;
-  payment_status: PaymentStatus;
-  order_date: string;
-  table_number?: number;
-}
+// Remove duplicate type definitions - they're now in types/api.ts
 
 class OrderService {
   // Get orders with filtering
-  async getOrders(filters?: {
-    venue_id?: string;
-    status?: OrderStatus;
-    payment_status?: PaymentStatus;
-    order_type?: string;
-    page?: number;
-    page_size?: number;
-  }): Promise<{
-    orders: Order[];
-    total: number;
-    page: number;
-    total_pages: number;
-  }> {
+  async getOrders(filters?: OrderFilters): Promise<PaginatedResponse<Order>> {
     try {
       const params = new URLSearchParams();
       
+      if (filters?.page) params.append('page', filters.page.toString());
+      if (filters?.page_size) params.append('page_size', filters.page_size.toString());
       if (filters?.venue_id) params.append('venue_id', filters.venue_id);
       if (filters?.status) params.append('status', filters.status);
       if (filters?.payment_status) params.append('payment_status', filters.payment_status);
       if (filters?.order_type) params.append('order_type', filters.order_type);
-      if (filters?.page) params.append('page', filters.page.toString());
-      if (filters?.page_size) params.append('page_size', filters.page_size.toString());
 
-      const response = await apiService.get<any>(`/orders?${params.toString()}`);
+      const response = await apiService.get<PaginatedResponse<Order>>(`/orders?${params.toString()}`);
       
-      if (response.success && response.data) {
-        return {
-          orders: response.data.data || response.data,
-          total: response.data.total || 0,
-          page: response.data.page || 1,
-          total_pages: response.data.total_pages || 1
-        };
-      }
-      
-      return { orders: [], total: 0, page: 1, total_pages: 1 };
+      return response.data || {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
     } catch (error) {
       console.error('Failed to get orders:', error);
-      return { orders: [], total: 0, page: 1, total_pages: 1 };
+      return {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
     }
   }
 
@@ -241,7 +103,7 @@ class OrderService {
   // Update order status
   async updateOrderStatus(orderId: string, status: OrderStatus): Promise<ApiResponse<void>> {
     try {
-      return await apiService.put<void>(`/orders/${orderId}/status`, { status });
+      return await apiService.put<void>(`/orders/${orderId}/status`, { new_status: status });
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update order status');
     }
@@ -298,13 +160,13 @@ class OrderService {
   }
 
   // Get order analytics
-  async getOrderAnalytics(venueId: string, startDate?: string, endDate?: string): Promise<OrderAnalytics | null> {
+  async getOrderAnalytics(venueId: string, startDate?: string, endDate?: string): Promise<VenueAnalyticsData | null> {
     try {
       const params = new URLSearchParams();
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
 
-      const response = await apiService.get<OrderAnalytics>(`/orders/venues/${venueId}/analytics?${params.toString()}`);
+      const response = await apiService.get<VenueAnalyticsData>(`/orders/venues/${venueId}/analytics?${params.toString()}`);
       return response.data || null;
     } catch (error) {
       console.error('Failed to get order analytics:', error);
@@ -519,3 +381,11 @@ class OrderService {
 }
 
 export const orderService = new OrderService();
+
+// Export types for components
+export type { 
+  Order, 
+  OrderStatus, 
+  PaymentStatus, 
+  PaymentMethod 
+} from '../types/api';

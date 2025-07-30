@@ -44,13 +44,14 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import CleanDinoLogo from '../components/CleanDinoLogo';
-import QRCodeDemo from '../components/QRCodeDemo';
+import DinoLogo from '../components/DinoLogo';
 
-const CleanHomePage: React.FC = () => {
+import { formatINR } from '../utils/formatters';
+
+const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [showQRDemo, setShowQRDemo] = useState(false);
+
 
   // Refs for smooth scrolling
   const heroRef = useRef<HTMLDivElement>(null);
@@ -118,7 +119,7 @@ const CleanHomePage: React.FC = () => {
   const pricingPlans = [
     {
       name: 'Starter',
-      price: 29,
+      price: 2999,
       period: 'month',
       description: 'Perfect for small cafes and restaurants',
       icon: <Restaurant sx={{ fontSize: 40, color: 'primary.main' }} />,
@@ -135,7 +136,7 @@ const CleanHomePage: React.FC = () => {
     },
     {
       name: 'Professional',
-      price: 79,
+      price: 7999,
       period: 'month',
       description: 'Ideal for growing restaurant chains',
       icon: <Business sx={{ fontSize: 40, color: 'secondary.main' }} />,
@@ -154,7 +155,7 @@ const CleanHomePage: React.FC = () => {
     },
     {
       name: 'Enterprise',
-      price: 199,
+      price: 19999,
       period: 'month',
       description: 'For large restaurant enterprises',
       icon: <CorporateFare sx={{ fontSize: 40, color: 'success.main' }} />,
@@ -175,60 +176,60 @@ const CleanHomePage: React.FC = () => {
 
   const testimonials = [
     {
-      name: "Sarah Johnson",
+      name: "Rajesh Kumar",
       role: "Restaurant Owner",
-      restaurant: "The Golden Spoon",
+      restaurant: "Spice Garden",
       rating: 5,
-      comment: "Dino E-Menu transformed our business! Revenue increased by 45% in just 3 months. The QR ordering system is incredibly intuitive.",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150",
-    },
-    {
-      name: "Michael Chen",
-      role: "Head Chef",
-      restaurant: "Fusion Bistro",
-      rating: 5,
-      comment: "The analytics helped us optimize our menu. Customer satisfaction is at an all-time high! We can track everything in real-time.",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Manager",
-      restaurant: "Coastal Cafe",
-      rating: 5,
-      comment: "Setup was incredibly easy. Our staff loves the intuitive interface! Customer wait times have decreased by 60%.",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150",
-    },
-    {
-      name: "David Park",
-      role: "Owner",
-      restaurant: "Urban Kitchen",
-      rating: 5,
-      comment: "The best investment we've made. Order accuracy improved dramatically and our customers love the contactless experience.",
+      comment: "Dino E-Menu transformed our restaurant completely! Revenue increased by 45% in just 3 months. The QR ordering system is perfect for Indian customers.",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
     },
     {
-      name: "Lisa Thompson",
-      role: "Operations Manager",
-      restaurant: "Metro Diner",
+      name: "Priya Sharma",
+      role: "Head Chef",
+      restaurant: "Mumbai Masala",
       rating: 5,
-      comment: "Dino E-Menu scaled perfectly with our business. Managing multiple locations has never been easier.",
-      avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150",
+      comment: "The analytics helped us understand our customers better. We can track peak hours and optimize our menu for maximum profit.",
+      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150",
     },
     {
-      name: "James Wilson",
-      role: "Franchise Owner",
-      restaurant: "Quick Bites Chain",
+      name: "Arjun Patel",
+      role: "Manager",
+      restaurant: "Gujarati Thali House",
       rating: 5,
-      comment: "The enterprise features are outstanding. Custom branding and analytics across all our locations is game-changing.",
+      comment: "Setup was incredibly easy. Our customers love ordering from their phones. Wait times reduced by 60% during lunch rush!",
+      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
+    },
+    {
+      name: "Deepika Reddy",
+      role: "Owner",
+      restaurant: "South Indian Express",
+      rating: 5,
+      comment: "Best investment for our chain! Order accuracy improved and customers appreciate the contactless experience, especially post-COVID.",
+      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150",
+    },
+    {
+      name: "Mohammed Ali",
+      role: "Operations Manager",
+      restaurant: "Biryani Palace",
+      rating: 5,
+      comment: "Managing our 8 locations across Mumbai became so much easier. Real-time tracking and centralized menu management is fantastic.",
       avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+    },
+    {
+      name: "Anita Singh",
+      role: "Franchise Owner",
+      restaurant: "Punjabi Dhaba Chain",
+      rating: 5,
+      comment: "The enterprise features are outstanding. Custom branding helps maintain our traditional dhaba feel while being modern.",
+      avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150",
     },
   ];
 
   const stats = [
-    { number: "10,000+", label: "Restaurants", icon: <Restaurant /> },
-    { number: "2M+", label: "Orders Daily", icon: <TrendingUp /> },
+    { number: "5,000+", label: "Restaurants", icon: <Restaurant /> },
+    { number: "1M+", label: "Orders Daily", icon: <TrendingUp /> },
     { number: "99.9%", label: "Uptime", icon: <CloudDone /> },
-    { number: "40%", label: "Revenue Boost", icon: <EmojiEvents /> },
+    { number: "45%", label: "Revenue Boost", icon: <EmojiEvents /> },
   ];
 
   const benefits = [
@@ -298,7 +299,7 @@ const CleanHomePage: React.FC = () => {
                     maxWidth: 500,
                   }}
                 >
-                  Join 10,000+ restaurants revolutionizing customer experience with QR code-based digital menus. 
+                  Join 5,000+ restaurants across India revolutionizing customer experience with QR code-based digital menus. 
                   Let customers order directly from their phones while you manage everything from our powerful dashboard.
                 </Typography>
 
@@ -326,10 +327,10 @@ const CleanHomePage: React.FC = () => {
                         variant="outlined"
                         size="large"
                         startIcon={<PlayArrow />}
-                        onClick={() => setShowQRDemo(true)}
+                        onClick={() => navigate('/register')}
                         sx={{ px: 4, py: 1.5, fontSize: '1rem' }}
                       >
-                        View Menu Demo
+                        Create Account
                       </Button>
                     </>
                   )}
@@ -562,7 +563,7 @@ const CleanHomePage: React.FC = () => {
                     
                     <Box sx={{ mb: 4 }}>
                       <Typography variant="h3" fontWeight="bold" color="primary.main" component="span">
-                        ${plan.price}
+                        {formatINR(plan.price)}
                       </Typography>
                       <Typography variant="body1" color="text.secondary" component="span">
                         /{plan.period}
@@ -752,9 +753,9 @@ const CleanHomePage: React.FC = () => {
           
           <Grid container spacing={4} sx={{ mb: 8 }}>
             {[
-              { icon: <Phone />, title: 'Call Us', info: '+1 (555) 123-4567', action: 'tel:+15551234567' },
-              { icon: <Email />, title: 'Email Us', info: 'hello@dinoemenu.com', action: 'mailto:hello@dinoemenu.com' },
-              { icon: <LocationOn />, title: 'Visit Us', info: '123 Tech Street, San Francisco, CA', action: '#' },
+              { icon: <Phone />, title: 'Call Us', info: '+91 98765 43210', action: 'tel:+919876543210' },
+              { icon: <Email />, title: 'Email Us', info: 'hello@dinoemenu.in', action: 'mailto:hello@dinoemenu.in' },
+              { icon: <LocationOn />, title: 'Visit Us', info: 'BKC, Mumbai, Maharashtra 400051', action: '#' },
             ].map((contact, index) => (
               <Grid item xs={12} md={4} key={index}>
                 <Paper
@@ -812,7 +813,7 @@ const CleanHomePage: React.FC = () => {
                   borderColor: 'primary.dark',
                 }}
               >
-                <CleanDinoLogo size={60} />
+                <DinoLogo size={60} />
                 <Typography variant="h4" gutterBottom fontWeight="600" sx={{ mt: 2 }}>
                   Special Launch Offer
                 </Typography>
@@ -860,13 +861,9 @@ const CleanHomePage: React.FC = () => {
         </Fab>
       </Zoom>
 
-      {/* QR Code Demo Dialog */}
-      <QRCodeDemo
-        open={showQRDemo}
-        onClose={() => setShowQRDemo(false)}
-      />
+
     </Box>
   );
 };
 
-export default CleanHomePage;
+export default HomePage;

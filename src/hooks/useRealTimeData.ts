@@ -110,7 +110,7 @@ export const useRealTimeOrders = (venueId?: string, status?: string) => {
     if (status) filters.status = status;
     
     const result = await orderService.getOrders(filters);
-    return result.orders;
+    return result.data;
   }, [targetVenueId, status]);
 
   return useRealTimeData(
@@ -128,7 +128,7 @@ export const useRealTimeLiveOrders = (venueId?: string) => {
 
   const fetchLiveOrders = useCallback(async () => {
     if (!targetVenueId) return null;
-    return await dashboardService.getLiveOrders(targetVenueId);
+    return await dashboardService.getLiveOrderStatus(targetVenueId);
   }, [targetVenueId]);
 
   return useRealTimeData(
@@ -146,7 +146,8 @@ export const useRealTimeTables = (venueId?: string) => {
 
   const fetchTables = useCallback(async () => {
     if (!targetVenueId) return [];
-    return await tableService.getVenueTables(targetVenueId);
+    const result = await tableService.getTables({ venue_id: targetVenueId });
+    return result.data;
   }, [targetVenueId]);
 
   return useRealTimeData(

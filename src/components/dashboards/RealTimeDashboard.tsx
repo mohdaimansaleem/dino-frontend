@@ -107,7 +107,7 @@ const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({ className = '' })
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-2xl font-bold text-yellow-600">
-                        {liveOrders.summary?.pending || 0}
+                        {liveOrders.summary?.pending_orders || 0}
                       </p>
                       <p className="text-sm text-yellow-700">Pending</p>
                     </div>
@@ -119,7 +119,7 @@ const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({ className = '' })
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-2xl font-bold text-blue-600">
-                        {liveOrders.summary?.confirmed || 0}
+                        {liveOrders.summary?.total_active_orders || 0}
                       </p>
                       <p className="text-sm text-blue-700">Confirmed</p>
                     </div>
@@ -131,7 +131,7 @@ const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({ className = '' })
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-2xl font-bold text-orange-600">
-                        {liveOrders.summary?.preparing || 0}
+                        {liveOrders.summary?.preparing_orders || 0}
                       </p>
                       <p className="text-sm text-orange-700">Preparing</p>
                     </div>
@@ -143,7 +143,7 @@ const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({ className = '' })
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-2xl font-bold text-green-600">
-                        {liveOrders.summary?.ready || 0}
+                        {liveOrders.summary?.ready_orders || 0}
                       </p>
                       <p className="text-sm text-green-700">Ready</p>
                     </div>
@@ -298,19 +298,19 @@ const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({ className = '' })
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-600">
-                {(liveOrders?.summary?.pending || 0) + (liveOrders?.summary?.confirmed || 0)}
+                {(liveOrders?.summary?.pending_orders || 0) + (liveOrders?.summary?.total_active_orders || 0)}
               </p>
               <p className="text-sm text-gray-600">Orders to Process</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-orange-600">
-                {liveOrders?.summary?.preparing || 0}
+                {liveOrders?.summary?.preparing_orders || 0}
               </p>
               <p className="text-sm text-gray-600">In Kitchen</p>
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600">
-                {liveOrders?.summary?.ready || 0}
+                {liveOrders?.summary?.ready_orders || 0}
               </p>
               <p className="text-sm text-gray-600">Ready to Serve</p>
             </div>

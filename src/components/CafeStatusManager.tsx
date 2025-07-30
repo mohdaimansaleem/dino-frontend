@@ -254,7 +254,7 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
                     Last Status Change
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {new Date().toLocaleString()}
+                    {targetCafe.lastStatusChange ? new Date(targetCafe.lastStatusChange).toLocaleString() : 'Not available'}
                   </Typography>
                 </Box>
               </Box>
@@ -267,7 +267,7 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
                     Operating Hours
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    9:00 AM - 10:00 PM
+                    {targetCafe.operatingHours || 'Not set'}
                   </Typography>
                 </Box>
               </Box>

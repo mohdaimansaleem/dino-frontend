@@ -71,38 +71,18 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
     setError('');
 
     try {
-      // For demo mode, generate a mock QR code
-      const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true' || cafeId === 'dino-cafe-1';
-      
-      if (isDemoMode) {
-        // Generate demo QR data
-        const demoQrData = {
-          id: `qr-${tableId}-${Date.now()}`,
-          cafeId,
-          tableId,
-          cafeName,
-          tableNumber,
-          qrCodeUrl: `/api/qr/demo-${tableId}.png`,
-          qrCodeBase64: generateDemoQRCode(),
-          menuUrl: `${window.location.origin}/menu/${cafeId}/${tableId}`,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setQrData(demoQrData);
-      } else {
-        const newQrData = await qrService.generateTableQR({
-          cafeId,
-          tableId,
-          cafeName,
-          tableNumber,
-          customization: {
-            template,
-            primaryColor: '#2e7d32',
-            secondaryColor: '#1b5e20',
-          },
-        });
-        setQrData(newQrData);
-      }
+      const newQrData = await qrService.generateTableQR({
+        cafeId,
+        tableId,
+        cafeName,
+        tableNumber,
+        customization: {
+          template,
+          primaryColor: '#2e7d32',
+          secondaryColor: '#1b5e20',
+        },
+      });
+      setQrData(newQrData);
     } catch (err: any) {
       setError(err.message || 'Failed to generate QR code');
     } finally {

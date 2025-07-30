@@ -80,7 +80,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     );
   }
 
-  const summary = dashboardData?.summary || {};
+  const summary = dashboardData?.summary || {} as any;
   const analytics = dashboardData?.venue_analytics || {};
 
   return (
@@ -88,10 +88,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       <div className="space-y-6">
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-green-600 to-blue-600 rounded-lg p-6 text-white">
-          <h1 className="text-2xl font-bold">Welcome back, {user?.first_name}!</h1>
+          <h1 className="text-2xl font-bold">Welcome back, {user?.firstName}!</h1>
           <p className="text-green-100 mt-1">Restaurant Administrator Dashboard</p>
           {user?.venue_id && (
-            <p className="text-green-200 text-sm mt-2">Managing: {summary.venue_name || 'Your Restaurant'}</p>
+            <p className="text-green-200 text-sm mt-2">Managing: {(summary as any).venue_name || 'Your Restaurant'}</p>
           )}
         </div>
 
@@ -187,25 +187,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bg-yellow-50 p-4 rounded-lg">
                   <p className="text-2xl font-bold text-yellow-600">
-                    {liveOrders.summary?.pending || 0}
+                    {liveOrders.summary?.pending_orders || 0}
                   </p>
                   <p className="text-sm text-yellow-700">Pending</p>
                 </div>
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-2xl font-bold text-blue-600">
-                    {liveOrders.summary?.confirmed || 0}
+                    {liveOrders.summary?.total_active_orders || 0}
                   </p>
                   <p className="text-sm text-blue-700">Confirmed</p>
                 </div>
                 <div className="bg-orange-50 p-4 rounded-lg">
                   <p className="text-2xl font-bold text-orange-600">
-                    {liveOrders.summary?.preparing || 0}
+                    {liveOrders.summary?.preparing_orders || 0}
                   </p>
                   <p className="text-sm text-orange-700">Preparing</p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
                   <p className="text-2xl font-bold text-green-600">
-                    {liveOrders.summary?.ready || 0}
+                    {liveOrders.summary?.ready_orders || 0}
                   </p>
                   <p className="text-sm text-green-700">Ready</p>
                 </div>
@@ -299,7 +299,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {dashboardData.recent_orders.slice(0, 5).map((order) => (
+                    {dashboardData.recent_orders.slice(0, 5).map((order: any) => (
                       <tr key={order.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           #{order.order_number}
@@ -351,7 +351,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
             
             {dashboardData?.menu_performance && dashboardData.menu_performance.length > 0 ? (
               <div className="space-y-4">
-                {dashboardData.menu_performance.slice(0, 5).map((item, index) => (
+                {dashboardData.menu_performance.slice(0, 5).map((item: any, index: number) => (
                   <div key={item.item_id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">

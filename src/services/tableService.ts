@@ -1,183 +1,64 @@
 import { apiService } from './api';
-import { ApiResponse } from '../types';
-
-// Table-related types
-export interface Table {
-  id: string;
-  venue_id: string;
-  table_number: number;
-  table_name?: string;
-  capacity: number;
-  table_status: TableStatus;
-  qr_code: string;
-  qr_code_url?: string;
-  location: {
-    section?: string;
-    floor?: string;
-    position?: string;
-    coordinates?: {
-      x: number;
-      y: number;
-    };
-  };
-  features?: string[];
-  is_active: boolean;
-  is_reserved: boolean;
-  reservation_details?: {
-    customer_name: string;
-    customer_phone: string;
-    reservation_time: string;
-    party_size: number;
-    special_requests?: string;
-  };
-  current_order_id?: string;
-  last_cleaned?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TableCreate {
-  venue_id: string;
-  table_number: number;
-  table_name?: string;
-  capacity: number;
-  location?: {
-    section?: string;
-    floor?: string;
-    position?: string;
-    coordinates?: {
-      x: number;
-      y: number;
-    };
-  };
-  features?: string[];
-}
-
-export interface TableUpdate {
-  table_number?: number;
-  table_name?: string;
-  capacity?: number;
-  table_status?: TableStatus;
-  location?: {
-    section?: string;
-    floor?: string;
-    position?: string;
-    coordinates?: {
-      x: number;
-      y: number;
-    };
-  };
-  features?: string[];
-  is_active?: boolean;
-}
-
-export type TableStatus = 
-  | 'available' 
-  | 'occupied' 
-  | 'reserved' 
-  | 'cleaning' 
-  | 'maintenance' 
-  | 'out_of_order';
-
-export interface TableReservation {
-  id: string;
-  table_id: string;
-  customer_name: string;
-  customer_phone: string;
-  customer_email?: string;
-  reservation_time: string;
-  party_size: number;
-  duration_minutes?: number;
-  special_requests?: string;
-  status: ReservationStatus;
-  created_at: string;
-  updated_at: string;
-}
-
-export type ReservationStatus = 
-  | 'pending' 
-  | 'confirmed' 
-  | 'seated' 
-  | 'completed' 
-  | 'cancelled' 
-  | 'no_show';
-
-export interface TableAnalytics {
-  venue_id: string;
-  period: {
-    start_date: string;
-    end_date: string;
-  };
-  total_tables: number;
-  average_utilization: number;
-  peak_hours: Array<{
-    hour: number;
-    utilization_rate: number;
-    occupied_tables: number;
-  }>;
-  table_performance: Array<{
-    table_id: string;
-    table_number: number;
-    total_orders: number;
-    total_revenue: number;
-    utilization_rate: number;
-    average_order_value: number;
-  }>;
-  reservation_stats: {
-    total_reservations: number;
-    confirmed_reservations: number;
-    no_shows: number;
-    cancellations: number;
-  };
-}
-
-export interface TableLayout {
-  venue_id: string;
-  layout_name: string;
-  sections: Array<{
-    id: string;
-    name: string;
-    floor?: string;
-    tables: Array<{
-      table_id: string;
-      position: {
-        x: number;
-        y: number;
-      };
-      rotation?: number;
-    }>;
-  }>;
-  created_at: string;
-  updated_at: string;
-}
+import { 
+  Table, 
+  TableCreate, 
+  TableUpdate, 
+  TableQRCode,
+  QRCodeVerification,
+  TableStatus,
+  PaginatedResponse,
+  ApiResponse,
+  TableFilters
+} from '../types/api';
 
 class TableService {
-  // Get tables with filtering
-  async getTables(filters?: {
-    venue_id?: string;
-    status?: TableStatus;
-    section?: string;
-    floor?: string;
-    available_only?: boolean;
-  }): Promise<Table[]> {
+  // =============================================================================
+  // TABLE MANAGEMENT
+  // =============================================================================
+
+  /**
+   * Get tables with pagination and filtering
+   */
+  async getTables(filters?: TableFilters): Promise<PaginatedResponse<Table>> {
     try {
       const params = new URLSearchParams();
       
+      if (filters?.page) params.append('page', filters.page.toString());
+      if (filters?.page_size) params.append('page_size', filters.page_size.toString());
       if (filters?.venue_id) params.append('venue_id', filters.venue_id);
-      if (filters?.status) params.append('status', filters.status);
-      if (filters?.section) params.append('section', filters.section);
-      if (filters?.floor) params.append('floor', filters.floor);
-      if (filters?.available_only !== undefined) params.append('available_only', filters.available_only.toString());
+      if (filters?.table_status) params.append('table_status', filters.table_status);
+      if (filters?.is_active !== undefined) params.append('is_active', filters.is_active.toString());
 
-      const response = await apiService.get<Table[]>(`/tables?${params.toString()}`);
-      return response.data || [];
+      const response = await apiService.get<PaginatedResponse<Table>>(`/tables?${params.toString()}`);
+      
+      return response.data || {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
     } catch (error) {
       console.error('Failed to get tables:', error);
-      return [];
+      return {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
     }
   }
 
-  // Get table by ID
+  /**
+   * Get table by ID
+   */
   async getTable(tableId: string): Promise<Table | null> {
     try {
       const response = await apiService.get<Table>(`/tables/${tableId}`);
@@ -188,18 +69,9 @@ class TableService {
     }
   }
 
-  // Get venue tables
-  async getVenueTables(venueId: string): Promise<Table[]> {
-    try {
-      const response = await apiService.get<Table[]>(`/tables/venues/${venueId}/tables`);
-      return response.data || [];
-    } catch (error) {
-      console.error('Failed to get venue tables:', error);
-      return [];
-    }
-  }
-
-  // Create new table
+  /**
+   * Create a new table with QR code
+   */
   async createTable(tableData: TableCreate): Promise<ApiResponse<Table>> {
     try {
       return await apiService.post<Table>('/tables', tableData);
@@ -208,7 +80,9 @@ class TableService {
     }
   }
 
-  // Update table
+  /**
+   * Update table information
+   */
   async updateTable(tableId: string, tableData: TableUpdate): Promise<ApiResponse<Table>> {
     try {
       return await apiService.put<Table>(`/tables/${tableId}`, tableData);
@@ -217,7 +91,9 @@ class TableService {
     }
   }
 
-  // Delete table
+  /**
+   * Deactivate table
+   */
   async deleteTable(tableId: string): Promise<ApiResponse<void>> {
     try {
       return await apiService.delete<void>(`/tables/${tableId}`);
@@ -226,332 +102,428 @@ class TableService {
     }
   }
 
-  // Update table status
-  async updateTableStatus(tableId: string, status: TableStatus): Promise<ApiResponse<void>> {
+  // =============================================================================
+  // TABLE STATUS MANAGEMENT
+  // =============================================================================
+
+  /**
+   * Update table status
+   */
+  async updateTableStatus(tableId: string, newStatus: TableStatus): Promise<ApiResponse<void>> {
     try {
-      return await apiService.put<void>(`/tables/${tableId}/status`, { status });
+      return await apiService.put<void>(`/tables/${tableId}/status`, { new_status: newStatus });
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update table status');
     }
   }
 
-  // Bulk update table statuses
-  async bulkUpdateTableStatus(updates: Array<{ table_id: string; status: TableStatus }>): Promise<ApiResponse<void>> {
+  /**
+   * Mark table as occupied
+   */
+  async occupyTable(tableId: string): Promise<ApiResponse<void>> {
     try {
-      return await apiService.put<void>('/tables/bulk-status-update', { updates });
+      return await apiService.post<void>(`/tables/${tableId}/occupy`);
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to bulk update table statuses');
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to occupy table');
     }
   }
 
-  // QR Code Management
-
-  // Generate QR code for table
-  async generateTableQR(tableId: string, customization?: {
-    logo_url?: string;
-    primary_color?: string;
-    secondary_color?: string;
-    template?: string;
-  }): Promise<ApiResponse<{ qr_code_url: string; qr_code_base64: string }>> {
+  /**
+   * Mark table as available
+   */
+  async freeTable(tableId: string): Promise<ApiResponse<void>> {
     try {
-      return await apiService.post<{ qr_code_url: string; qr_code_base64: string }>(
-        `/tables/${tableId}/generate-qr`, 
-        customization || {}
-      );
+      return await apiService.post<void>(`/tables/${tableId}/free`);
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to generate QR code');
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to free table');
     }
   }
 
-  // Regenerate QR code for table
-  async regenerateTableQR(tableId: string): Promise<ApiResponse<{ qr_code_url: string; qr_code_base64: string }>> {
+  // =============================================================================
+  // QR CODE MANAGEMENT
+  // =============================================================================
+
+  /**
+   * Get table QR code data
+   */
+  async getTableQRCode(tableId: string): Promise<TableQRCode | null> {
     try {
-      return await apiService.post<{ qr_code_url: string; qr_code_base64: string }>(`/tables/${tableId}/regenerate-qr`);
+      const response = await apiService.get<TableQRCode>(`/tables/${tableId}/qr-code`);
+      return response.data || null;
+    } catch (error) {
+      console.error('Failed to get table QR code:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Regenerate QR code for table
+   */
+  async regenerateQRCode(tableId: string): Promise<ApiResponse<TableQRCode>> {
+    try {
+      return await apiService.post<TableQRCode>(`/tables/${tableId}/regenerate-qr`);
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to regenerate QR code');
     }
   }
 
-  // Bulk generate QR codes for venue
-  async bulkGenerateQRCodes(venueId: string, customization?: {
-    logo_url?: string;
-    primary_color?: string;
-    secondary_color?: string;
-    template?: string;
-  }): Promise<ApiResponse<Array<{ table_id: string; qr_code_url: string; qr_code_base64: string }>>> {
+  /**
+   * Verify and decode table QR code
+   */
+  async verifyQRCode(qrCode: string): Promise<QRCodeVerification | null> {
     try {
-      return await apiService.post<Array<{ table_id: string; qr_code_url: string; qr_code_base64: string }>>(
-        `/tables/venues/${venueId}/bulk-generate-qr`, 
-        customization || {}
-      );
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to bulk generate QR codes');
+      const response = await apiService.post<QRCodeVerification>('/tables/verify-qr', { qr_code: qrCode });
+      return response.data || null;
+    } catch (error) {
+      console.error('Failed to verify QR code:', error);
+      return null;
     }
   }
 
-  // Table Reservations
+  // =============================================================================
+  // VENUE-SPECIFIC TABLE OPERATIONS
+  // =============================================================================
 
-  // Get table reservations
-  async getTableReservations(tableId: string, filters?: {
-    status?: ReservationStatus;
-    date?: string;
-  }): Promise<TableReservation[]> {
+  /**
+   * Get all tables for a venue
+   */
+  async getVenueTables(venueId: string, status?: TableStatus): Promise<Table[]> {
     try {
-      const params = new URLSearchParams();
-      if (filters?.status) params.append('status', filters.status);
-      if (filters?.date) params.append('date', filters.date);
-
-      const response = await apiService.get<TableReservation[]>(`/tables/${tableId}/reservations?${params.toString()}`);
+      const params = status ? `?status=${status}` : '';
+      const response = await apiService.get<Table[]>(`/tables/venues/${venueId}/tables${params}`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get table reservations:', error);
+      console.error('Failed to get venue tables:', error);
       return [];
     }
   }
 
-  // Create table reservation
-  async createReservation(reservationData: {
-    table_id: string;
-    customer_name: string;
-    customer_phone: string;
-    customer_email?: string;
-    reservation_time: string;
-    party_size: number;
-    duration_minutes?: number;
-    special_requests?: string;
-  }): Promise<ApiResponse<TableReservation>> {
-    try {
-      return await apiService.post<TableReservation>('/tables/reservations', reservationData);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to create reservation');
-    }
-  }
-
-  // Update reservation
-  async updateReservation(reservationId: string, reservationData: {
-    reservation_time?: string;
-    party_size?: number;
-    special_requests?: string;
-    status?: ReservationStatus;
-  }): Promise<ApiResponse<TableReservation>> {
-    try {
-      return await apiService.put<TableReservation>(`/tables/reservations/${reservationId}`, reservationData);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to update reservation');
-    }
-  }
-
-  // Cancel reservation
-  async cancelReservation(reservationId: string, reason?: string): Promise<ApiResponse<void>> {
-    try {
-      const params = reason ? `?reason=${encodeURIComponent(reason)}` : '';
-      return await apiService.post<void>(`/tables/reservations/${reservationId}/cancel${params}`);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to cancel reservation');
-    }
-  }
-
-  // Confirm reservation (customer seated)
-  async confirmReservation(reservationId: string): Promise<ApiResponse<void>> {
-    try {
-      return await apiService.post<void>(`/tables/reservations/${reservationId}/confirm`);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to confirm reservation');
-    }
-  }
-
-  // Analytics and Reporting
-
-  // Get table analytics
-  async getTableAnalytics(venueId: string, startDate?: string, endDate?: string): Promise<TableAnalytics | null> {
+  /**
+   * Create multiple tables at once
+   */
+  async bulkCreateTables(
+    venueId: string,
+    startNumber: number,
+    count: number,
+    capacity: number = 4,
+    location?: string
+  ): Promise<ApiResponse<Table[]>> {
     try {
       const params = new URLSearchParams();
-      if (startDate) params.append('start_date', startDate);
-      if (endDate) params.append('end_date', endDate);
+      params.append('venue_id', venueId);
+      params.append('start_number', startNumber.toString());
+      params.append('count', count.toString());
+      params.append('capacity', capacity.toString());
+      if (location) params.append('location', location);
 
-      const response = await apiService.get<TableAnalytics>(`/tables/venues/${venueId}/analytics?${params.toString()}`);
-      return response.data || null;
-    } catch (error) {
-      console.error('Failed to get table analytics:', error);
-      return null;
-    }
-  }
-
-  // Get table utilization
-  async getTableUtilization(venueId: string, date?: string): Promise<{
-    total_tables: number;
-    occupied_tables: number;
-    utilization_rate: number;
-    peak_hour: number;
-    peak_utilization: number;
-  } | null> {
-    try {
-      const params = date ? `?date=${date}` : '';
-      const response = await apiService.get<any>(`/tables/venues/${venueId}/utilization${params}`);
-      return response.data || null;
-    } catch (error) {
-      console.error('Failed to get table utilization:', error);
-      return null;
-    }
-  }
-
-  // Table Layout Management
-
-  // Get table layout
-  async getTableLayout(venueId: string): Promise<TableLayout | null> {
-    try {
-      const response = await apiService.get<TableLayout>(`/tables/venues/${venueId}/layout`);
-      return response.data || null;
-    } catch (error) {
-      console.error('Failed to get table layout:', error);
-      return null;
-    }
-  }
-
-  // Update table layout
-  async updateTableLayout(venueId: string, layoutData: Omit<TableLayout, 'venue_id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<TableLayout>> {
-    try {
-      return await apiService.put<TableLayout>(`/tables/venues/${venueId}/layout`, layoutData);
+      return await apiService.post<Table[]>(`/tables/bulk-create?${params.toString()}`);
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to update table layout');
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to create tables');
     }
   }
 
-  // Utility Methods
+  // =============================================================================
+  // UTILITY METHODS
+  // =============================================================================
 
-  // Get table status color
+  /**
+   * Get table status color for UI
+   */
   getTableStatusColor(status: TableStatus): string {
     const colors = {
-      available: '#10b981',
-      occupied: '#ef4444',
-      reserved: '#f59e0b',
-      cleaning: '#3b82f6',
-      maintenance: '#8b5cf6',
-      out_of_order: '#6b7280'
+      available: '#10b981', // green
+      booked: '#f59e0b',    // yellow
+      occupied: '#ef4444',  // red
+      maintenance: '#6b7280', // gray
+      out_of_service: '#374151' // dark gray
     };
     return colors[status] || '#6b7280';
   }
 
-  // Format table status for display
+  /**
+   * Get table status icon
+   */
+  getTableStatusIcon(status: TableStatus): string {
+    const icons = {
+      available: '✅',
+      booked: '📅',
+      occupied: '👥',
+      maintenance: '🔧',
+      out_of_service: '❌'
+    };
+    return icons[status] || '❓';
+  }
+
+  /**
+   * Format table status for display
+   */
   formatTableStatus(status: TableStatus): string {
     const labels = {
       available: 'Available',
+      booked: 'Booked',
       occupied: 'Occupied',
-      reserved: 'Reserved',
-      cleaning: 'Cleaning',
       maintenance: 'Maintenance',
-      out_of_order: 'Out of Order'
+      out_of_service: 'Out of Service'
     };
     return labels[status] || status;
   }
 
-  // Get reservation status color
-  getReservationStatusColor(status: ReservationStatus): string {
-    const colors = {
-      pending: '#f59e0b',
-      confirmed: '#10b981',
-      seated: '#3b82f6',
-      completed: '#059669',
-      cancelled: '#ef4444',
-      no_show: '#6b7280'
-    };
-    return colors[status] || '#6b7280';
+  /**
+   * Check if table can be occupied
+   */
+  canOccupyTable(table: Table): boolean {
+    return table.is_active && ['available', 'booked'].includes(table.table_status);
   }
 
-  // Format reservation status for display
-  formatReservationStatus(status: ReservationStatus): string {
-    const labels = {
-      pending: 'Pending',
-      confirmed: 'Confirmed',
-      seated: 'Seated',
-      completed: 'Completed',
-      cancelled: 'Cancelled',
-      no_show: 'No Show'
-    };
-    return labels[status] || status;
+  /**
+   * Check if table can be freed
+   */
+  canFreeTable(table: Table): boolean {
+    return table.is_active && ['occupied', 'booked'].includes(table.table_status);
   }
 
-  // Check if table is available for reservation
-  isTableAvailableForReservation(table: Table, reservationTime: string, durationMinutes: number = 120): boolean {
-    if (table.table_status !== 'available' || !table.is_active) {
-      return false;
-    }
-
-    // Additional logic would check existing reservations
-    // This is a simplified version
-    return true;
+  /**
+   * Check if table can be edited
+   */
+  canEditTable(table: Table): boolean {
+    return table.is_active && table.table_status !== 'occupied';
   }
 
-  // Calculate table capacity utilization
-  calculateCapacityUtilization(tables: Table[]): {
-    total_capacity: number;
-    occupied_capacity: number;
-    utilization_rate: number;
-  } {
-    const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
-    const occupiedCapacity = tables
-      .filter(table => table.table_status === 'occupied')
-      .reduce((sum, table) => sum + table.capacity, 0);
-    
-    const utilizationRate = totalCapacity > 0 ? (occupiedCapacity / totalCapacity) * 100 : 0;
-
-    return {
-      total_capacity: totalCapacity,
-      occupied_capacity: occupiedCapacity,
-      utilization_rate: Math.round(utilizationRate * 100) / 100
-    };
+  /**
+   * Check if table can be deleted
+   */
+  canDeleteTable(table: Table): boolean {
+    return table.table_status === 'available' || table.table_status === 'out_of_service';
   }
 
-  // Get tables by section
-  getTablesBySection(tables: Table[]): Record<string, Table[]> {
-    return tables.reduce((sections, table) => {
-      const section = table.location.section || 'Main';
-      if (!sections[section]) {
-        sections[section] = [];
-      }
-      sections[section].push(table);
-      return sections;
-    }, {} as Record<string, Table[]>);
-  }
-
-  // Get available tables for party size
-  getAvailableTablesForPartySize(tables: Table[], partySize: number): Table[] {
-    return tables.filter(table => 
-      table.table_status === 'available' && 
-      table.is_active && 
-      table.capacity >= partySize
-    ).sort((a, b) => a.capacity - b.capacity); // Sort by capacity (smallest suitable first)
-  }
-
-  // Format table display name
-  formatTableDisplayName(table: Table): string {
-    if (table.table_name) {
-      return `${table.table_name} (Table ${table.table_number})`;
-    }
-    return `Table ${table.table_number}`;
-  }
-
-  // Validate table data
+  /**
+   * Validate table data before creation/update
+   */
   validateTableData(tableData: TableCreate | TableUpdate): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    if ('table_number' in tableData && tableData.table_number !== undefined) {
-      if (tableData.table_number <= 0) {
-        errors.push('Table number must be greater than 0');
+    if ('table_number' in tableData) {
+      if (!tableData.table_number || tableData.table_number < 1) {
+        errors.push('Table number must be a positive number');
+      }
+      if (tableData.table_number && tableData.table_number > 9999) {
+        errors.push('Table number must be less than 10000');
       }
     }
 
-    if ('capacity' in tableData && tableData.capacity !== undefined) {
-      if (tableData.capacity <= 0) {
-        errors.push('Table capacity must be greater than 0');
+    if ('capacity' in tableData) {
+      if (!tableData.capacity || tableData.capacity < 1) {
+        errors.push('Table capacity must be at least 1');
       }
-      if (tableData.capacity > 20) {
-        errors.push('Table capacity cannot exceed 20 people');
+      if (tableData.capacity && tableData.capacity > 50) {
+        errors.push('Table capacity must be less than 50');
+      }
+    }
+
+    if ('location' in tableData && tableData.location) {
+      if (tableData.location.length > 100) {
+        errors.push('Location description must be less than 100 characters');
       }
     }
 
     return { isValid: errors.length === 0, errors };
   }
+
+  /**
+   * Generate QR code URL for display
+   */
+  generateQRCodeURL(qrCode: string, size: number = 200): string {
+    // This would typically use a QR code generation service
+    // For now, return a placeholder URL
+    return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(qrCode)}`;
+  }
+
+  /**
+   * Get table capacity options for forms
+   */
+  getCapacityOptions(): Array<{ value: number; label: string }> {
+    return [
+      { value: 1, label: '1 person' },
+      { value: 2, label: '2 people' },
+      { value: 4, label: '4 people' },
+      { value: 6, label: '6 people' },
+      { value: 8, label: '8 people' },
+      { value: 10, label: '10 people' },
+      { value: 12, label: '12 people' }
+    ];
+  }
+
+  /**
+   * Get table status options for forms
+   */
+  getStatusOptions(): Array<{ value: TableStatus; label: string; color: string }> {
+    return [
+      { value: 'available', label: 'Available', color: this.getTableStatusColor('available') },
+      { value: 'booked', label: 'Booked', color: this.getTableStatusColor('booked') },
+      { value: 'occupied', label: 'Occupied', color: this.getTableStatusColor('occupied') },
+      { value: 'maintenance', label: 'Maintenance', color: this.getTableStatusColor('maintenance') },
+      { value: 'out_of_service', label: 'Out of Service', color: this.getTableStatusColor('out_of_service') }
+    ];
+  }
+
+  /**
+   * Sort tables by number
+   */
+  sortTablesByNumber(tables: Table[]): Table[] {
+    return [...tables].sort((a, b) => a.table_number - b.table_number);
+  }
+
+  /**
+   * Group tables by status
+   */
+  groupTablesByStatus(tables: Table[]): Record<TableStatus, Table[]> {
+    const grouped = tables.reduce((groups, table) => {
+      const status = table.table_status;
+      if (!groups[status]) {
+        groups[status] = [];
+      }
+      groups[status].push(table);
+      return groups;
+    }, {} as Record<TableStatus, Table[]>);
+
+    // Ensure all statuses are present
+    const allStatuses: TableStatus[] = ['available', 'booked', 'occupied', 'maintenance', 'out_of_service'];
+    allStatuses.forEach(status => {
+      if (!grouped[status]) {
+        grouped[status] = [];
+      }
+    });
+
+    return grouped;
+  }
+
+  /**
+   * Get table statistics
+   */
+  getTableStatistics(tables: Table[]): {
+    total: number;
+    active: number;
+    available: number;
+    occupied: number;
+    booked: number;
+    maintenance: number;
+    outOfService: number;
+    totalCapacity: number;
+    averageCapacity: number;
+  } {
+    const active = tables.filter(t => t.is_active);
+    const available = tables.filter(t => t.table_status === 'available');
+    const occupied = tables.filter(t => t.table_status === 'occupied');
+    const booked = tables.filter(t => t.table_status === 'booked');
+    const maintenance = tables.filter(t => t.table_status === 'maintenance');
+    const outOfService = tables.filter(t => t.table_status === 'out_of_service');
+    
+    const totalCapacity = tables.reduce((sum, table) => sum + table.capacity, 0);
+    const averageCapacity = tables.length > 0 ? totalCapacity / tables.length : 0;
+
+    return {
+      total: tables.length,
+      active: active.length,
+      available: available.length,
+      occupied: occupied.length,
+      booked: booked.length,
+      maintenance: maintenance.length,
+      outOfService: outOfService.length,
+      totalCapacity,
+      averageCapacity: Math.round(averageCapacity * 100) / 100
+    };
+  }
+
+  /**
+   * Check for table number conflicts
+   */
+  checkTableNumberConflict(tables: Table[], tableNumber: number, excludeTableId?: string): boolean {
+    return tables.some(table => 
+      table.table_number === tableNumber && 
+      table.id !== excludeTableId &&
+      table.is_active
+    );
+  }
+
+  /**
+   * Suggest next available table number
+   */
+  suggestNextTableNumber(tables: Table[]): number {
+    const activeTables = tables.filter(t => t.is_active);
+    const usedNumbers = activeTables.map(t => t.table_number).sort((a, b) => a - b);
+    
+    // Find the first gap in the sequence
+    for (let i = 1; i <= usedNumbers.length + 1; i++) {
+      if (!usedNumbers.includes(i)) {
+        return i;
+      }
+    }
+    
+    return usedNumbers.length + 1;
+  }
+
+  /**
+   * Toggle table availability (for backward compatibility)
+   */
+  async toggleTableAvailability(tableId: string): Promise<Table> {
+    try {
+      const table = await this.getTable(tableId);
+      if (!table) {
+        throw new Error('Table not found');
+      }
+
+      const newStatus: TableStatus = table.table_status === 'available' ? 'occupied' : 'available';
+      const response = await this.updateTableStatus(tableId, newStatus);
+      
+      if (response.success) {
+        return { ...table, table_status: newStatus };
+      } else {
+        throw new Error(response.message || 'Failed to toggle table status');
+      }
+    } catch (error: any) {
+      throw new Error(error.message || 'Failed to toggle table availability');
+    }
+  }
+
+  /**
+   * Get table areas (for backward compatibility)
+   */
+  async getAreas(venueId: string): Promise<any[]> {
+    try {
+      const response = await apiService.get<any[]>(`/venues/${venueId}/areas`);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to get areas:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Create area (for backward compatibility)
+   */
+  async createArea(areaData: any): Promise<any> {
+    try {
+      const response = await apiService.post<any>('/areas', areaData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to create area');
+    }
+  }
+
+  /**
+   * Update area (for backward compatibility)
+   */
+  async updateArea(areaData: any): Promise<any> {
+    try {
+      const response = await apiService.put<any>(`/areas/${areaData.id}`, areaData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update area');
+    }
+  }
 }
 
 export const tableService = new TableService();
+
+// Export types for components
+export type { Table } from '../types/api';

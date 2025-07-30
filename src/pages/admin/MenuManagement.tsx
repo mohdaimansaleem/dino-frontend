@@ -16,7 +16,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
+  MenuItem as MuiMenuItem,
   Chip,
   IconButton,
   Paper,
@@ -25,6 +25,7 @@ import {
   Alert,
   Snackbar,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
@@ -38,30 +39,21 @@ import {
   Nature,
   LocalDining,
 } from '@mui/icons-material';
+import { menuService } from '../../services/menuService';
+import { DEFAULTS } from '../../constants/app';
+import { MenuItem, MenuCategory } from '../../types';
 
-interface MenuItemType {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  image?: string;
-  available: boolean;
-  featured: boolean;
-  allergens: string[];
-  preparationTime: number;
+interface MenuItemType extends MenuItem {
+  available?: boolean; // For backward compatibility
+  featured?: boolean;
+  allergens?: string[];
   calories?: number;
   spicyLevel?: number;
-  isVeg: boolean;
   dietaryInfo?: string[];
 }
 
-interface CategoryType {
-  id: string;
-  name: string;
-  description: string;
-  order: number;
-  active: boolean;
+interface CategoryType extends MenuCategory {
+  active?: boolean; // For backward compatibility
 }
 
 const MenuManagement: React.FC = () => {
@@ -76,108 +68,52 @@ const MenuManagement: React.FC = () => {
   const [editingItem, setEditingItem] = useState<MenuItemType | null>(null);
   const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Demo data for Dino Cafe
+  // Load menu data from API
   useEffect(() => {
-    setCategories([
-      { id: '1', name: 'Appetizers', description: 'Start your meal right', order: 1, active: true },
-      { id: '2', name: 'Main Courses', description: 'Hearty main dishes', order: 2, active: true },
-      { id: '3', name: 'Desserts', description: 'Sweet endings', order: 3, active: true },
-      { id: '4', name: 'Beverages', description: 'Refreshing drinks', order: 4, active: true },
-    ]);
+    const loadMenuData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    setMenuItems([
-      {
-        id: '1',
-        name: 'Paneer Tikka',
-        description: 'Grilled cottage cheese cubes marinated in spices and yogurt',
-        price: 280,
-        category: '1',
-        available: true,
-        featured: true,
-        allergens: ['dairy'],
-        preparationTime: 15,
-        calories: 350,
-        spicyLevel: 2,
-        isVeg: true,
-        dietaryInfo: ['vegetarian', 'protein-rich'],
-      },
-      {
-        id: '2',
-        name: 'Butter Chicken',
-        description: 'Tender chicken in rich tomato-based curry with butter and cream',
-        price: 320,
-        category: '2',
-        available: true,
-        featured: true,
-        allergens: ['dairy'],
-        preparationTime: 20,
-        calories: 450,
-        spicyLevel: 2,
-        isVeg: false,
-        dietaryInfo: ['non-vegetarian', 'protein-rich'],
-      },
-      {
-        id: '3',
-        name: 'Dal Makhani',
-        description: 'Creamy black lentils slow-cooked with butter and aromatic spices',
-        price: 220,
-        category: '2',
-        available: true,
-        featured: false,
-        allergens: ['dairy'],
-        preparationTime: 25,
-        calories: 380,
-        spicyLevel: 1,
-        isVeg: true,
-        dietaryInfo: ['vegetarian', 'protein-rich', 'comfort-food'],
-      },
-      {
-        id: '4',
-        name: 'Chicken Biryani',
-        description: 'Aromatic basmati rice layered with spiced chicken and saffron',
-        price: 350,
-        category: '2',
-        available: false,
-        featured: true,
-        allergens: [],
-        preparationTime: 30,
-        calories: 520,
-        spicyLevel: 3,
-        isVeg: false,
-        dietaryInfo: ['non-vegetarian', 'rice-dish'],
-      },
-      {
-        id: '5',
-        name: 'Gulab Jamun',
-        description: 'Soft milk dumplings soaked in rose-flavored sugar syrup',
-        price: 120,
-        category: '3',
-        available: true,
-        featured: false,
-        allergens: ['dairy', 'gluten'],
-        preparationTime: 5,
-        calories: 320,
-        spicyLevel: 0,
-        isVeg: true,
-        dietaryInfo: ['vegetarian', 'dessert'],
-      },
-      {
-        id: '6',
-        name: 'Masala Chai',
-        description: 'Traditional Indian spiced tea brewed with milk and aromatic spices',
-        price: 40,
-        category: '4',
-        available: true,
-        featured: false,
-        allergens: ['dairy'],
-        preparationTime: 5,
-        calories: 80,
-        spicyLevel: 0,
-        isVeg: true,
-        dietaryInfo: ['vegetarian', 'beverage'],
-      },
-    ]);
+        // Load categories and menu items in parallel
+        const [categoriesData, menuItemsData] = await Promise.all([
+          menuService.getMenuCategories({ venue_id: DEFAULTS.CAFE_ID }),
+          menuService.getMenuItems({ venue_id: DEFAULTS.CAFE_ID })
+        ]);
+
+        // Map API data to component types
+        setCategories(categoriesData.data.map((cat: any) => ({ 
+          ...cat, 
+          active: true,
+          order: 0,
+          cafeId: cat.venue_id
+        } as unknown as CategoryType)));
+        setMenuItems(menuItemsData.data.map((item: any) => ({
+          ...item,
+          price: item.base_price,
+          category: item.category_id,
+          isVeg: item.is_vegetarian || false,
+          available: item.is_available,
+          isAvailable: item.is_available,
+          preparationTime: item.preparation_time_minutes || 15
+        } as unknown as MenuItemType)));
+      } catch (error) {
+        console.error('Failed to load menu data:', error);
+        setError('Failed to load menu data. Please try again.');
+        setSnackbar({ 
+          open: true, 
+          message: 'Failed to load menu data. Please check your connection.', 
+          severity: 'error' 
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMenuData();
   }, []);
 
   const handleAddItem = () => {
@@ -190,48 +126,108 @@ const MenuManagement: React.FC = () => {
     setOpenItemDialog(true);
   };
 
-  const handleDeleteItem = (itemId: string) => {
-    const item = menuItems.find(item => item.id === itemId);
-    setMenuItems(prev => prev.filter(item => item.id !== itemId));
-    setSnackbar({ open: true, message: `${item?.name} deleted successfully`, severity: 'success' });
-  };
-
-  const handleSaveItem = (itemData: Partial<MenuItemType>) => {
-    if (editingItem) {
-      setMenuItems(prev => prev.map(item => 
-        item.id === editingItem.id ? { ...item, ...itemData } : item
-      ));
-      setSnackbar({ open: true, message: 'Menu item updated successfully', severity: 'success' });
-    } else {
-      const newItem: MenuItemType = {
-        id: Date.now().toString(),
-        name: '',
-        description: '',
-        price: 0,
-        category: '',
-        available: true,
-        featured: false,
-        allergens: [],
-        preparationTime: 0,
-        isVeg: true,
-        ...itemData,
-      };
-      setMenuItems(prev => [...prev, newItem]);
-      setSnackbar({ open: true, message: 'Menu item added successfully', severity: 'success' });
+  const handleDeleteItem = async (itemId: string) => {
+    try {
+      const item = menuItems.find(item => item.id === itemId);
+      await menuService.deleteMenuItem(itemId);
+      setMenuItems(prev => prev.filter(item => item.id !== itemId));
+      setSnackbar({ open: true, message: `${item?.name} deleted successfully`, severity: 'success' });
+    } catch (error) {
+      console.error('Failed to delete menu item:', error);
+      setSnackbar({ open: true, message: 'Failed to delete menu item', severity: 'error' });
     }
-    setOpenItemDialog(false);
   };
 
-  const handleToggleAvailability = (itemId: string) => {
-    const item = menuItems.find(item => item.id === itemId);
-    setMenuItems(prev => prev.map(item => 
-      item.id === itemId ? { ...item, available: !item.available } : item
-    ));
-    setSnackbar({ 
-      open: true, 
-      message: `${item?.name} marked as ${item?.available ? 'unavailable' : 'available'}`, 
-      severity: 'success' 
-    });
+  const handleSaveItem = async (itemData: Partial<MenuItemType>) => {
+    try {
+      if (editingItem) {
+        // Update existing item
+        const response = await menuService.updateMenuItem(editingItem.id, {
+          name: itemData.name,
+          description: itemData.description,
+          base_price: itemData.price,
+          category_id: itemData.category,
+          is_vegetarian: itemData.isVeg,
+          is_available: itemData.available ?? itemData.isAvailable,
+          preparation_time_minutes: itemData.preparationTime,
+        });
+        if (response.data) {
+          setMenuItems(prev => prev.map(item => 
+            item.id === editingItem.id ? { 
+              ...item,
+              price: response.data!.base_price,
+              category: response.data!.category_id,
+              isVeg: response.data!.is_vegetarian || false,
+              available: response.data!.is_available,
+              isAvailable: response.data!.is_available,
+              preparationTime: response.data!.preparation_time_minutes || 15
+            } as unknown as MenuItemType : item
+          ));
+        }
+        setSnackbar({ open: true, message: 'Menu item updated successfully', severity: 'success' });
+      } else {
+        // Create new item
+        const response = await menuService.createMenuItem({
+          name: itemData.name || '',
+          description: itemData.description || '',
+          base_price: itemData.price || 0,
+          category_id: itemData.category || '',
+          venue_id: DEFAULTS.CAFE_ID,
+          is_vegetarian: itemData.isVeg ?? true,
+          preparation_time_minutes: itemData.preparationTime || 15,
+        });
+        if (response.data) {
+          const newItem = {
+            ...response.data!,
+            price: response.data!.base_price,
+            category: response.data!.category_id,
+            isVeg: response.data!.is_vegetarian || false,
+            available: response.data!.is_available,
+            isAvailable: response.data!.is_available,
+            preparationTime: response.data!.preparation_time_minutes || 15
+          } as unknown as MenuItemType;
+          setMenuItems(prev => [...prev, newItem]);
+        }
+        setSnackbar({ open: true, message: 'Menu item added successfully', severity: 'success' });
+      }
+      setOpenItemDialog(false);
+    } catch (error) {
+      console.error('Failed to save menu item:', error);
+      setSnackbar({ open: true, message: 'Failed to save menu item', severity: 'error' });
+    }
+  };
+
+  const handleToggleAvailability = async (itemId: string) => {
+    try {
+      const item = menuItems.find(item => item.id === itemId);
+      if (!item) return;
+
+      const response = await menuService.updateMenuItem(itemId, {
+        is_available: !(item.available ?? item.isAvailable),
+      });
+
+      if (response.data) {
+        setMenuItems(prev => prev.map(item => 
+          item.id === itemId ? { 
+            ...item,
+            price: response.data!.base_price,
+            category: response.data!.category_id,
+            isVeg: response.data!.is_vegetarian || false,
+            available: response.data!.is_available,
+            isAvailable: response.data!.is_available,
+            preparationTime: response.data!.preparation_time_minutes || 15
+          } as unknown as MenuItemType : item
+        ));
+        setSnackbar({ 
+          open: true, 
+          message: `${item.name} marked as ${response.data.is_available ? 'available' : 'unavailable'}`, 
+          severity: 'success' 
+        });
+      }
+    } catch (error) {
+      console.error('Failed to toggle availability:', error);
+      setSnackbar({ open: true, message: 'Failed to update availability', severity: 'error' });
+    }
   };
 
   const handleAddCategory = () => {
@@ -244,28 +240,50 @@ const MenuManagement: React.FC = () => {
     setOpenCategoryDialog(true);
   };
 
-  const handleSaveCategory = (categoryData: Partial<CategoryType>) => {
-    if (editingCategory) {
-      setCategories(prev => prev.map(cat => 
-        cat.id === editingCategory.id ? { ...cat, ...categoryData } : cat
-      ));
-      setSnackbar({ open: true, message: 'Category updated successfully', severity: 'success' });
-    } else {
-      const newCategory: CategoryType = {
-        id: Date.now().toString(),
-        name: '',
-        description: '',
-        order: categories.length + 1,
-        active: true,
-        ...categoryData,
-      };
-      setCategories(prev => [...prev, newCategory]);
-      setSnackbar({ open: true, message: 'Category added successfully', severity: 'success' });
+  const handleSaveCategory = async (categoryData: Partial<CategoryType>) => {
+    try {
+      if (editingCategory) {
+        // Update existing category
+        const response = await menuService.updateMenuCategory(editingCategory.id, {
+          name: categoryData.name,
+          description: categoryData.description,
+        });
+        if (response.data) {
+          setCategories(prev => prev.map(cat => 
+            cat.id === editingCategory.id ? { 
+              ...cat,
+              ...response.data!,
+              active: true,
+              order: cat.order || 0,
+              cafeId: response.data!.venue_id
+            } as unknown as CategoryType : cat
+          ));
+        }
+        setSnackbar({ open: true, message: 'Category updated successfully', severity: 'success' });
+      } else {
+        // Create new category
+        const response = await menuService.createMenuCategory({
+          name: categoryData.name || '',
+          description: categoryData.description || '',
+          venue_id: DEFAULTS.CAFE_ID,
+        });
+        if (response.data) {
+          const newCategory = {
+            ...response.data!,
+            active: true,
+            order: 0,
+            cafeId: response.data!.venue_id
+          } as unknown as CategoryType;
+          setCategories(prev => [...prev, newCategory]);
+        }
+        setSnackbar({ open: true, message: 'Category added successfully', severity: 'success' });
+      }
+      setOpenCategoryDialog(false);
+    } catch (error) {
+      console.error('Failed to save category:', error);
+      setSnackbar({ open: true, message: 'Failed to save category', severity: 'error' });
     }
-    setOpenCategoryDialog(false);
   };
-
-
 
   const filteredItems = menuItems.filter(item => {
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
@@ -275,8 +293,8 @@ const MenuManagement: React.FC = () => {
                       (vegFilter === 'veg' && item.isVeg) || 
                       (vegFilter === 'non-veg' && !item.isVeg);
     const matchesAvailability = availabilityFilter === 'all' ||
-                               (availabilityFilter === 'available' && item.available) ||
-                               (availabilityFilter === 'unavailable' && !item.available);
+                               (availabilityFilter === 'available' && (item.available ?? item.isAvailable)) ||
+                               (availabilityFilter === 'unavailable' && !(item.available ?? item.isAvailable));
     
     return matchesCategory && matchesSearch && matchesVeg && matchesAvailability;
   });
@@ -292,6 +310,29 @@ const MenuManagement: React.FC = () => {
       minimumFractionDigits: 0,
     }).format(amount);
   };
+
+  if (loading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress size={60} />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert severity="error" sx={{ mb: 4 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -327,11 +368,11 @@ const MenuManagement: React.FC = () => {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 label="Category"
               >
-                <MenuItem value="all">All Categories</MenuItem>
+                <MuiMenuItem value="all">All Categories</MuiMenuItem>
                 {categories.filter(cat => cat.active).map(category => (
-                  <MenuItem key={category.id} value={category.id}>
+                  <MuiMenuItem key={category.id} value={category.id}>
                     {category.name}
-                  </MenuItem>
+                  </MuiMenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -345,15 +386,15 @@ const MenuManagement: React.FC = () => {
                 label="Veg/Non-Veg"
                 size="small"
               >
-                <MenuItem value="all">All Items</MenuItem>
-                <MenuItem value="veg">
+                <MuiMenuItem value="all">All Items</MuiMenuItem>
+                <MuiMenuItem value="veg">
                   <Nature sx={{ mr: 1, fontSize: 16, color: 'green' }} />
                   Vegetarian
-                </MenuItem>
-                <MenuItem value="non-veg">
+                </MuiMenuItem>
+                <MuiMenuItem value="non-veg">
                   <LocalDining sx={{ mr: 1, fontSize: 16, color: 'red' }} />
                   Non-Vegetarian
-                </MenuItem>
+                </MuiMenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -366,9 +407,9 @@ const MenuManagement: React.FC = () => {
                 label="Availability"
                 size="small"
               >
-                <MenuItem value="all">All Items</MenuItem>
-                <MenuItem value="available">Available</MenuItem>
-                <MenuItem value="unavailable">Unavailable</MenuItem>
+                <MuiMenuItem value="all">All Items</MuiMenuItem>
+                <MuiMenuItem value="available">Available</MuiMenuItem>
+                <MuiMenuItem value="unavailable">Unavailable</MuiMenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -443,7 +484,7 @@ const MenuManagement: React.FC = () => {
                 flexDirection: 'column',
                 border: '1px solid', 
                 borderColor: 'divider',
-                opacity: item.available ? 1 : 0.6,
+                opacity: (item.available ?? item.isAvailable) ? 1 : 0.6,
                 '&:hover': { boxShadow: 2 }
               }}
             >
@@ -527,9 +568,9 @@ const MenuManagement: React.FC = () => {
                     </Typography>
                   )}
                   <Chip 
-                    label={item.available ? 'Available' : 'Unavailable'} 
+                    label={(item.available ?? item.isAvailable) ? 'Available' : 'Unavailable'} 
                     size="small" 
-                    color={item.available ? 'success' : 'error'}
+                    color={(item.available ?? item.isAvailable) ? 'success' : 'error'}
                     variant="outlined"
                   />
                 </Box>
@@ -537,9 +578,9 @@ const MenuManagement: React.FC = () => {
                 {/* Actions - Push to bottom */}
                 <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <Tooltip title={item.available ? 'Mark Unavailable' : 'Mark Available'}>
+                    <Tooltip title={(item.available ?? item.isAvailable) ? 'Mark Unavailable' : 'Mark Available'}>
                       <IconButton size="small" onClick={() => handleToggleAvailability(item.id)}>
-                        {item.available ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                        {(item.available ?? item.isAvailable) ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
                       </IconButton>
                     </Tooltip>
                     <IconButton size="small" onClick={() => handleEditItem(item)}>
@@ -676,9 +717,9 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
                 label="Category"
               >
                 {categories.map(category => (
-                  <MenuItem key={category.id} value={category.id}>
+                  <MuiMenuItem key={category.id} value={category.id}>
                     {category.name}
-                  </MenuItem>
+                  </MuiMenuItem>
                 ))}
               </Select>
             </FormControl>

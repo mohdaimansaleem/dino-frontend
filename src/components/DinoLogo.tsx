@@ -1,13 +1,13 @@
 import React from 'react';
 import { Box, SxProps, Theme } from '@mui/material';
 
-interface CleanDinoLogoProps {
+interface DinoLogoProps {
   size?: number;
   animated?: boolean;
   sx?: SxProps<Theme>;
 }
 
-const CleanDinoLogo: React.FC<CleanDinoLogoProps> = ({ 
+const DinoLogo: React.FC<DinoLogoProps> = ({ 
   size = 40, 
   animated = false,
   sx = {} 
@@ -204,4 +204,4 @@ const CleanDinoLogo: React.FC<CleanDinoLogoProps> = ({
   );
 };
 
-export default CleanDinoLogo;
+export default DinoLogo;

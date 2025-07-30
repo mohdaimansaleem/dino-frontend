@@ -9,15 +9,15 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 // Public Pages
-import CleanHomePage from './pages/CleanHomePage';
+import HomePage from './pages/HomePage';
 import FeaturesPage from './pages/FeaturesPage';
 import PricingPage from './pages/PricingPage';
 import ContactPage from './pages/ContactPage';
 import TestimonialsPage from './pages/TestimonialsPage';
 import RegistrationPage from './pages/RegistrationPage';
 import LoginPage from './pages/LoginPage';
-import UserDashboard from './pages/UserDashboard';
-import EnhancedMenuPage from './pages/EnhancedMenuPage';
+
+import MenuPage from './pages/MenuPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 
@@ -25,8 +25,8 @@ import OrderTrackingPage from './pages/OrderTrackingPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import OrdersManagement from './pages/admin/OrdersManagement';
 import MenuManagement from './pages/admin/MenuManagement';
-import EnhancedTableManagement from './pages/admin/EnhancedTableManagement';
-import EnhancedCafeSettings from './pages/admin/EnhancedCafeSettings';
+import TableManagement from './pages/admin/TableManagement';
+import CafeSettings from './pages/admin/CafeSettings';
 import UserManagement from './pages/admin/UserManagement';
 import WorkspaceManagement from './pages/admin/WorkspaceManagement';
 import UserPermissionsDashboard from './pages/admin/UserPermissionsDashboard';
@@ -34,7 +34,7 @@ import UserPermissionsDashboard from './pages/admin/UserPermissionsDashboard';
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
-import CleanLayout from './components/CleanLayout';
+import Layout from './components/Layout';
 import UserProfile from './components/UserProfile';
 import { PERMISSIONS } from './types/auth';
 
@@ -46,18 +46,18 @@ function App() {
           <WorkspaceProvider>
             <NotificationProvider>
               <CartProvider>
-                <CleanLayout>
+                <Layout>
               <Routes>
                 {/* Public Routes */}
-                <Route path="/" element={<CleanHomePage />} />
-                <Route path="/home" element={<CleanHomePage />} />
+                <Route path="/" element={<HomePage />} />
+                <Route path="/home" element={<HomePage />} />
                 <Route path="/features" element={<FeaturesPage />} />
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/testimonials" element={<TestimonialsPage />} />
                 <Route path="/register" element={<RegistrationPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/menu/:cafeId/:tableId" element={<EnhancedMenuPage />} />
+                <Route path="/menu/:cafeId/:tableId" element={<MenuPage />} />
                 <Route path="/checkout/:cafeId/:tableId" element={<CheckoutPage />} />
                 <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
                 <Route path="/order/:orderId" element={<OrderTrackingPage />} />
@@ -87,12 +87,12 @@ function App() {
                 } />
                 <Route path="/admin/tables" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.TABLES_VIEW]}>
-                    <EnhancedTableManagement />
+                    <TableManagement />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/settings" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.SETTINGS_VIEW]}>
-                    <EnhancedCafeSettings />
+                    <CafeSettings />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/users" element={
@@ -114,7 +114,7 @@ function App() {
                 {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-                </CleanLayout>
+                </Layout>
               </CartProvider>
             </NotificationProvider>
           </WorkspaceProvider>

@@ -22,8 +22,7 @@ interface AuthContextType {
   isOperator: () => boolean;
   isSuperAdmin: () => boolean;
   getUserWithRole: () => AuthUser | null;
-  // Demo mode method
-  setDemoUser: (demoUser: UserProfile) => void;
+
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,38 +41,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const token = localStorage.getItem('dino_token');
         const savedUser = localStorage.getItem('dino_user');
-        const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true';
         
-        console.log('🔐 Initializing auth...', { hasToken: !!token, hasUser: !!savedUser, isDemoMode });
+        console.log('🔐 Initializing auth...', { hasToken: !!token, hasUser: !!savedUser });
         
         if (token && savedUser) {
-          if (isDemoMode || token === 'demo-token-bypass') {
-            // Demo mode - use stored user without backend verification
-            try {
-              const demoUser = JSON.parse(savedUser);
-              console.log('✅ Demo user restored:', demoUser.email);
-              setUser(demoUser);
-            } catch (error) {
-              console.error('❌ Invalid demo user data:', error);
-              // Invalid demo user data, clear storage
-              localStorage.removeItem('dino_token');
-              localStorage.removeItem('dino_user');
-              localStorage.removeItem('dino_demo_mode');
-              setUser(null);
-            }
-          } else {
-            // Normal mode - for now, treat as demo mode since we don't have backend
-            try {
-              const savedUserData = JSON.parse(savedUser);
-              console.log('✅ User restored from storage:', savedUserData.email);
-              setUser(savedUserData);
-            } catch (error) {
-              console.error('❌ Invalid user data:', error);
-              // Invalid user data, clear storage
-              localStorage.removeItem('dino_token');
-              localStorage.removeItem('dino_user');
-              setUser(null);
-            }
+          try {
+            const savedUserData = JSON.parse(savedUser);
+            console.log('✅ User restored from storage:', savedUserData.email);
+            setUser(savedUserData);
+          } catch (error) {
+            console.error('❌ Invalid user data:', error);
+            // Invalid user data, clear storage
+            localStorage.removeItem('dino_token');
+            localStorage.removeItem('dino_user');
+            setUser(null);
           }
         } else {
           console.log('ℹ️ No stored auth data found');
@@ -83,7 +64,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('❌ Failed to initialize auth:', error);
         localStorage.removeItem('dino_token');
         localStorage.removeItem('dino_user');
-        localStorage.removeItem('dino_demo_mode');
         setUser(null);
       } finally {
         setLoading(false);
@@ -102,8 +82,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('dino_token', response.access_token);
       localStorage.setItem('dino_user', JSON.stringify(response.user));
       
-      // Set user
-      setUser(response.user);
+      // Convert API user to local user format
+      const localUser: UserProfile = {
+        id: response.user.id,
+        email: response.user.email,
+        firstName: response.user.first_name,
+        lastName: response.user.last_name,
+        first_name: response.user.first_name,
+        last_name: response.user.last_name,
+        phone: response.user.phone,
+        role: response.user.role as any,
+        permissions: [],
+        workspaceId: response.user.workspace_id,
+        workspace_id: response.user.workspace_id,
+        cafeId: response.user.venue_id,
+        venue_id: response.user.venue_id,
+        isActive: response.user.is_active,
+        isVerified: true,
+        createdAt: new Date(response.user.created_at),
+        updatedAt: new Date(response.user.updated_at || response.user.created_at)
+      } as UserProfile;
+      
+      setUser(localUser);
     } catch (error) {
       throw error;
     } finally {
@@ -114,14 +114,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: UserRegistration): Promise<void> => {
     try {
       setLoading(true);
-      const response = await authService.register(userData);
       
-      // Store token and user
-      localStorage.setItem('dino_token', response.access_token);
-      localStorage.setItem('dino_user', JSON.stringify(response.user));
+      // Convert local registration data to API format
+      const apiUserData = {
+        email: userData.email,
+        phone: userData.phone,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        password: userData.password,
+        confirm_password: userData.confirmPassword,
+        role_id: userData.role,
+        workspace_id: (userData as any).workspaceId || '',
+        venue_id: (userData as any).cafeId,
+        date_of_birth: userData.dateOfBirth?.toISOString().split('T')[0],
+        gender: userData.gender
+      };
       
-      // Set user
-      setUser(response.user);
+      const response = await authService.register(apiUserData);
+      
+      // Registration doesn't return tokens, just success
+      // User needs to login after registration
+      
     } catch (error) {
       throw error;
     } finally {
@@ -133,15 +146,45 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('dino_token');
     localStorage.removeItem('dino_user');
     localStorage.removeItem('dino_refresh_token');
-    localStorage.removeItem('dino_demo_mode');
     setUser(null);
   };
 
   const updateUser = async (userData: Partial<UserProfile>): Promise<void> => {
     try {
-      const updatedUser = await authService.updateProfile(userData);
-      setUser(updatedUser);
-      localStorage.setItem('dino_user', JSON.stringify(updatedUser));
+      // Convert local user data to API format
+      const apiUserData = {
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        phone: userData.phone,
+        date_of_birth: userData.dateOfBirth?.toISOString().split('T')[0],
+        is_active: userData.isActive
+      };
+      
+      const updatedUser = await authService.updateProfile(apiUserData);
+      
+      // Convert API user back to local format
+      const localUser: UserProfile = {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        firstName: updatedUser.first_name,
+        lastName: updatedUser.last_name,
+        first_name: updatedUser.first_name,
+        last_name: updatedUser.last_name,
+        phone: updatedUser.phone,
+        role: updatedUser.role as any,
+        permissions: [],
+        workspaceId: updatedUser.workspace_id,
+        workspace_id: updatedUser.workspace_id,
+        cafeId: updatedUser.venue_id,
+        venue_id: updatedUser.venue_id,
+        isActive: updatedUser.is_active,
+        isVerified: true,
+        createdAt: new Date(updatedUser.created_at),
+        updatedAt: new Date(updatedUser.updated_at || updatedUser.created_at)
+      } as UserProfile;
+      
+      setUser(localUser);
+      localStorage.setItem('dino_user', JSON.stringify(localUser));
     } catch (error) {
       throw error;
     }
@@ -150,8 +193,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const refreshUser = async (): Promise<void> => {
     try {
       const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
-      localStorage.setItem('dino_user', JSON.stringify(currentUser));
+      
+      // Convert API user to local format
+      const localUser: UserProfile = {
+        id: currentUser.id,
+        email: currentUser.email,
+        firstName: currentUser.first_name,
+        lastName: currentUser.last_name,
+        first_name: currentUser.first_name,
+        last_name: currentUser.last_name,
+        phone: currentUser.phone,
+        role: currentUser.role as any,
+        permissions: [],
+        workspaceId: currentUser.workspace_id,
+        workspace_id: currentUser.workspace_id,
+        cafeId: currentUser.venue_id,
+        venue_id: currentUser.venue_id,
+        isActive: currentUser.is_active,
+        isVerified: true,
+        createdAt: new Date(currentUser.created_at),
+        updatedAt: new Date(currentUser.updated_at || currentUser.created_at)
+      } as UserProfile;
+      
+      setUser(localUser);
+      localStorage.setItem('dino_user', JSON.stringify(localUser));
     } catch (error) {
       console.error('Failed to refresh user:', error);
       // If refresh fails, user might need to login again
@@ -230,15 +295,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return PermissionService.isSuperAdmin(authUser);
   };
 
-  const setDemoUser = (demoUser: UserProfile): void => {
-    // Store demo session data
-    localStorage.setItem('dino_token', 'demo-token-bypass');
-    localStorage.setItem('dino_user', JSON.stringify(demoUser));
-    localStorage.setItem('dino_demo_mode', 'true');
-    
-    // Set user in state
-    setUser(demoUser);
-  };
+
 
   const value: AuthContextType = {
     user,
@@ -257,7 +314,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isOperator,
     isSuperAdmin,
     getUserWithRole,
-    setDemoUser,
   };
 
   return (

@@ -1,186 +1,64 @@
 import { apiService } from './api';
-import { ApiResponse } from '../types';
-
-// Venue-related types
-export interface Venue {
-  id: string;
-  name: string;
-  description: string;
-  workspace_id: string;
-  admin_id?: string;
-  owner_id?: string;
-  location: {
-    address: string;
-    city: string;
-    state: string;
-    country: string;
-    postal_code: string;
-    latitude?: number;
-    longitude?: number;
-    landmark?: string;
-  };
-  phone: string;
-  email: string;
-  website?: string;
-  logo_url?: string;
-  cuisine_types: string[];
-  price_range: 'budget' | 'mid_range' | 'premium' | 'luxury';
-  operating_hours: OperatingHours[];
-  subscription_plan: 'basic' | 'premium' | 'enterprise';
-  subscription_status: 'active' | 'inactive' | 'suspended';
-  status: 'active' | 'inactive' | 'maintenance' | 'closed';
-  is_active: boolean;
-  is_verified: boolean;
-  rating: number;
-  total_reviews: number;
-  features?: string[];
-  created_at: string;
-  updated_at: string;
-}
-
-export interface OperatingHours {
-  day_of_week: number; // 0=Monday, 6=Sunday
-  is_open: boolean;
-  open_time?: string;
-  close_time?: string;
-  is_24_hours: boolean;
-  break_start?: string;
-  break_end?: string;
-}
-
-export interface VenueCreate {
-  name: string;
-  description: string;
-  workspace_id: string;
-  location: {
-    address: string;
-    city: string;
-    state: string;
-    country: string;
-    postal_code: string;
-    latitude?: number;
-    longitude?: number;
-    landmark?: string;
-  };
-  phone: string;
-  email: string;
-  website?: string;
-  cuisine_types: string[];
-  price_range: 'budget' | 'mid_range' | 'premium' | 'luxury';
-  operating_hours?: OperatingHours[];
-  subscription_plan?: 'basic' | 'premium' | 'enterprise';
-}
-
-export interface VenueUpdate {
-  name?: string;
-  description?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo_url?: string;
-  cuisine_types?: string[];
-  price_range?: 'budget' | 'mid_range' | 'premium' | 'luxury';
-  operating_hours?: OperatingHours[];
-  subscription_plan?: 'basic' | 'premium' | 'enterprise';
-  subscription_status?: 'active' | 'inactive' | 'suspended';
-  status?: 'active' | 'inactive' | 'maintenance' | 'closed';
-  is_active?: boolean;
-}
-
-export interface VenueAnalytics {
-  venue_id: string;
-  total_menu_items: number;
-  total_tables: number;
-  total_orders_today: number;
-  total_revenue_today: number;
-  total_customers: number;
-  average_order_value: number;
-  popular_items: Array<{
-    menu_item_id: string;
-    menu_item_name: string;
-    order_count: number;
-    revenue: number;
-  }>;
-  table_utilization: number;
-  customer_satisfaction: number;
-}
+import { 
+  Venue, 
+  VenueCreate, 
+  VenueUpdate, 
+  VenueAnalytics,
+  VenueStatus,
+  OperatingHours,
+  PaginatedResponse,
+  ApiResponse,
+  VenueFilters
+} from '../types/api';
 
 class VenueService {
-  // Get all venues (with filtering)
-  async getVenues(filters?: {
-    workspace_id?: string;
-    subscription_status?: string;
-    is_active?: boolean;
-    search?: string;
-  }): Promise<Venue[]> {
+  // =============================================================================
+  // PUBLIC VENUE METHODS (No authentication required)
+  // =============================================================================
+
+  /**
+   * Get public venues with filtering and pagination
+   */
+  async getPublicVenues(filters?: VenueFilters): Promise<PaginatedResponse<Venue>> {
     try {
       const params = new URLSearchParams();
       
-      if (filters?.workspace_id) params.append('workspace_id', filters.workspace_id);
-      if (filters?.subscription_status) params.append('subscription_status', filters.subscription_status);
-      if (filters?.is_active !== undefined) params.append('is_active', filters.is_active.toString());
-      if (filters?.search) params.append('search', filters.search);
-
-      const response = await apiService.get<Venue[]>(`/venues?${params.toString()}`);
-      return response.data || [];
-    } catch (error) {
-      console.error('Failed to get venues:', error);
-      return [];
-    }
-  }
-
-  // Get public venues (no authentication required)
-  async getPublicVenues(filters?: {
-    search?: string;
-    cuisine_type?: string;
-    price_range?: string;
-    page?: number;
-    page_size?: number;
-  }): Promise<{
-    venues: Venue[];
-    total: number;
-    page: number;
-    total_pages: number;
-  }> {
-    try {
-      const params = new URLSearchParams();
-      
+      if (filters?.page) params.append('page', filters.page.toString());
+      if (filters?.page_size) params.append('page_size', filters.page_size.toString());
       if (filters?.search) params.append('search', filters.search);
       if (filters?.cuisine_type) params.append('cuisine_type', filters.cuisine_type);
       if (filters?.price_range) params.append('price_range', filters.price_range);
-      if (filters?.page) params.append('page', filters.page.toString());
-      if (filters?.page_size) params.append('page_size', filters.page_size.toString());
 
-      const response = await apiService.get<any>(`/venues/public?${params.toString()}`);
+      const response = await apiService.get<PaginatedResponse<Venue>>(`/venues/public?${params.toString()}`);
       
-      if (response.success && response.data) {
-        return {
-          venues: response.data.data || response.data,
-          total: response.data.total || 0,
-          page: response.data.page || 1,
-          total_pages: response.data.total_pages || 1
-        };
-      }
-      
-      return { venues: [], total: 0, page: 1, total_pages: 1 };
+      return response.data || {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
     } catch (error) {
       console.error('Failed to get public venues:', error);
-      return { venues: [], total: 0, page: 1, total_pages: 1 };
+      return {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
     }
   }
 
-  // Get venue by ID
-  async getVenue(venueId: string): Promise<Venue | null> {
-    try {
-      const response = await apiService.get<Venue>(`/venues/${venueId}`);
-      return response.data || null;
-    } catch (error) {
-      console.error('Failed to get venue:', error);
-      return null;
-    }
-  }
-
-  // Get public venue by ID
+  /**
+   * Get public venue details by ID
+   */
   async getPublicVenue(venueId: string): Promise<Venue | null> {
     try {
       const response = await apiService.get<Venue>(`/venues/public/${venueId}`);
@@ -191,7 +69,66 @@ class VenueService {
     }
   }
 
-  // Create new venue
+  // =============================================================================
+  // AUTHENTICATED VENUE METHODS
+  // =============================================================================
+
+  /**
+   * Get venues (filtered by user permissions)
+   */
+  async getVenues(filters?: VenueFilters): Promise<PaginatedResponse<Venue>> {
+    try {
+      const params = new URLSearchParams();
+      
+      if (filters?.page) params.append('page', filters.page.toString());
+      if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+      if (filters?.search) params.append('search', filters.search);
+      if (filters?.subscription_status) params.append('subscription_status', filters.subscription_status);
+      if (filters?.is_active !== undefined) params.append('is_active', filters.is_active.toString());
+
+      const response = await apiService.get<PaginatedResponse<Venue>>(`/venues?${params.toString()}`);
+      
+      return response.data || {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
+    } catch (error) {
+      console.error('Failed to get venues:', error);
+      return {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
+    }
+  }
+
+  /**
+   * Get venue by ID
+   */
+  async getVenue(venueId: string): Promise<Venue | null> {
+    try {
+      const response = await apiService.get<Venue>(`/venues/${venueId}`);
+      return response.data || null;
+    } catch (error) {
+      console.error('Failed to get venue:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Create a new venue
+   */
   async createVenue(venueData: VenueCreate): Promise<ApiResponse<Venue>> {
     try {
       return await apiService.post<Venue>('/venues', venueData);
@@ -200,7 +137,9 @@ class VenueService {
     }
   }
 
-  // Update venue
+  /**
+   * Update venue information
+   */
   async updateVenue(venueId: string, venueData: VenueUpdate): Promise<ApiResponse<Venue>> {
     try {
       return await apiService.put<Venue>(`/venues/${venueId}`, venueData);
@@ -209,7 +148,9 @@ class VenueService {
     }
   }
 
-  // Delete venue (soft delete)
+  /**
+   * Deactivate venue (soft delete)
+   */
   async deleteVenue(venueId: string): Promise<ApiResponse<void>> {
     try {
       return await apiService.delete<void>(`/venues/${venueId}`);
@@ -218,7 +159,9 @@ class VenueService {
     }
   }
 
-  // Activate venue
+  /**
+   * Activate deactivated venue
+   */
   async activateVenue(venueId: string): Promise<ApiResponse<void>> {
     try {
       return await apiService.post<void>(`/venues/${venueId}/activate`);
@@ -227,49 +170,9 @@ class VenueService {
     }
   }
 
-  // Deactivate venue
-  async deactivateVenue(venueId: string): Promise<ApiResponse<void>> {
-    try {
-      return await apiService.post<void>(`/venues/${venueId}/deactivate`);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to deactivate venue');
-    }
-  }
-
-  // Get user's venues
-  async getMyVenues(): Promise<Venue[]> {
-    try {
-      const response = await apiService.get<Venue[]>('/venues/my-venues');
-      return response.data || [];
-    } catch (error) {
-      console.error('Failed to get user venues:', error);
-      return [];
-    }
-  }
-
-  // Search venues
-  async searchVenues(query: string): Promise<Venue[]> {
-    try {
-      const response = await apiService.get<Venue[]>(`/venues/search/text?q=${encodeURIComponent(query)}`);
-      return response.data || [];
-    } catch (error) {
-      console.error('Failed to search venues:', error);
-      return [];
-    }
-  }
-
-  // Get venues by subscription status
-  async getVenuesBySubscription(status: 'active' | 'inactive' | 'suspended'): Promise<Venue[]> {
-    try {
-      const response = await apiService.get<Venue[]>(`/venues/filter/subscription/${status}`);
-      return response.data || [];
-    } catch (error) {
-      console.error('Failed to get venues by subscription:', error);
-      return [];
-    }
-  }
-
-  // Get venue analytics
+  /**
+   * Get venue analytics
+   */
   async getVenueAnalytics(venueId: string): Promise<VenueAnalytics | null> {
     try {
       const response = await apiService.get<VenueAnalytics>(`/venues/${venueId}/analytics`);
@@ -280,29 +183,13 @@ class VenueService {
     }
   }
 
-  // Upload venue logo
-  async uploadVenueLogo(venueId: string, file: File, onProgress?: (progress: number) => void): Promise<ApiResponse<{ logo_url: string }>> {
-    try {
-      return await apiService.uploadFile<{ logo_url: string }>(
-        `/venues/${venueId}/logo`,
-        file,
-        onProgress
-      );
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to upload logo');
-    }
-  }
+  // =============================================================================
+  // OPERATING HOURS MANAGEMENT
+  // =============================================================================
 
-  // Update operating hours
-  async updateOperatingHours(venueId: string, operatingHours: OperatingHours[]): Promise<ApiResponse<void>> {
-    try {
-      return await apiService.put<void>(`/venues/${venueId}/hours`, operatingHours);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to update operating hours');
-    }
-  }
-
-  // Get operating hours
+  /**
+   * Get venue operating hours
+   */
   async getOperatingHours(venueId: string): Promise<OperatingHours[]> {
     try {
       const response = await apiService.get<OperatingHours[]>(`/venues/${venueId}/hours`);
@@ -313,36 +200,161 @@ class VenueService {
     }
   }
 
-  // Update subscription
-  async updateSubscription(
-    venueId: string, 
-    subscriptionPlan: 'basic' | 'premium' | 'enterprise',
-    subscriptionStatus: 'active' | 'inactive' | 'suspended'
-  ): Promise<ApiResponse<void>> {
+  /**
+   * Update venue operating hours
+   */
+  async updateOperatingHours(venueId: string, hours: OperatingHours[]): Promise<ApiResponse<void>> {
     try {
-      return await apiService.put<void>(`/venues/${venueId}/subscription`, {
-        subscription_plan: subscriptionPlan,
-        subscription_status: subscriptionStatus
-      });
+      return await apiService.put<void>(`/venues/${venueId}/hours`, hours);
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to update subscription');
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update operating hours');
     }
   }
 
-  // Check if venue is currently open
-  isVenueOpen(venue: Venue): boolean {
-    if (!venue.is_active || venue.status !== 'active') {
-      return false;
+  /**
+   * Check if venue is currently open
+   */
+  async checkVenueStatus(venueId: string): Promise<VenueStatus | null> {
+    try {
+      const response = await apiService.get<VenueStatus>(`/orders/public/venue/${venueId}/status`);
+      return response.data || null;
+    } catch (error) {
+      console.error('Failed to check venue status:', error);
+      return null;
     }
+  }
 
+  // =============================================================================
+  // UTILITY METHODS
+  // =============================================================================
+
+  /**
+   * Format venue address for display
+   */
+  formatAddress(venue: Venue): string {
+    const { location } = venue;
+    const parts = [
+      location.address,
+      location.city,
+      location.state,
+      location.postal_code,
+      location.country
+    ].filter(Boolean);
+    
+    return parts.join(', ');
+  }
+
+  /**
+   * Calculate distance between two coordinates (in km)
+   */
+  calculateDistance(
+    lat1: number, 
+    lon1: number, 
+    lat2: number, 
+    lon2: number
+  ): number {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const d = R * c; // Distance in km
+    return Math.round(d * 100) / 100; // Round to 2 decimal places
+  }
+
+  private deg2rad(deg: number): number {
+    return deg * (Math.PI/180);
+  }
+
+  /**
+   * Get venues near a location
+   */
+  async getVenuesNearLocation(
+    latitude: number, 
+    longitude: number, 
+    radiusKm: number = 10,
+    filters?: Omit<VenueFilters, 'page' | 'page_size'>
+  ): Promise<(Venue & { distance: number })[]> {
+    try {
+      // Get all venues (you might want to implement server-side location filtering)
+      const response = await this.getPublicVenues({ ...filters, page_size: 100 });
+      const venues = response.data;
+
+      // Calculate distances and filter
+      const venuesWithDistance = venues
+        .map(venue => {
+          if (venue.location.latitude && venue.location.longitude) {
+            const distance = this.calculateDistance(
+              latitude,
+              longitude,
+              venue.location.latitude,
+              venue.location.longitude
+            );
+            return { ...venue, distance };
+          }
+          return null;
+        })
+        .filter((venue): venue is Venue & { distance: number } => 
+          venue !== null && venue.distance <= radiusKm
+        )
+        .sort((a, b) => a.distance - b.distance);
+
+      return venuesWithDistance;
+    } catch (error) {
+      console.error('Failed to get venues near location:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Format price range for display
+   */
+  formatPriceRange(priceRange: string): string {
+    const ranges = {
+      budget: '$ - Budget Friendly',
+      mid_range: '$$ - Mid Range',
+      premium: '$$$ - Premium',
+      luxury: '$$$$ - Luxury'
+    };
+    return ranges[priceRange as keyof typeof ranges] || priceRange;
+  }
+
+  /**
+   * Get cuisine type display name
+   */
+  formatCuisineType(cuisineType: string): string {
+    const cuisines = {
+      indian: 'Indian',
+      chinese: 'Chinese',
+      italian: 'Italian',
+      mexican: 'Mexican',
+      american: 'American',
+      thai: 'Thai',
+      japanese: 'Japanese',
+      mediterranean: 'Mediterranean',
+      fusion: 'Fusion',
+      continental: 'Continental',
+      fast_food: 'Fast Food',
+      cafe: 'Cafe',
+      bakery: 'Bakery',
+      desserts: 'Desserts',
+      beverages: 'Beverages'
+    };
+    return cuisines[cuisineType as keyof typeof cuisines] || cuisineType;
+  }
+
+  /**
+   * Check if venue is currently open based on operating hours
+   */
+  isVenueOpen(operatingHours: OperatingHours[]): boolean {
     const now = new Date();
-    const currentDay = now.getDay(); // 0=Sunday, 1=Monday, etc.
-    const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const currentTime = now.toTimeString().slice(0, 8); // HH:MM:SS format
 
-    // Convert Sunday (0) to our format (6)
-    const dayOfWeek = currentDay === 0 ? 6 : currentDay - 1;
-
-    const todayHours = venue.operating_hours.find(h => h.day_of_week === dayOfWeek);
+    const todayHours = operatingHours.find(hours => hours.day_of_week === currentDay);
     
     if (!todayHours || !todayHours.is_open) {
       return false;
@@ -356,93 +368,152 @@ class VenueService {
       return false;
     }
 
-    // Check if currently in break time
-    if (todayHours.break_start && todayHours.break_end) {
-      if (currentTime >= todayHours.break_start && currentTime <= todayHours.break_end) {
-        return false;
-      }
+    // Check if current time is within operating hours
+    const isWithinHours = currentTime >= todayHours.open_time && currentTime <= todayHours.close_time;
+    
+    // Check if it's during break time
+    if (isWithinHours && todayHours.break_start && todayHours.break_end) {
+      const isDuringBreak = currentTime >= todayHours.break_start && currentTime <= todayHours.break_end;
+      return !isDuringBreak;
     }
 
-    // Check if within operating hours
-    if (todayHours.close_time < todayHours.open_time) {
-      // Crosses midnight
-      return currentTime >= todayHours.open_time || currentTime <= todayHours.close_time;
-    } else {
-      return currentTime >= todayHours.open_time && currentTime <= todayHours.close_time;
-    }
+    return isWithinHours;
   }
 
-  // Get next opening/closing time
-  getNextOperatingTime(venue: Venue): { type: 'opens' | 'closes'; time: string } | null {
-    if (!venue.operating_hours.length) return null;
-
+  /**
+   * Get next opening/closing time
+   */
+  getNextStatusChange(operatingHours: OperatingHours[]): {
+    type: 'opening' | 'closing' | 'break_start' | 'break_end';
+    time: string;
+    day: string;
+  } | null {
     const now = new Date();
     const currentDay = now.getDay();
-    const dayOfWeek = currentDay === 0 ? 6 : currentDay - 1;
+    const currentTime = now.toTimeString().slice(0, 8);
 
-    const todayHours = venue.operating_hours.find(h => h.day_of_week === dayOfWeek);
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+    // Check today's hours first
+    const todayHours = operatingHours.find(hours => hours.day_of_week === currentDay);
     
     if (todayHours && todayHours.is_open && !todayHours.is_24_hours) {
-      const currentTime = now.toTimeString().slice(0, 5);
+      // Check if we're before opening
+      if (todayHours.open_time && currentTime < todayHours.open_time) {
+        return {
+          type: 'opening',
+          time: todayHours.open_time,
+          day: 'Today'
+        };
+      }
       
-      if (this.isVenueOpen(venue)) {
-        return { type: 'closes', time: todayHours.close_time || '' };
-      } else if (todayHours.open_time && currentTime < todayHours.open_time) {
-        return { type: 'opens', time: todayHours.open_time };
+      // Check if we're during break
+      if (todayHours.break_start && todayHours.break_end && 
+          currentTime >= todayHours.break_start && currentTime < todayHours.break_end) {
+        return {
+          type: 'break_end',
+          time: todayHours.break_end,
+          day: 'Today'
+        };
+      }
+      
+      // Check if we're before break
+      if (todayHours.break_start && currentTime < todayHours.break_start) {
+        return {
+          type: 'break_start',
+          time: todayHours.break_start,
+          day: 'Today'
+        };
+      }
+      
+      // Check if we're before closing
+      if (todayHours.close_time && currentTime < todayHours.close_time) {
+        return {
+          type: 'closing',
+          time: todayHours.close_time,
+          day: 'Today'
+        };
       }
     }
 
-    // Find next opening day
+    // Look for next opening day
     for (let i = 1; i <= 7; i++) {
-      const nextDay = (dayOfWeek + i) % 7;
-      const nextDayHours = venue.operating_hours.find(h => h.day_of_week === nextDay);
+      const nextDay = (currentDay + i) % 7;
+      const nextDayHours = operatingHours.find(hours => hours.day_of_week === nextDay);
       
       if (nextDayHours && nextDayHours.is_open && nextDayHours.open_time) {
-        return { type: 'opens', time: nextDayHours.open_time };
+        return {
+          type: 'opening',
+          time: nextDayHours.open_time,
+          day: i === 1 ? 'Tomorrow' : days[nextDay]
+        };
       }
     }
 
     return null;
   }
 
-  // Format venue address
-  formatAddress(location: Venue['location']): string {
-    const parts = [
-      location.address,
-      location.city,
-      location.state,
-      location.postal_code,
-      location.country
-    ].filter(Boolean);
-    
-    return parts.join(', ');
+  /**
+   * Validate venue data before creation/update
+   */
+  validateVenueData(venueData: VenueCreate | VenueUpdate): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if ('name' in venueData) {
+      if (!venueData.name || venueData.name.trim().length < 2) {
+        errors.push('Venue name must be at least 2 characters long');
+      }
+      if (venueData.name && venueData.name.length > 100) {
+        errors.push('Venue name must be less than 100 characters');
+      }
+    }
+
+    if ('location' in venueData && venueData.location) {
+      if (!venueData.location.address || venueData.location.address.trim().length < 5) {
+        errors.push('Address must be at least 5 characters long');
+      }
+      if (!venueData.location.city || venueData.location.city.trim().length < 2) {
+        errors.push('City is required');
+      }
+      if (!venueData.location.country || venueData.location.country.trim().length < 2) {
+        errors.push('Country is required');
+      }
+    }
+
+    if ('phone' in venueData && venueData.phone) {
+      if (!/^[+]?[\d\s\-()]{10,}$/.test(venueData.phone)) {
+        errors.push('Please enter a valid phone number');
+      }
+    }
+
+    if ('email' in venueData && venueData.email) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venueData.email)) {
+        errors.push('Please enter a valid email address');
+      }
+    }
+
+    if ('website' in venueData && venueData.website) {
+      try {
+        new URL(venueData.website);
+      } catch {
+        errors.push('Please enter a valid website URL');
+      }
+    }
+
+    return { isValid: errors.length === 0, errors };
   }
 
-  // Get venue features as formatted list
-  getVenueFeatures(venue: Venue): string[] {
-    const features = venue.features || [];
-    const defaultFeatures = [];
-
-    // Add features based on venue data
-    if (venue.cuisine_types.length > 0) {
-      defaultFeatures.push(`Cuisine: ${venue.cuisine_types.join(', ')}`);
-    }
-
-    if (venue.price_range) {
-      const priceLabels = {
-        budget: 'Budget Friendly',
-        mid_range: 'Mid Range',
-        premium: 'Premium',
-        luxury: 'Luxury'
-      };
-      defaultFeatures.push(priceLabels[venue.price_range]);
-    }
-
-    if (venue.rating > 0) {
-      defaultFeatures.push(`${venue.rating}★ (${venue.total_reviews} reviews)`);
-    }
-
-    return [...features, ...defaultFeatures];
+  /**
+   * Generate default operating hours (9 AM to 10 PM, Monday to Sunday)
+   */
+  generateDefaultOperatingHours(): OperatingHours[] {
+    return Array.from({ length: 7 }, (_, index) => ({
+      day_of_week: index,
+      is_open: true,
+      open_time: '09:00:00',
+      close_time: '22:00:00',
+      is_24_hours: false
+    }));
   }
 }
 

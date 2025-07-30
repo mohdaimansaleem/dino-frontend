@@ -38,9 +38,7 @@ class QRService {
       
       throw new Error(response.message || 'Failed to generate QR code');
     } catch (error: any) {
-      // Fallback to mock data if API fails
-      console.warn('QR generation failed, using mock data:', error.message);
-      return this.generateMockQR(request);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to generate QR code');
     }
   }
 
@@ -114,9 +112,7 @@ class QRService {
       
       throw new Error(response.message || 'Failed to generate QR code');
     } catch (error: any) {
-      // Fallback to mock QR if API fails
-      console.warn('QR base64 generation failed, using mock data:', error.message);
-      return this.generateMockQRBase64(request);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to generate QR code');
     }
   }
 
@@ -150,75 +146,12 @@ class QRService {
     }
   }
 
-  // Mock QR generation for demo mode
-  private generateMockQR(request: QRGenerationRequest): QRCodeData {
-    const menuUrl = 'https://google.com';
-    
-    return {
-      id: `qr-${Date.now()}`,
-      tableId: request.tableId,
-      cafeId: request.cafeId,
-      cafeName: request.cafeName,
-      tableNumber: request.tableNumber,
-      qrCodeUrl: `/api/qr/mock-${request.tableId}.png`,
-      qrCodeBase64: this.generateMockQRBase64(request),
-      menuUrl,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-  }
 
-  // Generate mock base64 QR code (simple placeholder)
-  private generateMockQRBase64(request: QRGenerationRequest): string {
-    // Create a simple SVG QR code placeholder
-    const size = 200;
-    const cellSize = size / 21; // 21x21 grid for better QR pattern
-    
-    // Simple pattern for demo (21x21 QR code pattern)
-    const pattern = [
-      [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
-      [1,0,0,0,0,0,1,0,1,1,0,1,1,0,1,0,0,0,0,0,1],
-      [1,0,1,1,1,0,1,0,0,1,1,1,0,0,1,0,1,1,1,0,1],
-      [1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1],
-      [1,0,1,1,1,0,1,0,0,1,0,1,0,0,1,0,1,1,1,0,1],
-      [1,0,0,0,0,0,1,0,1,1,1,1,1,0,1,0,0,0,0,0,1],
-      [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
-      [0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0],
-      [1,0,1,1,0,1,1,1,1,0,1,0,1,1,1,0,1,1,0,1,1],
-      [0,1,0,1,1,0,0,0,0,1,0,1,0,0,0,1,0,1,1,0,0],
-      [1,1,1,0,0,1,1,1,1,0,1,0,1,1,1,0,1,0,0,1,1],
-      [0,0,0,1,1,0,0,0,0,1,0,1,0,0,0,1,0,1,1,0,0],
-      [1,1,1,0,0,1,1,1,1,0,1,0,1,1,1,0,1,0,0,1,1],
-      [0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,1,0,1,1,0,0],
-      [1,1,1,1,1,1,1,0,0,1,1,1,0,0,1,0,1,0,0,1,1],
-      [1,0,0,0,0,0,1,0,1,0,1,0,1,0,0,1,0,1,1,0,0],
-      [1,0,1,1,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,1],
-      [1,0,1,1,1,0,1,0,1,1,1,1,1,0,0,1,0,1,1,0,0],
-      [1,0,1,1,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,1],
-      [1,0,0,0,0,0,1,0,1,0,1,0,1,0,0,1,0,1,1,0,0],
-      [1,1,1,1,1,1,1,0,0,1,1,1,0,0,1,1,1,1,1,1,1],
-    ];
-
-    let svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">`;
-    svg += `<rect width="${size}" height="${size}" fill="white"/>`;
-    
-    for (let row = 0; row < pattern.length; row++) {
-      for (let col = 0; col < pattern[row].length; col++) {
-        if (pattern[row][col] === 1) {
-          svg += `<rect x="${col * cellSize}" y="${row * cellSize}" width="${cellSize}" height="${cellSize}" fill="black"/>`;
-        }
-      }
-    }
-    
-    svg += '</svg>';
-    
-    // Convert SVG to base64
-    return `data:image/svg+xml;base64,${btoa(svg)}`;
-  }
 
   // Utility function to create menu URL
   createMenuUrl(cafeId: string, tableId: string): string {
-    return 'https://google.com';
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/menu/${cafeId}/${tableId}`;
   }
 
   // Validate QR code URL

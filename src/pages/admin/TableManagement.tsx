@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import QRCodeViewer from '../../components/QRCodeViewer';
 import QRCodeManager from '../../components/QRCodeManager';
+import { tableService, Table } from '../../services/tableService';
+import { DEFAULTS } from '../../constants/app';
 import {
   Box,
   Container,
@@ -28,6 +30,7 @@ import {
   Avatar,
   Divider,
   Tooltip,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
@@ -46,34 +49,16 @@ import {
   QrCodeScanner,
 } from '@mui/icons-material';
 
-interface Table {
-  id: string;
-  number: string;
-  capacity: number;
-  location: string;
-  status: 'available' | 'occupied' | 'reserved' | 'maintenance';
-  qrCode: string;
-  active: boolean;
-  shape: 'round' | 'square' | 'rectangle';
-  notes?: string;
-  currentOrder?: {
-    orderId: string;
-    customerName: string;
-    startTime: string;
-    items: number;
-    total: number;
-  };
-}
-
+// Local interface for table areas (backward compatibility)
 interface TableArea {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   color: string;
   active: boolean;
 }
 
-const EnhancedTableManagement: React.FC = () => {
+const TableManagement: React.FC = () => {
   const [tables, setTables] = useState<Table[]>([]);
   const [areas, setAreas] = useState<TableArea[]>([]);
   const [selectedArea, setSelectedArea] = useState<string>('all');
@@ -85,80 +70,37 @@ const EnhancedTableManagement: React.FC = () => {
   const [editingArea, setEditingArea] = useState<TableArea | null>(null);
   const [selectedTableForQR, setSelectedTableForQR] = useState<Table | null>(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data
   useEffect(() => {
-    setAreas([
-      { id: '1', name: 'Main Dining', description: 'Main dining area', color: '#2196F3', active: true },
-      { id: '2', name: 'Patio', description: 'Outdoor seating', color: '#4CAF50', active: true },
-      { id: '3', name: 'Private Room', description: 'Private dining room', color: '#FF9800', active: true },
-      { id: '4', name: 'Bar Area', description: 'Bar and lounge', color: '#9C27B0', active: true },
-    ]);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    setTables([
-      {
-        id: '1',
-        number: 'T001',
-        capacity: 4,
-        location: '1',
-        status: 'occupied',
-        qrCode: 'QR001',
-        active: true,
-        shape: 'round',
-        notes: 'Window table',
-        currentOrder: {
-          orderId: 'ORD001',
-          customerName: 'John Doe',
-          startTime: '2024-01-15T18:30:00',
-          items: 3,
-          total: 45.99,
-        },
-      },
-      {
-        id: '2',
-        number: 'T002',
-        capacity: 2,
-        location: '1',
-        status: 'available',
-        qrCode: 'QR002',
-        active: true,
-        shape: 'square',
-        notes: 'Quiet corner',
-      },
-      {
-        id: '3',
-        number: 'T003',
-        capacity: 6,
-        location: '2',
-        status: 'reserved',
-        qrCode: 'QR003',
-        active: true,
-        shape: 'rectangle',
-        notes: 'Patio table with umbrella',
-      },
-      {
-        id: '4',
-        number: 'T004',
-        capacity: 8,
-        location: '3',
-        status: 'available',
-        qrCode: 'QR004',
-        active: true,
-        shape: 'rectangle',
-        notes: 'Large private table',
-      },
-      {
-        id: '5',
-        number: 'T005',
-        capacity: 2,
-        location: '4',
-        status: 'maintenance',
-        qrCode: 'QR005',
-        active: false,
-        shape: 'round',
-        notes: 'Needs repair',
-      },
-    ]);
+        // Load areas and tables in parallel
+        const [areasData, tablesData] = await Promise.all([
+          tableService.getAreas(DEFAULTS.CAFE_ID),
+          tableService.getTables({ venue_id: DEFAULTS.CAFE_ID })
+        ]);
+
+        setAreas(areasData);
+        setTables(tablesData.data || []);
+      } catch (error) {
+        console.error('Failed to load table data:', error);
+        setError('Failed to load table data. Please try again.');
+        setSnackbar({ 
+          open: true, 
+          message: 'Failed to load table data. Please check your connection.', 
+          severity: 'error' 
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
   const handleAddTable = () => {
@@ -171,43 +113,69 @@ const EnhancedTableManagement: React.FC = () => {
     setOpenTableDialog(true);
   };
 
-  const handleDeleteTable = (tableId: string) => {
-    setTables(prev => prev.filter(table => table.id !== tableId));
-    setSnackbar({ open: true, message: 'Table deleted successfully', severity: 'success' });
-  };
-
-  const handleSaveTable = (tableData: Partial<Table>) => {
-    if (editingTable) {
-      setTables(prev => prev.map(table => 
-        table.id === editingTable.id ? { ...table, ...tableData } : table
-      ));
-      setSnackbar({ open: true, message: 'Table updated successfully', severity: 'success' });
-    } else {
-      const newTable: Table = {
-        id: Date.now().toString(),
-        number: '',
-        capacity: 2,
-        location: '',
-        status: 'available',
-        qrCode: `QR${Date.now()}`,
-        active: true,
-        shape: 'round',
-        ...tableData,
-      };
-      setTables(prev => [...prev, newTable]);
-      setSnackbar({ open: true, message: 'Table added successfully', severity: 'success' });
+  const handleDeleteTable = async (tableId: string) => {
+    try {
+      await tableService.deleteTable(tableId);
+      setTables(prev => prev.filter(table => table.id !== tableId));
+      setSnackbar({ open: true, message: 'Table deleted successfully', severity: 'success' });
+    } catch (error) {
+      console.error('Failed to delete table:', error);
+      setSnackbar({ open: true, message: 'Failed to delete table', severity: 'error' });
     }
-    setOpenTableDialog(false);
   };
 
-  const handleToggleTableStatus = (tableId: string) => {
-    setTables(prev => prev.map(table => 
-      table.id === tableId ? { 
-        ...table, 
-        status: table.status === 'available' ? 'maintenance' : 'available',
-        active: table.status !== 'available'
-      } : table
-    ));
+  const handleSaveTable = async (tableData: any) => {
+    try {
+      if (editingTable) {
+        // Update existing table
+        const response = await tableService.updateTable(editingTable.id, {
+          table_number: parseInt(tableData.table_number || editingTable.table_number.toString()),
+          capacity: tableData.capacity || editingTable.capacity,
+          location: tableData.location || editingTable.location,
+          table_status: tableData.table_status || editingTable.table_status,
+          is_active: tableData.is_active !== undefined ? tableData.is_active : editingTable.is_active,
+        });
+        if (response.data) {
+          setTables(prev => prev.map(table => 
+            table.id === editingTable.id ? response.data! : table
+          ));
+        }
+        setSnackbar({ open: true, message: 'Table updated successfully', severity: 'success' });
+      } else {
+        // Create new table
+        const response = await tableService.createTable({
+          table_number: parseInt(tableData.table_number || '1'),
+          capacity: tableData.capacity || 2,
+          location: tableData.location || '',
+          venue_id: DEFAULTS.CAFE_ID,
+        });
+        if (response.data) {
+          setTables(prev => [...prev, response.data!]);
+        }
+        setSnackbar({ open: true, message: 'Table added successfully', severity: 'success' });
+      }
+      setOpenTableDialog(false);
+    } catch (error) {
+      console.error('Failed to save table:', error);
+      setSnackbar({ open: true, message: 'Failed to save table', severity: 'error' });
+    }
+  };
+
+  const handleToggleTableStatus = async (tableId: string) => {
+    try {
+      const updatedTable = await tableService.toggleTableAvailability(tableId);
+      setTables(prev => prev.map(table => 
+        table.id === tableId ? updatedTable : table
+      ));
+      setSnackbar({ 
+        open: true, 
+        message: `Table status updated to ${updatedTable.table_status}`, 
+        severity: 'success' 
+      });
+    } catch (error) {
+      console.error('Failed to toggle table status:', error);
+      setSnackbar({ open: true, message: 'Failed to update table status', severity: 'error' });
+    }
   };
 
   const handleAddArea = () => {
@@ -220,29 +188,38 @@ const EnhancedTableManagement: React.FC = () => {
     setOpenAreaDialog(true);
   };
 
-  const handleSaveArea = (areaData: Partial<TableArea>) => {
-    if (editingArea) {
-      setAreas(prev => prev.map(area => 
-        area.id === editingArea.id ? { ...area, ...areaData } : area
-      ));
-      setSnackbar({ open: true, message: 'Area updated successfully', severity: 'success' });
-    } else {
-      const newArea: TableArea = {
-        id: Date.now().toString(),
-        name: '',
-        description: '',
-        color: '#2196F3',
-        active: true,
-        ...areaData,
-      };
-      setAreas(prev => [...prev, newArea]);
-      setSnackbar({ open: true, message: 'Area added successfully', severity: 'success' });
+  const handleSaveArea = async (areaData: Partial<TableArea>) => {
+    try {
+      if (editingArea) {
+        // Update existing area
+        const updatedArea = await tableService.updateArea({
+          id: editingArea.id,
+          ...areaData,
+        });
+        setAreas(prev => prev.map(area => 
+          area.id === editingArea.id ? updatedArea : area
+        ));
+        setSnackbar({ open: true, message: 'Area updated successfully', severity: 'success' });
+      } else {
+        // Create new area
+        const newArea = await tableService.createArea({
+          name: areaData.name || '',
+          description: areaData.description || '',
+          color: areaData.color || '#2196F3',
+          active: areaData.active ?? true,
+        });
+        setAreas(prev => [...prev, newArea]);
+        setSnackbar({ open: true, message: 'Area added successfully', severity: 'success' });
+      }
+      setOpenAreaDialog(false);
+    } catch (error) {
+      console.error('Failed to save area:', error);
+      setSnackbar({ open: true, message: 'Failed to save area', severity: 'error' });
     }
-    setOpenAreaDialog(false);
   };
 
   const filteredTables = tables.filter(table => {
-    return selectedArea === 'all' || table.location === selectedArea;
+    return selectedArea === 'all' || (table.location || '') === selectedArea;
   });
 
   const getAreaName = (areaId: string) => {
@@ -293,9 +270,31 @@ const EnhancedTableManagement: React.FC = () => {
     setOpenQRManager(true);
   };
 
+  if (loading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress size={60} />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert severity="error" sx={{ mb: 4 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={() => window.location.reload()}>
+          Retry
+        </Button>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
           Table Management
@@ -305,7 +304,6 @@ const EnhancedTableManagement: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Controls */}
       <Paper elevation={1} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'divider' }}>
         <Grid container spacing={3} alignItems="center">
           <Grid item xs={12} md={4}>
@@ -363,13 +361,12 @@ const EnhancedTableManagement: React.FC = () => {
         </Grid>
       </Paper>
 
-      {/* Statistics */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {[
           { label: 'Total Tables', value: tables.length, color: '#2196F3', icon: <TableRestaurant /> },
-          { label: 'Available', value: tables.filter(t => t.status === 'available').length, color: '#4CAF50', icon: <CheckCircle /> },
-          { label: 'Occupied', value: tables.filter(t => t.status === 'occupied').length, color: '#F44336', icon: <People /> },
-          { label: 'Reserved', value: tables.filter(t => t.status === 'reserved').length, color: '#FF9800', icon: <Schedule /> },
+          { label: 'Available', value: tables.filter(t => t.table_status === 'available').length, color: '#4CAF50', icon: <CheckCircle /> },
+          { label: 'Occupied', value: tables.filter(t => t.table_status === 'occupied').length, color: '#F44336', icon: <People /> },
+          { label: 'Reserved', value: tables.filter(t => t.table_status === 'booked').length, color: '#FF9800', icon: <Schedule /> },
         ].map((stat, index) => (
           <Grid item xs={6} md={3} key={index}>
             <Paper elevation={1} sx={{ p: 3, border: '1px solid', borderColor: 'divider' }}>
@@ -391,7 +388,6 @@ const EnhancedTableManagement: React.FC = () => {
         ))}
       </Grid>
 
-      {/* Areas Overview */}
       <Paper elevation={1} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'divider' }}>
         <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
           Seating Areas
@@ -417,7 +413,7 @@ const EnhancedTableManagement: React.FC = () => {
                         {area.description}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {tables.filter(table => table.location === area.id).length} tables
+                        {tables.filter(table => (table.location || '') === area.id).length} tables
                       </Typography>
                     </Box>
                     <IconButton size="small" onClick={() => handleEditArea(area)}>
@@ -431,7 +427,6 @@ const EnhancedTableManagement: React.FC = () => {
         </Grid>
       </Paper>
 
-      {/* Tables Grid */}
       <Grid container spacing={3}>
         {filteredTables.map(table => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={table.id}>
@@ -442,8 +437,8 @@ const EnhancedTableManagement: React.FC = () => {
                 flexDirection: 'column',
                 border: '1px solid', 
                 borderColor: 'divider',
-                borderLeft: `4px solid ${getAreaColor(table.location)}`,
-                opacity: table.active ? 1 : 0.6,
+                borderLeft: `4px solid ${getAreaColor(table.location || '')}`,
+                opacity: table.is_active ? 1 : 0.6,
                 '&:hover': { boxShadow: 2 }
               }}
             >
@@ -451,18 +446,18 @@ const EnhancedTableManagement: React.FC = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box>
                     <Typography variant="h6" fontWeight="600" color="text.primary">
-                      {table.number}
+                      Table {table.table_number}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {getAreaName(table.location)}
+                      {getAreaName(table.location || '')}
                     </Typography>
                   </Box>
                   <Chip 
-                    icon={getStatusIcon(table.status)}
-                    label={table.status.charAt(0).toUpperCase() + table.status.slice(1)}
+                    icon={getStatusIcon(table.table_status)}
+                    label={table.table_status.charAt(0).toUpperCase() + table.table_status.slice(1)}
                     size="small"
                     sx={{ 
-                      backgroundColor: getStatusColor(table.status),
+                      backgroundColor: getStatusColor(table.table_status),
                       color: 'white',
                       '& .MuiChip-icon': { color: 'white' }
                     }}
@@ -479,36 +474,15 @@ const EnhancedTableManagement: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <TableRestaurant fontSize="small" color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      {table.shape}
+                      Table
                     </Typography>
                   </Box>
                 </Box>
                 
-                {table.notes && (
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontStyle: 'italic' }}>
-                    {table.notes}
-                  </Typography>
-                )}
+                {/* Notes section - API doesn't have notes field yet */}
                 
-                {table.currentOrder && (
-                  <Paper elevation={0} sx={{ p: 2, backgroundColor: 'grey.50', mb: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="600" color="text.primary" sx={{ mb: 1 }}>
-                      Current Order
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {table.currentOrder.customerName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {table.currentOrder.items} items • ₹{table.currentOrder.total.toFixed(0)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Started: {new Date(table.currentOrder.startTime).toLocaleTimeString()}
-                    </Typography>
-                  </Paper>
-                )}
+                {/* Current order section - API doesn't have currentOrder field yet */}
 
-
-                
                 <Box sx={{ mt: 'auto' }}>
                   <Divider sx={{ my: 2 }} />
                   
@@ -531,7 +505,7 @@ const EnhancedTableManagement: React.FC = () => {
                     </Tooltip>
                     <Tooltip title="Toggle Status">
                       <IconButton size="small" onClick={() => handleToggleTableStatus(table.id)}>
-                        {table.active ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                        {table.is_active ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Edit Table">
@@ -552,7 +526,6 @@ const EnhancedTableManagement: React.FC = () => {
         ))}
       </Grid>
 
-      {/* Table Dialog */}
       <TableDialog
         open={openTableDialog}
         onClose={() => setOpenTableDialog(false)}
@@ -561,7 +534,6 @@ const EnhancedTableManagement: React.FC = () => {
         areas={areas}
       />
 
-      {/* Area Dialog */}
       <AreaDialog
         open={openAreaDialog}
         onClose={() => setOpenAreaDialog(false)}
@@ -569,7 +541,6 @@ const EnhancedTableManagement: React.FC = () => {
         area={editingArea}
       />
 
-      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -579,7 +550,7 @@ const EnhancedTableManagement: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-      {/* QR Code Viewer */}
+
       <QRCodeViewer
         open={openQRViewer}
         onClose={() => {
@@ -587,60 +558,60 @@ const EnhancedTableManagement: React.FC = () => {
           setSelectedTableForQR(null);
         }}
         tableId={selectedTableForQR?.id}
-        cafeId="dino-cafe-1"
-        cafeName="Dino Cafe"
-        tableNumber={selectedTableForQR?.number}
+        cafeId={DEFAULTS.CAFE_ID}
+        cafeName={DEFAULTS.CAFE_NAME}
+        tableNumber={selectedTableForQR?.table_number.toString()}
       />
 
-      {/* QR Code Manager */}
       <QRCodeManager
         open={openQRManager}
         onClose={() => setOpenQRManager(false)}
         tables={tables.map(table => ({
           id: table.id,
-          number: table.number,
-          cafeId: "dino-cafe-1",
-          cafeName: "Dino Cafe"
+          number: table.table_number.toString(),
+          cafeId: DEFAULTS.CAFE_ID,
+          cafeName: DEFAULTS.CAFE_NAME
         }))}
-        cafeId="dino-cafe-1"
-        cafeName="Dino Cafe"
+        cafeId={DEFAULTS.CAFE_ID}
+        cafeName={DEFAULTS.CAFE_NAME}
       />
     </Container>
   );
 };
 
-// Table Dialog Component
 interface TableDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (table: Partial<Table>) => void;
+  onSave: (table: any) => void;
   table: Table | null;
   areas: TableArea[];
 }
 
 const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table, areas }) => {
-  const [formData, setFormData] = useState<Partial<Table>>({
-    number: '',
+  const [formData, setFormData] = useState<any>({
+    table_number: '',
     capacity: 2,
     location: '',
-    status: 'available',
-    active: true,
-    shape: 'round',
-    notes: '',
+    table_status: 'available',
+    is_active: true,
   });
 
   useEffect(() => {
     if (table) {
-      setFormData(table);
+      setFormData({
+        table_number: table.table_number.toString(),
+        capacity: table.capacity,
+        location: table.location || '',
+        table_status: table.table_status,
+        is_active: table.is_active,
+      });
     } else {
       setFormData({
-        number: '',
+        table_number: '',
         capacity: 2,
         location: '',
-        status: 'available',
-        active: true,
-        shape: 'round',
-        notes: '',
+        table_status: 'available',
+        is_active: true,
       });
     }
   }, [table, open]);
@@ -660,8 +631,8 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
             <TextField
               fullWidth
               label="Table Number"
-              value={formData.number || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, number: e.target.value }))}
+              value={formData.table_number || ''}
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, table_number: e.target.value }))}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -669,7 +640,7 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
               <InputLabel>Area</InputLabel>
               <Select
                 value={formData.location || ''}
-                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                onChange={(e) => setFormData((prev: any) => ({ ...prev, location: e.target.value }))}
                 label="Area"
               >
                 {areas.map(area => (
@@ -686,54 +657,31 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
               label="Capacity"
               type="number"
               value={formData.capacity || 2}
-              onChange={(e) => setFormData(prev => ({ ...prev, capacity: parseInt(e.target.value) }))}
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, capacity: parseInt(e.target.value) }))}
             />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth>
-              <InputLabel>Shape</InputLabel>
-              <Select
-                value={formData.shape || 'round'}
-                onChange={(e) => setFormData(prev => ({ ...prev, shape: e.target.value as 'round' | 'square' | 'rectangle' }))}
-                label="Shape"
-              >
-                <MenuItem value="round">Round</MenuItem>
-                <MenuItem value="square">Square</MenuItem>
-                <MenuItem value="rectangle">Rectangle</MenuItem>
-              </Select>
-            </FormControl>
           </Grid>
           <Grid item xs={12} md={4}>
             <FormControl fullWidth>
               <InputLabel>Status</InputLabel>
               <Select
-                value={formData.status || 'available'}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as Table['status'] }))}
+                value={formData.table_status || 'available'}
+                onChange={(e) => setFormData((prev: any) => ({ ...prev, table_status: e.target.value }))}
                 label="Status"
               >
                 <MenuItem value="available">Available</MenuItem>
                 <MenuItem value="occupied">Occupied</MenuItem>
-                <MenuItem value="reserved">Reserved</MenuItem>
+                <MenuItem value="booked">Booked</MenuItem>
                 <MenuItem value="maintenance">Maintenance</MenuItem>
+                <MenuItem value="out_of_service">Out of Service</MenuItem>
               </Select>
             </FormControl>
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Notes"
-              multiline
-              rows={3}
-              value={formData.notes || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-            />
           </Grid>
           <Grid item xs={12}>
             <FormControlLabel
               control={
                 <Switch
                   checked={formData.active || false}
-                  onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                  onChange={(e) => setFormData((prev: any) => ({ ...prev, active: e.target.checked }))}
                 />
               }
               label="Active"
@@ -751,7 +699,6 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
   );
 };
 
-// Area Dialog Component
 interface AreaDialogProps {
   open: boolean;
   onClose: () => void;
@@ -814,20 +761,20 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area }) 
             />
           </Grid>
           <Grid item xs={12}>
-            <Typography variant="subtitle2" gutterBottom>
+            <Typography variant="subtitle1" gutterBottom>
               Color
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {colorOptions.map(color => (
+              {colorOptions.map((color) => (
                 <Box
                   key={color}
                   sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
+                    width: 40,
+                    height: 40,
                     backgroundColor: color,
+                    borderRadius: 1,
                     cursor: 'pointer',
-                    border: formData.color === color ? '3px solid #000' : '1px solid #ccc',
+                    border: formData.color === color ? '3px solid #000' : '1px solid #ddd',
                   }}
                   onClick={() => setFormData(prev => ({ ...prev, color }))}
                 />
@@ -839,7 +786,7 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area }) 
               control={
                 <Switch
                   checked={formData.active || false}
-                  onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                  onChange={(e) => setFormData((prev: any) => ({ ...prev, active: e.target.checked }))}
                 />
               }
               label="Active"
@@ -857,4 +804,4 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area }) 
   );
 };
 
-export default EnhancedTableManagement;
+export default TableManagement;

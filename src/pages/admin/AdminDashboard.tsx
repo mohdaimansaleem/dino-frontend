@@ -43,79 +43,84 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 import CafeStatusManager from '../../components/CafeStatusManager';
 import UserPermissions from '../../components/UserPermissions';
+import { analyticsService, DashboardAnalytics, RecentOrder } from '../../services/analyticsService';
 
-// Demo data for Dino Cafe - Hyderabad
-const mockAnalytics = {
-  totalRevenue: 45680,
-  totalOrders: 156,
-  averageOrderValue: 293,
-  activeOrders: 8,
-  popularItems: [
-    { name: 'Butter Chicken', orders: 45, revenue: 14400 },
-    { name: 'Paneer Tikka', orders: 32, revenue: 8960 },
-    { name: 'Chicken Biryani', orders: 28, revenue: 9800 },
-    { name: 'Dal Makhani', orders: 25, revenue: 5500 },
-  ],
-  revenueByDay: [
-    { date: '2024-01-15', revenue: 4200, orders: 15 },
-    { date: '2024-01-16', revenue: 5450, orders: 18 },
-    { date: '2024-01-17', revenue: 3800, orders: 14 },
-    { date: '2024-01-18', revenue: 6250, orders: 21 },
-    { date: '2024-01-19', revenue: 7100, orders: 23 },
-    { date: '2024-01-20', revenue: 8900, orders: 26 },
-    { date: '2024-01-21', revenue: 6980, orders: 24 },
-  ],
-  ordersByStatus: [
-    { status: 'Pending', count: 3, color: '#1976d2' },
-    { status: 'Preparing', count: 4, color: '#42a5f5' },
-    { status: 'Ready', count: 1, color: '#64b5f6' },
-    { status: 'Served', count: 148, color: '#90caf9' },
-  ],
-  cafePerformance: [
-    { metric: 'Customer Satisfaction', value: 4.5, max: 5 },
-    { metric: 'Order Accuracy', value: 96, max: 100 },
-    { metric: 'Service Speed', value: 88, max: 100 },
-    { metric: 'Food Quality', value: 92, max: 100 },
-  ],
-  hourlyOrders: [
-    { hour: '9 AM', orders: 5, revenue: 1200 },
-    { hour: '10 AM', orders: 8, revenue: 2100 },
-    { hour: '11 AM', orders: 12, revenue: 3200 },
-    { hour: '12 PM', orders: 18, revenue: 4800 },
-    { hour: '1 PM', orders: 25, revenue: 6500 },
-    { hour: '2 PM', orders: 22, revenue: 5800 },
-    { hour: '3 PM', orders: 15, revenue: 3900 },
-    { hour: '4 PM', orders: 10, revenue: 2600 },
-    { hour: '5 PM', orders: 14, revenue: 3700 },
-    { hour: '6 PM', orders: 20, revenue: 5200 },
-    { hour: '7 PM', orders: 28, revenue: 7300 },
-    { hour: '8 PM', orders: 24, revenue: 6200 },
-  ],
+// Default analytics data structure for loading states
+const defaultAnalytics: DashboardAnalytics = {
+  venue_id: '',
+  period: { start_date: '', end_date: '' },
+  summary: {
+    total_revenue: 0,
+    total_orders: 0,
+    average_order_value: 0,
+    active_orders: 0,
+    customer_count: 0,
+    table_turnover_rate: 0
+  },
+  revenue_trend: [],
+  order_status_breakdown: [],
+  popular_items: [],
+  hourly_performance: [],
+  cafe_performance_metrics: [],
+  payment_method_breakdown: [],
+  customer_satisfaction: {
+    average_rating: 0,
+    total_reviews: 0,
+    rating_distribution: []
+  }
 };
-
-const mockRecentOrders = [
-  { id: 'ORD-001', tableNumber: 'dt-001', items: 3, total: 800, status: 'preparing', time: '2 min ago' },
-  { id: 'ORD-002', tableNumber: 'T-005', items: 2, total: 620, status: 'ready', time: '5 min ago' },
-  { id: 'ORD-003', tableNumber: 'T-008', items: 4, total: 490, status: 'pending', time: '8 min ago' },
-  { id: 'ORD-004', tableNumber: 'T-012', items: 1, total: 350, status: 'served', time: '12 min ago' },
-  { id: 'ORD-005', tableNumber: 'T-003', items: 5, total: 1250, status: 'preparing', time: '15 min ago' },
-];
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { currentCafe } = useWorkspace();
   const [loading, setLoading] = useState(true);
-  const [analytics] = useState(mockAnalytics);
-  const [recentOrders] = useState(mockRecentOrders);
+  const [analytics, setAnalytics] = useState<DashboardAnalytics>(defaultAnalytics);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [animationKey, setAnimationKey] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    const loadDashboardData = async () => {
+      if (!currentCafe?.id) {
+        setError('No cafe selected');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Load analytics data
+        const analyticsData = await analyticsService.getDashboardAnalytics(
+          currentCafe.id,
+          analyticsService.getDefaultPeriod()
+        );
+
+        if (analyticsData) {
+          setAnalytics(analyticsData);
+        }
+
+        // Load recent orders
+        const recentOrdersData = await analyticsService.getRecentOrders(currentCafe.id, 5);
+        setRecentOrders(recentOrdersData);
+
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        setError('Failed to load dashboard data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+
+    // Auto-refresh data every 5 minutes
+    const refreshTimer = setInterval(loadDashboardData, 5 * 60 * 1000);
 
     // Auto-refresh charts every 10 seconds for dynamic effect
     const chartRefreshTimer = setInterval(() => {
@@ -123,18 +128,46 @@ const AdminDashboard: React.FC = () => {
     }, 10000);
 
     return () => {
-      clearTimeout(timer);
+      clearInterval(refreshTimer);
       clearInterval(chartRefreshTimer);
     };
-  }, []);
+  }, [currentCafe?.id]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'error';
-      case 'preparing': return 'info';
+    switch (status.toLowerCase()) {
+      case 'pending': 
+      case 'placed': return 'error';
+      case 'preparing': 
+      case 'confirmed': return 'info';
       case 'ready': return 'success';
-      case 'served': return 'default';
+      case 'served': 
+      case 'delivered': return 'default';
       default: return 'default';
+    }
+  };
+
+  const handleRefreshData = async () => {
+    if (!currentCafe?.id) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [analyticsData, recentOrdersData] = await Promise.all([
+        analyticsService.getDashboardAnalytics(currentCafe.id, analyticsService.getDefaultPeriod()),
+        analyticsService.getRecentOrders(currentCafe.id, 5)
+      ]);
+
+      if (analyticsData) {
+        setAnalytics(analyticsData);
+      }
+      setRecentOrders(recentOrdersData);
+      setAnimationKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Failed to refresh dashboard data:', error);
+      setError('Failed to refresh data. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -165,6 +198,21 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h6" color="error" gutterBottom>
+            {error}
+          </Typography>
+          <Button variant="contained" onClick={handleRefreshData} sx={{ mt: 2 }}>
+            Try Again
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Header */}
@@ -173,7 +221,7 @@ const AdminDashboard: React.FC = () => {
           Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Welcome back, {user?.firstName || user?.email}! Here's what's happening at your restaurant.
+          Welcome back, {user?.firstName || user?.email}! Here's what's happening at {currentCafe?.name || 'your restaurant'}.
         </Typography>
       </Box>
 
@@ -188,7 +236,7 @@ const AdminDashboard: React.FC = () => {
                     Today's Revenue
                   </Typography>
                   <Typography variant="h5" fontWeight="bold">
-                    {formatCurrency(analytics.totalRevenue)}
+                    {formatCurrency(analytics.summary.total_revenue)}
                   </Typography>
                 </Box>
                 <TrendingUp sx={{ fontSize: 40, color: 'success.main' }} />
@@ -206,7 +254,7 @@ const AdminDashboard: React.FC = () => {
                     Total Orders
                   </Typography>
                   <Typography variant="h5" fontWeight="bold">
-                    {analytics.totalOrders}
+                    {analytics.summary.total_orders}
                   </Typography>
                 </Box>
                 <ShoppingCart sx={{ fontSize: 40, color: 'primary.main' }} />
@@ -224,7 +272,7 @@ const AdminDashboard: React.FC = () => {
                     Average Order
                   </Typography>
                   <Typography variant="h5" fontWeight="bold">
-                    {formatCurrency(analytics.averageOrderValue)}
+                    {formatCurrency(analytics.summary.average_order_value)}
                   </Typography>
                 </Box>
                 <Analytics sx={{ fontSize: 40, color: 'info.main' }} />
@@ -242,7 +290,7 @@ const AdminDashboard: React.FC = () => {
                     Active Orders
                   </Typography>
                   <Typography variant="h5" fontWeight="bold">
-                    {analytics.activeOrders}
+                    {analytics.summary.active_orders}
                   </Typography>
                 </Box>
                 <Schedule sx={{ fontSize: 40, color: 'primary.main' }} />
@@ -261,7 +309,7 @@ const AdminDashboard: React.FC = () => {
                 Revenue Trend (Last 7 Days)
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={analytics.revenueByDay} key={`revenue-${animationKey}`}>
+                <AreaChart data={analytics.revenue_trend} key={`revenue-${animationKey}`}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#1976d2" stopOpacity={0.8}/>
@@ -303,7 +351,7 @@ const AdminDashboard: React.FC = () => {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart key={`pie-${animationKey}`}>
                   <Pie
-                    data={analytics.ordersByStatus}
+                    data={analytics.order_status_breakdown}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -313,7 +361,7 @@ const AdminDashboard: React.FC = () => {
                     animationBegin={0}
                     animationDuration={1500}
                   >
-                    {analytics.ordersByStatus.map((entry, index) => (
+                    {analytics.order_status_breakdown.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -332,7 +380,7 @@ const AdminDashboard: React.FC = () => {
                 Today's Hourly Performance
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={analytics.hourlyOrders} key={`hourly-${animationKey}`}>
+                <BarChart data={analytics.hourly_performance} key={`hourly-${animationKey}`}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="hour" />
                   <YAxis yAxisId="left" tickFormatter={(value) => `${value}`} />
@@ -373,7 +421,7 @@ const AdminDashboard: React.FC = () => {
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart 
-                  data={analytics.cafePerformance} 
+                  data={analytics.cafe_performance_metrics} 
                   layout="horizontal"
                   key={`performance-${animationKey}`}
                 >
@@ -405,7 +453,7 @@ const AdminDashboard: React.FC = () => {
                 <Typography variant="h6">
                   Recent Orders
                 </Typography>
-                <IconButton size="small">
+                <IconButton size="small" onClick={handleRefreshData}>
                   <Refresh />
                 </IconButton>
               </Box>
@@ -417,7 +465,7 @@ const AdminDashboard: React.FC = () => {
                         primary={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Typography variant="subtitle2">
-                              Table {order.tableNumber}
+                              Table {order.table_number}
                             </Typography>
                             <Chip
                               label={order.status}
@@ -426,11 +474,11 @@ const AdminDashboard: React.FC = () => {
                             />
                           </Box>
                         }
-                        secondary={`${order.items} items • ${order.time}`}
+                        secondary={`${order.items_count} items • ${order.time_ago}`}
                       />
                       <ListItemSecondaryAction>
                         <Typography variant="subtitle2" fontWeight="bold">
-                          {formatCurrency(order.total)}
+                          {formatCurrency(order.total_amount)}
                         </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
@@ -459,7 +507,7 @@ const AdminDashboard: React.FC = () => {
                 Popular Items
               </Typography>
               <List>
-                {analytics.popularItems.map((item, index) => (
+                {analytics.popular_items.map((item, index) => (
                   <React.Fragment key={index}>
                     <ListItem>
                       <ListItemText
@@ -472,7 +520,7 @@ const AdminDashboard: React.FC = () => {
                         </Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
-                    {index < analytics.popularItems.length - 1 && <Divider />}
+                    {index < analytics.popular_items.length - 1 && <Divider />}
                   </React.Fragment>
                 ))}
               </List>

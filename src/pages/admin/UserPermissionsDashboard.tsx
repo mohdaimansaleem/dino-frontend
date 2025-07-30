@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -63,57 +63,28 @@ const UserPermissionsDashboard: React.FC = () => {
   const [filterRole, setFilterRole] = useState('all');
   const [showInactive, setShowInactive] = useState(false);
 
-  // Mock users data with detailed permissions
-  const mockUsers = [
-    {
-      id: '1',
-      email: 'superadmin@dino.com',
-      firstName: 'Super',
-      lastName: 'Admin',
-      role: ROLES.SUPERADMIN,
-      isActive: true,
-      lastLogin: new Date('2024-01-20T10:30:00'),
-      cafeId: null,
-      permissions: PermissionService.getRolePermissions(ROLES.SUPERADMIN),
-      createdAt: new Date('2024-01-01'),
-    },
-    {
-      id: '2',
-      email: 'admin@cafe1.com',
-      firstName: 'John',
-      lastName: 'Doe',
-      role: ROLES.ADMIN,
-      isActive: true,
-      lastLogin: new Date('2024-01-20T09:15:00'),
-      cafeId: 'cafe-1',
-      permissions: PermissionService.getRolePermissions(ROLES.ADMIN),
-      createdAt: new Date('2024-01-05'),
-    },
-    {
-      id: '3',
-      email: 'operator@cafe1.com',
-      firstName: 'Jane',
-      lastName: 'Smith',
-      role: ROLES.OPERATOR,
-      isActive: true,
-      lastLogin: new Date('2024-01-20T08:45:00'),
-      cafeId: 'cafe-1',
-      permissions: PermissionService.getRolePermissions(ROLES.OPERATOR),
-      createdAt: new Date('2024-01-10'),
-    },
-    {
-      id: '4',
-      email: 'admin@cafe2.com',
-      firstName: 'Mike',
-      lastName: 'Johnson',
-      role: ROLES.ADMIN,
-      isActive: false,
-      lastLogin: new Date('2024-01-18T16:45:00'),
-      cafeId: 'cafe-2',
-      permissions: PermissionService.getRolePermissions(ROLES.ADMIN),
-      createdAt: new Date('2024-01-08'),
-    },
-  ];
+  // Users data will be loaded from API
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load users from API
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        setLoading(true);
+        // TODO: Replace with actual API call
+        // const usersData = await userService.getUsers();
+        // setUsers(usersData);
+        setUsers([]); // Empty for now until API is implemented
+      } catch (error) {
+        console.error('Failed to load users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUsers();
+  }, []);
 
   const permissionCategories = [
     {
@@ -214,7 +185,7 @@ const UserPermissionsDashboard: React.FC = () => {
     }
   };
 
-  const filteredUsers = mockUsers.filter(user => {
+  const filteredUsers = users.filter(user => {
     const matchesSearch = user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -396,21 +367,26 @@ const UserPermissionsDashboard: React.FC = () => {
       {/* Users Table */}
       <Card>
         <CardContent>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>User</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Cafe</TableCell>
-                  <TableCell>Permissions</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Last Login</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredUsers.map((user) => (
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <Typography>Loading users...</Typography>
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>User</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Cafe</TableCell>
+                    <TableCell>Permissions</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Last Login</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -477,10 +453,11 @@ const UserPermissionsDashboard: React.FC = () => {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
 
           {filteredUsers.length === 0 && (
             <Box sx={{ textAlign: 'center', py: 4 }}>

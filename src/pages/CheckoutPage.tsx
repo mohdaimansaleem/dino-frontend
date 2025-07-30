@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -51,6 +51,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import CustomerNavbar from '../components/CustomerNavbar';
 import Footer from '../components/layout/Footer';
+import { promoService, PromoValidation } from '../services/promoService';
+import { orderService } from '../services/orderService';
 
 interface CustomerInfo {
   name: string;
@@ -81,11 +83,29 @@ const CheckoutPage: React.FC = () => {
   
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
   const [promoCode, setPromoCode] = useState('');
-  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<PromoValidation | null>(null);
   const [loading, setLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [showPromoDialog, setShowPromoDialog] = useState(false);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [availablePromos, setAvailablePromos] = useState<string[]>([]);
+
+  // Load available promo codes
+  useEffect(() => {
+    const loadAvailablePromos = async () => {
+      if (!cafeId) return;
+      
+      try {
+        const promoCodes = await promoService.getActivePromoCodes(cafeId);
+        setAvailablePromos(promoCodes.map(promo => promo.code));
+      } catch (error) {
+        console.error('Failed to load promo codes:', error);
+      }
+    };
+
+    loadAvailablePromos();
+  }, [cafeId]);
 
   // Payment methods
   const paymentMethods: PaymentMethod[] = [
@@ -114,7 +134,7 @@ const CheckoutPage: React.FC = () => {
   const deliveryFee = subtotal >= 25 ? 0 : 2.99;
   const taxRate = 0.08; // 8% tax
   const tax = subtotal * taxRate;
-  const promoDiscount = appliedPromo ? (subtotal * appliedPromo.discount / 100) : 0;
+  const promoDiscount = appliedPromo ? appliedPromo.discount_amount : 0;
   const total = subtotal + deliveryFee + tax - promoDiscount;
 
 
@@ -135,23 +155,38 @@ const CheckoutPage: React.FC = () => {
     }));
   };
 
-  const handleApplyPromo = () => {
-    // Mock promo codes
-    const promoCodes: Record<string, number> = {
-      'SAVE10': 10,
-      'FIRST20': 20,
-      'WELCOME15': 15,
-    };
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim() || !cafeId) {
+      alert('Please enter a valid promo code');
+      return;
+    }
 
-    if (promoCodes[promoCode.toUpperCase()]) {
-      setAppliedPromo({
-        code: promoCode.toUpperCase(),
-        discount: promoCodes[promoCode.toUpperCase()],
-      });
-      setShowPromoDialog(false);
-      setPromoCode('');
-    } else {
-      alert('Invalid promo code');
+    setPromoLoading(true);
+    try {
+      const orderData = {
+        venue_id: cafeId,
+        items: items.map(item => ({
+          menu_item_id: item.menuItem.id,
+          quantity: item.quantity,
+          unit_price: item.menuItem.price,
+        })),
+        subtotal: subtotal,
+      };
+
+      const validation = await promoService.validatePromoCode(promoCode.toUpperCase(), orderData);
+      
+      if (validation.is_valid) {
+        setAppliedPromo(validation);
+        setShowPromoDialog(false);
+        setPromoCode('');
+      } else {
+        alert(validation.error_message || 'Invalid promo code');
+      }
+    } catch (error) {
+      console.error('Failed to validate promo code:', error);
+      alert('Failed to validate promo code. Please try again.');
+    } finally {
+      setPromoLoading(false);
     }
   };
 
@@ -168,20 +203,44 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
+    if (!cafeId || !tableId) {
+      alert('Missing venue or table information');
+      return;
+    }
+
     setLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      const orderData = {
+        venue_id: cafeId,
+        table_id: tableId,
+        customer: {
+          name: customerInfo.name,
+          phone: customerInfo.phone,
+          email: customerInfo.email,
+        },
+        items: items.map(item => ({
+          menu_item_id: item.menuItem.id,
+          quantity: item.quantity,
+          special_instructions: item.specialInstructions,
+        })),
+        order_type: 'qr_scan' as const,
+        special_instructions: customerInfo.specialInstructions,
+      };
+
+      const response = await orderService.createPublicOrder(orderData);
       
-      // Generate mock order ID
-      const mockOrderId = `ORD${Date.now()}`;
-      setOrderId(mockOrderId);
-      setOrderPlaced(true);
-      clearCart();
-      setActiveStep(3);
+      if (response.success && response.data) {
+        setOrderId(response.data.order_number || response.data.id);
+        setOrderPlaced(true);
+        clearCart();
+        setActiveStep(3);
+      } else {
+        throw new Error('Failed to create order');
+      }
     } catch (error) {
       console.error('Failed to place order:', error);
+      alert('Failed to place order. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -688,7 +747,7 @@ const CheckoutPage: React.FC = () => {
               {appliedPromo && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                   <Typography variant="body2" color="success.main">
-                    Promo ({appliedPromo.code})
+                    Promo ({appliedPromo.promo_code?.code})
                   </Typography>
                   <Typography variant="body2" color="success.main">
                     -{formatPrice(promoDiscount)}
@@ -713,7 +772,7 @@ const CheckoutPage: React.FC = () => {
               {appliedPromo ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Chip
-                    label={`${appliedPromo.code} - ${appliedPromo.discount}% OFF`}
+                    label={`${appliedPromo.promo_code?.code} - ${promoService.formatDiscount(appliedPromo.promo_code!)}`}
                     color="success"
                     onDelete={handleRemovePromo}
                   />
@@ -759,14 +818,20 @@ const CheckoutPage: React.FC = () => {
             onChange={(e) => setPromoCode(e.target.value)}
             placeholder="e.g., SAVE10"
           />
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Available codes: SAVE10, FIRST20, WELCOME15
-          </Typography>
+          {availablePromos.length > 0 && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+              Available codes: {availablePromos.join(', ')}
+            </Typography>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowPromoDialog(false)}>Cancel</Button>
-          <Button onClick={handleApplyPromo} variant="contained">
-            Apply
+          <Button 
+            onClick={handleApplyPromo} 
+            variant="contained"
+            disabled={promoLoading || !promoCode.trim()}
+          >
+            {promoLoading ? 'Validating...' : 'Apply'}
           </Button>
         </DialogActions>
       </Dialog>

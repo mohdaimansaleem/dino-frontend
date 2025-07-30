@@ -1,7 +1,7 @@
 import { User, Permission, UserRole, PERMISSIONS, ROLES, PermissionName, RoleName } from '../types/auth';
 
 class PermissionService {
-  // Mock role definitions - in real app, this would come from database
+  // Role definitions - these should be loaded from API in production
   private static roleDefinitions: Record<string, UserRole> = {
     [ROLES.SUPERADMIN]: {
       id: 'superadmin-role',
@@ -262,3 +262,4 @@ class PermissionService {
 }
 
 export default PermissionService;
+export const permissionService = PermissionService;

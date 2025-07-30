@@ -140,14 +140,14 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
     );
   }
 
-  const summary = dashboardData?.today_summary || {};
+  const summary = dashboardData?.today_summary || {} as any;
 
   return (
     <RoleBasedComponent allowedRoles={['operator']} className={className}>
       <div className="space-y-6">
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-orange-600 to-red-600 rounded-lg p-6 text-white">
-          <h1 className="text-2xl font-bold">Welcome back, {user?.first_name}!</h1>
+          <h1 className="text-2xl font-bold">Welcome back, {user?.firstName}!</h1>
           <p className="text-orange-100 mt-1">Kitchen Operations Dashboard</p>
           <div className="flex items-center mt-3">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-2"></div>
@@ -232,7 +232,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
                         </div>
                         <div className="text-right">
                           <p className="text-sm text-gray-500">
-                            {order.table_number ? `Table ${order.table_number}` : 'Takeaway'}
+                            {(order as any).table_number ? `Table ${(order as any).table_number}` : 'Takeaway'}
                           </p>
                           <p className="text-xs text-gray-400">
                             {dashboardService.formatTimeAgo(order.created_at)}
@@ -241,7 +241,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
                       </div>
 
                       <div className="mb-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Customer: {order.customer_name}</p>
+                        <p className="text-sm font-medium text-gray-700 mb-2">Customer: {(order as any).customer_name || 'N/A'}</p>
                         <div className="space-y-1">
                           {order.items?.map((item: any, index: number) => (
                             <div key={index} className="flex justify-between text-sm">
@@ -362,7 +362,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
                           Order #{order.order_number}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {order.customer_name} • {order.table_number ? `Table ${order.table_number}` : 'Takeaway'}
+                          {(order as any).customer_name || 'N/A'} • {(order as any).table_number ? `Table ${(order as any).table_number}` : 'Takeaway'}
                         </p>
                       </div>
                       <div className="text-right">

@@ -65,8 +65,8 @@ export const config = {
     themeToggle: getBooleanEnvVar('REACT_APP_ENABLE_THEME_TOGGLE', true),
     
     // Demo Mode Feature
-    // Enables demo login functionality for testing
-    demoMode: getBooleanEnvVar('REACT_APP_ENABLE_DEMO_MODE', true),
+    // Enables demo login functionality for testing (disabled for production)
+    demoMode: getBooleanEnvVar('REACT_APP_ENABLE_DEMO_MODE', false),
     
     // Analytics Feature
     // Enables advanced analytics and reporting
@@ -87,7 +87,7 @@ export const config = {
 
   // API Configuration
   api: {
-    baseUrl: getEnvVar('REACT_APP_API_BASE_URL', 'http://localhost:8080/api'),
+    baseUrl: getEnvVar('REACT_APP_API_BASE_URL', 'http://localhost:8000/api/v1'),
     timeout: getNumberEnvVar('REACT_APP_API_TIMEOUT', 30000),
     rateLimit: getNumberEnvVar('REACT_APP_API_RATE_LIMIT', 100),
   },

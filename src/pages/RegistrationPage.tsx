@@ -11,83 +11,88 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  FormControlLabel,
-  Checkbox,
   Alert,
   Stepper,
   Step,
   StepLabel,
   IconButton,
   InputAdornment,
-
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress
+  CircularProgress,
+  FormHelperText,
+  Divider
 } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
+  Business,
+  Store,
   Person,
+  CheckCircle,
+  LocationOn,
   Email,
   Phone,
-  LocationOn,
-  Security,
-  CheckCircle
+  Language
 } from '@mui/icons-material';
-// import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-// import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-// import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { authService } from '../services/authService';
+import { WorkspaceRegistration, VenueLocation, PriceRange } from '../types/api';
 
-interface RegistrationData {
-  // Personal Information
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  dateOfBirth: Date | null;
-  gender: string;
+interface RegistrationFormData {
+  // Workspace Information
+  workspaceName: string;
+  workspaceDescription: string;
   
-  // Account Security
-  password: string;
+  // Venue Information
+  venueName: string;
+  venueDescription: string;
+  venueLocation: VenueLocation;
+  venuePhone: string;
+  venueEmail: string;
+  venueWebsite: string;
+  priceRange: PriceRange;
+  venueType: string;
+  
+  // Owner Information
+  ownerEmail: string;
+  ownerPhone: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerPassword: string;
   confirmPassword: string;
-  
-  // Address Information
-  addressLabel: string;
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  
-  // Preferences
-  dietaryRestrictions: string[];
-  favoriteCuisines: string[];
-  spiceLevel: string;
-  emailNotifications: boolean;
-  smsNotifications: boolean;
-  
-  // Terms and Conditions
-  termsAccepted: boolean;
-  marketingConsent: boolean;
 }
 
 const steps = [
-  'Personal Information',
-  'Account Security',
-  'Address Details',
+  'Workspace Details',
+  'Venue Information', 
+  'Owner Account',
   'Review & Submit'
 ];
 
+const priceRangeOptions = [
+  { value: 'budget', label: 'Budget (₹ - Under ₹500 per person)' },
+  { value: 'mid_range', label: 'Mid Range (₹₹ - ₹500-₹1500 per person)' },
+  { value: 'premium', label: 'Premium (₹₹₹ - ₹1500-₹3000 per person)' },
+  { value: 'luxury', label: 'Luxury (₹₹₹₹ - Above ₹3000 per person)' }
+];
 
+const venueTypeOptions = [
+  'restaurant',
+  'cafe',
+  'bar',
+  'fast_food',
+  'fine_dining',
+  'bakery',
+  'food_truck',
+  'cloud_kitchen',
+  'other'
+];
 
 const RegistrationPage: React.FC = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
   
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -95,30 +100,37 @@ const RegistrationPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [successDialog, setSuccessDialog] = useState(false);
+  const [successData, setSuccessData] = useState<any>(null);
   
-  const [formData, setFormData] = useState<RegistrationData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    dateOfBirth: null,
-    gender: '',
-    password: '',
-    confirmPassword: '',
-    addressLabel: 'Home',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: 'India',
-    dietaryRestrictions: [],
-    favoriteCuisines: [],
-    spiceLevel: 'medium',
-    emailNotifications: true,
-    smsNotifications: false,
-    termsAccepted: false,
-    marketingConsent: false
+  const [formData, setFormData] = useState<RegistrationFormData>({
+    // Workspace Information
+    workspaceName: '',
+    workspaceDescription: '',
+    
+    // Venue Information
+    venueName: '',
+    venueDescription: '',
+    venueLocation: {
+      address: '',
+      city: '',
+      state: '',
+      country: 'India',
+      postal_code: '',
+      landmark: ''
+    },
+    venuePhone: '',
+    venueEmail: '',
+    venueWebsite: '',
+    priceRange: 'mid_range',
+    venueType: 'restaurant',
+    
+    // Owner Information
+    ownerEmail: '',
+    ownerPhone: '',
+    ownerFirstName: '',
+    ownerLastName: '',
+    ownerPassword: '',
+    confirmPassword: ''
   });
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -127,54 +139,72 @@ const RegistrationPage: React.FC = () => {
     const errors: Record<string, string> = {};
 
     switch (step) {
-      case 0: // Personal Information
-        if (!formData.firstName.trim()) errors.firstName = 'First name is required';
-        if (!formData.lastName.trim()) errors.lastName = 'Last name is required';
-        if (!formData.email.trim()) {
-          errors.email = 'Email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-          errors.email = 'Please enter a valid email address';
-        }
-        if (!formData.phone.trim()) {
-          errors.phone = 'Phone number is required';
-        } else if (!/^[+]?[1-9]?[0-9]{7,15}$/.test(formData.phone)) {
-          errors.phone = 'Please enter a valid phone number';
+      case 0: // Workspace Details
+        if (!formData.workspaceName.trim()) {
+          errors.workspaceName = 'Workspace name is required';
+        } else if (formData.workspaceName.length < 3) {
+          errors.workspaceName = 'Workspace name must be at least 3 characters';
         }
         break;
 
-      case 1: // Account Security
-        if (!formData.password) {
-          errors.password = 'Password is required';
+      case 1: // Venue Information
+        if (!formData.venueName.trim()) {
+          errors.venueName = 'Venue name is required';
+        }
+        if (!formData.venueLocation.address.trim()) {
+          errors.address = 'Address is required';
+        }
+        if (!formData.venueLocation.city.trim()) {
+          errors.city = 'City is required';
+        }
+        if (!formData.venueLocation.state.trim()) {
+          errors.state = 'State is required';
+        }
+        if (!formData.venueLocation.postal_code.trim()) {
+          errors.postal_code = 'Postal code is required';
+        } else if (!/^\d{5,6}$/.test(formData.venueLocation.postal_code)) {
+          errors.postal_code = 'Please enter a valid postal code';
+        }
+        if (formData.venuePhone && !/^[+]?[1-9]?[0-9]{7,15}$/.test(formData.venuePhone)) {
+          errors.venuePhone = 'Please enter a valid phone number';
+        }
+        if (formData.venueEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.venueEmail)) {
+          errors.venueEmail = 'Please enter a valid email address';
+        }
+        break;
+
+      case 2: // Owner Account
+        if (!formData.ownerFirstName.trim()) {
+          errors.ownerFirstName = 'First name is required';
+        }
+        if (!formData.ownerLastName.trim()) {
+          errors.ownerLastName = 'Last name is required';
+        }
+        if (!formData.ownerEmail.trim()) {
+          errors.ownerEmail = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.ownerEmail)) {
+          errors.ownerEmail = 'Please enter a valid email address';
+        }
+        if (formData.ownerPhone && !/^[+]?[1-9]?[0-9]{7,15}$/.test(formData.ownerPhone)) {
+          errors.ownerPhone = 'Please enter a valid phone number';
+        }
+        if (!formData.ownerPassword) {
+          errors.ownerPassword = 'Password is required';
         } else {
-          if (formData.password.length < 8) {
-            errors.password = 'Password must be at least 8 characters long';
-          } else if (!/(?=.*[a-z])/.test(formData.password)) {
-            errors.password = 'Password must contain at least one lowercase letter';
-          } else if (!/(?=.*[A-Z])/.test(formData.password)) {
-            errors.password = 'Password must contain at least one uppercase letter';
-          } else if (!/(?=.*\d)/.test(formData.password)) {
-            errors.password = 'Password must contain at least one number';
+          if (formData.ownerPassword.length < 8) {
+            errors.ownerPassword = 'Password must be at least 8 characters long';
+          } else if (!/(?=.*[a-z])/.test(formData.ownerPassword)) {
+            errors.ownerPassword = 'Password must contain at least one lowercase letter';
+          } else if (!/(?=.*[A-Z])/.test(formData.ownerPassword)) {
+            errors.ownerPassword = 'Password must contain at least one uppercase letter';
+          } else if (!/(?=.*\d)/.test(formData.ownerPassword)) {
+            errors.ownerPassword = 'Password must contain at least one number';
+          } else if (!/(?=.*[!@#$%^&*])/.test(formData.ownerPassword)) {
+            errors.ownerPassword = 'Password must contain at least one special character';
           }
         }
-        if (formData.password !== formData.confirmPassword) {
+        if (formData.ownerPassword !== formData.confirmPassword) {
           errors.confirmPassword = 'Passwords do not match';
-        }
-        break;
-
-      case 2: // Address Details
-        if (!formData.addressLine1.trim()) errors.addressLine1 = 'Address line 1 is required';
-        if (!formData.city.trim()) errors.city = 'City is required';
-        if (!formData.state.trim()) errors.state = 'State is required';
-        if (!formData.postalCode.trim()) {
-          errors.postalCode = 'Postal code is required';
-        } else if (!/^\d{5,10}$/.test(formData.postalCode)) {
-          errors.postalCode = 'Please enter a valid postal code';
-        }
-        break;
-
-      case 3: // Review & Submit
-        if (!formData.termsAccepted) {
-          errors.termsAccepted = 'You must accept the terms and conditions';
         }
         break;
     }
@@ -195,11 +225,22 @@ const RegistrationPage: React.FC = () => {
     setError(null);
   };
 
-  const handleInputChange = (field: keyof RegistrationData, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleInputChange = (field: string, value: any) => {
+    if (field.startsWith('venueLocation.')) {
+      const locationField = field.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        venueLocation: {
+          ...prev.venueLocation,
+          [locationField]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
     
     // Clear validation error for this field
     if (validationErrors[field]) {
@@ -211,44 +252,33 @@ const RegistrationPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep(3)) return;
+    if (!validateStep(2)) return; // Validate owner account step
 
     setLoading(true);
     setError(null);
 
     try {
-      await register({
-        email: formData.email,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        dateOfBirth: formData.dateOfBirth || undefined,
-        gender: formData.gender as 'male' | 'female' | 'other' | 'prefer_not_to_say',
-        role: 'customer',
-        addresses: [{
-          label: formData.addressLabel,
-          addressLine1: formData.addressLine1,
-          addressLine2: formData.addressLine2,
-          city: formData.city,
-          state: formData.state,
-          postalCode: formData.postalCode,
-          country: formData.country,
-          isDefault: true
-        }],
-        preferences: {
-          dietaryRestrictions: formData.dietaryRestrictions,
-          favoriteCuisines: formData.favoriteCuisines,
-          spiceLevel: formData.spiceLevel as 'mild' | 'medium' | 'hot' | 'extra_hot',
-          notificationsEnabled: formData.emailNotifications,
-          emailNotifications: formData.emailNotifications,
-          smsNotifications: formData.smsNotifications
-        },
-        termsAccepted: formData.termsAccepted,
-        marketingConsent: formData.marketingConsent
-      });
+      const registrationData: WorkspaceRegistration = {
+        workspace_name: formData.workspaceName,
+        workspace_description: formData.workspaceDescription,
+        venue_name: formData.venueName,
+        venue_description: formData.venueDescription,
+        venue_location: formData.venueLocation,
+        venue_phone: formData.venuePhone,
+        venue_email: formData.venueEmail,
+        venue_website: formData.venueWebsite,
+        price_range: formData.priceRange,
+        venue_type: formData.venueType,
+        owner_email: formData.ownerEmail,
+        owner_phone: formData.ownerPhone,
+        owner_first_name: formData.ownerFirstName,
+        owner_last_name: formData.ownerLastName,
+        owner_password: formData.ownerPassword,
+        confirm_password: formData.confirmPassword
+      };
 
+      const response = await authService.registerWorkspace(registrationData);
+      setSuccessData(response.data);
       setSuccessDialog(true);
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -259,18 +289,267 @@ const RegistrationPage: React.FC = () => {
 
   const handleSuccessClose = () => {
     setSuccessDialog(false);
-    navigate('/dashboard');
+    navigate('/login');
   };
 
   const renderStepContent = (step: number) => {
     switch (step) {
-      case 0:
+      case 0: // Workspace Details
+        return (
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Business color="primary" />
+                Workspace Information
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Set up your business workspace that will contain all your venues
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Workspace Name"
+                value={formData.workspaceName}
+                onChange={(e) => handleInputChange('workspaceName', e.target.value)}
+                error={!!validationErrors.workspaceName}
+                helperText={validationErrors.workspaceName || 'This will be your main business identifier'}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Workspace Description"
+                value={formData.workspaceDescription}
+                onChange={(e) => handleInputChange('workspaceDescription', e.target.value)}
+                multiline
+                rows={3}
+                helperText="Brief description of your business (optional)"
+              />
+            </Grid>
+          </Grid>
+        );
+
+      case 1: // Venue Information
+        return (
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Store color="primary" />
+                Venue Details
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Configure your first venue under this workspace
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Venue Name"
+                value={formData.venueName}
+                onChange={(e) => handleInputChange('venueName', e.target.value)}
+                error={!!validationErrors.venueName}
+                helperText={validationErrors.venueName}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Venue Type</InputLabel>
+                <Select
+                  value={formData.venueType}
+                  label="Venue Type"
+                  onChange={(e) => handleInputChange('venueType', e.target.value)}
+                >
+                  {venueTypeOptions.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Venue Description"
+                value={formData.venueDescription}
+                onChange={(e) => handleInputChange('venueDescription', e.target.value)}
+                multiline
+                rows={2}
+                helperText="Describe your venue's atmosphere and specialties"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+                <LocationOn color="primary" />
+                Location Details
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address"
+                value={formData.venueLocation.address}
+                onChange={(e) => handleInputChange('venueLocation.address', e.target.value)}
+                error={!!validationErrors.address}
+                helperText={validationErrors.address}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="City"
+                value={formData.venueLocation.city}
+                onChange={(e) => handleInputChange('venueLocation.city', e.target.value)}
+                error={!!validationErrors.city}
+                helperText={validationErrors.city}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="State"
+                value={formData.venueLocation.state}
+                onChange={(e) => handleInputChange('venueLocation.state', e.target.value)}
+                error={!!validationErrors.state}
+                helperText={validationErrors.state}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Postal Code"
+                value={formData.venueLocation.postal_code}
+                onChange={(e) => handleInputChange('venueLocation.postal_code', e.target.value)}
+                error={!!validationErrors.postal_code}
+                helperText={validationErrors.postal_code}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Country"
+                value={formData.venueLocation.country}
+                onChange={(e) => handleInputChange('venueLocation.country', e.target.value)}
+                disabled
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Landmark (Optional)"
+                value={formData.venueLocation.landmark}
+                onChange={(e) => handleInputChange('venueLocation.landmark', e.target.value)}
+                helperText="Nearby landmark to help customers find you"
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                Contact & Business Details
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Venue Phone"
+                value={formData.venuePhone}
+                onChange={(e) => handleInputChange('venuePhone', e.target.value)}
+                error={!!validationErrors.venuePhone}
+                helperText={validationErrors.venuePhone}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Phone />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Venue Email"
+                value={formData.venueEmail}
+                onChange={(e) => handleInputChange('venueEmail', e.target.value)}
+                error={!!validationErrors.venueEmail}
+                helperText={validationErrors.venueEmail}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Website (Optional)"
+                value={formData.venueWebsite}
+                onChange={(e) => handleInputChange('venueWebsite', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Language />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Price Range</InputLabel>
+                <Select
+                  value={formData.priceRange}
+                  label="Price Range"
+                  onChange={(e) => handleInputChange('priceRange', e.target.value)}
+                >
+                  {priceRangeOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>Average cost per person</FormHelperText>
+              </FormControl>
+            </Grid>
+          </Grid>
+        );
+
+      case 2: // Owner Account
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Person color="primary" />
-                Personal Information
+                Owner Account
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Create your admin account to manage the workspace and venue
               </Typography>
             </Grid>
             
@@ -278,10 +557,10 @@ const RegistrationPage: React.FC = () => {
               <TextField
                 fullWidth
                 label="First Name"
-                value={formData.firstName}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
-                error={!!validationErrors.firstName}
-                helperText={validationErrors.firstName}
+                value={formData.ownerFirstName}
+                onChange={(e) => handleInputChange('ownerFirstName', e.target.value)}
+                error={!!validationErrors.ownerFirstName}
+                helperText={validationErrors.ownerFirstName}
                 required
               />
             </Grid>
@@ -290,10 +569,10 @@ const RegistrationPage: React.FC = () => {
               <TextField
                 fullWidth
                 label="Last Name"
-                value={formData.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
-                error={!!validationErrors.lastName}
-                helperText={validationErrors.lastName}
+                value={formData.ownerLastName}
+                onChange={(e) => handleInputChange('ownerLastName', e.target.value)}
+                error={!!validationErrors.ownerLastName}
+                helperText={validationErrors.ownerLastName}
                 required
               />
             </Grid>
@@ -303,10 +582,10 @@ const RegistrationPage: React.FC = () => {
                 fullWidth
                 label="Email Address"
                 type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                error={!!validationErrors.email}
-                helperText={validationErrors.email}
+                value={formData.ownerEmail}
+                onChange={(e) => handleInputChange('ownerEmail', e.target.value)}
+                error={!!validationErrors.ownerEmail}
+                helperText={validationErrors.ownerEmail}
                 required
                 InputProps={{
                   startAdornment: (
@@ -322,11 +601,10 @@ const RegistrationPage: React.FC = () => {
               <TextField
                 fullWidth
                 label="Phone Number"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                error={!!validationErrors.phone}
-                helperText={validationErrors.phone}
-                required
+                value={formData.ownerPhone}
+                onChange={(e) => handleInputChange('ownerPhone', e.target.value)}
+                error={!!validationErrors.ownerPhone}
+                helperText={validationErrors.ownerPhone}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -337,58 +615,15 @@ const RegistrationPage: React.FC = () => {
               />
             </Grid>
             
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Date of Birth"
-                type="date"
-                value={formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString().split('T')[0] : ''}
-                onChange={(e) => handleInputChange('dateOfBirth', e.target.value ? new Date(e.target.value) : null)}
-                error={!!validationErrors.dateOfBirth}
-                helperText={validationErrors.dateOfBirth || 'Optional - helps us personalize your experience'}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Gender</InputLabel>
-                <Select
-                  value={formData.gender}
-                  label="Gender"
-                  onChange={(e) => handleInputChange('gender', e.target.value)}
-                >
-                  <MenuItem value="male">Male</MenuItem>
-                  <MenuItem value="female">Female</MenuItem>
-                  <MenuItem value="other">Other</MenuItem>
-                  <MenuItem value="prefer_not_to_say">Prefer not to say</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-        );
-
-      case 1:
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Security color="primary" />
-                Account Security
-              </Typography>
-            </Grid>
-            
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Password"
                 type={showPassword ? 'text' : 'password'}
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                error={!!validationErrors.password}
-                helperText={validationErrors.password || 'Password must be at least 8 characters with uppercase, lowercase, and number'}
+                value={formData.ownerPassword}
+                onChange={(e) => handleInputChange('ownerPassword', e.target.value)}
+                error={!!validationErrors.ownerPassword}
+                helperText={validationErrors.ownerPassword || 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'}
                 required
                 InputProps={{
                   endAdornment: (
@@ -432,163 +667,91 @@ const RegistrationPage: React.FC = () => {
           </Grid>
         );
 
-      case 2:
-        return (
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <LocationOn color="primary" />
-                Address Information
-              </Typography>
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Address Label"
-                value={formData.addressLabel}
-                onChange={(e) => handleInputChange('addressLabel', e.target.value)}
-                placeholder="e.g., Home, Work, etc."
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address Line 1"
-                value={formData.addressLine1}
-                onChange={(e) => handleInputChange('addressLine1', e.target.value)}
-                error={!!validationErrors.addressLine1}
-                helperText={validationErrors.addressLine1}
-                required
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address Line 2 (Optional)"
-                value={formData.addressLine2}
-                onChange={(e) => handleInputChange('addressLine2', e.target.value)}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="City"
-                value={formData.city}
-                onChange={(e) => handleInputChange('city', e.target.value)}
-                error={!!validationErrors.city}
-                helperText={validationErrors.city}
-                required
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="State"
-                value={formData.state}
-                onChange={(e) => handleInputChange('state', e.target.value)}
-                error={!!validationErrors.state}
-                helperText={validationErrors.state}
-                required
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Postal Code"
-                value={formData.postalCode}
-                onChange={(e) => handleInputChange('postalCode', e.target.value)}
-                error={!!validationErrors.postalCode}
-                helperText={validationErrors.postalCode}
-                required
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Country"
-                value={formData.country}
-                onChange={(e) => handleInputChange('country', e.target.value)}
-                disabled
-              />
-            </Grid>
-          </Grid>
-        );
-
-      case 3:
+      case 3: // Review & Submit
         return (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
                 Review Your Information
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Please review all information before submitting
+              </Typography>
             </Grid>
             
             <Grid item xs={12}>
-              <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>Personal Information</Typography>
+              <Paper elevation={1} sx={{ p: 3, mb: 2 }}>
+                <Typography variant="subtitle1" gutterBottom color="primary">
+                  Workspace Information
+                </Typography>
                 <Typography variant="body2">
-                  Name: {formData.firstName} {formData.lastName}<br />
-                  Email: {formData.email}<br />
-                  Phone: {formData.phone}<br />
-                  {formData.dateOfBirth && `Date of Birth: ${formData.dateOfBirth.toLocaleDateString()}`}<br />
-                  {formData.gender && `Gender: ${formData.gender}`}
+                  <strong>Name:</strong> {formData.workspaceName}<br />
+                  {formData.workspaceDescription && (
+                    <>
+                      <strong>Description:</strong> {formData.workspaceDescription}<br />
+                    </>
+                  )}
                 </Typography>
               </Paper>
             </Grid>
             
             <Grid item xs={12}>
-              <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>Address</Typography>
+              <Paper elevation={1} sx={{ p: 3, mb: 2 }}>
+                <Typography variant="subtitle1" gutterBottom color="primary">
+                  Venue Information
+                </Typography>
                 <Typography variant="body2">
-                  {formData.addressLabel}: {formData.addressLine1}<br />
-                  {formData.addressLine2 && `${formData.addressLine2}`}<br />
-                  {formData.city}, {formData.state} {formData.postalCode}<br />
-                  {formData.country}
+                  <strong>Name:</strong> {formData.venueName}<br />
+                  <strong>Type:</strong> {formData.venueType.charAt(0).toUpperCase() + formData.venueType.slice(1).replace('_', ' ')}<br />
+                  {formData.venueDescription && (
+                    <>
+                      <strong>Description:</strong> {formData.venueDescription}<br />
+                    </>
+                  )}
+                  <strong>Address:</strong> {formData.venueLocation.address}<br />
+                  <strong>City:</strong> {formData.venueLocation.city}, {formData.venueLocation.state} {formData.venueLocation.postal_code}<br />
+                  <strong>Country:</strong> {formData.venueLocation.country}<br />
+                  {formData.venueLocation.landmark && (
+                    <>
+                      <strong>Landmark:</strong> {formData.venueLocation.landmark}<br />
+                    </>
+                  )}
+                  {formData.venuePhone && (
+                    <>
+                      <strong>Phone:</strong> {formData.venuePhone}<br />
+                    </>
+                  )}
+                  {formData.venueEmail && (
+                    <>
+                      <strong>Email:</strong> {formData.venueEmail}<br />
+                    </>
+                  )}
+                  {formData.venueWebsite && (
+                    <>
+                      <strong>Website:</strong> {formData.venueWebsite}<br />
+                    </>
+                  )}
+                  <strong>Price Range:</strong> {priceRangeOptions.find(p => p.value === formData.priceRange)?.label}
                 </Typography>
               </Paper>
             </Grid>
             
-
-            
             <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.termsAccepted}
-                    onChange={(e) => handleInputChange('termsAccepted', e.target.checked)}
-                    color="primary"
-                  />
-                }
-                label={
-                  <Typography variant="body2">
-                    I accept the <Button variant="text" size="small">Terms and Conditions</Button> and <Button variant="text" size="small">Privacy Policy</Button>
-                  </Typography>
-                }
-              />
-              {validationErrors.termsAccepted && (
-                <Typography color="error" variant="caption" display="block">
-                  {validationErrors.termsAccepted}
+              <Paper elevation={1} sx={{ p: 3, mb: 2 }}>
+                <Typography variant="subtitle1" gutterBottom color="primary">
+                  Owner Account
                 </Typography>
-              )}
-            </Grid>
-            
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.marketingConsent}
-                    onChange={(e) => handleInputChange('marketingConsent', e.target.checked)}
-                  />
-                }
-                label="I would like to receive promotional offers and updates via email"
-              />
+                <Typography variant="body2">
+                  <strong>Name:</strong> {formData.ownerFirstName} {formData.ownerLastName}<br />
+                  <strong>Email:</strong> {formData.ownerEmail}<br />
+                  {formData.ownerPhone && (
+                    <>
+                      <strong>Phone:</strong> {formData.ownerPhone}<br />
+                    </>
+                  )}
+                  <strong>Role:</strong> Super Admin (Workspace Owner)
+                </Typography>
+              </Paper>
             </Grid>
           </Grid>
         );
@@ -602,11 +765,11 @@ const RegistrationPage: React.FC = () => {
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" align="center" gutterBottom>
-          Create Your Account
+          🦕 Create Your Dino Workspace
         </Typography>
         
         <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 4 }}>
-          Register your cafe and start publishing your menu to reach more customers
+          Set up your complete restaurant management workspace with venues and team
         </Typography>
 
         <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
@@ -627,6 +790,8 @@ const RegistrationPage: React.FC = () => {
           {renderStepContent(activeStep)}
         </Box>
 
+        <Divider sx={{ my: 3 }} />
+
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button
             disabled={activeStep === 0}
@@ -642,13 +807,15 @@ const RegistrationPage: React.FC = () => {
               onClick={handleSubmit}
               disabled={loading}
               startIcon={loading ? <CircularProgress size={20} /> : null}
+              size="large"
             >
-              {loading ? 'Creating Account...' : 'Create Account'}
+              {loading ? 'Creating Workspace...' : 'Create Workspace'}
             </Button>
           ) : (
             <Button
               variant="contained"
               onClick={handleNext}
+              size="large"
             >
               Next
             </Button>
@@ -666,19 +833,32 @@ const RegistrationPage: React.FC = () => {
       </Paper>
 
       {/* Success Dialog */}
-      <Dialog open={successDialog} onClose={handleSuccessClose}>
+      <Dialog open={successDialog} onClose={handleSuccessClose} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ textAlign: 'center' }}>
           <CheckCircle color="success" sx={{ fontSize: 60, mb: 2 }} />
-          <Typography variant="h5">Welcome to Dino!</Typography>
+          <Typography variant="h5">Workspace Created Successfully!</Typography>
         </DialogTitle>
         <DialogContent>
-          <Typography align="center">
-            Your cafe account has been created successfully. You can now start publishing your menu and managing your restaurant.
+          <Typography align="center" sx={{ mb: 2 }}>
+            Your workspace and venue have been created successfully. You can now sign in and start managing your restaurant.
           </Typography>
+          
+          {successData && (
+            <Paper elevation={1} sx={{ p: 2, bgcolor: 'grey.50' }}>
+              <Typography variant="subtitle2" gutterBottom>
+                What's Next:
+              </Typography>
+              <Typography variant="body2" component="div">
+                {successData.next_steps?.map((step: string, index: number) => (
+                  <div key={index}>• {step}</div>
+                ))}
+              </Typography>
+            </Paper>
+          )}
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
           <Button variant="contained" onClick={handleSuccessClose} size="large">
-            Get Started
+            Continue to Login
           </Button>
         </DialogActions>
       </Dialog>

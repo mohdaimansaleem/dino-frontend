@@ -33,6 +33,7 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  Skeleton,
 } from '@mui/material';
 import {
   Add,
@@ -55,20 +56,7 @@ import { useWorkspace } from '../../contexts/WorkspaceContext';
 import PermissionService from '../../services/permissionService';
 import { ROLES, PERMISSIONS } from '../../types/auth';
 import PasswordUpdateDialog from '../../components/PasswordUpdateDialog';
-
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  role: 'superadmin' | 'admin' | 'operator';
-  isActive: boolean;
-  lastLogin?: Date;
-  createdAt: Date;
-  cafeId?: string;
-  permissions: string[];
-}
+import { userService, User, UserCreate, UserUpdate } from '../../services/userService';
 
 const UserManagement: React.FC = () => {
   const { user: currentUser, hasPermission, getUserWithRole, isSuperAdmin, isAdmin } = useAuth();
@@ -76,6 +64,7 @@ const UserManagement: React.FC = () => {
   
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -85,69 +74,39 @@ const UserManagement: React.FC = () => {
 
   const [formData, setFormData] = useState({
     email: '',
-    firstName: '',
-    lastName: '',
+    first_name: '',
+    last_name: '',
     phone: '',
-    role: ROLES.OPERATOR as 'superadmin' | 'admin' | 'operator',
-    cafeId: '',
-    isActive: true,
+    role_name: ROLES.OPERATOR as string,
+    workspace_id: '',
+    venue_id: '',
+    is_active: true,
   });
-
-  // Mock users data
-  const mockUsers: User[] = [
-    {
-      id: '1',
-      email: 'admin@dinecafe.com',
-      firstName: 'John',
-      lastName: 'Doe',
-      phone: '+91 98765 43210',
-      role: ROLES.ADMIN,
-      isActive: true,
-      lastLogin: new Date('2024-01-20T10:30:00'),
-      createdAt: new Date('2024-01-01T00:00:00'),
-      cafeId: 'cafe-1',
-      permissions: ['dashboard:view', 'orders:view', 'orders:update', 'menu:view', 'menu:update']
-    },
-    {
-      id: '2',
-      email: 'operator@dinecafe.com',
-      firstName: 'Jane',
-      lastName: 'Smith',
-      phone: '+91 98765 43211',
-      role: ROLES.OPERATOR,
-      isActive: true,
-      lastLogin: new Date('2024-01-20T09:15:00'),
-      createdAt: new Date('2024-01-05T00:00:00'),
-      cafeId: 'cafe-1',
-      permissions: ['orders:view', 'orders:update']
-    },
-    {
-      id: '3',
-      email: 'manager@dinecafe.com',
-      firstName: 'Mike',
-      lastName: 'Johnson',
-      phone: '+91 98765 43212',
-      role: ROLES.ADMIN,
-      isActive: false,
-      lastLogin: new Date('2024-01-18T16:45:00'),
-      createdAt: new Date('2024-01-10T00:00:00'),
-      cafeId: 'cafe-2',
-      permissions: ['dashboard:view', 'orders:view', 'menu:view', 'tables:view']
-    }
-  ];
 
   useEffect(() => {
     loadUsers();
   }, [currentWorkspace, currentCafe]);
 
   const loadUsers = async () => {
+    if (!currentWorkspace?.id) {
+      setError('No workspace selected');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
+    setError(null);
     try {
-      // In real app, this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setUsers(mockUsers);
+      const filters = {
+        workspace_id: currentWorkspace.id,
+        venue_id: currentCafe?.id,
+      };
+      
+      const usersData = await userService.getUsers(filters);
+      setUsers(usersData.data || []);
     } catch (error) {
       console.error('Failed to load users:', error);
+      setError('Failed to load users. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -158,23 +117,25 @@ const UserManagement: React.FC = () => {
       setEditingUser(user);
       setFormData({
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        first_name: user.first_name,
+        last_name: user.last_name,
         phone: user.phone || '',
-        role: user.role,
-        cafeId: user.cafeId || '',
-        isActive: user.isActive,
+        role_name: user.role as string,
+        workspace_id: user.workspace_id,
+        venue_id: user.venue_id || '',
+        is_active: user.is_active,
       });
     } else {
       setEditingUser(null);
       setFormData({
         email: '',
-        firstName: '',
-        lastName: '',
+        first_name: '',
+        last_name: '',
         phone: '',
-        role: ROLES.OPERATOR as 'superadmin' | 'admin' | 'operator',
-        cafeId: currentCafe?.id || '', // Always default to current cafe
-        isActive: true,
+        role_name: ROLES.OPERATOR as string,
+        workspace_id: currentWorkspace?.id || '',
+        venue_id: currentCafe?.id || '',
+        is_active: true,
       });
     }
     setOpenDialog(true);
@@ -189,47 +150,62 @@ const UserManagement: React.FC = () => {
     try {
       if (editingUser) {
         // Update user
-        const updatedUsers = users.map(user =>
-          user.id === editingUser.id
-            ? { ...user, ...formData }
-            : user
-        );
-        setUsers(updatedUsers);
+        const updateData: UserUpdate = {
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone: formData.phone,
+          is_active: formData.is_active,
+        };
+        
+        await userService.updateUser(editingUser.id, updateData);
       } else {
         // Create new user
-        const newUser: User = {
-          id: Date.now().toString(),
-          ...formData,
-          lastLogin: undefined,
-          createdAt: new Date(),
-          permissions: PermissionService.getRolePermissions(formData.role).map(p => p.name),
+        const createData: UserCreate = {
+          email: formData.email,
+          password: 'TempPassword123!', // Would be generated or set by admin
+          confirm_password: 'TempPassword123!',
+          first_name: formData.first_name,
+          last_name: formData.last_name,
+          phone: formData.phone,
+          workspace_id: formData.workspace_id,
+          venue_id: formData.venue_id,
         };
-        setUsers([...users, newUser]);
+        
+        await userService.createUser(createData);
       }
+      
+      // Reload users after successful operation
+      await loadUsers();
       handleCloseDialog();
     } catch (error) {
       console.error('Failed to save user:', error);
+      // Show error message to user
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(user => user.id !== userId));
+      try {
+        await userService.deleteUser(userId);
+        await loadUsers(); // Reload users after deletion
+      } catch (error) {
+        console.error('Failed to delete user:', error);
+      }
     }
   };
 
-  const handleToggleUserStatus = async (userId: string) => {
-    const updatedUsers = users.map(user =>
-      user.id === userId
-        ? { ...user, isActive: !user.isActive }
-        : user
-    );
-    setUsers(updatedUsers);
+  const handleToggleUserStatus = async (userId: string, currentStatus: boolean) => {
+    try {
+      await userService.toggleUserStatus(userId, !currentStatus);
+      await loadUsers(); // Reload users after status change
+    } catch (error) {
+      console.error('Failed to toggle user status:', error);
+    }
   };
 
   const handlePasswordUpdate = async (userId: string, newPassword: string) => {
     try {
-      // In real app, this would be an API call
+      // This would use the userService password update method
       console.log(`Updating password for user ${userId}`);
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -252,8 +228,8 @@ const UserManagement: React.FC = () => {
     setSelectedUser(null);
   };
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
+  const getRoleColor = (roleName: string) => {
+    switch (roleName) {
       case ROLES.SUPERADMIN:
         return 'error';
       case ROLES.ADMIN:
@@ -265,17 +241,19 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const getRoleDisplayName = (role: string) => {
-    const roleDefinition = PermissionService.getRoleDefinition(role);
-    return roleDefinition?.displayName || role;
+  const getRoleDisplayName = (role: User['role']) => {
+    const roleLabels = {
+      'superadmin': 'Super Admin',
+      'admin': 'Admin',
+      'operator': 'Operator',
+      'customer': 'Customer'
+    };
+    return roleLabels[role as keyof typeof roleLabels] || role;
   };
 
-  const formatLastLogin = (date?: Date) => {
-    if (!date) return 'Never';
-    return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
-      Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-      'day'
-    );
+  const formatLastLogin = (dateString?: string) => {
+    if (!dateString) return 'Never';
+    return userService.formatLastLogin(dateString);
   };
 
   // Role-based restrictions
@@ -284,105 +262,63 @@ const UserManagement: React.FC = () => {
   const canDeleteUsers = hasPermission(PERMISSIONS.USERS_DELETE);
   const canUpdatePasswords = isAdmin() || isSuperAdmin(); // Admin can only update passwords
 
+  if (loading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Grid container spacing={3}>
+          {[...Array(6)].map((_, index) => (
+            <Grid item xs={12} key={index}>
+              <Card>
+                <CardContent>
+                  <Skeleton variant="text" height={32} />
+                  <Skeleton variant="text" height={24} />
+                  <Skeleton variant="rectangular" height={120} sx={{ mt: 2 }} />
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Button variant="contained" onClick={loadUsers}>
+          Retry
+        </Button>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-            User Management
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Manage users and their permissions for {currentCafe?.name || 'your restaurant'}
-          </Typography>
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box>
+            <Typography variant="h4" gutterBottom fontWeight="600">
+              User Management
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Manage users and their permissions for {currentCafe?.name || currentWorkspace?.name || 'your workspace'}
+            </Typography>
+          </Box>
+          {canCreateUsers && (
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => handleOpenDialog()}
+            >
+              Add User
+            </Button>
+          )}
         </Box>
-        
-        {isSuperAdmin() && (
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
-            size="large"
-          >
-            Add User
-          </Button>
-        )}
       </Box>
-
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    Total Users
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold">
-                    {users.length}
-                  </Typography>
-                </Box>
-                <Person sx={{ fontSize: 40, color: 'primary.main' }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    Active Users
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold">
-                    {users.filter(u => u.isActive).length}
-                  </Typography>
-                </Box>
-                <CheckCircle sx={{ fontSize: 40, color: 'success.main' }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    Admins
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold">
-                    {users.filter(u => u.role === ROLES.ADMIN).length}
-                  </Typography>
-                </Box>
-                <Security sx={{ fontSize: 40, color: 'warning.main' }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography color="text.secondary" gutterBottom variant="body2">
-                    Operators
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold">
-                    {users.filter(u => u.role === ROLES.OPERATOR).length}
-                  </Typography>
-                </Box>
-                <Business sx={{ fontSize: 40, color: 'info.main' }} />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
 
       {/* Users Table */}
       <Card>
@@ -393,10 +329,9 @@ const UserManagement: React.FC = () => {
                 <TableRow>
                   <TableCell>User</TableCell>
                   <TableCell>Role</TableCell>
-                  <TableCell>Cafe</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Last Login</TableCell>
-                  <TableCell align="right">Actions</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -404,16 +339,21 @@ const UserManagement: React.FC = () => {
                   <TableRow key={user.id}>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ width: 40, height: 40 }}>
-                          {user.firstName[0]}{user.lastName[0]}
+                        <Avatar>
+                          {user.first_name.charAt(0)}{user.last_name.charAt(0)}
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" fontWeight="500">
-                            {user.firstName} {user.lastName}
+                          <Typography variant="subtitle2" fontWeight="600">
+                            {user.first_name} {user.last_name}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="body2" color="text.secondary">
                             {user.email}
                           </Typography>
+                          {user.phone && (
+                            <Typography variant="body2" color="text.secondary">
+                              {user.phone}
+                            </Typography>
+                          )}
                         </Box>
                       </Box>
                     </TableCell>
@@ -425,21 +365,19 @@ const UserManagement: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      {cafes.find(c => c.id === user.cafeId)?.name || 'N/A'}
-                    </TableCell>
-                    <TableCell>
                       <Chip
-                        label={user.isActive ? 'Active' : 'Inactive'}
-                        color={user.isActive ? 'success' : 'default'}
+                        label={user.is_active ? 'Active' : 'Inactive'}
+                        color={user.is_active ? 'success' : 'default'}
                         size="small"
+                        icon={user.is_active ? <CheckCircle /> : <Cancel />}
                       />
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {formatLastLogin(user.lastLogin)}
+                        {formatLastLogin(user.updated_at || user.created_at)}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell>
                       <IconButton
                         onClick={(e) => handleMenuClick(e, user)}
                         size="small"
@@ -455,156 +393,15 @@ const UserManagement: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* User Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {isSuperAdmin() 
-            ? (editingUser ? 'Edit User' : 'Add New User')
-            : 'Update User Password'
-          }
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            {/* Show different fields based on user role */}
-            {isSuperAdmin() ? (
-              // SuperAdmin can create/edit full user details
-              <>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="First Name"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Last Name"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    disabled={!!editingUser} // Can't change email when editing
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Phone"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Role</InputLabel>
-                    <Select
-                      value={formData.role}
-                      label="Role"
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                      required
-                    >
-                      <MenuItem value={ROLES.OPERATOR}>Operator</MenuItem>
-                      <MenuItem value={ROLES.ADMIN}>Admin</MenuItem>
-                      <MenuItem value={ROLES.SUPERADMIN}>Super Admin</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth>
-                    <InputLabel>Cafe</InputLabel>
-                    <Select
-                      value={formData.cafeId}
-                      label="Cafe"
-                      onChange={(e) => setFormData({ ...formData, cafeId: e.target.value })}
-                      disabled // Always current cafe for superadmin
-                    >
-                      <MenuItem value={currentCafe?.id || ''}>
-                        {currentCafe?.name || 'Current Cafe'}
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.isActive}
-                        onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                      />
-                    }
-                    label="Active User"
-                  />
-                </Grid>
-              </>
-            ) : (
-              // Admin can only update password
-              <>
-                <Grid item xs={12}>
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    As an Admin, you can only update user passwords. Contact a SuperAdmin to modify other user details.
-                  </Alert>
-                </Grid>
-                <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom>
-                    User: {editingUser?.firstName} {editingUser?.lastName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Email: {editingUser?.email}
-                  </Typography>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="New Password"
-                    type="password"
-                    placeholder="Enter new password for user"
-                    helperText="Leave empty to keep current password"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Confirm New Password"
-                    type="password"
-                    placeholder="Confirm new password"
-                  />
-                </Grid>
-              </>
-            )}
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {isSuperAdmin() 
-              ? (editingUser ? 'Update User' : 'Create User')
-              : 'Update Password'
-            }
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Action Menu */}
+      {/* User Actions Menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
       >
-        {isSuperAdmin() && (
+        {canEditUsers && (
           <MenuItem onClick={() => {
-            handleOpenDialog(selectedUser || undefined);
+            handleOpenDialog(selectedUser!);
             handleMenuClose();
           }}>
             <ListItemIcon>
@@ -613,8 +410,7 @@ const UserManagement: React.FC = () => {
             <ListItemText>Edit User</ListItemText>
           </MenuItem>
         )}
-        
-        {isAdmin() && !isSuperAdmin() && (
+        {canUpdatePasswords && selectedUser && (
           <MenuItem onClick={() => {
             setPasswordDialogOpen(true);
             handleMenuClose();
@@ -625,56 +421,145 @@ const UserManagement: React.FC = () => {
             <ListItemText>Update Password</ListItemText>
           </MenuItem>
         )}
-        
-        <MenuItem onClick={() => {
-          if (selectedUser) {
-            handleToggleUserStatus(selectedUser.id);
-          }
-          handleMenuClose();
-        }}>
-          <ListItemIcon>
-            {selectedUser?.isActive ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
-          </ListItemIcon>
-          <ListItemText>
-            {selectedUser?.isActive ? 'Deactivate' : 'Activate'}
-          </ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={() => {
-          setShowPermissions(selectedUser?.id || null);
-          handleMenuClose();
-        }}>
-          <ListItemIcon>
-            <Visibility fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>View Permissions</ListItemText>
-        </MenuItem>
-
-        {canDeleteUsers && selectedUser?.id !== currentUser?.id && (
+        {selectedUser && (
           <MenuItem onClick={() => {
-            if (selectedUser) {
-              handleDeleteUser(selectedUser.id);
-            }
+            handleToggleUserStatus(selectedUser.id, selectedUser.is_active);
+            handleMenuClose();
+          }}>
+            <ListItemIcon>
+              {selectedUser.is_active ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
+            </ListItemIcon>
+            <ListItemText>
+              {selectedUser.is_active ? 'Deactivate' : 'Activate'}
+            </ListItemText>
+          </MenuItem>
+        )}
+        {canDeleteUsers && selectedUser && (
+          <MenuItem onClick={() => {
+            handleDeleteUser(selectedUser.id);
             handleMenuClose();
           }}>
             <ListItemIcon>
               <Delete fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Delete</ListItemText>
+            <ListItemText>Delete User</ListItemText>
           </MenuItem>
         )}
       </Menu>
 
+      {/* User Create/Edit Dialog */}
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {editingUser ? 'Edit User' : 'Create New User'}
+        </DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 1 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="First Name"
+                value={formData.first_name}
+                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Last Name"
+                value={formData.last_name}
+                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                disabled={!!editingUser}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControl fullWidth required>
+                <InputLabel>Role</InputLabel>
+                <Select
+                  value={formData.role_name}
+                  onChange={(e) => setFormData({ ...formData, role_name: e.target.value })}
+                  label="Role"
+                >
+                  <MenuItem value={ROLES.OPERATOR}>Operator</MenuItem>
+                  {isAdmin() && <MenuItem value={ROLES.ADMIN}>Admin</MenuItem>}
+                  {isSuperAdmin() && <MenuItem value={ROLES.SUPERADMIN}>Super Admin</MenuItem>}
+                </Select>
+              </FormControl>
+            </Grid>
+            {cafes.length > 1 && (
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Cafe</InputLabel>
+                  <Select
+                    value={formData.venue_id}
+                    onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
+                    label="Cafe"
+                  >
+                    <MenuItem value="">All Cafes</MenuItem>
+                    {cafes.map((cafe) => (
+                      <MenuItem key={cafe.id} value={cafe.id}>
+                        {cafe.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.is_active}
+                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  />
+                }
+                label="Active User"
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained">
+            {editingUser ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Password Update Dialog */}
-      <PasswordUpdateDialog
-        open={passwordDialogOpen}
-        user={selectedUser}
-        onClose={() => {
-          setPasswordDialogOpen(false);
-          setSelectedUser(null);
-        }}
-        onUpdate={handlePasswordUpdate}
-      />
+      {selectedUser && (
+        <PasswordUpdateDialog
+          open={passwordDialogOpen}
+          onClose={() => setPasswordDialogOpen(false)}
+          onUpdate={(userId, newPassword) => handlePasswordUpdate(userId, newPassword)}
+          user={{
+            id: selectedUser.id,
+            email: selectedUser.email,
+            firstName: selectedUser.first_name,
+            lastName: selectedUser.last_name,
+            role: selectedUser.role
+          }}
+        />
+      )}
     </Container>
   );
 };

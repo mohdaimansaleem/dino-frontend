@@ -1,4 +1,4 @@
-import { API_CONFIG } from '../constants/app';
+import { config } from '../config/env';
 
 interface ApiRequestLog {
   method: string;
@@ -15,7 +15,6 @@ interface ApiResponseLog {
   error?: string;
   timestamp: Date;
   duration: number;
-  source: 'api' | 'mock';
 }
 
 interface ApiCall {
@@ -30,8 +29,8 @@ class EnhancedApiService {
   private apiCalls: ApiCall[] = [];
 
   constructor() {
-    this.baseUrl = API_CONFIG.BASE_URL;
-    this.timeout = API_CONFIG.TIMEOUT;
+    this.baseUrl = config.api.baseUrl;
+    this.timeout = config.api.timeout;
     
     // Log API service initialization
     console.log('🚀 Enhanced API Service initialized');
@@ -68,7 +67,7 @@ class EnhancedApiService {
     return id;
   }
 
-  private logResponse(id: string, status: number, statusText: string, data?: any, error?: string, source: 'api' | 'mock' = 'api'): void {
+  private logResponse(id: string, status: number, statusText: string, data?: any, error?: string): void {
     const callIndex = this.apiCalls.findIndex(call => call.id === id);
     if (callIndex === -1) return;
 
@@ -82,19 +81,16 @@ class EnhancedApiService {
       error,
       timestamp: new Date(),
       duration,
-      source,
     };
 
     this.apiCalls[callIndex].response = response;
 
     // Console logging with status-based emojis
     const statusEmoji = status >= 200 && status < 300 ? '✅' : status >= 400 ? '❌' : '⚠️';
-    const sourceEmoji = source === 'api' ? '📡' : '🎭';
     
-    console.group(`${statusEmoji} API Response [${id}] ${sourceEmoji}`);
+    console.group(`${statusEmoji} API Response [${id}]`);
     console.log(`📥 ${status} ${statusText}`);
     console.log(`⏱️ Duration: ${duration}ms`);
-    console.log(`🔗 Source: ${source.toUpperCase()}`);
     
     if (data) {
       console.log('📄 Response Data:', data);
@@ -106,18 +102,13 @@ class EnhancedApiService {
     console.groupEnd();
 
     // Show summary
-    if (source === 'mock') {
-      console.warn(`🎭 Using MOCK data for ${call.request.method} ${call.request.url}`);
-    } else {
-      console.info(`📡 API call successful: ${call.request.method} ${call.request.url}`);
-    }
+    console.info(`📡 API call completed: ${call.request.method} ${call.request.url}`);
   }
 
   private async makeRequest<T>(
     endpoint: string,
-    options: RequestInit = {},
-    mockData?: T
-  ): Promise<{ data: T; source: 'api' | 'mock'; status: number }> {
+    options: RequestInit = {}
+  ): Promise<{ data: T; status: number }> {
     const url = `${this.baseUrl}${endpoint}`;
     const method = options.method || 'GET';
     
@@ -129,7 +120,7 @@ class EnhancedApiService {
 
     // Add auth token if available
     const token = localStorage.getItem('dino_token');
-    if (token && token !== 'demo-token-bypass') {
+    if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
@@ -158,75 +149,54 @@ class EnhancedApiService {
       }
 
       if (!response.ok) {
-        this.logResponse(requestId, response.status, response.statusText, undefined, `HTTP ${response.status}: ${response.statusText}`, 'api');
+        this.logResponse(requestId, response.status, response.statusText, undefined, `HTTP ${response.status}: ${response.statusText}`);
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      this.logResponse(requestId, response.status, response.statusText, responseData, undefined, 'api');
+      this.logResponse(requestId, response.status, response.statusText, responseData);
 
       return {
         data: responseData,
-        source: 'api',
         status: response.status,
       };
 
     } catch (error: any) {
       // Log the API failure
-      this.logResponse(requestId, 0, 'Network Error', undefined, error.message, 'api');
-      
-      // Return mock data if available
-      if (mockData !== undefined) {
-        console.warn(`🎭 API failed, falling back to mock data for ${method} ${endpoint}`);
-        
-        // Log mock response
-        const mockRequestId = this.generateId();
-        this.logRequest('MOCK', endpoint, {}, 'Mock data fallback');
-        this.logResponse(mockRequestId, 200, 'OK (Mock)', mockData, undefined, 'mock');
-        
-        return {
-          data: mockData,
-          source: 'mock',
-          status: 200,
-        };
-      }
-
-      // No mock data available, throw error
+      this.logResponse(requestId, 0, 'Network Error', undefined, error.message);
       throw error;
     }
   }
 
   // GET request
-  async get<T>(endpoint: string, mockData?: T): Promise<{ data: T; source: 'api' | 'mock'; status: number }> {
-    return this.makeRequest(endpoint, { method: 'GET' }, mockData);
+  async get<T>(endpoint: string): Promise<{ data: T; status: number }> {
+    return this.makeRequest(endpoint, { method: 'GET' });
   }
 
   // POST request
-  async post<T>(endpoint: string, body: any, mockData?: T): Promise<{ data: T; source: 'api' | 'mock'; status: number }> {
+  async post<T>(endpoint: string, body: any): Promise<{ data: T; status: number }> {
     return this.makeRequest(
       endpoint,
       {
         method: 'POST',
         body: JSON.stringify(body),
-      },
-      mockData
+      }
     );
   }
 
   // PUT request
-  async put<T>(endpoint: string, body: any, mockData?: T): Promise<{ data: T; source: 'api' | 'mock'; status: number }> {
+  async put<T>(endpoint: string, body: any): Promise<{ data: T; status: number }> {
     return this.makeRequest(
       endpoint,
       {
         method: 'PUT',
         body: JSON.stringify(body),
-      },
-      mockData
+      }
     );
   }
 
   // DELETE request
-  async delete<T>(endpoint: string, mockData?: T): Promise<{ data: T; source: 'api' | 'mock'; status: number }> {
-    return this.makeRequest(endpoint, { method: 'DELETE' }, mockData);
+  async delete<T>(endpoint: string): Promise<{ data: T; status: number }> {
+    return this.makeRequest(endpoint, { method: 'DELETE' });
   }
 
   // Get API call history
@@ -245,13 +215,11 @@ class EnhancedApiService {
     totalCalls: number;
     successfulCalls: number;
     failedCalls: number;
-    mockCalls: number;
     averageResponseTime: number;
   } {
     const completedCalls = this.apiCalls.filter(call => call.response);
     const successfulCalls = completedCalls.filter(call => call.response!.status >= 200 && call.response!.status < 300);
     const failedCalls = completedCalls.filter(call => call.response!.status >= 400);
-    const mockCalls = completedCalls.filter(call => call.response!.source === 'mock');
     
     const totalResponseTime = completedCalls.reduce((sum, call) => sum + call.response!.duration, 0);
     const averageResponseTime = completedCalls.length > 0 ? totalResponseTime / completedCalls.length : 0;
@@ -260,7 +228,6 @@ class EnhancedApiService {
       totalCalls: this.apiCalls.length,
       successfulCalls: successfulCalls.length,
       failedCalls: failedCalls.length,
-      mockCalls: mockCalls.length,
       averageResponseTime: Math.round(averageResponseTime),
     };
   }
@@ -273,7 +240,6 @@ class EnhancedApiService {
     console.log('📈 Total API Calls:', stats.totalCalls);
     console.log('✅ Successful Calls:', stats.successfulCalls);
     console.log('❌ Failed Calls:', stats.failedCalls);
-    console.log('🎭 Mock Calls:', stats.mockCalls);
     console.log('⚡ Average Response Time:', stats.averageResponseTime + 'ms');
     console.groupEnd();
   }

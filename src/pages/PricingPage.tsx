@@ -31,6 +31,7 @@ import {
   CloudDone,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { formatINR } from '../utils/formatters';
 
 const PricingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -41,8 +42,8 @@ const PricingPage: React.FC = () => {
       id: 'basic',
       name: 'Basic',
       description: 'Perfect for small cafes and restaurants',
-      monthlyPrice: 999,
-      annualPrice: 9990,
+      monthlyPrice: 2999,
+      annualPrice: 29990,
       popular: false,
       maxCafes: 1,
       maxUsers: 5,
@@ -66,8 +67,8 @@ const PricingPage: React.FC = () => {
       id: 'premium',
       name: 'Premium',
       description: 'Ideal for growing restaurant chains',
-      monthlyPrice: 2999,
-      annualPrice: 29990,
+      monthlyPrice: 7999,
+      annualPrice: 79990,
       popular: true,
       maxCafes: 5,
       maxUsers: 25,
@@ -92,8 +93,8 @@ const PricingPage: React.FC = () => {
       id: 'enterprise',
       name: 'Enterprise',
       description: 'For large restaurant enterprises',
-      monthlyPrice: 9999,
-      annualPrice: 99990,
+      monthlyPrice: 19999,
+      annualPrice: 199990,
       popular: false,
       maxCafes: -1, // Unlimited
       maxUsers: -1, // Unlimited
@@ -119,25 +120,25 @@ const PricingPage: React.FC = () => {
     {
       name: 'Additional Location',
       description: 'Add extra cafe locations to your plan',
-      price: 500,
+      price: 1500,
       unit: 'per location/month'
     },
     {
       name: 'Extra Users',
       description: 'Add more staff users to your account',
-      price: 100,
+      price: 299,
       unit: 'per user/month'
     },
     {
       name: 'Custom Integration',
-      description: 'Connect with your existing systems',
-      price: 5000,
+      description: 'Connect with your existing POS/billing systems',
+      price: 15000,
       unit: 'one-time setup'
     },
     {
       name: 'Training Session',
       description: 'Dedicated training for your team',
-      price: 2000,
+      price: 5000,
       unit: 'per session'
     }
   ];
@@ -153,11 +154,11 @@ const PricingPage: React.FC = () => {
     },
     {
       question: 'What payment methods do you accept?',
-      answer: 'We accept all major credit cards, debit cards, and bank transfers. For enterprise plans, we also offer invoice-based billing.'
+      answer: 'We accept all major credit cards, debit cards, UPI, net banking, and bank transfers. For enterprise plans, we also offer invoice-based billing with GST.'
     },
     {
       question: 'Is my data secure?',
-      answer: 'Absolutely. We use bank-level encryption and are compliant with industry standards including PCI DSS and GDPR.'
+      answer: 'Absolutely. We use bank-level encryption and are compliant with industry standards including PCI DSS, GDPR, and Indian data protection regulations.'
     },
     {
       question: 'Do you offer custom solutions?',
@@ -165,13 +166,7 @@ const PricingPage: React.FC = () => {
     }
   ];
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+
 
   const getDiscountedPrice = (monthlyPrice: number, annualPrice: number) => {
     if (isAnnual) {
@@ -272,7 +267,7 @@ const PricingPage: React.FC = () => {
                       
                       <Box sx={{ mb: 2 }}>
                         <Typography variant="h3" component="span" fontWeight="bold">
-                          {formatPrice(price)}
+                          {formatINR(price)}
                         </Typography>
                         <Typography variant="body1" component="span" color="text.secondary">
                           /{isAnnual ? 'year' : 'month'}
@@ -370,7 +365,7 @@ const PricingPage: React.FC = () => {
                     {addon.description}
                   </Typography>
                   <Typography variant="h5" fontWeight="bold" color="primary.main">
-                    {formatPrice(addon.price)}
+                    {formatINR(addon.price)}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {addon.unit}

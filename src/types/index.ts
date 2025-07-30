@@ -1,12 +1,98 @@
-// Enhanced User and Authentication Types
+// Re-export API types for compatibility
+export type {
+  // Core API types
+  ApiResponse as ApiResponseType,
+  PaginatedResponse as PaginatedResponseType,
+  
+  // Authentication types
+  AuthToken as ApiAuthToken,
+  UserProfile as ApiUserProfile,
+  UserRegistration as ApiUserRegistration,
+  WorkspaceRegistration,
+  
+  // Workspace types
+  Workspace,
+  WorkspaceCreate,
+  WorkspaceUpdate,
+  WorkspaceStatistics,
+  
+  // Venue types
+  Venue,
+  VenueCreate,
+  VenueUpdate,
+  VenueAnalytics,
+  VenueStatus,
+  VenueLocation,
+  OperatingHours,
+  
+  // Menu types
+  MenuCategory as ApiMenuCategory,
+  MenuItem as ApiMenuItem,
+  MenuCategoryCreate as ApiMenuCategoryCreate,
+  MenuItemCreate as ApiMenuItemCreate,
+  MenuItemUpdate as ApiMenuItemUpdate,
+  
+  // Table types
+  Table as ApiTable,
+  TableCreate,
+  TableUpdate,
+  TableQRCode,
+  QRCodeVerification,
+  TableStatus,
+  
+  // Order types
+  Order as ApiOrder,
+  OrderCreate as ApiOrderCreate,
+  OrderUpdate as ApiOrderUpdate,
+  OrderItem as ApiOrderItem,
+  OrderItemCreate as ApiOrderItemCreate,
+  PublicOrderCreate,
+  CustomerCreate,
+  OrderValidation,
+  OrderReceipt,
+  OrderStatus as ApiOrderStatus,
+  PaymentStatus as ApiPaymentStatus,
+  PaymentMethod as ApiPaymentMethod,
+  OrderType,
+  
+  // Dashboard types
+  DashboardData,
+  SuperAdminDashboard,
+  AdminDashboard,
+  OperatorDashboard,
+  LiveOrderData,
+  VenueAnalyticsData,
+  
+  // User types
+  User as ApiUser,
+  UserCreate as ApiUserCreate,
+  UserUpdate as ApiUserUpdate,
+  UserRole as ApiUserRole,
+  
+  // Validation types
+  ValidationResponse,
+  WorkspaceValidation,
+  
+  // Filter types
+  PaginationParams as ApiPaginationParams,
+  VenueFilters as ApiVenueFilters,
+  MenuFilters as ApiMenuFilters,
+  OrderFilters,
+  TableFilters,
+  UserFilters,
+  
+  // Error types
+  ApiError,
+  ErrorCode
+} from './api';
+
+// Legacy User and Authentication Types (for backward compatibility)
 export interface UserProfile {
   id: string;
   email: string;
   phone?: string;
   firstName: string;
   lastName: string;
-  first_name: string; // Add for compatibility
-  last_name: string;  // Add for compatibility
   name?: string;
   dateOfBirth?: Date;
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';

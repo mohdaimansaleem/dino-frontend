@@ -12,14 +12,13 @@ export const STORAGE_KEYS = {
   TOKEN: 'dino_token',
   USER: 'dino_user',
   REFRESH_TOKEN: 'dino_refresh_token',
-  DEMO_MODE: 'dino_demo_mode',
   CART: 'dino_cart',
   PREFERENCES: 'dino_preferences',
 } as const;
 
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+  BASE_URL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1',
   TIMEOUT: 10000, // 10 seconds
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000, // 1 second
@@ -45,10 +44,13 @@ export const ROUTES = {
 // Default Values
 export const DEFAULTS = {
   CAFE_ID: 'dino-cafe-1',
+  CAFE_NAME: 'Dino Cafe',
   TABLE_ID: 'dt-001',
   CURRENCY: 'INR',
   LANGUAGE: 'en',
   TIMEZONE: 'Asia/Kolkata',
+  COUNTRY: 'IN',
+  REGION: 'India',
   ITEMS_PER_PAGE: 10,
   MAX_CART_ITEMS: 50,
   SESSION_TIMEOUT: 30 * 60 * 1000, // 30 minutes
@@ -56,7 +58,7 @@ export const DEFAULTS = {
 
 // Feature Flags
 export const FEATURES = {
-  DEMO_MODE: true,
+  DEMO_MODE: false, // Disabled for production
   QR_CODE_GENERATION: true,
   REAL_TIME_UPDATES: true,
   ANALYTICS: true,
@@ -65,15 +67,18 @@ export const FEATURES = {
   DARK_MODE: false,
 } as const;
 
-// Business Rules
+// Business Rules (Indian Market)
 export const BUSINESS_RULES = {
-  MIN_ORDER_VALUE: 100, // INR
+  MIN_ORDER_VALUE: 150, // INR
   FREE_DELIVERY_THRESHOLD: 500, // INR
-  DELIVERY_FEE: 50, // INR
-  TAX_RATE: 0.18, // 18% GST
+  DELIVERY_FEE: 40, // INR
+  TAX_RATE: 0.18, // 18% GST (Indian Standard)
   SERVICE_CHARGE_RATE: 0.10, // 10%
   MAX_DISCOUNT_PERCENTAGE: 50,
   ORDER_CANCELLATION_TIME: 5 * 60 * 1000, // 5 minutes
+  CURRENCY_SYMBOL: '₹',
+  CURRENCY_CODE: 'INR',
+  PHONE_COUNTRY_CODE: '+91',
 } as const;
 
 // Time Formats
@@ -84,16 +89,18 @@ export const TIME_FORMATS = {
   TIMESTAMP: 'DD/MM/YYYY HH:mm:ss',
 } as const;
 
-// Validation Rules
+// Validation Rules (Indian Context)
 export const VALIDATION = {
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  PHONE_REGEX: /^[+]?[\d\s\-()]{10,}$/,
+  PHONE_REGEX: /^(\+91|91)?[6-9]\d{9}$/, // Indian mobile number format
   PASSWORD_MIN_LENGTH: 6,
   NAME_MIN_LENGTH: 2,
   NAME_MAX_LENGTH: 50,
   DESCRIPTION_MAX_LENGTH: 500,
-  PRICE_MIN: 1,
-  PRICE_MAX: 10000,
+  PRICE_MIN: 10, // INR
+  PRICE_MAX: 50000, // INR
   QUANTITY_MIN: 1,
   QUANTITY_MAX: 10,
+  PIN_CODE_REGEX: /^[1-9][0-9]{5}$/, // Indian PIN code
+  GST_REGEX: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, // GST number
 } as const;

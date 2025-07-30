@@ -1,16 +1,55 @@
 import { apiService } from './api';
-import { Workspace, Cafe, PricingPlan } from '../types/auth';
-import { ApiResponse } from '../types';
+import { 
+  Workspace, 
+  WorkspaceCreate,
+  WorkspaceUpdate,
+  WorkspaceStatistics,
+  Venue,
+  User,
+  PaginatedResponse,
+  ApiResponse 
+} from '../types/api';
 
 class WorkspaceService {
   // Workspace Management
-  async getWorkspaces(): Promise<Workspace[]> {
+  async getWorkspaces(filters?: {
+    page?: number;
+    page_size?: number;
+    search?: string;
+    is_active?: boolean;
+  }): Promise<PaginatedResponse<Workspace>> {
     try {
-      const response = await apiService.get<Workspace[]>('/workspaces');
-      return response.data || [];
+      const params = new URLSearchParams();
+      
+      if (filters?.page) params.append('page', filters.page.toString());
+      if (filters?.page_size) params.append('page_size', filters.page_size.toString());
+      if (filters?.search) params.append('search', filters.search);
+      if (filters?.is_active !== undefined) params.append('is_active', filters.is_active.toString());
+
+      const response = await apiService.get<PaginatedResponse<Workspace>>(`/workspaces?${params.toString()}`);
+      
+      return response.data || {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
     } catch (error) {
       console.error('Failed to get workspaces:', error);
-      return [];
+      return {
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        page_size: 10,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false
+      };
     }
   }
 
@@ -24,40 +63,47 @@ class WorkspaceService {
     }
   }
 
-  async createWorkspace(workspaceData: {
-    name: string;
-    description?: string;
-    pricingPlan: string;
-  }): Promise<ApiResponse<Workspace>> {
-    return await apiService.post<Workspace>('/workspaces', workspaceData);
+  async createWorkspace(workspaceData: WorkspaceCreate): Promise<ApiResponse<Workspace>> {
+    try {
+      return await apiService.post<Workspace>('/workspaces', workspaceData);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to create workspace');
+    }
   }
 
-  async updateWorkspace(workspaceId: string, workspaceData: Partial<Workspace>): Promise<ApiResponse<Workspace>> {
-    return await apiService.put<Workspace>(`/workspaces/${workspaceId}`, workspaceData);
+  async updateWorkspace(workspaceId: string, workspaceData: WorkspaceUpdate): Promise<ApiResponse<Workspace>> {
+    try {
+      return await apiService.put<Workspace>(`/workspaces/${workspaceId}`, workspaceData);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update workspace');
+    }
   }
 
   async deleteWorkspace(workspaceId: string): Promise<ApiResponse<void>> {
-    return await apiService.delete<void>(`/workspaces/${workspaceId}`);
+    try {
+      return await apiService.delete<void>(`/workspaces/${workspaceId}`);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to delete workspace');
+    }
   }
 
-  // Cafe Management
-  async getCafes(workspaceId?: string): Promise<Cafe[]> {
+  // Get workspace venues
+  async getWorkspaceVenues(workspaceId: string): Promise<Venue[]> {
     try {
-      const url = workspaceId ? `/cafes?workspace_id=${workspaceId}` : '/cafes';
-      const response = await apiService.get<Cafe[]>(url);
+      const response = await apiService.get<Venue[]>(`/workspaces/${workspaceId}/venues`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get cafes:', error);
+      console.error('Failed to get workspace venues:', error);
       return [];
     }
   }
 
-  async getCafe(cafeId: string): Promise<Cafe | null> {
+  async getCafe(cafeId: string): Promise<Venue | null> {
     try {
-      const response = await apiService.get<Cafe>(`/cafes/${cafeId}`);
+      const response = await apiService.get<Venue>(`/venues/${cafeId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get cafe:', error);
+      console.error('Failed to get venue:', error);
       return null;
     }
   }
@@ -69,34 +115,53 @@ class WorkspaceService {
     phone: string;
     email: string;
     workspaceId: string;
-  }): Promise<ApiResponse<Cafe>> {
-    return await apiService.post<Cafe>('/cafes', cafeData);
+  }): Promise<ApiResponse<Venue>> {
+    const venueData = {
+      name: cafeData.name,
+      description: cafeData.description,
+      location: {
+        address: cafeData.address,
+        city: '',
+        state: '',
+        country: 'India',
+        postal_code: ''
+      },
+      phone: cafeData.phone,
+      email: cafeData.email,
+      workspace_id: cafeData.workspaceId
+    };
+    return await apiService.post<Venue>('/venues', venueData);
   }
 
-  async updateCafe(cafeId: string, cafeData: Partial<Cafe>): Promise<ApiResponse<Cafe>> {
-    return await apiService.put<Cafe>(`/cafes/${cafeId}`, cafeData);
+  async updateCafe(cafeId: string, cafeData: Partial<Venue>): Promise<ApiResponse<Venue>> {
+    return await apiService.put<Venue>(`/venues/${cafeId}`, cafeData);
   }
 
   async deleteCafe(cafeId: string): Promise<ApiResponse<void>> {
-    return await apiService.delete<void>(`/cafes/${cafeId}`);
+    return await apiService.delete<void>(`/venues/${cafeId}`);
   }
 
   async activateCafe(cafeId: string): Promise<ApiResponse<void>> {
-    return await apiService.post<void>(`/cafes/${cafeId}/activate`);
+    return await apiService.post<void>(`/venues/${cafeId}/activate`);
   }
 
   async deactivateCafe(cafeId: string): Promise<ApiResponse<void>> {
-    return await apiService.post<void>(`/cafes/${cafeId}/deactivate`);
+    return await apiService.post<void>(`/venues/${cafeId}/deactivate`);
   }
 
   async toggleCafeStatus(cafeId: string, isOpen: boolean): Promise<ApiResponse<void>> {
-    return await apiService.post<void>(`/cafes/${cafeId}/toggle-status`, { isOpen });
+    return await apiService.post<void>(`/venues/${cafeId}/toggle-status`, { isOpen });
+  }
+
+  // Add missing getCafes method for backward compatibility
+  async getCafes(workspaceId: string): Promise<Venue[]> {
+    return this.getWorkspaceVenues(workspaceId);
   }
 
   // Pricing Plans
-  async getPricingPlans(): Promise<PricingPlan[]> {
+  async getPricingPlans(): Promise<any[]> {
     try {
-      const response = await apiService.get<PricingPlan[]>('/pricing-plans');
+      const response = await apiService.get<any[]>('/pricing-plans');
       return response.data || [];
     } catch (error) {
       console.error('Failed to get pricing plans:', error);
@@ -104,7 +169,7 @@ class WorkspaceService {
     }
   }
 
-  private getDefaultPricingPlans(): PricingPlan[] {
+  private getDefaultPricingPlans(): any[] {
     return [
       {
         id: 'basic',
@@ -157,10 +222,21 @@ class WorkspaceService {
     ];
   }
 
-  // User Management within Workspace
-  async getWorkspaceUsers(workspaceId: string): Promise<any[]> {
+  // Get workspace statistics
+  async getWorkspaceStatistics(workspaceId: string): Promise<WorkspaceStatistics | null> {
     try {
-      const response = await apiService.get<any[]>(`/workspaces/${workspaceId}/users`);
+      const response = await apiService.get<WorkspaceStatistics>(`/workspaces/${workspaceId}/statistics`);
+      return response.data || null;
+    } catch (error) {
+      console.error('Failed to get workspace statistics:', error);
+      return null;
+    }
+  }
+
+  // User Management within Workspace
+  async getWorkspaceUsers(workspaceId: string): Promise<User[]> {
+    try {
+      const response = await apiService.get<User[]>(`/workspaces/${workspaceId}/users`);
       return response.data || [];
     } catch (error) {
       console.error('Failed to get workspace users:', error);

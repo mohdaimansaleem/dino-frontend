@@ -120,27 +120,59 @@ const TestimonialsPage: React.FC = () => {
         customerSatisfaction: '93%'
       },
       plan: 'Premium'
+    },
+    {
+      id: 7,
+      name: 'Suresh Agarwal',
+      position: 'Owner',
+      restaurant: 'Rajasthani Royal Thali',
+      location: 'Jaipur, India',
+      avatar: '/api/placeholder/64/64',
+      rating: 5,
+      quote: 'Our traditional thali business got a modern touch with Dino. Young customers love the QR ordering while we maintain our authentic taste.',
+      metrics: {
+        orderIncrease: '50%',
+        timeReduction: '65%',
+        customerSatisfaction: '96%'
+      },
+      plan: 'Basic'
+    },
+    {
+      id: 8,
+      name: 'Kavita Joshi',
+      position: 'Manager',
+      restaurant: 'Udupi Palace',
+      location: 'Bangalore, India',
+      avatar: '/api/placeholder/64/64',
+      rating: 5,
+      quote: 'During festival seasons, we used to have huge queues. Now customers can order while waiting, and our efficiency has doubled.',
+      metrics: {
+        orderIncrease: '42%',
+        timeReduction: '58%',
+        customerSatisfaction: '94%'
+      },
+      plan: 'Premium'
     }
   ];
 
   const stats = [
     {
-      number: '500+',
+      number: '2,500+',
       label: 'Happy Restaurants',
       icon: <Restaurant sx={{ fontSize: 40, color: 'primary.main' }} />
     },
     {
-      number: '2M+',
+      number: '5L+',
       label: 'Orders Processed',
       icon: <TrendingUp sx={{ fontSize: 40, color: 'success.main' }} />
     },
     {
-      number: '40%',
+      number: '45%',
       label: 'Average Revenue Increase',
       icon: <Speed sx={{ fontSize: 40, color: 'warning.main' }} />
     },
     {
-      number: '4.8/5',
+      number: '4.9/5',
       label: 'Customer Rating',
       icon: <Star sx={{ fontSize: 40, color: 'error.main' }} />
     }

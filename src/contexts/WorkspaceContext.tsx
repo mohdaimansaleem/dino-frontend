@@ -84,16 +84,42 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       if (user?.workspaceId) {
         const workspace = await workspaceService.getWorkspace(user.workspaceId);
         if (workspace) {
-          setCurrentWorkspace(workspace);
+          // Convert API workspace to local format
+          const localWorkspace = {
+            ...workspace,
+            ownerId: workspace.owner_id || '',
+            isActive: workspace.is_active,
+            pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxCafes: 1, maxUsers: 5 },
+            createdAt: workspace.created_at,
+            updatedAt: workspace.updated_at || workspace.created_at
+          };
+          setCurrentWorkspace(localWorkspace as any);
           await loadCafesForWorkspace(workspace.id);
         }
       }
 
       // Set current cafe from user data or first available
       if (user?.cafeId) {
-        const cafe = await workspaceService.getCafe(user.cafeId);
-        if (cafe) {
-          setCurrentCafe(cafe);
+        const venue = await workspaceService.getCafe(user.cafeId);
+        if (venue) {
+          // Convert Venue to Cafe format
+          const cafe = {
+            id: venue.id,
+            name: venue.name,
+            description: venue.description || '',
+            address: venue.location?.address || '',
+            phone: venue.phone || '',
+            email: venue.email || '',
+            ownerId: user.id,
+            workspaceId: venue.workspace_id,
+            logo: '',
+            isActive: venue.is_active,
+            isOpen: venue.is_active,
+            settings: {},
+            createdAt: new Date(venue.created_at),
+            updatedAt: new Date(venue.updated_at || venue.created_at)
+          };
+          setCurrentCafe(cafe as any);
         }
       }
     } catch (error) {
@@ -107,7 +133,16 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     setWorkspacesLoading(true);
     try {
       const workspaceList = await workspaceService.getWorkspaces();
-      setWorkspaces(workspaceList);
+      // Extract data from paginated response and convert to local format
+      const localWorkspaces = (workspaceList.data || []).map((workspace: any) => ({
+        ...workspace,
+        ownerId: workspace.owner_id || '',
+        isActive: workspace.is_active,
+        pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxCafes: 1, maxUsers: 5 },
+        createdAt: new Date(workspace.created_at),
+        updatedAt: new Date(workspace.updated_at || workspace.created_at)
+      }));
+      setWorkspaces(localWorkspaces);
     } catch (error) {
       console.error('Failed to refresh workspaces:', error);
     } finally {
@@ -123,12 +158,29 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   const loadCafesForWorkspace = async (workspaceId: string) => {
     setCafesLoading(true);
     try {
-      const cafeList = await workspaceService.getCafes(workspaceId);
+      const venueList = await workspaceService.getCafes(workspaceId);
+      // Convert venues to cafes
+      const cafeList = venueList.map((venue: any) => ({
+        id: venue.id,
+        name: venue.name,
+        description: venue.description || '',
+        address: venue.location?.address || '',
+        phone: venue.phone || '',
+        email: venue.email || '',
+        ownerId: (venue as any).owner_id || '',
+        workspaceId: venue.workspace_id,
+        logo: '',
+        isActive: venue.is_active,
+        isOpen: venue.is_active,
+        settings: {},
+        createdAt: new Date(venue.created_at),
+        updatedAt: new Date(venue.updated_at || venue.created_at)
+      })) as any[];
       setCafes(cafeList);
       
       // If no current cafe is set, set the first active cafe
       if (!currentCafe && cafeList.length > 0) {
-        const activeCafe = cafeList.find(cafe => cafe.isActive) || cafeList[0];
+        const activeCafe = cafeList.find((cafe: any) => cafe.isActive) || cafeList[0];
         setCurrentCafe(activeCafe);
       }
     } catch (error) {
@@ -193,7 +245,16 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         await refreshWorkspaces();
         // Update current workspace if it's the one being updated
         if (currentWorkspace?.id === workspaceId && response.data) {
-          setCurrentWorkspace(response.data);
+          // Convert API workspace to local format
+          const localWorkspace = {
+            ...response.data,
+            ownerId: response.data.owner_id || '',
+            isActive: response.data.is_active,
+            pricingPlan: currentWorkspace.pricingPlan, // Keep existing pricing plan
+            createdAt: response.data.created_at,
+            updatedAt: response.data.updated_at || response.data.created_at
+          };
+          setCurrentWorkspace(localWorkspace as any);
         }
       } else {
         throw new Error(response.message || 'Failed to update workspace');
@@ -255,7 +316,24 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         await refreshCafes();
         // Update current cafe if it's the one being updated
         if (currentCafe?.id === cafeId && response.data) {
-          setCurrentCafe(response.data);
+          const venue = response.data;
+          const cafe = {
+            id: venue.id,
+            name: venue.name,
+            description: venue.description || '',
+            address: venue.location?.address || '',
+            phone: venue.phone || '',
+            email: venue.email || '',
+            ownerId: (venue as any).owner_id || '',
+            workspaceId: venue.workspace_id,
+            logo: '',
+            isActive: venue.is_active,
+            isOpen: venue.is_active,
+            settings: {},
+            createdAt: new Date(venue.created_at),
+            updatedAt: new Date(venue.updated_at || venue.created_at)
+          };
+          setCurrentCafe(cafe as any);
         }
       } else {
         throw new Error(response.message || 'Failed to update cafe');

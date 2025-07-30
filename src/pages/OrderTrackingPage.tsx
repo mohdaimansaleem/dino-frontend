@@ -19,6 +19,7 @@ import {
   LinearProgress,
   Avatar,
   Divider,
+  Skeleton,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -28,125 +29,165 @@ import {
   Refresh,
   Receipt,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { trackingService, OrderTracking } from '../services/trackingService';
 
-// Mock order data
-const mockOrder = {
-  id: 'ORD20240121001',
-  tableNumber: 5,
-  customerName: 'John Doe',
-  customerPhone: '+1 (555) 123-4567',
-  status: 'preparing',
-  createdAt: '2024-01-21T14:30:00Z',
-  estimatedTime: 25,
-  items: [
-    {
-      id: '1',
-      name: 'Butter Chicken',
-      quantity: 1,
-      price: 320,
-      image: '/api/placeholder/100/100',
-      specialInstructions: 'Extra spicy please',
-    },
-    {
-      id: '2',
-      name: 'Paneer Tikka Masala',
-      quantity: 2,
-      price: 280,
-      image: '/api/placeholder/100/100',
-    },
-    {
-      id: '3',
-      name: 'Garlic Naan',
-      quantity: 1,
-      price: 80,
-      image: '/api/placeholder/100/100',
-    },
-  ],
-  totalAmount: 960,
-  paymentStatus: 'pending',
+// Default order structure for loading states
+const defaultOrder: OrderTracking = {
+  order_id: '',
+  order_number: '',
+  venue_id: '',
+  customer: {
+    name: '',
+    phone: '',
+  },
+  status: 'placed',
+  payment_status: 'pending',
+  items: [],
+  pricing: {
+    subtotal: 0,
+    tax_amount: 0,
+    discount_amount: 0,
+    delivery_fee: 0,
+    total_amount: 0,
+  },
+  timeline: [],
+  created_at: '',
+  updated_at: '',
 };
-
-const orderSteps = [
-  {
-    label: 'Order Received',
-    description: 'Your order has been received and confirmed',
-    icon: <Receipt />,
-    status: 'completed',
-  },
-  {
-    label: 'Preparing',
-    description: 'Our chefs are preparing your delicious meal',
-    icon: <Restaurant />,
-    status: 'active',
-  },
-  {
-    label: 'Ready',
-    description: 'Your order is ready for pickup/serving',
-    icon: <CheckCircle />,
-    status: 'pending',
-  },
-  {
-    label: 'Served',
-    description: 'Enjoy your meal!',
-    icon: <LocalDining />,
-    status: 'pending',
-  },
-];
 
 const OrderTrackingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [order] = useState(mockOrder);
-  const [loading, setLoading] = useState(false);
-  const [activeStep] = useState(1);
+  const { orderId } = useParams<{ orderId: string }>();
+  const [order, setOrder] = useState<OrderTracking>(defaultOrder);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Real-time updates would be implemented here
+  // Load order tracking data
   useEffect(() => {
-    // Placeholder for real-time order updates
-  }, []);
+    const loadOrderTracking = async () => {
+      if (!orderId) {
+        setError('No order ID provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const trackingData = await trackingService.getOrderTrackingByNumber(orderId);
+        
+        if (trackingData) {
+          setOrder(trackingData);
+        } else {
+          setError('Order not found');
+        }
+      } catch (error) {
+        console.error('Failed to load order tracking:', error);
+        setError('Failed to load order tracking. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrderTracking();
+
+    // Set up real-time updates if order is active
+    let unsubscribe: (() => void) | undefined;
+    
+    if (orderId && order.status !== 'served' && order.status !== 'cancelled') {
+      trackingService.subscribeToOrderUpdates(orderId, (update) => {
+        setOrder(prev => ({
+          ...prev,
+          status: update.status,
+          estimated_ready_time: update.estimated_ready_time,
+        }));
+      }).then(unsub => {
+        unsubscribe = unsub;
+      });
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [orderId]);
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'warning';
-      case 'confirmed': return 'info';
-      case 'preparing': return 'primary';
-      case 'ready': return 'success';
-      case 'served': return 'default';
-      default: return 'default';
-    }
+    const colors = trackingService.getStatusDisplayInfo(status as any);
+    return colors.color;
   };
 
   const formatPrice = (price: number) => {
-    return `₹${price.toFixed(2)}`;
+    return trackingService.formatCurrency(price);
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    return trackingService.formatTime(dateString);
   };
 
   const getEstimatedDeliveryTime = () => {
-    const orderTime = new Date(order.createdAt);
-    const estimatedDelivery = new Date(orderTime.getTime() + order.estimatedTime * 60000);
-    return estimatedDelivery.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    if (order.estimated_ready_time) {
+      return formatTime(order.estimated_ready_time);
+    }
+    return 'Calculating...';
   };
 
   const getProgressPercentage = () => {
-    return ((activeStep + 1) / orderSteps.length) * 100;
+    return trackingService.getProgressPercentage(order.status);
   };
 
-  const handleRefresh = () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+  const handleRefresh = async () => {
+    if (!orderId) return;
+
+    try {
+      setLoading(true);
+      const trackingData = await trackingService.getOrderTrackingByNumber(orderId);
+      
+      if (trackingData) {
+        setOrder(trackingData);
+      }
+    } catch (error) {
+      console.error('Failed to refresh order tracking:', error);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
+
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Card>
+              <CardContent>
+                <Skeleton variant="text" height={40} />
+                <Skeleton variant="text" height={24} />
+                <Skeleton variant="rectangular" height={200} sx={{ mt: 2 }} />
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h6" color="error" gutterBottom>
+            {error}
+          </Typography>
+          <Button variant="contained" onClick={handleRefresh} sx={{ mt: 2 }}>
+            Try Again
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -167,15 +208,19 @@ const OrderTrackingPage: React.FC = () => {
             <Grid item xs={12} md={8}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                 <Typography variant="h6" fontWeight="bold">
-                  Order #{order.id}
+                  Order #{order.order_number || order.order_id}
                 </Typography>
                 <Chip
-                  label={order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                  color={getStatusColor(order.status) as any}
+                  label={trackingService.getStatusDisplayInfo(order.status).label}
+                  sx={{ 
+                    backgroundColor: getStatusColor(order.status),
+                    color: 'white'
+                  }}
                 />
               </Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Table {order.tableNumber} • Ordered at {formatTime(order.createdAt)}
+                {order.table_number && `Table ${order.table_number} • `}
+                Ordered at {formatTime(order.created_at)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Estimated ready time: {getEstimatedDeliveryTime()}
@@ -192,7 +237,7 @@ const OrderTrackingPage: React.FC = () => {
                 Refresh
               </Button>
               <Typography variant="h5" fontWeight="bold" color="primary">
-                {formatPrice(order.totalAmount)}
+                {formatPrice(order.pricing.total_amount)}
               </Typography>
             </Grid>
           </Grid>
@@ -224,49 +269,57 @@ const OrderTrackingPage: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Order Status
               </Typography>
-              <Stepper activeStep={activeStep} orientation="vertical">
-                {orderSteps.map((step, index) => (
-                  <Step key={step.label}>
-                    <StepLabel
-                      StepIconComponent={() => (
-                        <Box
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: index <= activeStep ? 'primary.main' : 'grey.300',
-                            color: index <= activeStep ? 'white' : 'grey.600',
-                          }}
-                        >
-                          {step.icon}
-                        </Box>
-                      )}
-                    >
-                      <Typography variant="subtitle1" fontWeight="bold">
-                        {step.label}
-                      </Typography>
-                    </StepLabel>
-                    <StepContent>
-                      <Typography variant="body2" color="text.secondary">
-                        {step.description}
-                      </Typography>
-                      {index === activeStep && (
-                        <Box sx={{ mt: 1 }}>
-                          <Chip
-                            icon={<Schedule />}
-                            label="In Progress"
-                            size="small"
-                            color="primary"
-                          />
-                        </Box>
-                      )}
-                    </StepContent>
-                  </Step>
-                ))}
-              </Stepper>
+              {order.timeline.length > 0 ? (
+                <Stepper orientation="vertical">
+                  {order.timeline.map((step, index) => (
+                    <Step key={index} active={step.is_current} completed={step.is_completed}>
+                      <StepLabel
+                        StepIconComponent={() => (
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              bgcolor: step.is_completed || step.is_current ? 'primary.main' : 'grey.300',
+                              color: step.is_completed || step.is_current ? 'white' : 'grey.600',
+                            }}
+                          >
+                            {step.is_completed ? <CheckCircle /> : <Schedule />}
+                          </Box>
+                        )}
+                      >
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          {trackingService.getStatusDisplayInfo(step.status).label}
+                        </Typography>
+                      </StepLabel>
+                      <StepContent>
+                        <Typography variant="body2" color="text.secondary">
+                          {step.message}
+                        </Typography>
+                        {step.is_current && (
+                          <Box sx={{ mt: 1 }}>
+                            <Chip
+                              icon={<Schedule />}
+                              label="In Progress"
+                              size="small"
+                              color="primary"
+                            />
+                          </Box>
+                        )}
+                      </StepContent>
+                    </Step>
+                  ))}
+                </Stepper>
+              ) : (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Order status updates will appear here
+                  </Typography>
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -280,10 +333,10 @@ const OrderTrackingPage: React.FC = () => {
               </Typography>
               <List>
                 {order.items.map((item, index) => (
-                  <React.Fragment key={item.id}>
+                  <React.Fragment key={index}>
                     <ListItem sx={{ px: 0 }}>
                       <Avatar
-                        src={item.image}
+                        src={item.image_url}
                         alt={item.name}
                         sx={{ width: 48, height: 48, mr: 2 }}
                       >
@@ -296,22 +349,22 @@ const OrderTrackingPage: React.FC = () => {
                               {item.name}
                             </Typography>
                             <Typography variant="subtitle2" fontWeight="bold">
-                              {formatPrice(item.price * item.quantity)}
+                              {formatPrice(item.total_price)}
                             </Typography>
                           </Box>
                         }
                         secondary={
                           <Box>
                             <Typography variant="body2" color="text.secondary">
-                              Quantity: {item.quantity} × {formatPrice(item.price)}
+                              Quantity: {item.quantity} × {formatPrice(item.unit_price)}
                             </Typography>
-                            {item.specialInstructions && (
+                            {item.special_instructions && (
                               <Typography 
                                 variant="body2" 
                                 color="text.secondary" 
                                 sx={{ fontStyle: 'italic', mt: 0.5 }}
                               >
-                                Note: {item.specialInstructions}
+                                Note: {item.special_instructions}
                               </Typography>
                             )}
                           </Box>
@@ -330,7 +383,7 @@ const OrderTrackingPage: React.FC = () => {
                   Total:
                 </Typography>
                 <Typography variant="h6" fontWeight="bold" color="primary">
-                  {formatPrice(order.totalAmount)}
+                  {formatPrice(order.pricing.total_amount)}
                 </Typography>
               </Box>
             </CardContent>
@@ -350,7 +403,7 @@ const OrderTrackingPage: React.FC = () => {
                     Customer Name
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    {order.customerName}
+                    {order.customer.name}
                   </Typography>
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -358,25 +411,27 @@ const OrderTrackingPage: React.FC = () => {
                     Phone Number
                   </Typography>
                   <Typography variant="body1" fontWeight="bold">
-                    {order.customerPhone}
+                    {order.customer.phone}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant="body2" color="text.secondary">
-                    Table Number
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    Table {order.tableNumber}
-                  </Typography>
-                </Grid>
+                {order.table_number && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary">
+                      Table Number
+                    </Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      Table {order.table_number}
+                    </Typography>
+                  </Grid>
+                )}
                 <Grid item xs={12} sm={6}>
                   <Typography variant="body2" color="text.secondary">
                     Payment Status
                   </Typography>
                   <Chip
-                    label={order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                    label={order.payment_status.charAt(0).toUpperCase() + order.payment_status.slice(1)}
                     size="small"
-                    color={order.paymentStatus === 'paid' ? 'success' : 'warning'}
+                    color={order.payment_status === 'paid' ? 'success' : 'warning'}
                   />
                 </Grid>
               </Grid>
@@ -390,7 +445,7 @@ const OrderTrackingPage: React.FC = () => {
         <Alert severity="info">
           <Typography variant="body2">
             <strong>Need help?</strong> If you have any questions about your order, 
-            please contact our staff or show them your order ID: <strong>{order.id}</strong>
+            please contact our staff or show them your order ID: <strong>{order.order_number || order.order_id}</strong>
           </Typography>
         </Alert>
       </Box>

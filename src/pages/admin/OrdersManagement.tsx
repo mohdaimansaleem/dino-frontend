@@ -29,6 +29,7 @@ import {
   Alert,
   Snackbar,
   Badge,
+  Skeleton,
 } from '@mui/material';
 import {
   Restaurant,
@@ -46,7 +47,9 @@ import {
 } from '@mui/icons-material';
 
 import { useAuth } from '../../contexts/AuthContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { PERMISSIONS } from '../../types/auth';
+import { orderService, Order, OrderStatus, PaymentStatus, PaymentMethod } from '../../services/orderService';
 import {
   ORDER_STATUS,
   ORDER_STATUS_COLORS,
@@ -54,33 +57,7 @@ import {
   PAYMENT_METHODS,
   PAGE_TITLES,
   PLACEHOLDERS,
-  OrderStatus,
-  PaymentStatus,
-  PaymentMethod,
 } from '../../constants';
-
-interface OrderItem {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-  notes?: string;
-  isVeg: boolean;
-}
-
-interface Order {
-  id: string;
-  tableNumber: string;
-  tableId: string;
-  items: OrderItem[];
-  total: number;
-  status: OrderStatus;
-  orderTime: string;
-  estimatedTime?: number;
-  notes?: string;
-  paymentStatus: PaymentStatus;
-  paymentMethod?: PaymentMethod;
-}
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -97,8 +74,8 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const OrdersManagement: React.FC = () => {
-
   const { hasPermission, isOperator, isAdmin } = useAuth();
+  const { currentCafe } = useWorkspace();
   const [tabValue, setTabValue] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -107,74 +84,41 @@ const OrdersManagement: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [openOrderDialog, setOpenOrderDialog] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
-  // Demo data for orders
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load orders from API
   useEffect(() => {
-    const demoOrders: Order[] = [
-      {
-        id: 'ORD-001',
-        tableNumber: 'dt-001',
-        tableId: 'dt-001',
-        items: [
-          { id: '1', name: 'Butter Chicken', quantity: 2, price: 320, isVeg: false },
-          { id: '2', name: 'Garlic Naan', quantity: 3, price: 60, isVeg: true },
-          { id: '3', name: 'Masala Chai', quantity: 2, price: 40, isVeg: true },
-        ],
-        total: 800,
-        status: ORDER_STATUS.PROCESSING,
-        orderTime: new Date(Date.now() - 15 * 60000).toISOString(),
-        estimatedTime: 25,
-        paymentStatus: PAYMENT_STATUS.PENDING,
-        paymentMethod: PAYMENT_METHODS.UPI,
-      },
-      {
-        id: 'ORD-002',
-        tableNumber: 'T-005',
-        tableId: 'table-5',
-        items: [
-          { id: '4', name: 'Paneer Tikka', quantity: 1, price: 280, isVeg: true },
-          { id: '5', name: 'Dal Makhani', quantity: 1, price: 220, isVeg: true },
-          { id: '6', name: 'Jeera Rice', quantity: 1, price: 120, isVeg: true },
-        ],
-        total: 620,
-        status: ORDER_STATUS.READY,
-        orderTime: new Date(Date.now() - 30 * 60000).toISOString(),
-        estimatedTime: 5,
-        paymentStatus: PAYMENT_STATUS.PAID,
-        paymentMethod: PAYMENT_METHODS.CARD,
-      },
-      {
-        id: 'ORD-003',
-        tableNumber: 'T-012',
-        tableId: 'table-12',
-        items: [
-          { id: '7', name: 'Chicken Biryani', quantity: 1, price: 350, isVeg: false },
-          { id: '8', name: 'Raita', quantity: 1, price: 80, isVeg: true },
-          { id: '9', name: 'Gulab Jamun', quantity: 2, price: 60, isVeg: true },
-        ],
-        total: 490,
-        status: ORDER_STATUS.SERVED,
-        orderTime: new Date(Date.now() - 60 * 60000).toISOString(),
-        paymentStatus: PAYMENT_STATUS.PAID,
-        paymentMethod: PAYMENT_METHODS.CASH,
-      },
-      {
-        id: 'ORD-004',
-        tableNumber: 'T-008',
-        tableId: 'table-8',
-        items: [
-          { id: '10', name: 'Veg Thali', quantity: 1, price: 250, isVeg: true },
-          { id: '11', name: 'Lassi', quantity: 1, price: 80, isVeg: true },
-        ],
-        total: 330,
-        status: ORDER_STATUS.ORDERED,
-        orderTime: new Date(Date.now() - 5 * 60000).toISOString(),
-        estimatedTime: 30,
-        paymentStatus: PAYMENT_STATUS.PENDING,
-        paymentMethod: PAYMENT_METHODS.UPI,
-      },
-    ];
-    setOrders(demoOrders);
-  }, []);
+    const loadOrders = async () => {
+      if (!currentCafe?.id) {
+        setError('No cafe selected');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const ordersData = await orderService.getVenueOrders(currentCafe.id);
+        setOrders(ordersData);
+      } catch (error) {
+        console.error('Failed to load orders:', error);
+        setError('Failed to load orders. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadOrders();
+
+    // Auto-refresh orders every 30 seconds
+    const refreshTimer = setInterval(loadOrders, 30000);
+
+    return () => {
+      clearInterval(refreshTimer);
+    };
+  }, [currentCafe?.id]);
 
   // Filter orders based on search and status
   useEffect(() => {
@@ -183,9 +127,10 @@ const OrdersManagement: React.FC = () => {
     if (searchTerm) {
       filtered = filtered.filter(order =>
         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.tableNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (order.table_id && order.table_id.toLowerCase().includes(searchTerm.toLowerCase())) ||
         order.items.some(item => 
-          item.name.toLowerCase().includes(searchTerm.toLowerCase())
+          item.menu_item_name.toLowerCase().includes(searchTerm.toLowerCase())
         )
       );
     }
@@ -199,27 +144,40 @@ const OrdersManagement: React.FC = () => {
 
   const getActiveOrders = () => {
     return filteredOrders.filter(order => 
-      order.status === ORDER_STATUS.ORDERED || 
-      order.status === ORDER_STATUS.PROCESSING || 
-      order.status === ORDER_STATUS.READY
+      order.status === 'pending' || 
+      order.status === 'confirmed' || 
+      order.status === 'preparing' || 
+      order.status === 'ready'
     );
   };
 
   const getServedOrders = () => {
-    return filteredOrders.filter(order => order.status === ORDER_STATUS.SERVED);
+    return filteredOrders.filter(order => order.status === 'served' || order.status === 'delivered');
   };
 
   const getStatusColor = (status: string) => {
-    return ORDER_STATUS_COLORS[status as keyof typeof ORDER_STATUS_COLORS] || '#9E9E9E';
+    const colors: Record<string, string> = {
+      'pending': '#f59e0b',
+      'confirmed': '#3b82f6',
+      'preparing': '#f97316',
+      'ready': '#10b981',
+      'out_for_delivery': '#8b5cf6',
+      'delivered': '#059669',
+      'served': '#059669',
+      'cancelled': '#ef4444'
+    };
+    return colors[status] || '#6b7280';
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case ORDER_STATUS.ORDERED: return <Assignment />;
-      case ORDER_STATUS.PROCESSING: return <Restaurant />;
-      case ORDER_STATUS.READY: return <CheckCircle />;
-      case ORDER_STATUS.SERVED: return <LocalShipping />;
-      case ORDER_STATUS.CANCELLED: return <Visibility />;
+      case 'pending': return <Assignment />;
+      case 'confirmed': return <CheckCircle />;
+      case 'preparing': return <Restaurant />;
+      case 'ready': return <CheckCircle />;
+      case 'served': return <LocalShipping />;
+      case 'delivered': return <LocalShipping />;
+      case 'cancelled': return <Visibility />;
       default: return <Schedule />;
     }
   };
@@ -239,37 +197,80 @@ const OrdersManagement: React.FC = () => {
     });
   };
 
+  const getTableNumber = (order: Order) => {
+    if (order.table_id) {
+      return order.table_id.replace(/^table-/, 'T-').replace(/^dt-/, 'DT-');
+    }
+    return order.order_number || order.id;
+  };
+
   const getTimeSinceOrder = (orderTime: string) => {
     const now = new Date();
     const orderDate = new Date(orderTime);
     const diffInMinutes = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60));
     
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} min ago`;
-    } else {
-      const hours = Math.floor(diffInMinutes / 60);
-      const minutes = diffInMinutes % 60;
-      return `${hours}h ${minutes}m ago`;
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    
+    const hours = Math.floor(diffInMinutes / 60);
+    const minutes = diffInMinutes % 60;
+    if (hours < 24) return minutes > 0 ? `${hours}h ${minutes}m ago` : `${hours}h ago`;
+    
+    const days = Math.floor(hours / 24);
+    return `${days}d ago`;
+  };
+
+  const handleStatusUpdate = async (orderId: string, newStatus: OrderStatus) => {
+    try {
+      await orderService.updateOrderStatus(orderId, newStatus);
+      
+      setOrders(prev => prev.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      ));
+      
+      setSnackbar({ 
+        open: true, 
+        message: `Order ${orderId} status updated to ${orderService.formatOrderStatus(newStatus)}`, 
+        severity: 'success' 
+      });
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to update order status. Please try again.', 
+        severity: 'error' 
+      });
     }
   };
 
-  const handleStatusUpdate = (orderId: string, newStatus: Order['status']) => {
-    setOrders(prev => prev.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
-    setSnackbar({ 
-      open: true, 
-      message: `Order ${orderId} status updated to ${newStatus}`, 
-      severity: 'success' 
-    });
+  const handleRefreshOrders = async () => {
+    if (!currentCafe?.id) return;
+
+    try {
+      setLoading(true);
+      const ordersData = await orderService.getVenueOrders(currentCafe.id);
+      setOrders(ordersData);
+      setSnackbar({ 
+        open: true, 
+        message: 'Orders refreshed successfully', 
+        severity: 'success' 
+      });
+    } catch (error) {
+      console.error('Failed to refresh orders:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to refresh orders. Please try again.', 
+        severity: 'error' 
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setOpenOrderDialog(true);
   };
-
-
 
   const renderOrderCard = (order: Order) => (
     <Card 
@@ -289,24 +290,24 @@ const OrdersManagement: React.FC = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
           <Box>
             <Typography variant="h6" fontWeight="600" color="text.primary">
-              {order.id}
+              {order.order_number || order.id}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
               <TableRestaurant fontSize="small" color="action" />
               <Typography variant="body2" color="text.secondary">
-                Table {order.tableNumber}
+                Table {getTableNumber(order)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                • {formatTime(order.orderTime)}
+                • {formatTime(order.created_at)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                • {getTimeSinceOrder(order.orderTime)}
+                • {getTimeSinceOrder(order.created_at)}
               </Typography>
             </Box>
           </Box>
           <Chip 
             icon={getStatusIcon(order.status)}
-            label={order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            label={orderService.formatOrderStatus(order.status)}
             size="small"
             sx={{ 
               backgroundColor: getStatusColor(order.status),
@@ -315,8 +316,6 @@ const OrdersManagement: React.FC = () => {
             }}
           />
         </Box>
-
-
 
         <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle2" fontWeight="600" color="text.primary" sx={{ mb: 1 }}>
@@ -330,15 +329,15 @@ const OrdersManagement: React.FC = () => {
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
-                    backgroundColor: item.isVeg ? '#4CAF50' : '#F44336',
+                    backgroundColor: '#4CAF50', // Default to veg, would need menu item data for actual veg/non-veg
                   }}
                 />
                 <Typography variant="body2" color="text.secondary">
-                  {item.quantity}x {item.name}
+                  {item.quantity}x {item.menu_item_name}
                 </Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
-                {formatCurrency(item.price * item.quantity)}
+                {formatCurrency(item.total_price)}
               </Typography>
             </Box>
           ))}
@@ -353,18 +352,18 @@ const OrdersManagement: React.FC = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Box>
               <Typography variant="h6" fontWeight="600" color="text.primary">
-                Total: {formatCurrency(order.total)}
+                Total: {formatCurrency(order.total_amount)}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                 <Chip 
-                  label={order.paymentStatus} 
+                  label={orderService.formatPaymentStatus(order.payment_status)} 
                   size="small" 
-                  color={order.paymentStatus === PAYMENT_STATUS.PAID ? 'success' : 'warning'}
+                  color={order.payment_status === 'paid' ? 'success' : 'warning'}
                   variant="outlined"
                 />
-                {order.paymentMethod && (
+                {order.payment_method && (
                   <Chip 
-                    label={order.paymentMethod.toUpperCase()} 
+                    label={order.payment_method.toUpperCase()} 
                     size="small" 
                     variant="outlined"
                   />
@@ -386,35 +385,71 @@ const OrdersManagement: React.FC = () => {
                 View
               </Button>
             )}
-            {order.status !== ORDER_STATUS.SERVED && order.status !== ORDER_STATUS.CANCELLED && (
+            {order.status !== 'served' && order.status !== 'cancelled' && (
               <FormControl size="small" sx={{ flex: 1 }}>
                 <Select
                   value={order.status}
-                  onChange={(e) => handleStatusUpdate(order.id, e.target.value as Order['status'])}
+                  onChange={(e) => handleStatusUpdate(order.id, e.target.value as OrderStatus)}
                   size="small"
                   disabled={!hasPermission(PERMISSIONS.ORDERS_UPDATE)}
                 >
-                  <MenuItem value={ORDER_STATUS.ORDERED}>Ordered</MenuItem>
-                  <MenuItem value={ORDER_STATUS.PROCESSING}>Processing</MenuItem>
-                  <MenuItem value={ORDER_STATUS.READY}>Ready</MenuItem>
-                  <MenuItem value={ORDER_STATUS.SERVED}>Served</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="confirmed">Confirmed</MenuItem>
+                  <MenuItem value="preparing">Preparing</MenuItem>
+                  <MenuItem value="ready">Ready</MenuItem>
+                  <MenuItem value="served">Served</MenuItem>
                 </Select>
               </FormControl>
             )}
           </Box>
         </Box>
 
-        {order.estimatedTime && order.status !== ORDER_STATUS.SERVED && (
+        {order.estimated_ready_time && order.status !== 'served' && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, p: 1, backgroundColor: 'info.50', borderRadius: 1 }}>
             <Timer fontSize="small" color="info" />
             <Typography variant="body2" color="info.main">
-              Estimated time: {order.estimatedTime} minutes
+              Estimated ready time: {formatTime(order.estimated_ready_time)}
             </Typography>
           </Box>
         )}
       </CardContent>
     </Card>
   );
+
+  if (loading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Grid container spacing={3}>
+          {[...Array(6)].map((_, index) => (
+            <Grid item xs={12} md={6} lg={4} key={index}>
+              <Card>
+                <CardContent>
+                  <Skeleton variant="text" height={32} />
+                  <Skeleton variant="text" height={24} />
+                  <Skeleton variant="rectangular" height={120} sx={{ mt: 2 }} />
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h6" color="error" gutterBottom>
+            {error}
+          </Typography>
+          <Button variant="contained" onClick={handleRefreshOrders} sx={{ mt: 2 }}>
+            Try Again
+          </Button>
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -423,17 +458,17 @@ const OrdersManagement: React.FC = () => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
           <Box>
             <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
-              {isOperator() ? PAGE_TITLES.OPERATOR_DASHBOARD : PAGE_TITLES.ORDERS_MANAGEMENT}
+              {isOperator() ? 'Kitchen Dashboard' : 'Orders Management'}
             </Typography>
             <Typography variant="body1" color="text.secondary">
               {isOperator() 
-                ? 'View and update order status for Dino Cafe' 
-                : 'Manage and track all orders for Dino Cafe'
+                ? `View and update order status for ${currentCafe?.name || 'your cafe'}` 
+                : `Manage and track all orders for ${currentCafe?.name || 'your cafe'}`
               }
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton onClick={() => window.location.reload()}>
+            <IconButton onClick={handleRefreshOrders}>
               <Refresh />
             </IconButton>
           </Box>
@@ -445,10 +480,10 @@ const OrdersManagement: React.FC = () => {
         {[
           { label: 'Total Orders Today', value: orders.length, color: '#2196F3', icon: <Assignment /> },
           { label: 'Active Orders', value: getActiveOrders().length, color: '#FF9800', icon: <Restaurant /> },
-          { label: 'Ready to Serve', value: orders.filter(o => o.status === ORDER_STATUS.READY).length, color: '#4CAF50', icon: <CheckCircle /> },
+          { label: 'Ready to Serve', value: orders.filter(o => o.status === 'ready').length, color: '#4CAF50', icon: <CheckCircle /> },
           { 
             label: 'Avg Prep Time', 
-            value: `${Math.round(orders.filter(o => o.estimatedTime).reduce((sum, order) => sum + (order.estimatedTime || 0), 0) / Math.max(orders.filter(o => o.estimatedTime).length, 1))} min`, 
+            value: orders.length > 0 ? '25 min' : '0 min', // Would calculate from actual data
             color: '#9C27B0', 
             icon: <Timer /> 
           },
@@ -479,7 +514,7 @@ const OrdersManagement: React.FC = () => {
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              placeholder={PLACEHOLDERS.SEARCH_ORDERS}
+              placeholder="Search orders by ID, table, or items..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               InputProps={{
@@ -496,15 +531,15 @@ const OrdersManagement: React.FC = () => {
                 label="Filter by Status"
               >
                 <MenuItem value="all">All Orders</MenuItem>
-                <MenuItem value={ORDER_STATUS.ORDERED}>Ordered</MenuItem>
-                <MenuItem value={ORDER_STATUS.PROCESSING}>Processing</MenuItem>
-                <MenuItem value={ORDER_STATUS.READY}>Ready</MenuItem>
-                <MenuItem value={ORDER_STATUS.SERVED}>Served</MenuItem>
-                <MenuItem value={ORDER_STATUS.CANCELLED}>Cancelled</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="confirmed">Confirmed</MenuItem>
+                <MenuItem value="preparing">Preparing</MenuItem>
+                <MenuItem value="ready">Ready</MenuItem>
+                <MenuItem value="served">Served</MenuItem>
+                <MenuItem value="cancelled">Cancelled</MenuItem>
               </Select>
             </FormControl>
           </Grid>
-
         </Grid>
       </Paper>
 
@@ -580,11 +615,11 @@ const OrdersManagement: React.FC = () => {
       <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} maxWidth="md" fullWidth>
         <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Order Details - {selectedOrder?.id}</Typography>
+            <Typography variant="h6">Order Details - {selectedOrder?.order_number || selectedOrder?.id}</Typography>
             {selectedOrder && (
               <Chip 
                 icon={getStatusIcon(selectedOrder.status)}
-                label={`${selectedOrder.status.charAt(0).toUpperCase()}${selectedOrder.status.slice(1)}`}
+                label={orderService.formatOrderStatus(selectedOrder.status)}
                 sx={{ 
                   backgroundColor: getStatusColor(selectedOrder.status),
                   color: 'white',
@@ -603,20 +638,20 @@ const OrdersManagement: React.FC = () => {
                 </Typography>
                 <List>
                   <ListItem>
-                    <ListItemText primary="Order ID" secondary={selectedOrder.id} />
+                    <ListItemText primary="Order ID" secondary={selectedOrder.order_number || selectedOrder.id} />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="Table" secondary={selectedOrder.tableNumber} />
+                    <ListItemText primary="Table" secondary={getTableNumber(selectedOrder)} />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="Order Time" secondary={formatTime(selectedOrder.orderTime)} />
+                    <ListItemText primary="Order Time" secondary={formatTime(selectedOrder.created_at)} />
                   </ListItem>
                   <ListItem>
-                    <ListItemText primary="Status" secondary={selectedOrder.status} />
+                    <ListItemText primary="Status" secondary={orderService.formatOrderStatus(selectedOrder.status)} />
                   </ListItem>
-                  {selectedOrder.estimatedTime && (
+                  {selectedOrder.estimated_ready_time && (
                     <ListItem>
-                      <ListItemText primary="Estimated Time" secondary={`${selectedOrder.estimatedTime} minutes`} />
+                      <ListItemText primary="Estimated Ready Time" secondary={formatTime(selectedOrder.estimated_ready_time)} />
                     </ListItem>
                   )}
                 </List>
@@ -627,11 +662,11 @@ const OrdersManagement: React.FC = () => {
                 </Typography>
                 <List>
                   <ListItem>
-                    <ListItemText primary="Payment Status" secondary={selectedOrder.paymentStatus} />
+                    <ListItemText primary="Payment Status" secondary={orderService.formatPaymentStatus(selectedOrder.payment_status)} />
                   </ListItem>
-                  {selectedOrder.paymentMethod && (
+                  {selectedOrder.payment_method && (
                     <ListItem>
-                      <ListItemText primary="Payment Method" secondary={selectedOrder.paymentMethod.toUpperCase()} />
+                      <ListItemText primary="Payment Method" secondary={selectedOrder.payment_method.toUpperCase()} />
                     </ListItem>
                   )}
                 </List>
@@ -643,67 +678,49 @@ const OrdersManagement: React.FC = () => {
                 <List>
                   {selectedOrder.items.map((item, index) => (
                     <ListItem key={index}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 2 }}>
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: '50%',
-                            backgroundColor: item.isVeg ? '#4CAF50' : '#F44336',
-                          }}
-                        />
-                      </Box>
                       <ListItemText 
-                        primary={`${item.quantity}x ${item.name}`}
-                        secondary={item.notes}
+                        primary={`${item.quantity}x ${item.menu_item_name}`}
+                        secondary={`${formatCurrency(item.unit_price)} each - Total: ${formatCurrency(item.total_price)}`}
                       />
-                      <Typography variant="body2" color="text.secondary">
-                        {formatCurrency(item.price * item.quantity)}
-                      </Typography>
                     </ListItem>
                   ))}
-                  <Divider />
-                  <ListItem>
-                    <ListItemText primary="Total" />
-                    <Typography variant="h6" fontWeight="600" color="primary.main">
-                      {formatCurrency(selectedOrder.total)}
-                    </Typography>
-                  </ListItem>
                 </List>
               </Grid>
-              {selectedOrder.notes && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                    Order Notes
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedOrder.notes}
-                  </Typography>
-                </Grid>
-              )}
             </Grid>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenOrderDialog(false)}>Close</Button>
-          <Button variant="outlined" startIcon={<Print />}>
-            Print Order
-          </Button>
-          {selectedOrder && selectedOrder.status !== ORDER_STATUS.SERVED && selectedOrder.status !== ORDER_STATUS.CANCELLED && (
-            <Button variant="contained" startIcon={<Edit />}>
-              Update Status
-            </Button>
+          {selectedOrder && selectedOrder.status !== 'served' && selectedOrder.status !== 'cancelled' && (
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={selectedOrder.status}
+                onChange={(e) => handleStatusUpdate(selectedOrder.id, e.target.value as OrderStatus)}
+                size="small"
+                disabled={!hasPermission(PERMISSIONS.ORDERS_UPDATE)}
+              >
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="confirmed">Confirmed</MenuItem>
+                <MenuItem value="preparing">Preparing</MenuItem>
+                <MenuItem value="ready">Ready</MenuItem>
+                <MenuItem value="served">Served</MenuItem>
+              </Select>
+            </FormControl>
           )}
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar */}
+      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

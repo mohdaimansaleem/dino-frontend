@@ -37,8 +37,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
       ]);
 
       setDashboardData(dashboard as SuperAdminDashboardType);
-      setWorkspaces(workspaceList);
-      setVenues(venueList);
+      setWorkspaces(workspaceList.data || []);
+      setVenues(venueList.data || []);
     } catch (err: any) {
       setError(err.message || 'Failed to load dashboard data');
     } finally {
@@ -71,7 +71,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
     );
   }
 
-  const summary = dashboardData?.summary || {};
+  const summary = dashboardData?.summary || {} as any;
   const analytics = dashboardData?.workspace_analytics || {};
 
   return (
@@ -79,7 +79,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
       <div className="space-y-6">
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-          <h1 className="text-2xl font-bold">Welcome back, {user?.first_name}!</h1>
+          <h1 className="text-2xl font-bold">Welcome back, {user?.firstName}!</h1>
           <p className="text-blue-100 mt-1">Super Administrator Dashboard</p>
         </div>
 

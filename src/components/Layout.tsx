@@ -9,9 +9,6 @@ import {
   Badge,
   Container,
   Fade,
-
-  Fab,
-
   Switch,
   FormControlLabel,
   Chip,
@@ -21,7 +18,6 @@ import {
   Restaurant, 
   AccountCircle, 
   ExitToApp,
-  KeyboardArrowUp,
   Dashboard,
   TableRestaurant,
   Settings,
@@ -34,16 +30,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { PERMISSIONS } from '../types/auth';
-import CleanDinoLogo from './CleanDinoLogo';
+import DinoLogo from './DinoLogo';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
 
-interface CleanLayoutProps {
+interface LayoutProps {
   children: ReactNode;
 }
 
-const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, hasPermission, isAdmin, isOperator, isSuperAdmin } = useAuth();
@@ -52,8 +48,6 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   
   // Feature flags
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
-  
-
 
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isPublicMenuRoute = location.pathname.includes('/menu/');
@@ -64,15 +58,10 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
   const isCustomerFacingRoute = isPublicMenuRoute || isCheckoutRoute || isOrderTrackingRoute;
   const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true';
 
-
   const handleLogout = () => {
     logout();
     navigate('/');
   };
-
-
-
-
 
   const renderNavigation = () => {
     if (isPublicMenuRoute) {
@@ -339,49 +328,48 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
             transition: 'all 0.2s ease-in-out',
           }}
         >
-        <Container maxWidth="xl">
-          <Toolbar sx={{ px: { xs: 0, sm: 2 }, minHeight: 64 }}>
-            <Box
-              sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                flexGrow: 1, 
-                cursor: 'pointer',
-                gap: 2,
-                minWidth: 0,
-                '&:hover': {
-                  opacity: 0.8,
-                },
-              }}
-              onClick={() => {
-                if (isPublicMenuRoute || isCheckoutRoute) {
-                  // Stay on current menu page, don't navigate away
-                  return;
-                } else {
-                  navigate('/');
-                }
-              }}
-            >
-              <CleanDinoLogo 
-                size={40} 
-                animated={false}
-              />
-              <Typography
-                variant="h6"
-                component="div"
+          <Container maxWidth="xl">
+            <Toolbar sx={{ px: { xs: 0, sm: 2 }, minHeight: 64 }}>
+              <Box
                 sx={{ 
-                  fontWeight: 600,
-                  fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                  color: 'text.primary',
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexGrow: 1, 
+                  cursor: 'pointer',
+                  gap: 2,
+                  minWidth: 0,
+                  '&:hover': {
+                    opacity: 0.8,
+                  },
+                }}
+                onClick={() => {
+                  if (isPublicMenuRoute || isCheckoutRoute) {
+                    // Stay on current menu page, don't navigate away
+                    return;
+                  } else {
+                    navigate('/');
+                  }
                 }}
               >
-                {getPageTitle()}
-              </Typography>
-
-            </Box>
-            {renderNavigation()}
-          </Toolbar>
-        </Container>
+                <DinoLogo 
+                  size={40} 
+                  animated={false}
+                />
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{ 
+                    fontWeight: 600,
+                    fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                    color: 'text.primary',
+                  }}
+                >
+                  {getPageTitle()}
+                </Typography>
+              </Box>
+              {renderNavigation()}
+            </Toolbar>
+          </Container>
         </AppBar>
       )}
 
@@ -413,24 +401,11 @@ const CleanLayout: React.FC<CleanLayoutProps> = ({ children }) => {
             borderColor: 'divider',
           }}
         >
-          <Container maxWidth="lg">
-            <Box sx={{ textAlign: 'center' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                <CleanDinoLogo size={32} animated={false} />
-              </Box>
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-                sx={{ fontWeight: 500 }}
-              >
-                © 2024 Dino E-Menu. Made in India with ❤️
-              </Typography>
-            </Box>
-          </Container>
+          <Container maxWidth="lg"></Container>
         </Box>
       )}
     </Box>
   );
 };
 
-export default CleanLayout;
+export default Layout;

@@ -1,200 +1,23 @@
 import { apiService } from './api';
-import { ApiResponse } from '../types';
-
-// Dashboard-related types
-export interface DashboardData {
-  user_role: 'superadmin' | 'admin' | 'operator' | 'customer';
-  workspace_id: string;
-  venue_id?: string;
-  summary: Record<string, any>;
-  recent_orders: Array<{
-    id: string;
-    order_number: string;
-    venue_name?: string;
-    table_number?: number;
-    customer_name: string;
-    total_amount: number;
-    status: string;
-    created_at: string;
-  }>;
-  active_orders?: Array<{
-    id: string;
-    order_number: string;
-    table_number?: number;
-    customer_name: string;
-    items: Array<{
-      name: string;
-      quantity: number;
-    }>;
-    total_amount: number;
-    status: string;
-    estimated_ready_time?: string;
-    actual_ready_time?: string;
-    created_at: string;
-  }>;
-  analytics: Record<string, any>;
-  alerts: Array<{
-    type: 'info' | 'warning' | 'error' | 'success' | 'urgent';
-    message: string;
-    venue_id?: string;
-    table_id?: string;
-    order_id?: string;
-    created_at: string;
-  }>;
-  quick_actions: Array<{
-    label: string;
-    action: string;
-    icon: string;
-  }>;
-}
-
-export interface SuperAdminDashboard extends DashboardData {
-  all_venues: Array<{
-    venue_id: string;
-    venue_name: string;
-    today_orders: number;
-    today_revenue: number;
-    status: string;
-    utilization: number;
-  }>;
-  workspace_analytics: Record<string, any>;
-  user_management: Record<string, any>;
-}
-
-export interface AdminDashboard extends DashboardData {
-  venue_analytics?: VenueAnalytics;
-  staff_performance: Record<string, any>;
-  inventory_alerts: Array<Record<string, any>>;
-  menu_performance: Array<{
-    item_id: string;
-    item_name: string;
-    orders_today: number;
-    revenue_today: number;
-    rating: number;
-  }>;
-  table_status: Array<{
-    table_id: string;
-    table_number: number;
-    status: string;
-    capacity: number;
-    order_id?: string;
-  }>;
-}
-
-export interface OperatorDashboard extends DashboardData {
-  active_orders: Array<{
-    id: string;
-    order_number: string;
-    table_number?: number;
-    customer_name: string;
-    items: Array<{
-      name: string;
-      quantity: number;
-    }>;
-    total_amount: number;
-    status: string;
-    estimated_ready_time?: string;
-    actual_ready_time?: string;
-    created_at: string;
-  }>;
-  table_status: Array<{
-    table_id: string;
-    table_number: number;
-    status: string;
-    capacity: number;
-    order_id?: string;
-  }>;
-  today_summary: Record<string, any>;
-}
-
-export interface VenueAnalytics {
-  venue_id: string;
-  venue_name: string;
-  period: string;
-  total_orders: number;
-  total_revenue: number;
-  average_order_value: number;
-  total_customers: number;
-  new_customers: number;
-  returning_customers: number;
-  popular_items: Array<Record<string, any>>;
-  peak_hours: Array<Record<string, any>>;
-  table_utilization: number;
-  customer_satisfaction: number;
-  order_status_breakdown: Record<string, number>;
-}
-
-export interface LiveOrdersData {
-  venue_id: string;
-  timestamp: string;
-  total_active: number;
-  orders_by_status: Record<string, any[]>;
-  summary: {
-    pending: number;
-    confirmed: number;
-    preparing: number;
-    ready: number;
-  };
-}
-
-export interface LiveTablesData {
-  venue_id: string;
-  timestamp: string;
-  total_tables: number;
-  tables_by_status: Record<string, any[]>;
-  summary: {
-    available: number;
-    occupied: number;
-    reserved: number;
-    cleaning: number;
-  };
-  utilization_rate: number;
-}
-
-export interface RevenueAnalytics {
-  venue_id: string;
-  daily: Array<{
-    date: string;
-    revenue: number;
-    orders: number;
-  }>;
-  weekly: Array<{
-    week: string;
-    revenue: number;
-    orders: number;
-  }>;
-  monthly: Array<{
-    month: string;
-    revenue: number;
-    orders: number;
-  }>;
-}
-
-export interface CustomerAnalytics {
-  venue_id: string;
-  customer_segments: {
-    new: number;
-    returning: number;
-    vip: number;
-  };
-  customer_satisfaction: {
-    average_rating: number;
-    total_reviews: number;
-    rating_distribution: Record<string, number>;
-  };
-  repeat_rate: number;
-  average_order_frequency: number;
-  top_customers: Array<{
-    customer_id: string;
-    name: string;
-    total_spent: number;
-    total_orders: number;
-    last_visit: string;
-  }>;
-}
+import { 
+  DashboardData,
+  SuperAdminDashboard,
+  AdminDashboard,
+  OperatorDashboard,
+  LiveOrderData,
+  VenueAnalyticsData,
+  UserRole,
+  ApiResponse
+} from '../types/api';
 
 class DashboardService {
-  // Get main dashboard data based on user role
+  // =============================================================================
+  // ROLE-BASED DASHBOARD DATA
+  // =============================================================================
+
+  /**
+   * Get role-based dashboard data
+   */
   async getDashboardData(): Promise<DashboardData | null> {
     try {
       const response = await apiService.get<DashboardData>('/dashboard');
@@ -205,25 +28,39 @@ class DashboardService {
     }
   }
 
-  // Get dashboard summary
-  async getDashboardSummary(): Promise<Record<string, any> | null> {
+  /**
+   * Get quick dashboard summary
+   */
+  async getDashboardSummary(): Promise<any> {
     try {
       const response = await apiService.get<any>('/dashboard/summary');
-      return response.data || null;
+      return response.data || {};
     } catch (error) {
       console.error('Failed to get dashboard summary:', error);
-      return null;
+      return {};
     }
   }
 
-  // Get venue analytics
-  async getVenueAnalytics(venueId: string, startDate?: string, endDate?: string): Promise<VenueAnalytics | null> {
+  // =============================================================================
+  // VENUE ANALYTICS
+  // =============================================================================
+
+  /**
+   * Get detailed venue analytics
+   */
+  async getVenueAnalytics(
+    venueId: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<VenueAnalyticsData | null> {
     try {
       const params = new URLSearchParams();
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
 
-      const response = await apiService.get<VenueAnalytics>(`/dashboard/analytics/venue/${venueId}?${params.toString()}`);
+      const response = await apiService.get<VenueAnalyticsData>(
+        `/dashboard/analytics/venue/${venueId}?${params.toString()}`
+      );
       return response.data || null;
     } catch (error) {
       console.error('Failed to get venue analytics:', error);
@@ -231,270 +68,528 @@ class DashboardService {
     }
   }
 
-  // Get workspace analytics (SuperAdmin only)
-  async getWorkspaceAnalytics(): Promise<Record<string, any> | null> {
+  /**
+   * Get workspace-wide analytics (SuperAdmin only)
+   */
+  async getWorkspaceAnalytics(
+    startDate?: string,
+    endDate?: string
+  ): Promise<any> {
     try {
-      const response = await apiService.get<any>('/dashboard/analytics/workspace');
-      return response.data || null;
+      const params = new URLSearchParams();
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
+
+      const response = await apiService.get<any>(
+        `/dashboard/analytics/workspace?${params.toString()}`
+      );
+      return response.data || {};
     } catch (error) {
       console.error('Failed to get workspace analytics:', error);
-      return null;
+      return {};
     }
   }
 
-  // Get live orders data
-  async getLiveOrders(venueId?: string): Promise<LiveOrdersData | null> {
+  // =============================================================================
+  // REAL-TIME DATA
+  // =============================================================================
+
+  /**
+   * Get real-time order status
+   */
+  async getLiveOrderStatus(venueId?: string): Promise<LiveOrderData | null> {
     try {
       const params = venueId ? `?venue_id=${venueId}` : '';
-      const response = await apiService.get<LiveOrdersData>(`/dashboard/live/orders${params}`);
+      const response = await apiService.get<LiveOrderData>(`/dashboard/live/orders${params}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get live orders:', error);
+      console.error('Failed to get live order status:', error);
       return null;
     }
   }
 
-  // Get live table status
-  async getLiveTableStatus(venueId?: string): Promise<LiveTablesData | null> {
+  /**
+   * Get real-time table status
+   */
+  async getLiveTableStatus(venueId?: string): Promise<any> {
     try {
       const params = venueId ? `?venue_id=${venueId}` : '';
-      const response = await apiService.get<LiveTablesData>(`/dashboard/live/tables${params}`);
-      return response.data || null;
+      const response = await apiService.get<any>(`/dashboard/live/tables${params}`);
+      return response.data || {};
     } catch (error) {
       console.error('Failed to get live table status:', error);
-      return null;
+      return {};
     }
   }
 
-  // Get revenue analytics
-  async getRevenueAnalytics(venueId: string, period: 'daily' | 'weekly' | 'monthly' = 'daily'): Promise<RevenueAnalytics | null> {
-    try {
-      const response = await apiService.get<RevenueAnalytics>(`/analytics/revenue/${venueId}?period=${period}`);
-      return response.data || null;
-    } catch (error) {
-      console.error('Failed to get revenue analytics:', error);
-      return null;
+  // =============================================================================
+  // DASHBOARD UTILITIES
+  // =============================================================================
+
+  /**
+   * Format dashboard data based on user role
+   */
+  formatDashboardData(data: DashboardData): {
+    title: string;
+    subtitle: string;
+    primaryMetrics: Array<{ label: string; value: string | number; trend?: number }>;
+    secondaryMetrics: Array<{ label: string; value: string | number }>;
+  } {
+    const role = data.user_role;
+    
+    switch (role) {
+      case 'superadmin':
+        return this.formatSuperAdminDashboard(data as SuperAdminDashboard);
+      case 'admin':
+        return this.formatAdminDashboard(data as AdminDashboard);
+      case 'operator':
+        return this.formatOperatorDashboard(data as OperatorDashboard);
+      default:
+        return {
+          title: 'Dashboard',
+          subtitle: 'Welcome back',
+          primaryMetrics: [],
+          secondaryMetrics: []
+        };
     }
   }
 
-  // Get customer analytics
-  async getCustomerAnalytics(venueId: string): Promise<CustomerAnalytics | null> {
-    try {
-      const response = await apiService.get<CustomerAnalytics>(`/analytics/customers/${venueId}`);
-      return response.data || null;
-    } catch (error) {
-      console.error('Failed to get customer analytics:', error);
-      return null;
-    }
+  private formatSuperAdminDashboard(data: SuperAdminDashboard) {
+    return {
+      title: 'SuperAdmin Dashboard',
+      subtitle: 'System Overview',
+      primaryMetrics: [
+        { label: 'Total Venues', value: data.summary.total_venues },
+        { label: 'Active Venues', value: data.summary.active_venues },
+        { label: 'Total Orders', value: data.summary.total_orders },
+        { label: 'Total Revenue', value: this.formatCurrency(data.summary.total_revenue) }
+      ],
+      secondaryMetrics: [
+        { label: 'Venue Utilization', value: `${Math.round((data.summary.active_venues / data.summary.total_venues) * 100)}%` }
+      ]
+    };
   }
 
-  // Real-time data polling
+  private formatAdminDashboard(data: AdminDashboard) {
+    return {
+      title: 'Admin Dashboard',
+      subtitle: 'Venue Management',
+      primaryMetrics: [
+        { label: "Today's Orders", value: data.summary.today_orders },
+        { label: "Today's Revenue", value: this.formatCurrency(data.summary.today_revenue) },
+        { label: 'Active Tables', value: data.summary.active_tables },
+        { label: 'Occupied Tables', value: data.summary.occupied_tables }
+      ],
+      secondaryMetrics: [
+        { label: 'Table Occupancy', value: `${Math.round((data.summary.occupied_tables / data.summary.active_tables) * 100)}%` }
+      ]
+    };
+  }
+
+  private formatOperatorDashboard(data: OperatorDashboard) {
+    return {
+      title: 'Operator Dashboard',
+      subtitle: 'Order Management',
+      primaryMetrics: [
+        { label: 'Active Orders', value: data.summary.active_orders },
+        { label: 'Pending Orders', value: data.summary.pending_orders },
+        { label: 'Ready Orders', value: data.summary.ready_orders },
+        { label: 'Occupied Tables', value: data.summary.occupied_tables }
+      ],
+      secondaryMetrics: []
+    };
+  }
+
+  /**
+   * Get dashboard refresh interval based on role
+   */
+  getRefreshInterval(role: UserRole): number {
+    const intervals = {
+      superadmin: 60000, // 1 minute
+      admin: 30000,      // 30 seconds
+      operator: 10000,   // 10 seconds
+      customer: 30000    // 30 seconds
+    };
+    return intervals[role] || 30000;
+  }
+
+  /**
+   * Get dashboard widgets configuration based on role
+   */
+  getDashboardWidgets(role: UserRole): Array<{
+    id: string;
+    title: string;
+    type: 'metric' | 'chart' | 'table' | 'list';
+    size: 'small' | 'medium' | 'large';
+    priority: number;
+  }> {
+    const widgets = {
+      superadmin: [
+        { id: 'workspace-overview', title: 'Workspace Overview', type: 'metric' as const, size: 'large' as const, priority: 1 },
+        { id: 'venue-performance', title: 'Venue Performance', type: 'chart' as const, size: 'large' as const, priority: 2 },
+        { id: 'revenue-trends', title: 'Revenue Trends', type: 'chart' as const, size: 'medium' as const, priority: 3 },
+        { id: 'user-activity', title: 'User Activity', type: 'table' as const, size: 'medium' as const, priority: 4 },
+        { id: 'system-alerts', title: 'System Alerts', type: 'list' as const, size: 'small' as const, priority: 5 }
+      ],
+      admin: [
+        { id: 'venue-overview', title: 'Venue Overview', type: 'metric' as const, size: 'large' as const, priority: 1 },
+        { id: 'order-trends', title: 'Order Trends', type: 'chart' as const, size: 'medium' as const, priority: 2 },
+        { id: 'table-status', title: 'Table Status', type: 'table' as const, size: 'medium' as const, priority: 3 },
+        { id: 'staff-performance', title: 'Staff Performance', type: 'chart' as const, size: 'small' as const, priority: 4 },
+        { id: 'inventory-alerts', title: 'Inventory Alerts', type: 'list' as const, size: 'small' as const, priority: 5 }
+      ],
+      operator: [
+        { id: 'active-orders', title: 'Active Orders', type: 'table' as const, size: 'large' as const, priority: 1 },
+        { id: 'order-queue', title: 'Order Queue', type: 'list' as const, size: 'medium' as const, priority: 2 },
+        { id: 'table-overview', title: 'Table Overview', type: 'metric' as const, size: 'medium' as const, priority: 3 },
+        { id: 'kitchen-status', title: 'Kitchen Status', type: 'metric' as const, size: 'small' as const, priority: 4 }
+      ],
+      customer: [
+        { id: 'order-history', title: 'Order History', type: 'list' as const, size: 'large' as const, priority: 1 },
+        { id: 'favorites', title: 'Favorites', type: 'list' as const, size: 'medium' as const, priority: 2 },
+        { id: 'recommendations', title: 'Recommendations', type: 'list' as const, size: 'medium' as const, priority: 3 }
+      ]
+    };
+
+    return widgets[role] || [];
+  }
+
+  /**
+   * Calculate percentage change
+   */
+  calculatePercentageChange(current: number, previous: number): number {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100);
+  }
+
+  /**
+   * Format currency for display
+   */
+  formatCurrency(amount: number, currency: string = 'INR'): string {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+
+  /**
+   * Format large numbers for display
+   */
+  formatNumber(num: number): string {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  }
+
+  /**
+   * Get time period options for analytics
+   */
+  getTimePeriodOptions(): Array<{
+    value: string;
+    label: string;
+    startDate: string;
+    endDate: string;
+  }> {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000);
+
+    return [
+      {
+        value: 'today',
+        label: 'Today',
+        startDate: today.toISOString().split('T')[0],
+        endDate: today.toISOString().split('T')[0]
+      },
+      {
+        value: 'yesterday',
+        label: 'Yesterday',
+        startDate: yesterday.toISOString().split('T')[0],
+        endDate: yesterday.toISOString().split('T')[0]
+      },
+      {
+        value: 'last7days',
+        label: 'Last 7 Days',
+        startDate: weekAgo.toISOString().split('T')[0],
+        endDate: today.toISOString().split('T')[0]
+      },
+      {
+        value: 'last30days',
+        label: 'Last 30 Days',
+        startDate: monthAgo.toISOString().split('T')[0],
+        endDate: today.toISOString().split('T')[0]
+      },
+      {
+        value: 'last365days',
+        label: 'Last Year',
+        startDate: yearAgo.toISOString().split('T')[0],
+        endDate: today.toISOString().split('T')[0]
+      }
+    ];
+  }
+
+  /**
+   * Generate chart colors
+   */
+  getChartColors(): {
+    primary: string[];
+    secondary: string[];
+    success: string[];
+    warning: string[];
+    danger: string[];
+  } {
+    return {
+      primary: ['#3b82f6', '#1d4ed8', '#1e40af', '#1e3a8a'],
+      secondary: ['#6b7280', '#4b5563', '#374151', '#1f2937'],
+      success: ['#10b981', '#059669', '#047857', '#065f46'],
+      warning: ['#f59e0b', '#d97706', '#b45309', '#92400e'],
+      danger: ['#ef4444', '#dc2626', '#b91c1c', '#991b1b']
+    };
+  }
+
+  /**
+   * Get status indicators for real-time data
+   */
+  getStatusIndicators(): {
+    online: { color: string; label: string };
+    offline: { color: string; label: string };
+    warning: { color: string; label: string };
+    error: { color: string; label: string };
+  } {
+    return {
+      online: { color: '#10b981', label: 'Online' },
+      offline: { color: '#6b7280', label: 'Offline' },
+      warning: { color: '#f59e0b', label: 'Warning' },
+      error: { color: '#ef4444', label: 'Error' }
+    };
+  }
+
+  /**
+   * Format time for display
+   */
+  formatTime(date: string | Date): string {
+    const d = new Date(date);
+    return d.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+
+  /**
+   * Format date for display
+   */
+  formatDate(date: string | Date): string {
+    const d = new Date(date);
+    return d.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+
+  /**
+   * Format relative time (e.g., "2 minutes ago")
+   */
+  formatRelativeTime(date: string | Date): string {
+    const now = new Date();
+    const d = new Date(date);
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    
+    return this.formatDate(date);
+  }
+
+  /**
+   * Check if data needs refresh based on timestamp
+   */
+  needsRefresh(lastUpdated: string | Date, maxAgeMs: number = 30000): boolean {
+    const now = new Date();
+    const updated = new Date(lastUpdated);
+    return (now.getTime() - updated.getTime()) > maxAgeMs;
+  }
+
+  // =============================================================================
+  // REAL-TIME POLLING METHODS
+  // =============================================================================
+
   private pollingIntervals: Map<string, NodeJS.Timeout> = new Map();
 
-  // Start polling for live data
+  /**
+   * Start live data polling for a venue
+   */
   startLiveDataPolling(
     venueId: string,
-    onOrdersUpdate: (data: LiveOrdersData) => void,
-    onTablesUpdate: (data: LiveTablesData) => void,
-    interval: number = 30000 // 30 seconds
+    onOrdersUpdate: (data: any) => void,
+    onTablesUpdate?: (data: any) => void,
+    intervalMs: number = 10000
   ): void {
-    const pollKey = `live_${venueId}`;
-    
-    // Clear existing polling
+    // Clear existing interval if any
     this.stopLiveDataPolling(venueId);
 
-    const poll = async () => {
+    const pollData = async () => {
       try {
         const [ordersData, tablesData] = await Promise.all([
-          this.getLiveOrders(venueId),
+          this.getLiveOrderStatus(venueId),
           this.getLiveTableStatus(venueId)
         ]);
 
-        if (ordersData) onOrdersUpdate(ordersData);
-        if (tablesData) onTablesUpdate(tablesData);
+        if (ordersData) {
+          onOrdersUpdate(ordersData);
+        }
+
+        if (tablesData && onTablesUpdate) {
+          onTablesUpdate(tablesData);
+        }
       } catch (error) {
-        console.error('Live data polling error:', error);
+        console.error('Failed to poll live data:', error);
       }
     };
 
-    // Initial poll
-    poll();
+    // Initial fetch
+    pollData();
 
     // Set up interval
-    const intervalId = setInterval(poll, interval);
-    this.pollingIntervals.set(pollKey, intervalId);
+    const interval = setInterval(pollData, intervalMs);
+    this.pollingIntervals.set(venueId, interval);
   }
 
-  // Stop polling for live data
+  /**
+   * Stop live data polling for a venue
+   */
   stopLiveDataPolling(venueId: string): void {
-    const pollKey = `live_${venueId}`;
-    const intervalId = this.pollingIntervals.get(pollKey);
-    
-    if (intervalId) {
-      clearInterval(intervalId);
-      this.pollingIntervals.delete(pollKey);
+    const interval = this.pollingIntervals.get(venueId);
+    if (interval) {
+      clearInterval(interval);
+      this.pollingIntervals.delete(venueId);
     }
   }
 
-  // Stop all polling
+  /**
+   * Stop all live data polling
+   */
   stopAllPolling(): void {
-    this.pollingIntervals.forEach((intervalId) => {
-      clearInterval(intervalId);
+    this.pollingIntervals.forEach((interval) => {
+      clearInterval(interval);
     });
     this.pollingIntervals.clear();
   }
 
-  // Utility Methods
+  /**
+   * Get live orders data
+   */
+  async getLiveOrders(venueId: string): Promise<any> {
+    return this.getLiveOrderStatus(venueId);
+  }
 
-  // Format dashboard metrics
+  // =============================================================================
+  // FORMATTING UTILITIES
+  // =============================================================================
+
+  /**
+   * Format metric values for display
+   */
   formatMetric(value: number, type: 'currency' | 'number' | 'percentage'): string {
     switch (type) {
       case 'currency':
-        return new Intl.NumberFormat('en-IN', {
-          style: 'currency',
-          currency: 'INR',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(value);
-      
+        return this.formatCurrency(value);
       case 'percentage':
-        return `${value.toFixed(1)}%`;
-      
+        return `${value}%`;
       case 'number':
+        return this.formatNumber(value);
       default:
-        return new Intl.NumberFormat('en-IN').format(value);
+        return value.toString();
     }
   }
 
-  // Calculate growth rate
-  calculateGrowthRate(current: number, previous: number): number {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return ((current - previous) / previous) * 100;
+  /**
+   * Format time ago (alias for formatRelativeTime)
+   */
+  formatTimeAgo(date: string | Date): string {
+    return this.formatRelativeTime(date);
   }
 
-  // Get growth indicator
-  getGrowthIndicator(growthRate: number): {
-    direction: 'up' | 'down' | 'neutral';
-    color: string;
-    icon: string;
-  } {
-    if (growthRate > 0) {
-      return { direction: 'up', color: '#10b981', icon: '↗' };
-    } else if (growthRate < 0) {
-      return { direction: 'down', color: '#ef4444', icon: '↘' };
-    } else {
-      return { direction: 'neutral', color: '#6b7280', icon: '→' };
-    }
-  }
-
-  // Get alert priority color
-  getAlertColor(type: 'info' | 'warning' | 'error' | 'success' | 'urgent'): string {
-    const colors = {
-      info: '#3b82f6',
-      warning: '#f59e0b',
-      error: '#ef4444',
-      success: '#10b981',
-      urgent: '#dc2626'
+  /**
+   * Generate mock data for development/testing
+   */
+  generateMockDashboardData(role: UserRole): DashboardData {
+    const baseData = {
+      user_role: role,
+      workspace_id: 'mock-workspace-id',
+      venue_id: role !== 'superadmin' ? 'mock-venue-id' : undefined
     };
-    return colors[type] || '#6b7280';
-  }
 
-  // Format time ago
-  formatTimeAgo(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
+    switch (role) {
+      case 'superadmin':
+        return {
+          ...baseData,
+          summary: {
+            total_venues: 15,
+            active_venues: 12,
+            total_orders: 1250,
+            total_revenue: 125000
+          },
+          all_venues: [],
+          workspace_analytics: {},
+          user_management: {},
+          alerts: [],
+          quick_actions: []
+        } as SuperAdminDashboard;
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    
-    return date.toLocaleDateString();
-  }
+      case 'admin':
+        return {
+          ...baseData,
+          summary: {
+            today_orders: 45,
+            today_revenue: 8500,
+            active_tables: 20,
+            occupied_tables: 12
+          },
+          venue_analytics: {},
+          staff_performance: {},
+          inventory_alerts: []
+        } as AdminDashboard;
 
-  // Get peak hours data
-  getPeakHours(analytics: VenueAnalytics): Array<{ hour: number; label: string; value: number }> {
-    if (!analytics.peak_hours) return [];
+      case 'operator':
+        return {
+          ...baseData,
+          summary: {
+            active_orders: 8,
+            pending_orders: 3,
+            ready_orders: 2,
+            occupied_tables: 12
+          },
+          active_orders: [],
+          table_status: [],
+          today_summary: {}
+        } as OperatorDashboard;
 
-    return analytics.peak_hours.map((peak: any) => ({
-      hour: peak.hour,
-      label: this.formatHour(peak.hour),
-      value: peak.occupancy_rate || peak.order_count || 0
-    }));
-  }
-
-  // Format hour for display
-  private formatHour(hour: number): string {
-    const period = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-    return `${displayHour}${period}`;
-  }
-
-  // Get table utilization status
-  getTableUtilizationStatus(rate: number): {
-    status: 'low' | 'medium' | 'high' | 'full';
-    color: string;
-    label: string;
-  } {
-    if (rate >= 95) {
-      return { status: 'full', color: '#dc2626', label: 'Full' };
-    } else if (rate >= 75) {
-      return { status: 'high', color: '#f59e0b', label: 'High' };
-    } else if (rate >= 50) {
-      return { status: 'medium', color: '#10b981', label: 'Medium' };
-    } else {
-      return { status: 'low', color: '#3b82f6', label: 'Low' };
-    }
-  }
-
-  // Generate dashboard insights
-  generateInsights(analytics: VenueAnalytics): string[] {
-    const insights: string[] = [];
-
-    // Revenue insights
-    if (analytics.average_order_value > 500) {
-      insights.push('High average order value indicates premium positioning');
-    }
-
-    // Customer insights
-    const newCustomerRate = (analytics.new_customers / analytics.total_customers) * 100;
-    if (newCustomerRate > 30) {
-      insights.push('Strong new customer acquisition');
-    }
-
-    // Table utilization insights
-    if (analytics.table_utilization > 80) {
-      insights.push('Consider adding more tables during peak hours');
-    } else if (analytics.table_utilization < 40) {
-      insights.push('Opportunity to improve table utilization');
-    }
-
-    // Customer satisfaction insights
-    if (analytics.customer_satisfaction >= 4.5) {
-      insights.push('Excellent customer satisfaction scores');
-    } else if (analytics.customer_satisfaction < 3.5) {
-      insights.push('Focus on improving customer experience');
-    }
-
-    return insights;
-  }
-
-  // Export dashboard data
-  async exportDashboardData(venueId: string, format: 'csv' | 'pdf' | 'excel' = 'csv'): Promise<Blob | null> {
-    try {
-      const response = await apiService.get<Blob>(`/dashboard/export/${venueId}?format=${format}`, undefined, {
-        responseType: 'blob'
-      });
-      return response.data || null;
-    } catch (error) {
-      console.error('Failed to export dashboard data:', error);
-      return null;
+      default:
+        return baseData as DashboardData;
     }
   }
 }
 
 export const dashboardService = new DashboardService();
+
+// Export types for components
+export type { 
+  SuperAdminDashboard, 
+  AdminDashboard, 
+  OperatorDashboard 
+} from '../types/api';

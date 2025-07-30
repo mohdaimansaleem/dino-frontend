@@ -1,4 +1,4 @@
-import { AuthToken, UserProfile, UserRegistration } from '../types';
+import { AuthToken, UserProfile, UserRegistration, WorkspaceRegistration, ApiResponse } from '../types/api';
 import { apiService } from './api';
 
 class AuthService {
@@ -6,11 +6,12 @@ class AuthService {
   private readonly USER_KEY = 'dino_user';
   private readonly REFRESH_TOKEN_KEY = 'dino_refresh_token';
 
-  async login(email: string, password: string): Promise<AuthToken> {
+  async login(email: string, password: string, rememberMe: boolean = false): Promise<AuthToken> {
     try {
       const response = await apiService.post<AuthToken>('/auth/login', {
         email,
-        password
+        password,
+        remember_me: rememberMe
       });
       
       if (response.success && response.data) {
@@ -24,13 +25,12 @@ class AuthService {
     }
   }
 
-  async register(userData: UserRegistration): Promise<AuthToken> {
+  async register(userData: UserRegistration): Promise<ApiResponse<UserProfile>> {
     try {
-      const response = await apiService.post<AuthToken>('/users/register', userData);
+      const response = await apiService.post<UserProfile>('/auth/register', userData);
       
       if (response.success && response.data) {
-        this.setTokens(response.data);
-        return response.data;
+        return response;
       }
       
       throw new Error(response.message || 'Registration failed');
@@ -39,9 +39,23 @@ class AuthService {
     }
   }
 
+  async registerWorkspace(workspaceData: WorkspaceRegistration): Promise<ApiResponse<any>> {
+    try {
+      const response = await apiService.post<any>('/auth/register', workspaceData);
+      
+      if (response.success && response.data) {
+        return response;
+      }
+      
+      throw new Error(response.message || 'Workspace registration failed');
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Workspace registration failed');
+    }
+  }
+
   async getCurrentUser(): Promise<UserProfile> {
     try {
-      const response = await apiService.get<UserProfile>('/users/profile');
+      const response = await apiService.get<UserProfile>('/auth/me');
       
       if (response.success && response.data) {
         // Update stored user data
@@ -61,7 +75,7 @@ class AuthService {
 
   async updateProfile(userData: Partial<UserProfile>): Promise<UserProfile> {
     try {
-      const response = await apiService.put<UserProfile>('/users/profile', userData);
+      const response = await apiService.put<UserProfile>('/auth/me', userData);
       
       if (response.success && response.data) {
         // Update stored user data
@@ -98,7 +112,7 @@ class AuthService {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     try {
-      const response = await apiService.post('/users/change-password', {
+      const response = await apiService.post('/auth/change-password', {
         current_password: currentPassword,
         new_password: newPassword
       });
