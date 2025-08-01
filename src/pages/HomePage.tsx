@@ -46,7 +46,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DinoLogo from '../components/DinoLogo';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
-import BouncingDice from '../components/ui/BouncingDice';
+
 import AnimatedBackground from '../components/ui/AnimatedBackground';
 
 import { formatINR } from '../utils/formatters';
@@ -229,10 +229,39 @@ const HomePage: React.FC = () => {
   ];
 
   const stats = [
-    { number: 5000, suffix: "+", label: "Restaurants", icon: <Restaurant /> },
-    { number: 1000000, suffix: "+", label: "Orders Daily", icon: <TrendingUp /> },
-    { number: 99.9, suffix: "%", label: "Uptime", icon: <CloudDone />, decimals: 1 },
-    { number: 45, suffix: "%", label: "Revenue Boost", icon: <EmojiEvents /> },
+    { 
+      number: 5000, 
+      suffix: "+", 
+      label: "Restaurants", 
+      icon: <Restaurant />,
+      color: '#4caf50', // Green - matches success theme
+      bgColor: 'rgba(76, 175, 80, 0.1)'
+    },
+    { 
+      number: 1000000, 
+      suffix: "+", 
+      label: "Orders Daily", 
+      icon: <TrendingUp />,
+      color: '#2196f3', // Blue - matches growth theme  
+      bgColor: 'rgba(33, 150, 243, 0.1)'
+    },
+    { 
+      number: 99.9, 
+      suffix: "%", 
+      label: "Uptime", 
+      icon: <CloudDone />, 
+      decimals: 1,
+      color: '#ff9800', // Amber - matches progress theme
+      bgColor: 'rgba(255, 152, 0, 0.1)'
+    },
+    { 
+      number: 45, 
+      suffix: "%", 
+      label: "Revenue Boost", 
+      icon: <EmojiEvents />,
+      color: '#4caf50', // Green - matches success theme
+      bgColor: 'rgba(76, 175, 80, 0.1)'
+    },
   ];
 
   const benefits = [
@@ -271,7 +300,7 @@ const HomePage: React.FC = () => {
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 3 }}>
                 <Chip 
-                  icon={<AutoAwesome />}
+                  icon={<AutoAwesome sx={{ color: '#fffffeff !important' }} />}
                   label="Revolutionary Technology" 
                   sx={{ 
                     mb: 3, 
@@ -280,6 +309,9 @@ const HomePage: React.FC = () => {
                     color: 'white',
                     border: '1px solid',
                     borderColor: 'primary.main',
+                    '& .MuiChip-icon': {
+                      color: '#ffffffff !important',
+                    },
                   }}
                 />
                 
@@ -466,11 +498,14 @@ const HomePage: React.FC = () => {
                           textAlign: 'center',
                           backgroundColor: 'rgba(255,255,255,0.9)',
                           borderRadius: 2,
-                          border: '1px solid rgba(255,255,255,0.3)',
+                          border: `1px solid ${stat.color}30`,
                           backdropFilter: 'blur(10px)',
+                          background: `linear-gradient(135deg, rgba(255,255,255,0.9) 0%, ${stat.bgColor} 100%)`,
                           '&:hover': {
                             transform: 'translateX(10px) scale(1.05)',
-                            backgroundColor: 'rgba(255,255,255,0.95)',
+                            backgroundColor: stat.bgColor,
+                            borderColor: `${stat.color}60`,
+                            boxShadow: `0 8px 24px ${stat.color}20`,
                           },
                           transition: 'all 0.3s ease',
                         }}
@@ -478,7 +513,7 @@ const HomePage: React.FC = () => {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                           <Box
                             sx={{
-                              backgroundColor: 'primary.main',
+                              backgroundColor: stat.color,
                               borderRadius: '50%',
                               p: 1,
                               color: 'white',
@@ -487,6 +522,7 @@ const HomePage: React.FC = () => {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
+                              boxShadow: `0 4px 12px ${stat.color}40`,
                             }}
                           >
                             {stat.icon}
