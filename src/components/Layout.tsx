@@ -1,13 +1,9 @@
 import React, { ReactNode, useState } from 'react';
 import { 
   Box, 
-  AppBar, 
-  Toolbar, 
-  Typography, 
   Button, 
   IconButton, 
   Badge,
-  Container,
   Fade,
   Switch,
   FormControlLabel,
@@ -30,7 +26,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { PERMISSIONS } from '../types/auth';
-import DinoLogo from './DinoLogo';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
@@ -43,7 +38,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, hasPermission, isAdmin, isOperator, isSuperAdmin } = useAuth();
+  const { user, logout, hasPermission, isAdmin, isOperator } = useAuth();
   const { getTotalItems } = useCart();
   const [cafeOpen, setCafeOpen] = useState(true);
   
@@ -55,9 +50,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isCheckoutRoute = location.pathname.includes('/checkout/');
   const isOrderTrackingRoute = location.pathname.includes('/order-tracking/') || location.pathname.includes('/order/');
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
-  const isCustomerMenuRoute = location.pathname.includes('/menu/');
   const isCustomerFacingRoute = isPublicMenuRoute || isCheckoutRoute || isOrderTrackingRoute;
-  const isDemoMode = localStorage.getItem('dino_demo_mode') === 'true';
 
   const handleLogout = () => {
     logout();

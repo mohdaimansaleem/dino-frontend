@@ -58,6 +58,7 @@ import { authService } from '../services/authService';
 import ImageUpload from './ImageUpload';
 import UserPermissions from './UserPermissions';
 
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;

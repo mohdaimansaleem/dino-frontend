@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   IconButton,
@@ -12,7 +12,6 @@ import {
   Divider,
   Button,
   Chip,
-  Avatar,
   Alert,
 } from '@mui/material';
 import {
@@ -21,11 +20,9 @@ import {
   CheckCircle,
   Info,
   Warning,
-  Error,
   Clear,
   MarkEmailRead,
   ShoppingCart,
-  Restaurant,
   Wifi,
   WifiOff,
 } from '@mui/icons-material';
