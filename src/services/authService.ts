@@ -14,13 +14,21 @@ class AuthService {
         remember_me: rememberMe
       });
       
+      // Handle direct AuthToken response from backend
+      let authToken: AuthToken;
       if (response.success && response.data) {
-        this.setTokens(response.data);
-        return response.data;
+        authToken = response.data;
+      } else if (response && 'access_token' in response) {
+        // Direct response from backend without wrapper
+        authToken = response as any as AuthToken;
+      } else {
+        throw new Error(response.message || 'Login failed');
       }
       
-      throw new Error(response.message || 'Login failed');
+      this.setTokens(authToken);
+      return authToken;
     } catch (error: any) {
+      console.error('Login error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Login failed');
     }
   }
@@ -70,6 +78,42 @@ class AuthService {
         this.clearTokens();
       }
       throw new Error(error.response?.data?.detail || error.message || 'Failed to get user profile');
+    }
+  }
+
+  async getUserPermissions(): Promise<any> {
+    try {
+      const response = await apiService.get<any>('/auth/permissions');
+      
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      throw new Error('Failed to get user permissions');
+    } catch (error: any) {
+      // If unauthorized, clear tokens
+      if (error.response?.status === 401) {
+        this.clearTokens();
+      }
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to get user permissions');
+    }
+  }
+
+  async refreshUserPermissions(): Promise<any> {
+    try {
+      const response = await apiService.post<any>('/auth/refresh-permissions');
+      
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      throw new Error('Failed to refresh user permissions');
+    } catch (error: any) {
+      // If unauthorized, clear tokens
+      if (error.response?.status === 401) {
+        this.clearTokens();
+      }
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to refresh user permissions');
     }
   }
 

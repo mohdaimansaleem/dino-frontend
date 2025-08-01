@@ -153,15 +153,16 @@ const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({ className = '' })
               </div>
 
               {/* Active Orders List */}
-              {Object.entries(liveOrders.orders_by_status || {}).map(([status, orders]) => (
-                orders.length > 0 && (
+              {Object.entries(liveOrders.orders_by_status || {}).map(([status, orders]) => {
+                const orderArray = Array.isArray(orders) ? orders : [];
+                return orderArray.length > 0 && (
                   <div key={status} className="space-y-2">
                     <h4 className="font-medium text-gray-900 capitalize flex items-center space-x-2">
                       <OrderStatusIndicator status={status} size="sm" />
-                      <span>{status} Orders ({orders.length})</span>
+                      <span>{status} Orders ({orderArray.length})</span>
                     </h4>
                     <div className="grid gap-2">
-                      {orders.slice(0, 3).map((order: any) => (
+                      {orderArray.slice(0, 3).map((order: any) => (
                         <div key={order.id} className="bg-gray-50 p-3 rounded border">
                           <div className="flex items-center justify-between">
                             <div>
@@ -179,15 +180,15 @@ const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({ className = '' })
                           </div>
                         </div>
                       ))}
-                      {orders.length > 3 && (
+                      {orderArray.length > 3 && (
                         <p className="text-xs text-gray-500 text-center">
-                          +{orders.length - 3} more orders
+                          +{orderArray.length - 3} more orders
                         </p>
                       )}
                     </div>
                   </div>
-                )
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500">

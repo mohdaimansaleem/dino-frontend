@@ -152,10 +152,17 @@ export const withPermissions = <P extends object>(
 
 // Hook for conditional rendering based on permissions
 export const usePermissionCheck = () => {
-  const { user, isAuthenticated, getUserWithRole } = useAuth();
+  const { user, isAuthenticated, getUserWithRole, hasBackendPermission, userPermissions } = useAuth();
 
   const checkPermission = (permission: PermissionName): boolean => {
     if (!isAuthenticated || !user) return false;
+    
+    // First try backend permissions
+    if (userPermissions && hasBackendPermission(permission)) {
+      return true;
+    }
+    
+    // Fallback to static permissions
     const authUser = getUserWithRole();
     return PermissionService.hasPermission(authUser, permission);
   };

@@ -138,8 +138,23 @@ class ApiService {
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
       console.log(`🌐 API Call: POST ${url}`, data ? { data } : '');
-      const response: AxiosResponse<ApiResponse<T>> = await this.api.post(url, data, config);
+      const response: AxiosResponse<any> = await this.api.post(url, data, config);
       console.log(`✅ API Success: POST ${url}`, response.data);
+      
+      // Handle different response formats from backend
+      if (response.data && typeof response.data === 'object') {
+        // If response has success field, it's our ApiResponse format
+        if ('success' in response.data) {
+          return response.data as ApiResponse<T>;
+        }
+        // If response is direct data (like auth endpoints), wrap it
+        return {
+          success: true,
+          data: response.data as T,
+          message: 'Success'
+        } as ApiResponse<T>;
+      }
+      
       return response.data;
     } catch (error: any) {
       console.error(`❌ API Error: POST ${url}`, error.response?.data || error.message);

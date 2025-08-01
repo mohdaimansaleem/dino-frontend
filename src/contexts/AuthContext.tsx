@@ -3,6 +3,8 @@ import { UserProfile, UserRegistration } from '../types';
 import { User as AuthUser, ROLES, PermissionName, RoleName } from '../types/auth';
 import { authService } from '../services/authService';
 import PermissionService from '../services/permissionService';
+import { userCache, CacheKeys, cacheUtils } from '../services/cacheService';
+import { preloadCriticalComponents } from '../components/LazyComponents';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -22,7 +24,11 @@ interface AuthContextType {
   isOperator: () => boolean;
   isSuperAdmin: () => boolean;
   getUserWithRole: () => AuthUser | null;
-
+  // Permission management
+  userPermissions: any | null;
+  refreshPermissions: () => Promise<void>;
+  getPermissionsList: () => string[];
+  hasBackendPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +40,7 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userPermissions, setUserPermissions] = useState<any | null>(null);
 
   useEffect(() => {
     // Check for existing token on app load
@@ -104,6 +111,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } as UserProfile;
       
       setUser(localUser);
+      
+      // Fetch and store user permissions with caching
+      try {
+        const permissionsData = await userCache.getOrSet(
+          CacheKeys.userPermissions(localUser.id),
+          () => authService.getUserPermissions(),
+          10 * 60 * 1000 // 10 minutes TTL
+        );
+        setUserPermissions(permissionsData);
+        localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
+      } catch (error) {
+        console.warn('Failed to fetch user permissions:', error);
+        // Continue with login even if permissions fetch fails
+      }
+
+      // Preload critical components and data
+      setTimeout(() => {
+        preloadCriticalComponents();
+        cacheUtils.preloadCriticalData(localUser.id, localUser.venue_id || localUser.cafeId);
+      }, 100);
     } catch (error) {
       throw error;
     } finally {
@@ -146,7 +173,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('dino_token');
     localStorage.removeItem('dino_user');
     localStorage.removeItem('dino_refresh_token');
+    localStorage.removeItem('dino_permissions');
     setUser(null);
+    setUserPermissions(null);
   };
 
   const updateUser = async (userData: Partial<UserProfile>): Promise<void> => {
@@ -295,7 +324,56 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return PermissionService.isSuperAdmin(authUser);
   };
 
+  // Permission management methods
+  const refreshPermissions = async (): Promise<void> => {
+    try {
+      const permissionsData = await authService.refreshUserPermissions();
+      setUserPermissions(permissionsData);
+      localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
+    } catch (error) {
+      console.error('Failed to refresh permissions:', error);
+      throw error;
+    }
+  };
 
+  const getPermissionsList = (): string[] => {
+    if (!userPermissions?.permissions) return [];
+    return userPermissions.permissions.map((p: any) => p.name);
+  };
+
+  const hasBackendPermission = (permission: string): boolean => {
+    if (!userPermissions?.permissions) return false;
+    return userPermissions.permissions.some((p: any) => p.name === permission);
+  };
+
+  // Initialize permissions from localStorage on app load
+  useEffect(() => {
+    const initializePermissions = async () => {
+      try {
+        const savedPermissions = localStorage.getItem('dino_permissions');
+        if (savedPermissions) {
+          setUserPermissions(JSON.parse(savedPermissions));
+        }
+        
+        // If user is logged in but no permissions cached, fetch them
+        if (user && !savedPermissions) {
+          try {
+            const permissionsData = await authService.getUserPermissions();
+            setUserPermissions(permissionsData);
+            localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
+          } catch (error) {
+            console.warn('Failed to fetch permissions on init:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to initialize permissions:', error);
+      }
+    };
+
+    if (!loading) {
+      initializePermissions();
+    }
+  }, [user, loading]);
 
   const value: AuthContextType = {
     user,
@@ -314,6 +392,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isOperator,
     isSuperAdmin,
     getUserWithRole,
+    userPermissions,
+    refreshPermissions,
+    getPermissionsList,
+    hasBackendPermission,
   };
 
   return (

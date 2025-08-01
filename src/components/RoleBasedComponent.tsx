@@ -1,150 +1,105 @@
-import React, { ReactNode } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import PermissionService from '../services/permissionService';
-import { User, RoleName, PermissionName } from '../types/auth';
+import { PermissionName, RoleName, ROLES } from '../types/auth';
 
 interface RoleBasedComponentProps {
-  children: ReactNode;
-  allowedRoles?: RoleName[];
+  children: React.ReactNode;
   requiredPermissions?: PermissionName[];
-  requireAllPermissions?: boolean; // If true, user must have ALL permissions; if false, ANY permission
-  fallback?: ReactNode;
+  requiredRole?: RoleName;
+  allowedRoles?: RoleName[];
+  fallback?: React.ReactNode;
   showFallback?: boolean;
-  venueId?: string; // For venue-specific access control
-  workspaceId?: string; // For workspace-specific access control
-  className?: string;
 }
 
 /**
- * RoleBasedComponent - A wrapper component that conditionally renders children
- * based on user roles and permissions
+ * Component that conditionally renders children based on user role and permissions
  */
-const RoleBasedComponent: React.FC<RoleBasedComponentProps> = ({
+export const RoleBasedComponent: React.FC<RoleBasedComponentProps> = ({
   children,
-  allowedRoles = [],
   requiredPermissions = [],
-  requireAllPermissions = false,
+  requiredRole,
+  allowedRoles = [],
   fallback = null,
   showFallback = true,
-  venueId,
-  workspaceId,
-  className
 }) => {
-  const { user, isAuthenticated, getUserWithRole } = useAuth();
+  const { hasPermission, hasRole, getUserWithRole } = useAuth();
+  const user = getUserWithRole();
 
-  // If not authenticated, don't render anything
-  if (!isAuthenticated || !user) {
+  // Check if user has required role
+  if (requiredRole && !hasRole(requiredRole)) {
     return showFallback ? <>{fallback}</> : null;
   }
 
-  // Check workspace access if specified
-  if (workspaceId && user.workspace_id !== workspaceId) {
-    return showFallback ? <>{fallback}</> : null;
-  }
-
-  // Check venue access if specified
-  if (venueId && user.venue_id && user.venue_id !== venueId) {
-    return showFallback ? <>{fallback}</> : null;
-  }
-
-  // Get user with role information for permission checks
-  const authUser = getUserWithRole();
-
-  // Check role-based access
-  const hasRoleAccess = allowedRoles.length === 0 || 
-    allowedRoles.some(role => PermissionService.hasRole(authUser, role));
-
-  // Check permission-based access
-  let hasPermissionAccess = true;
-  if (requiredPermissions.length > 0) {
-    if (requireAllPermissions) {
-      hasPermissionAccess = PermissionService.hasAllPermissions(authUser, requiredPermissions);
-    } else {
-      hasPermissionAccess = PermissionService.hasAnyPermission(authUser, requiredPermissions);
+  // Check if user has any of the allowed roles
+  if (allowedRoles.length > 0) {
+    const hasAllowedRole = allowedRoles.some(role => hasRole(role));
+    if (!hasAllowedRole) {
+      return showFallback ? <>{fallback}</> : null;
     }
   }
 
-  // Render children if user has access
-  if (hasRoleAccess && hasPermissionAccess) {
-    return className ? <div className={className}>{children}</div> : <>{children}</>;
+  // Check if user has required permissions
+  if (requiredPermissions.length > 0) {
+    const hasRequiredPermissions = requiredPermissions.some(permission =>
+      hasPermission(permission)
+    );
+    if (!hasRequiredPermissions) {
+      return showFallback ? <>{fallback}</> : null;
+    }
   }
 
-  // Render fallback if no access
-  return showFallback ? <>{fallback}</> : null;
+  return <>{children}</>;
 };
 
-export default RoleBasedComponent;
-
-// Convenience components for specific roles
-export const SuperAdminOnly: React.FC<Omit<RoleBasedComponentProps, 'allowedRoles'>> = (props) => (
-  <RoleBasedComponent {...props} allowedRoles={['superadmin']} />
-);
-
-export const AdminOnly: React.FC<Omit<RoleBasedComponentProps, 'allowedRoles'>> = (props) => (
-  <RoleBasedComponent {...props} allowedRoles={['admin']} />
-);
-
-export const OperatorOnly: React.FC<Omit<RoleBasedComponentProps, 'allowedRoles'>> = (props) => (
-  <RoleBasedComponent {...props} allowedRoles={['operator']} />
-);
-
-export const AdminOrSuperAdmin: React.FC<Omit<RoleBasedComponentProps, 'allowedRoles'>> = (props) => (
-  <RoleBasedComponent {...props} allowedRoles={['admin', 'superadmin']} />
-);
-
-export const StaffOnly: React.FC<Omit<RoleBasedComponentProps, 'allowedRoles'>> = (props) => (
-  <RoleBasedComponent {...props} allowedRoles={['admin', 'operator', 'superadmin']} />
-);
-
-// Hook for checking permissions in components
+/**
+ * Hook to get user permissions and role information
+ */
 export const usePermissions = () => {
-  const { user, getUserWithRole } = useAuth();
-
-  const hasRole = (role: RoleName): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.hasRole(authUser, role);
-  };
-
-  const hasPermission = (permission: PermissionName): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.hasPermission(authUser, permission);
-  };
-
-  const hasAnyPermission = (permissions: PermissionName[]): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.hasAnyPermission(authUser, permissions);
-  };
-
-  const hasAllPermissions = (permissions: PermissionName[]): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.hasAllPermissions(authUser, permissions);
-  };
-
-  const canAccessRoute = (route: string): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.canAccessRoute(authUser, route);
-  };
-
-  const canPerformAction = (resource: string, action: string): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.canPerformAction(authUser, resource, action);
-  };
-
-  const authUser = getUserWithRole();
+  const { getUserWithRole, hasPermission, hasRole, isAdmin, isOperator, isSuperAdmin } = useAuth();
+  const user = getUserWithRole();
 
   return {
     user,
-    hasRole,
     hasPermission,
-    hasAnyPermission,
-    hasAllPermissions,
-    canAccessRoute,
-    canPerformAction,
-    isAdmin: PermissionService.isAdmin(authUser),
-    isOperator: PermissionService.isOperator(authUser),
-    isSuperAdmin: PermissionService.isSuperAdmin(authUser),
-    canManageWorkspace: PermissionService.canManageWorkspace(authUser),
-    canSwitchCafe: PermissionService.canSwitchCafe(authUser),
-    canManageCafeStatus: PermissionService.canManageCafeStatus(authUser)
+    hasRole,
+    isAdmin,
+    isOperator,
+    isSuperAdmin,
+    
+    // Role checks
+    checkIsSuperAdmin: () => hasRole(ROLES.SUPERADMIN),
+    isAdminOrAbove: () => hasRole(ROLES.SUPERADMIN) || hasRole(ROLES.ADMIN),
+    isOperatorOrAbove: () => hasRole(ROLES.SUPERADMIN) || hasRole(ROLES.ADMIN) || hasRole(ROLES.OPERATOR),
+    
+    // Permission checks
+    canViewDashboard: () => hasPermission('dashboard:view'),
+    canManageUsers: () => hasPermission('users:view') || hasPermission('users:create'),
+    canManageVenues: () => hasPermission('workspace:view') || hasPermission('workspace:create'),
+    canManageOrders: () => hasPermission('orders:view') || hasPermission('orders:update'),
+    canManageMenu: () => hasPermission('menu:view') || hasPermission('menu:create'),
+    canManageTables: () => hasPermission('tables:view') || hasPermission('tables:create'),
+    canViewSettings: () => hasPermission('settings:view'),
   };
 };
+
+/**
+ * Higher-order component for role-based access control
+ */
+export const withRoleAccess = <P extends object>(
+  Component: React.ComponentType<P>,
+  requiredPermissions?: PermissionName[],
+  requiredRole?: RoleName,
+  fallback?: React.ReactNode
+) => {
+  return (props: P) => (
+    <RoleBasedComponent
+      requiredPermissions={requiredPermissions}
+      requiredRole={requiredRole}
+      fallback={fallback}
+    >
+      <Component {...props} />
+    </RoleBasedComponent>
+  );
+};
+
+export default RoleBasedComponent;

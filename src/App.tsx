@@ -7,6 +7,7 @@ import { CartProvider } from './contexts/CartContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 // Public Pages
 import HomePage from './pages/HomePage';
@@ -14,39 +15,47 @@ import FeaturesPage from './pages/FeaturesPage';
 import PricingPage from './pages/PricingPage';
 import ContactPage from './pages/ContactPage';
 import TestimonialsPage from './pages/TestimonialsPage';
-import RegistrationPage from './pages/RegistrationPage';
+// RegistrationPage now imported from LazyComponents
 import LoginPage from './pages/LoginPage';
 
-import MenuPage from './pages/MenuPage';
-import CheckoutPage from './pages/CheckoutPage';
-import OrderTrackingPage from './pages/OrderTrackingPage';
+// MenuPage, CheckoutPage, OrderTrackingPage now imported from LazyComponents
 
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import OrdersManagement from './pages/admin/OrdersManagement';
-import MenuManagement from './pages/admin/MenuManagement';
-import TableManagement from './pages/admin/TableManagement';
-import CafeSettings from './pages/admin/CafeSettings';
-import UserManagement from './pages/admin/UserManagement';
-import WorkspaceManagement from './pages/admin/WorkspaceManagement';
-import UserPermissionsDashboard from './pages/admin/UserPermissionsDashboard';
+// Lazy-loaded components for better performance
+import {
+  AdminDashboard,
+  OrdersManagement,
+  MenuManagement,
+  TableManagement,
+  CafeSettings,
+  UserManagement,
+  WorkspaceManagement,
+  UserPermissionsDashboard,
+  MenuPage,
+  CheckoutPage,
+  OrderTrackingPage,
+  RegistrationPage,
+  preloadCriticalComponents,
+} from './components/LazyComponents';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import Layout from './components/Layout';
 import UserProfile from './components/UserProfile';
+import PermissionSync from './components/PermissionSync';
 import { PERMISSIONS } from './types/auth';
 
 function App() {
   return (
     <ThemeProvider>
-      {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
-        <AuthProvider>
-          <WorkspaceProvider>
-            <NotificationProvider>
-              <CartProvider>
-                <Layout>
+      <ToastProvider>
+        {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
+          <AuthProvider>
+            <PermissionSync autoRefreshInterval={5 * 60 * 1000} showSyncStatus={process.env.NODE_ENV === 'development'}>
+              <WorkspaceProvider>
+                <NotificationProvider>
+                  <CartProvider>
+                  <Layout>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<HomePage />} />
@@ -114,12 +123,14 @@ function App() {
                 {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-                </Layout>
-              </CartProvider>
-            </NotificationProvider>
-          </WorkspaceProvider>
-        </AuthProvider>
-      {/* </LocalizationProvider> */}
+                  </Layout>
+                  </CartProvider>
+                </NotificationProvider>
+              </WorkspaceProvider>
+            </PermissionSync>
+          </AuthProvider>
+        {/* </LocalizationProvider> */}
+      </ToastProvider>
     </ThemeProvider>
   );
 }

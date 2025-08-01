@@ -79,14 +79,53 @@ class PermissionService {
   };
 
   /**
-   * Check if user has a specific permission
+   * Check if user has a specific permission (with backend fallback)
    */
   static hasPermission(user: User | null, permission: PermissionName): boolean {
     if (!user || !user.permissions) {
       return false;
     }
 
+    // First check backend permissions if available
+    const backendPermissions = this.getBackendPermissions();
+    if (backendPermissions && backendPermissions.length > 0) {
+      return backendPermissions.some((p: any) => p.name === permission);
+    }
+
+    // Fallback to static permissions
     return user.permissions.some(p => p.name === permission);
+  }
+
+  /**
+   * Get backend permissions from localStorage
+   */
+  static getBackendPermissions(): any[] {
+    try {
+      const permissionsData = localStorage.getItem('dino_permissions');
+      if (permissionsData) {
+        const parsed = JSON.parse(permissionsData);
+        return parsed.permissions || [];
+      }
+    } catch (error) {
+      console.warn('Failed to parse backend permissions:', error);
+    }
+    return [];
+  }
+
+  /**
+   * Get backend role information
+   */
+  static getBackendRole(): any | null {
+    try {
+      const permissionsData = localStorage.getItem('dino_permissions');
+      if (permissionsData) {
+        const parsed = JSON.parse(permissionsData);
+        return parsed.role || null;
+      }
+    } catch (error) {
+      console.warn('Failed to parse backend role:', error);
+    }
+    return null;
   }
 
   /**
@@ -112,9 +151,16 @@ class PermissionService {
   }
 
   /**
-   * Check if user has a specific role
+   * Check if user has a specific role (with backend fallback)
    */
   static hasRole(user: User | null, roleName: string | RoleName): boolean {
+    // First check backend role if available
+    const backendRole = this.getBackendRole();
+    if (backendRole) {
+      return backendRole.name === roleName;
+    }
+
+    // Fallback to static role
     if (!user || !user.role) {
       return false;
     }

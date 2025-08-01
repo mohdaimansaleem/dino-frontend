@@ -46,15 +46,15 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ className }) => {
   }
 
   // Render appropriate dashboard based on user role
-  if (isSuperAdmin) {
+  if (isSuperAdmin()) {
     return <SuperAdminDashboard className={className} />;
   }
 
-  if (isAdmin) {
+  if (isAdmin()) {
     return <AdminDashboard className={className} />;
   }
 
-  if (isOperator) {
+  if (isOperator()) {
     return <OperatorDashboard className={className} />;
   }
 
