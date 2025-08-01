@@ -16,7 +16,7 @@ export const PAGE_TITLES = {
 export const APP_TITLES = {
   DINO_ADMIN: 'Dino Admin',
   DINO_OPERATOR: 'Dino Operator',
-  DINO_E_MENU: 'Dino E-Menu',
+  DINO_E_MENU: 'Dino',
   DINO_CAFE: 'Dino Cafe',
 } as const;
 

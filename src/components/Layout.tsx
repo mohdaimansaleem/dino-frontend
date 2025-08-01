@@ -34,6 +34,7 @@ import DinoLogo from './DinoLogo';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
+import AppHeader from './layout/AppHeader';
 
 interface LayoutProps {
   children: ReactNode;
@@ -315,62 +316,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Clean AppBar - Hidden for customer facing pages */}
+      {/* Enhanced AppHeader - Hidden for customer facing pages */}
       {!isCustomerFacingRoute && (
-        <AppBar 
-          position="fixed" 
-          elevation={1}
-          sx={{ 
-            backgroundColor: 'background.paper',
-            color: 'text.primary',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            transition: 'all 0.2s ease-in-out',
-          }}
-        >
-          <Container maxWidth="xl">
-            <Toolbar sx={{ px: { xs: 0, sm: 2 }, minHeight: 64 }}>
-              <Box
-                sx={{ 
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexGrow: 1, 
-                  cursor: 'pointer',
-                  gap: 2,
-                  minWidth: 0,
-                  '&:hover': {
-                    opacity: 0.8,
-                  },
-                }}
-                onClick={() => {
-                  if (isPublicMenuRoute || isCheckoutRoute) {
-                    // Stay on current menu page, don't navigate away
-                    return;
-                  } else {
-                    navigate('/');
-                  }
-                }}
-              >
-                <DinoLogo 
-                  size={40} 
-                  animated={false}
-                />
-                <Typography
-                  variant="h6"
-                  component="div"
-                  sx={{ 
-                    fontWeight: 600,
-                    fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                    color: 'text.primary',
-                  }}
-                >
-                  {getPageTitle()}
-                </Typography>
-              </Box>
-              {renderNavigation()}
-            </Toolbar>
-          </Container>
-        </AppBar>
+        <AppHeader />
       )}
 
       {/* Main Content */}
@@ -380,7 +328,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           flexGrow: 1,
           backgroundColor: 'background.default',
           minHeight: '100vh',
-          pt: isCustomerFacingRoute ? 0 : 8, // No padding for customer facing pages, account for fixed AppBar for others
+          pt: isCustomerFacingRoute ? 0 : 9, // No padding for customer facing pages, account for enhanced AppBar for others
         }}
       >
         <Fade in timeout={300}>

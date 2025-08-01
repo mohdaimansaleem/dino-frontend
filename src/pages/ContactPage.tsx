@@ -458,7 +458,7 @@ const ContactPage: React.FC = () => {
             }}
           >
             <Typography variant="h5" gutterBottom fontWeight="600">
-              Dino E-Menu Headquarters
+              Dino Headquarters
             </Typography>
             <Typography variant="body1" sx={{ mb: 2, opacity: 0.9 }}>
               123 Tech Park, Sector 5<br />

@@ -418,13 +418,15 @@ const HomePage: React.FC = () => {
                   )}
                 </Box>
                 
-                {/* Navigation Links */}
+                {/* Quick Action Buttons */}
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 3 }}>
                   <Button
-                    onClick={() => scrollToSection(featuresRef)}
+                    variant="text"
+                    onClick={() => navigate('/features')}
                     sx={{ 
                       textTransform: 'none',
                       color: 'text.secondary',
+                      fontWeight: 500,
                       '&:hover': {
                         color: 'primary.main',
                         backgroundColor: 'rgba(25, 118, 210, 0.04)',
@@ -433,13 +435,15 @@ const HomePage: React.FC = () => {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    Features
+                    Learn More →
                   </Button>
                   <Button
-                    onClick={() => scrollToSection(pricingRef)}
+                    variant="text"
+                    onClick={() => navigate('/pricing')}
                     sx={{ 
                       textTransform: 'none',
                       color: 'text.secondary',
+                      fontWeight: 500,
                       '&:hover': {
                         color: 'primary.main',
                         backgroundColor: 'rgba(25, 118, 210, 0.04)',
@@ -448,37 +452,7 @@ const HomePage: React.FC = () => {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    Pricing
-                  </Button>
-                  <Button
-                    onClick={() => scrollToSection(testimonialsRef)}
-                    sx={{ 
-                      textTransform: 'none',
-                      color: 'text.secondary',
-                      '&:hover': {
-                        color: 'primary.main',
-                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                        transform: 'translateY(-1px)',
-                      },
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    Testimonials
-                  </Button>
-                  <Button
-                    onClick={() => scrollToSection(contactRef)}
-                    sx={{ 
-                      textTransform: 'none',
-                      color: 'text.secondary',
-                      '&:hover': {
-                        color: 'primary.main',
-                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                        transform: 'translateY(-1px)',
-                      },
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    Contact
+                    View Pricing →
                   </Button>
                 </Box>
               </Box>
@@ -559,7 +533,7 @@ const HomePage: React.FC = () => {
       <Container maxWidth="lg" sx={{ py: 10 }} ref={featuresRef} id="features">
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
-            Why Choose Dino E-Menu?
+            Why Choose Dino?
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
             Everything you need to modernize your restaurant ordering experience with cutting-edge technology

@@ -90,7 +90,7 @@ const LoginPage: React.FC = () => {
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Restaurant sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
             <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-              🦕 Dino E-Menu
+              🦕 Dino
             </Typography>
             <Typography variant="h6" color="text.secondary">
               Welcome Back!
@@ -182,7 +182,7 @@ const LoginPage: React.FC = () => {
         {/* Footer */}
         <Box sx={{ textAlign: 'center', mt: 4 }}>
           <Typography variant="body2" color="text.secondary">
-            © 2024 Dino E-Menu. All rights reserved.
+            © 2024 Dino. All rights reserved.
           </Typography>
         </Box>
       </Box>

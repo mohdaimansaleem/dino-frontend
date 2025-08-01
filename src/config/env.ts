@@ -53,7 +53,7 @@ export const config = {
   // Application Settings
   app: {
     env: getEnvVar('REACT_APP_ENV', 'development') as Environment,
-    name: getEnvVar('REACT_APP_NAME', 'Dino E-Menu'),
+    name: getEnvVar('REACT_APP_NAME', 'Dino'),
     version: getEnvVar('REACT_APP_VERSION', '1.0.0'),
     debugMode: getBooleanEnvVar('REACT_APP_DEBUG_MODE', false),
   },
