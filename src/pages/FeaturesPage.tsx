@@ -36,151 +36,41 @@ import {
   Assessment,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { 
+  CORE_FEATURES, 
+  MANAGEMENT_FEATURES, 
+  ADVANCED_FEATURES, 
+  INTEGRATIONS 
+} from '../data/info';
 
 const FeaturesPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const coreFeatures = [
-    {
-      icon: <QrCode sx={{ fontSize: 40, color: '#2196F3' }} />,
-      title: 'QR Code Ordering',
-      description: 'Customers scan QR codes to access digital menus and place orders instantly without waiting for staff.',
-      benefits: [
-        'Zero contact ordering',
-        'Instant menu access',
-        'Reduced wait times',
-        'Multi-language support'
-      ]
-    },
-    {
-      icon: <Analytics sx={{ fontSize: 40, color: '#4CAF50' }} />,
-      title: 'Advanced Analytics',
-      description: 'Comprehensive insights into your restaurant performance with real-time data and predictive analytics.',
-      benefits: [
-        'Real-time sales tracking',
-        'Customer behavior insights',
-        'Popular item analysis',
-        'Revenue forecasting'
-      ]
-    },
-    {
-      icon: <Smartphone sx={{ fontSize: 40, color: '#FF9800' }} />,
-      title: 'Mobile Optimized',
-      description: 'Progressive web app that works seamlessly across all devices with offline capabilities.',
-      benefits: [
-        'Works on any device',
-        'Offline functionality',
-        'App-like experience',
-        'Fast loading times'
-      ]
-    },
-    {
-      icon: <Security sx={{ fontSize: 40, color: '#9C27B0' }} />,
-      title: 'Enterprise Security',
-      description: 'Bank-level security with end-to-end encryption and compliance with industry standards.',
-      benefits: [
-        'SSL encryption',
-        'PCI compliance',
-        'Data protection',
-        'Secure payments'
-      ]
-    }
-  ];
+  // Transform core features for display
+  const coreFeatures = CORE_FEATURES.map(feature => ({
+    icon: React.createElement(feature.icon, { sx: { fontSize: 40, color: feature.color } }),
+    title: feature.title,
+    description: feature.description,
+    benefits: feature.benefits || []
+  }));
 
-  const managementFeatures = [
-    {
-      icon: <Restaurant />,
-      title: 'Menu Management',
-      description: 'Easy-to-use interface for managing your menu items, categories, and pricing.',
-      features: [
-        'Drag & drop menu organization',
-        'Real-time price updates',
-        'Image management',
-        'Availability controls'
-      ]
-    },
-    {
-      icon: <ShoppingCart />,
-      title: 'Order Management',
-      description: 'Streamlined order processing with real-time updates and status tracking.',
-      features: [
-        'Real-time order notifications',
-        'Order status tracking',
-        'Kitchen display integration',
-        'Customer communication'
-      ]
-    },
-    {
-      icon: <TableRestaurant />,
-      title: 'Table Management',
-      description: 'Efficient table management with QR code generation and occupancy tracking.',
-      features: [
-        'QR code generation',
-        'Table status tracking',
-        'Capacity management',
-        'Reservation integration'
-      ]
-    },
-    {
-      icon: <People />,
-      title: 'User Management',
-      description: 'Role-based access control with permission management for your team.',
-      features: [
-        'Role-based permissions',
-        'Staff management',
-        'Activity tracking',
-        'Multi-location support'
-      ]
-    }
-  ];
+  // Transform management features for display
+  const managementFeatures = MANAGEMENT_FEATURES.map(feature => ({
+    icon: React.createElement(feature.icon),
+    title: feature.title,
+    description: feature.description,
+    features: feature.features
+  }));
 
-  const advancedFeatures = [
-    {
-      icon: <Notifications />,
-      title: 'Real-time Notifications',
-      description: 'Instant notifications for new orders, status updates, and important alerts.',
-      color: '#1976d2'
-    },
-    {
-      icon: <TrendingUp />,
-      title: 'Sales Analytics',
-      description: 'Detailed sales reports with trends, forecasting, and performance metrics.',
-      color: '#388e3c'
-    },
-    {
-      icon: <Inventory />,
-      title: 'Inventory Tracking',
-      description: 'Monitor stock levels and get alerts when items are running low.',
-      color: '#f57c00'
-    },
-    {
-      icon: <Assessment />,
-      title: 'Custom Reports',
-      description: 'Generate custom reports for accounting, tax filing, and business analysis.',
-      color: '#7b1fa2'
-    },
-    {
-      icon: <CloudDone />,
-      title: 'Cloud Backup',
-      description: 'Automatic cloud backup ensures your data is always safe and accessible.',
-      color: '#0288d1'
-    },
-    {
-      icon: <Support />,
-      title: '24/7 Support',
-      description: 'Round-the-clock customer support with dedicated account managers.',
-      color: '#d32f2f'
-    }
-  ];
+  // Transform advanced features for display
+  const advancedFeatures = ADVANCED_FEATURES.map(feature => ({
+    icon: React.createElement(feature.icon),
+    title: feature.title,
+    description: feature.description,
+    color: feature.color
+  }));
 
-  const integrations = [
-    'Payment Gateways (Stripe, PayPal, Razorpay)',
-    'Accounting Software (QuickBooks, Xero)',
-    'Delivery Platforms (Uber Eats, DoorDash)',
-    'POS Systems (Square, Toast)',
-    'Email Marketing (Mailchimp, SendGrid)',
-    'SMS Services (Twilio, TextLocal)'
-  ];
+  const integrations = INTEGRATIONS;
 
   return (
     <Box>
@@ -278,7 +168,7 @@ const FeaturesPage: React.FC = () => {
                   </Typography>
 
                   <List dense>
-                    {feature.benefits.map((benefit, idx) => (
+                    {feature.benefits.map((benefit: string, idx: number) => (
                       <ListItem key={idx} sx={{ px: 0 }}>
                         <ListItemIcon sx={{ minWidth: 32 }}>
                           <CheckCircle color="primary" fontSize="small" />

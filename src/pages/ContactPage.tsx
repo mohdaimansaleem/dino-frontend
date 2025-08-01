@@ -30,6 +30,13 @@ import {
   Engineering,
 } from '@mui/icons-material';
 
+import { 
+  CONTACT_INFO, 
+  CONTACT_DEPARTMENTS, 
+  FAQS,
+  COMPANY_INFO 
+} from '../data/info';
+
 const ContactPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -43,59 +50,21 @@ const ContactPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const contactInfo = [
-    {
-      icon: <Phone />,
-      title: 'Phone',
-      details: ['+91 98765 43210', '+91 98765 43211'],
-      description: 'Mon-Fri 9AM-6PM IST'
-    },
-    {
-      icon: <Email />,
-      title: 'Email',
-      details: ['hello@dinoemenu.com', 'support@dinoemenu.com'],
-      description: 'We reply within 24 hours'
-    },
-    {
-      icon: <LocationOn />,
-      title: 'Office',
-      details: ['123 Tech Park, Sector 5', 'Hyderabad, Telangana 500032'],
-      description: 'Visit us for demos'
-    },
-    {
-      icon: <Schedule />,
-      title: 'Business Hours',
-      details: ['Monday - Friday: 9:00 AM - 6:00 PM', 'Saturday: 10:00 AM - 4:00 PM'],
-      description: 'Sunday: Closed'
-    }
-  ];
+  // Transform contact info for display
+  const contactInfo = CONTACT_INFO.map(info => ({
+    icon: React.createElement(info.icon),
+    title: info.title,
+    details: info.details,
+    description: info.description
+  }));
 
-  const departments = [
-    {
-      icon: <Business />,
-      title: 'Sales',
-      email: 'sales@dinoemenu.com',
-      description: 'Questions about pricing, plans, and demos'
-    },
-    {
-      icon: <Support />,
-      title: 'Support',
-      email: 'support@dinoemenu.com',
-      description: 'Technical support and account help'
-    },
-    {
-      icon: <Engineering />,
-      title: 'Technical',
-      email: 'tech@dinoemenu.com',
-      description: 'API, integrations, and custom development'
-    },
-    {
-      icon: <Business />,
-      title: 'Partnerships',
-      email: 'partners@dinoemenu.com',
-      description: 'Business partnerships and collaborations'
-    }
-  ];
+  // Transform departments for display
+  const departments = CONTACT_DEPARTMENTS.map(dept => ({
+    icon: React.createElement(dept.icon),
+    title: dept.title,
+    email: dept.email,
+    description: dept.description
+  }));
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -404,24 +373,7 @@ const ContactPage: React.FC = () => {
         </Box>
 
         <Grid container spacing={4}>
-          {[
-            {
-              question: 'How quickly can I get started?',
-              answer: 'You can start using Dino immediately with our free trial. Setup takes less than 15 minutes.'
-            },
-            {
-              question: 'Do you offer training?',
-              answer: 'Yes, we provide comprehensive training for all plans, including video tutorials and live sessions.'
-            },
-            {
-              question: 'Can you integrate with my existing POS?',
-              answer: 'We support integration with most popular POS systems. Contact our technical team for specific requirements.'
-            },
-            {
-              question: 'What kind of support do you provide?',
-              answer: 'We offer email support for all plans, with phone support and dedicated account managers for premium plans.'
-            }
-          ].map((faq, index) => (
+          {FAQS.slice(5, 9).map((faq, index) => (
             <Grid item xs={12} md={6} key={index}>
               <Paper elevation={1} sx={{ p: 3, height: '100%' }}>
                 <Typography variant="h6" gutterBottom fontWeight="600">
@@ -458,12 +410,12 @@ const ContactPage: React.FC = () => {
             }}
           >
             <Typography variant="h5" gutterBottom fontWeight="600">
-              Dino Headquarters
+              {COMPANY_INFO.name} Headquarters
             </Typography>
             <Typography variant="body1" sx={{ mb: 2, opacity: 0.9 }}>
-              123 Tech Park, Sector 5<br />
-              Hyderabad, Telangana 500032<br />
-              India
+              {COMPANY_INFO.contact.address.street}<br />
+              {COMPANY_INFO.contact.address.city}, {COMPANY_INFO.contact.address.state} {COMPANY_INFO.contact.address.pincode}<br />
+              {COMPANY_INFO.contact.address.country}
             </Typography>
             <Button
               variant="contained"

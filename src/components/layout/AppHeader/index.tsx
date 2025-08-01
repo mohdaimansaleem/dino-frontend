@@ -34,6 +34,7 @@ import NotificationCenter from '../../NotificationCenter';
 import ThemeToggle from '../../ThemeToggle';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import MobileMenu from '../MobileMenu';
+import { NAVIGATION, COMPANY_INFO } from '../../../data/info';
 
 interface AppHeaderProps {
   onSectionScroll?: (sectionId: string) => void;
@@ -60,13 +61,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
 
   // Navigation items for home page
-  const homeNavItems = [
-    { label: 'Home', id: 'hero', icon: <Home /> },
-    { label: 'Features', id: 'features', icon: <Info /> },
-    { label: 'Pricing', id: 'pricing', icon: <AttachMoney /> },
-    { label: 'Testimonials', id: 'testimonials', icon: <RateReview /> },
-    { label: 'Contact', id: 'contact', icon: <ContactMail /> },
-  ];
+  const homeNavItems = NAVIGATION.home.map(item => ({
+    label: item.label,
+    id: item.id,
+    icon: React.createElement(item.icon)
+  }));
 
   // Smooth scroll to section
   const scrollToSection = (sectionId: string) => {
@@ -262,8 +261,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
   };
 
   const getPageTitle = () => {
-    if (isHomePage) return 'Dino';
-    return 'Dino';
+    if (isHomePage) return COMPANY_INFO.name;
+    return COMPANY_INFO.name;
   };
 
   return (
@@ -327,7 +326,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                         lineHeight: 1,
                       }}
                     >
-                      Digital Menu Revolution
+                      {COMPANY_INFO.tagline}
                     </Typography>
                 </Box>
               </Box>

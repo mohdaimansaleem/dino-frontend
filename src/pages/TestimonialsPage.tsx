@@ -20,187 +20,25 @@ import {
   FormatQuote,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { 
+  TESTIMONIALS, 
+  TESTIMONIAL_STATS, 
+  SUCCESS_STORIES 
+} from '../data/info';
 
 const TestimonialsPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const testimonials = [
-    {
-      id: 1,
-      name: 'Rajesh Kumar',
-      position: 'Owner',
-      restaurant: 'Spice Garden',
-      location: 'Mumbai, India',
-      avatar: '/api/placeholder/64/64',
-      rating: 5,
-      quote: 'Dino transformed our restaurant completely. We saw a 45% increase in orders within the first month. The QR code ordering system is a game-changer!',
-      metrics: {
-        orderIncrease: '45%',
-        timeReduction: '60%',
-        customerSatisfaction: '95%'
-      },
-      plan: 'Premium'
-    },
-    {
-      id: 2,
-      name: 'Priya Sharma',
-      position: 'Manager',
-      restaurant: 'Cafe Delight',
-      location: 'Delhi, India',
-      avatar: '/api/placeholder/64/64',
-      rating: 5,
-      quote: 'The analytics dashboard gives us insights we never had before. We can track everything in real-time and make data-driven decisions.',
-      metrics: {
-        orderIncrease: '35%',
-        timeReduction: '50%',
-        customerSatisfaction: '92%'
-      },
-      plan: 'Basic'
-    },
-    {
-      id: 3,
-      name: 'Mohammed Ali',
-      position: 'CEO',
-      restaurant: 'Biryani House Chain',
-      location: 'Hyderabad, India',
-      avatar: '/api/placeholder/64/64',
-      rating: 5,
-      quote: 'Managing 12 locations was a nightmare before Dino. Now everything is centralized and we can monitor all our restaurants from one dashboard.',
-      metrics: {
-        orderIncrease: '55%',
-        timeReduction: '70%',
-        customerSatisfaction: '97%'
-      },
-      plan: 'Enterprise'
-    },
-    {
-      id: 4,
-      name: 'Anita Patel',
-      position: 'Owner',
-      restaurant: 'South Indian Express',
-      location: 'Bangalore, India',
-      avatar: '/api/placeholder/64/64',
-      rating: 5,
-      quote: 'Our customers love the contactless ordering. During COVID, this system kept our business running when others had to close.',
-      metrics: {
-        orderIncrease: '40%',
-        timeReduction: '55%',
-        customerSatisfaction: '94%'
-      },
-      plan: 'Premium'
-    },
-    {
-      id: 5,
-      name: 'Vikram Singh',
-      position: 'Manager',
-      restaurant: 'Punjabi Dhaba',
-      location: 'Chandigarh, India',
-      avatar: '/api/placeholder/64/64',
-      rating: 4,
-      quote: 'The staff training was excellent and the support team is always available. Implementation was smooth and customers adapted quickly.',
-      metrics: {
-        orderIncrease: '30%',
-        timeReduction: '45%',
-        customerSatisfaction: '90%'
-      },
-      plan: 'Basic'
-    },
-    {
-      id: 6,
-      name: 'Deepika Reddy',
-      position: 'Owner',
-      restaurant: 'Coastal Kitchen',
-      location: 'Chennai, India',
-      avatar: '/api/placeholder/64/64',
-      rating: 5,
-      quote: 'The multi-language support helped us serve international customers better. Revenue from foreign tourists increased by 25%.',
-      metrics: {
-        orderIncrease: '38%',
-        timeReduction: '52%',
-        customerSatisfaction: '93%'
-      },
-      plan: 'Premium'
-    },
-    {
-      id: 7,
-      name: 'Suresh Agarwal',
-      position: 'Owner',
-      restaurant: 'Rajasthani Royal Thali',
-      location: 'Jaipur, India',
-      avatar: '/api/placeholder/64/64',
-      rating: 5,
-      quote: 'Our traditional thali business got a modern touch with Dino. Young customers love the QR ordering while we maintain our authentic taste.',
-      metrics: {
-        orderIncrease: '50%',
-        timeReduction: '65%',
-        customerSatisfaction: '96%'
-      },
-      plan: 'Basic'
-    },
-    {
-      id: 8,
-      name: 'Kavita Joshi',
-      position: 'Manager',
-      restaurant: 'Udupi Palace',
-      location: 'Bangalore, India',
-      avatar: '/api/placeholder/64/64',
-      rating: 5,
-      quote: 'During festival seasons, we used to have huge queues. Now customers can order while waiting, and our efficiency has doubled.',
-      metrics: {
-        orderIncrease: '42%',
-        timeReduction: '58%',
-        customerSatisfaction: '94%'
-      },
-      plan: 'Premium'
-    }
-  ];
+  const testimonials = TESTIMONIALS;
 
-  const stats = [
-    {
-      number: '2,500+',
-      label: 'Happy Restaurants',
-      icon: <Restaurant sx={{ fontSize: 40, color: 'primary.main' }} />
-    },
-    {
-      number: '5L+',
-      label: 'Orders Processed',
-      icon: <TrendingUp sx={{ fontSize: 40, color: 'success.main' }} />
-    },
-    {
-      number: '45%',
-      label: 'Average Revenue Increase',
-      icon: <Speed sx={{ fontSize: 40, color: 'warning.main' }} />
-    },
-    {
-      number: '4.9/5',
-      label: 'Customer Rating',
-      icon: <Star sx={{ fontSize: 40, color: 'error.main' }} />
-    }
-  ];
+  // Transform stats for display
+  const stats = TESTIMONIAL_STATS.map(stat => ({
+    number: stat.number,
+    label: stat.label,
+    icon: React.createElement(stat.icon, { sx: { fontSize: 40, color: 'primary.main' } })
+  }));
 
-  const successStories = [
-    {
-      title: 'From Struggling to Thriving',
-      restaurant: 'Green Leaf Cafe',
-      story: 'A small cafe in Pune was struggling with long queues and order mix-ups. After implementing Dino, they reduced wait times by 65% and increased customer satisfaction scores from 3.2 to 4.7 stars.',
-      results: ['65% reduction in wait time', '47% increase in orders', '4.7-star rating'],
-      image: '/api/placeholder/300/200'
-    },
-    {
-      title: 'Scaling Across Cities',
-      restaurant: 'Masala Magic Chain',
-      story: 'A regional chain wanted to expand but struggled with consistency across locations. Dino\'s centralized management helped them maintain quality while scaling from 3 to 15 locations.',
-      results: ['5x location growth', 'Consistent quality', '60% operational efficiency'],
-      image: '/api/placeholder/300/200'
-    },
-    {
-      title: 'Digital Transformation Success',
-      restaurant: 'Traditional Thali House',
-      story: 'A 50-year-old traditional restaurant embraced digital ordering with Dino. They attracted younger customers while retaining their loyal base, increasing revenue by 80%.',
-      results: ['80% revenue increase', '40% new customers', 'Preserved tradition'],
-      image: '/api/placeholder/300/200'
-    }
-  ];
+  const successStories = SUCCESS_STORIES;
 
   const getPlanColor = (plan: string) => {
     switch (plan) {

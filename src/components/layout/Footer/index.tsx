@@ -24,6 +24,11 @@ import {
   Speed,
   ArrowUpward,
 } from '@mui/icons-material';
+import { 
+  COMPANY_INFO, 
+  FOOTER_FEATURES, 
+  NAVIGATION 
+} from '../../../data/info';
 
 // Animation keyframes
 const float = keyframes`
@@ -118,7 +123,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                 animation: `${slideInUp} 1s ease-out`,
               }}
             >
-              © {currentYear} Dino Digital Menu Revolution. All rights reserved.
+              {COMPANY_INFO.legal.copyright.replace('2024', currentYear.toString())}
             </Typography>
           </Box>
         </Container>
@@ -126,12 +131,11 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
     );
   }
 
-  const features = [
-    { icon: <QrCode />, title: 'QR Ordering', description: 'Contactless dining experience' },
-    { icon: <Analytics />, title: 'Analytics', description: 'Real-time insights' },
-    { icon: <Security />, title: 'Secure', description: 'Bank-level encryption' },
-    { icon: <Speed />, title: 'Fast', description: 'Lightning quick service' },
-  ];
+  const features = FOOTER_FEATURES.map(feature => ({
+    icon: React.createElement(feature.icon),
+    title: feature.title,
+    description: feature.description
+  }));
 
   return (
     <Box
@@ -281,24 +285,17 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                   }} 
                 />
                 <Typography variant="h5" fontWeight="bold">
-                  Dino
+                  {COMPANY_INFO.name}
                 </Typography>
                 <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                  Digital Menu Revolution
+                  {COMPANY_INFO.tagline}
                 </Typography>
               </Box>
               <Typography variant="body2" sx={{ mb: 3, opacity: 0.9, lineHeight: 1.6 }}>
-                Transform your restaurant with our cutting-edge digital menu system. 
-                Enhance customer experience, boost efficiency, and increase revenue with 
-                our innovative QR-based ordering platform.
+                {COMPANY_INFO.description}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1 }}>
-                {[
-                  { icon: <Facebook />, color: '#1877F2' },
-                  { icon: <Twitter />, color: '#1DA1F2' },
-                  { icon: <Instagram />, color: '#E4405F' },
-                  { icon: <LinkedIn />, color: '#0A66C2' },
-                ].map((social, index) => (
+                {COMPANY_INFO.socialMedia.map((social, index) => (
                   <IconButton
                     key={index}
                     size="small"
@@ -317,7 +314,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                       } 
                     }}
                   >
-                    {social.icon}
+                    {React.createElement(social.icon)}
                   </IconButton>
                 ))}
               </Box>
@@ -336,7 +333,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                 Platform
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {['Features', 'Pricing', 'Testimonials', 'Demo'].map((item, index) => (
+                {NAVIGATION.footer.platform.map((item, index) => (
                   <Link
                     key={item}
                     href="#"
@@ -386,7 +383,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                 Solutions
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {['QR Menu System', 'Order Management', 'Analytics Dashboard', 'Customer Insights'].map((item) => (
+                {NAVIGATION.footer.solutions.map((item) => (
                   <Link
                     key={item}
                     href="#"
@@ -437,9 +434,9 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {[
-                  { icon: <LocationOn />, text: 'BKC, Mumbai, Maharashtra 400051' },
-                  { icon: <Phone />, text: '+91 98765 43210' },
-                  { icon: <Email />, text: 'hello@dinoemenu.in' },
+                  { icon: <LocationOn />, text: COMPANY_INFO.contact.address.full },
+                  { icon: <Phone />, text: COMPANY_INFO.contact.phone.primary },
+                  { icon: <Email />, text: COMPANY_INFO.contact.email.primary },
                 ].map((contact, index) => (
                   <Box 
                     key={index}
@@ -499,7 +496,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
           }}
         >
           <Typography variant="body2" sx={{ opacity: 0.8 }}>
-            © {currentYear} Dino Digital Menu Revolution. All rights reserved.
+            {COMPANY_INFO.legal.copyright.replace('2024', currentYear.toString())}
           </Typography>
           <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
             <Link
@@ -512,7 +509,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                 '&:hover': { opacity: 1, transform: 'translateY(-2px)' } 
               }}
             >
-              Privacy Policy
+              {COMPANY_INFO.legal.privacyPolicy}
             </Link>
             <Link
               href="#"
@@ -524,7 +521,7 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                 '&:hover': { opacity: 1, transform: 'translateY(-2px)' } 
               }}
             >
-              Terms of Service
+              {COMPANY_INFO.legal.termsOfService}
             </Link>
           </Box>
         </Box>

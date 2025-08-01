@@ -51,11 +51,19 @@ import Footer from '../components/layout/Footer';
 import AnimatedBackground from '../components/ui/AnimatedBackground';
 
 import { formatINR } from '../utils/formatters';
+import { 
+  CORE_FEATURES, 
+  PRICING_PLANS, 
+  TESTIMONIALS, 
+  COMPANY_STATS, 
+  BENEFITS,
+  CONTENT,
+  COMPANY_INFO
+} from '../data/info';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-
 
   // Refs for smooth scrolling
   const heroRef = useRef<HTMLDivElement>(null);
@@ -81,200 +89,48 @@ const HomePage: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const features = [
-    {
-      icon: <QrCode sx={{ fontSize: 40, color: 'primary.main' }} />,
-      title: 'Smart QR Ordering',
-      description: 'Customers scan QR codes to access your menu and place orders instantly with zero wait time.',
-      stats: '99.9% Uptime',
-    },
-    {
-      icon: <Analytics sx={{ fontSize: 40, color: 'success.main' }} />,
-      title: 'Advanced Analytics',
-      description: 'Real-time insights, predictive analytics, and revenue optimization tools for data-driven decisions.',
-      stats: '40% Revenue Boost',
-    },
-    {
-      icon: <Security sx={{ fontSize: 40, color: 'warning.main' }} />,
-      title: 'Enterprise Security',
-      description: 'Bank-level encryption, PCI compliance, and 24/7 monitoring to keep your data safe.',
-      stats: 'ISO 27001 Certified',
-    },
-    {
-      icon: <Speed sx={{ fontSize: 40, color: 'secondary.main' }} />,
-      title: 'Lightning Fast',
-      description: 'Sub-second loading times with global CDN and edge computing for optimal performance.',
-      stats: '<100ms Response',
-    },
-    {
-      icon: <Smartphone sx={{ fontSize: 40, color: 'error.main' }} />,
-      title: 'Mobile First',
-      description: 'Progressive web app with offline support and native app experience across all devices.',
-      stats: '5-Star Rating',
-    },
-    {
-      icon: <Support sx={{ fontSize: 40, color: 'info.main' }} />,
-      title: 'Premium Support',
-      description: 'Dedicated success manager, priority support, and custom integrations for enterprise clients.',
-      stats: '24/7 Available',
-    },
-  ];
+  // Transform features data for display
+  const features = CORE_FEATURES.map(feature => ({
+    icon: React.createElement(feature.icon, { sx: { fontSize: 40, color: feature.color } }),
+    title: feature.title,
+    description: feature.description,
+    stats: feature.stats,
+  }));
 
-  const pricingPlans = [
-    {
-      name: 'Starter',
-      price: 2999,
-      period: 'month',
-      description: 'Perfect for small cafes and restaurants',
-      icon: <Restaurant sx={{ fontSize: 40, color: 'primary.main' }} />,
-      features: [
-        'Up to 2 cafes',
-        'Basic QR menu',
-        'Order management',
-        'Basic analytics',
-        'Email support',
-        'Mobile app access',
-      ],
-      popular: false,
-      color: 'primary',
-    },
-    {
-      name: 'Professional',
-      price: 7999,
-      period: 'month',
-      description: 'Ideal for growing restaurant chains',
-      icon: <Business sx={{ fontSize: 40, color: 'secondary.main' }} />,
-      features: [
-        'Up to 10 cafes',
-        'Advanced QR features',
-        'Real-time analytics',
-        'Customer insights',
-        'Priority support',
-        'Custom branding',
-        'Multi-language support',
-        'Integration APIs',
-      ],
-      popular: true,
-      color: 'secondary',
-    },
-    {
-      name: 'Enterprise',
-      price: 19999,
-      period: 'month',
-      description: 'For large restaurant enterprises',
-      icon: <CorporateFare sx={{ fontSize: 40, color: 'success.main' }} />,
-      features: [
-        'Unlimited cafes',
-        'White-label solution',
-        'Advanced analytics',
-        'Custom integrations',
-        'Dedicated support',
-        'SLA guarantee',
-        'Custom features',
-        'Training & onboarding',
-      ],
-      popular: false,
-      color: 'success',
-    },
-  ];
+  // Transform pricing plans for display
+  const pricingPlans = PRICING_PLANS.map(plan => ({
+    name: plan.name,
+    price: plan.monthlyPrice,
+    period: 'month',
+    description: plan.description,
+    icon: React.createElement(plan.icon, { sx: { fontSize: 40, color: `${plan.color}.main` } }),
+    features: plan.features.slice(0, 6), // Take first 6 features for home page
+    popular: plan.popular,
+    color: plan.color,
+  }));
 
-  const testimonials = [
-    {
-      name: "Rajesh Kumar",
-      role: "Restaurant Owner",
-      restaurant: "Spice Garden",
-      rating: 5,
-      comment: "Dino E-Menu transformed our restaurant completely! Revenue increased by 45% in just 3 months. The QR ordering system is perfect for Indian customers.",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-    },
-    {
-      name: "Priya Sharma",
-      role: "Head Chef",
-      restaurant: "Mumbai Masala",
-      rating: 5,
-      comment: "The analytics helped us understand our customers better. We can track peak hours and optimize our menu for maximum profit.",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150",
-    },
-    {
-      name: "Arjun Patel",
-      role: "Manager",
-      restaurant: "Gujarati Thali House",
-      rating: 5,
-      comment: "Setup was incredibly easy. Our customers love ordering from their phones. Wait times reduced by 60% during lunch rush!",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
-    },
-    {
-      name: "Deepika Reddy",
-      role: "Owner",
-      restaurant: "South Indian Express",
-      rating: 5,
-      comment: "Best investment for our chain! Order accuracy improved and customers appreciate the contactless experience, especially post-COVID.",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150",
-    },
-    {
-      name: "Mohammed Ali",
-      role: "Operations Manager",
-      restaurant: "Biryani Palace",
-      rating: 5,
-      comment: "Managing our 8 locations across Mumbai became so much easier. Real-time tracking and centralized menu management is fantastic.",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-    },
-    {
-      name: "Anita Singh",
-      role: "Franchise Owner",
-      restaurant: "Punjabi Dhaba Chain",
-      rating: 5,
-      comment: "The enterprise features are outstanding. Custom branding helps maintain our traditional dhaba feel while being modern.",
-      avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150",
-    },
-  ];
+  // Transform testimonials for display
+  const testimonials = TESTIMONIALS.slice(0, 6).map(testimonial => ({
+    name: testimonial.name,
+    role: testimonial.role,
+    restaurant: testimonial.restaurant,
+    rating: testimonial.rating,
+    comment: testimonial.comment,
+    avatar: testimonial.avatar,
+  }));
 
-  const stats = [
-    { 
-      number: 5000, 
-      suffix: "+", 
-      label: "Restaurants", 
-      icon: <Restaurant />,
-      color: '#4caf50', // Green - matches success theme
-      bgColor: 'rgba(76, 175, 80, 0.1)'
-    },
-    { 
-      number: 1000000, 
-      suffix: "+", 
-      label: "Orders Daily", 
-      icon: <TrendingUp />,
-      color: '#2196f3', // Blue - matches growth theme  
-      bgColor: 'rgba(33, 150, 243, 0.1)'
-    },
-    { 
-      number: 99.9, 
-      suffix: "%", 
-      label: "Uptime", 
-      icon: <CloudDone />, 
-      decimals: 1,
-      color: '#ff9800', // Amber - matches progress theme
-      bgColor: 'rgba(255, 152, 0, 0.1)'
-    },
-    { 
-      number: 45, 
-      suffix: "%", 
-      label: "Revenue Boost", 
-      icon: <EmojiEvents />,
-      color: '#4caf50', // Green - matches success theme
-      bgColor: 'rgba(76, 175, 80, 0.1)'
-    },
-  ];
+  // Transform stats for display
+  const stats = COMPANY_STATS.map(stat => ({
+    number: stat.number,
+    suffix: stat.suffix,
+    label: stat.label,
+    icon: React.createElement(stat.icon),
+    color: stat.color,
+    bgColor: stat.bgColor,
+    decimals: stat.decimals,
+  }));
 
-  const benefits = [
-    'Reduce order processing time by 60%',
-    'Increase table turnover rate',
-    'Minimize order errors',
-    'Contactless ordering experience',
-    'Real-time order tracking',
-    'Detailed sales analytics',
-    'Easy menu updates',
-    'Multi-language support',
-  ];
+  const benefits = BENEFITS;
 
   return (
     <Box>
@@ -302,7 +158,7 @@ const HomePage: React.FC = () => {
               <Box sx={{ mb: 3 }}>
                 <Chip 
                   icon={<AutoAwesome sx={{ color: '#fffffeff !important' }} />}
-                  label="Revolutionary Technology" 
+                  label={CONTENT.hero.badge} 
                   sx={{ 
                     mb: 3, 
                     fontWeight: 500,
@@ -324,7 +180,7 @@ const HomePage: React.FC = () => {
                     color: 'text.primary',
                   }}
                 >
-                  Transform Your Restaurant
+                  {CONTENT.hero.title}
                 </Typography>
                 
                 <Typography 
@@ -335,7 +191,7 @@ const HomePage: React.FC = () => {
                     color: 'text.secondary',
                   }}
                 >
-                  with Digital Menu Ordering
+                  {CONTENT.hero.subtitle}
                 </Typography>
                 
                 <Typography 
@@ -348,8 +204,7 @@ const HomePage: React.FC = () => {
                     maxWidth: 500,
                   }}
                 >
-                  Join 5,000+ restaurants across India revolutionizing customer experience with QR code-based digital menus. 
-                  Let customers order directly from their phones while you manage everything from our powerful dashboard.
+                  {CONTENT.hero.description}
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -392,7 +247,7 @@ const HomePage: React.FC = () => {
                           transition: 'all 0.3s ease',
                         }}
                       >
-                        Start Free Trial
+                        {CONTENT.hero.cta.primary}
                       </Button>
                       <Button
                         variant="outlined"
@@ -413,7 +268,7 @@ const HomePage: React.FC = () => {
                           transition: 'all 0.3s ease',
                         }}
                       >
-                        Create Account
+                        {CONTENT.hero.cta.secondary}
                       </Button>
                     </>
                   )}
@@ -436,7 +291,7 @@ const HomePage: React.FC = () => {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    Learn More →
+                    {CONTENT.hero.quickActions.learnMore}
                   </Button>
                   <Button
                     variant="text"
@@ -453,7 +308,7 @@ const HomePage: React.FC = () => {
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    View Pricing →
+                    {CONTENT.hero.quickActions.viewPricing}
                   </Button>
                 </Box>
               </Box>
@@ -534,10 +389,10 @@ const HomePage: React.FC = () => {
       <Container maxWidth="lg" sx={{ py: 10 }} ref={featuresRef} id="features">
         <Box sx={{ textAlign: 'center', mb: 8 }}>
           <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
-            Why Choose Dino?
+            {CONTENT.features.title}
           </Typography>
           <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-            Everything you need to modernize your restaurant ordering experience with cutting-edge technology
+            {CONTENT.features.subtitle}
           </Typography>
         </Box>
 
@@ -588,10 +443,10 @@ const HomePage: React.FC = () => {
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
             <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
-              Simple, Transparent Pricing
+              {CONTENT.pricing.title}
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
-              Choose the perfect plan for your restaurant. All plans include our core features with no hidden fees.
+              {CONTENT.pricing.subtitle}
             </Typography>
           </Box>
 
@@ -684,14 +539,14 @@ const HomePage: React.FC = () => {
 
           <Box sx={{ textAlign: 'center', mt: 6 }}>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              All plans include 14-day free trial • No setup fees • Cancel anytime
+              {CONTENT.pricing.trialInfo}
             </Typography>
             <Button
               variant="text"
               onClick={() => scrollToSection(contactRef)}
               sx={{ textDecoration: 'underline' }}
             >
-              Need a custom plan? Contact us
+              {CONTENT.pricing.customPlan}
             </Button>
           </Box>
         </Container>
@@ -703,10 +558,10 @@ const HomePage: React.FC = () => {
           <Grid container spacing={8} alignItems="center">
             <Grid item xs={12} md={6}>
               <Typography variant="h3" gutterBottom fontWeight="600" color="text.primary">
-                Boost Your Restaurant's Efficiency
+                {CONTENT.benefits.title}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem' }}>
-                Join hundreds of restaurants that have transformed their operations with Dino E-Menu.
+                {CONTENT.benefits.subtitle}
               </Typography>
               <List>
                 {benefits.map((benefit, index) => (
@@ -738,24 +593,24 @@ const HomePage: React.FC = () => {
                 }}
               >
                 <Typography variant="h2" gutterBottom fontWeight="bold">
-                  60%
+                  {CONTENT.benefits.stats.processing.value}
                 </Typography>
                 <Typography variant="h6" gutterBottom>
-                  Faster Order Processing
+                  {CONTENT.benefits.stats.processing.label}
                 </Typography>
                 <Divider sx={{ my: 3, bgcolor: 'rgba(255,255,255,0.3)' }} />
                 <Typography variant="h2" gutterBottom fontWeight="bold">
-                  95%
+                  {CONTENT.benefits.stats.satisfaction.value}
                 </Typography>
                 <Typography variant="h6" gutterBottom>
-                  Customer Satisfaction
+                  {CONTENT.benefits.stats.satisfaction.label}
                 </Typography>
                 <Divider sx={{ my: 3, bgcolor: 'rgba(255,255,255,0.3)' }} />
                 <Typography variant="h2" gutterBottom fontWeight="bold">
-                  24/7
+                  {CONTENT.benefits.stats.availability.value}
                 </Typography>
                 <Typography variant="h6">
-                  System Availability
+                  {CONTENT.benefits.stats.availability.label}
                 </Typography>
               </Paper>
             </Grid>
@@ -768,10 +623,10 @@ const HomePage: React.FC = () => {
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
             <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
-              Loved by Restaurant Owners
+              {CONTENT.testimonials.title}
             </Typography>
             <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
-              See what our customers are saying about their experience with Dino E-Menu
+              {CONTENT.testimonials.subtitle}
             </Typography>
           </Box>
           
@@ -825,18 +680,18 @@ const HomePage: React.FC = () => {
         <Container maxWidth="lg">
           <Box sx={{ textAlign: 'center', mb: 8 }}>
             <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
-              Ready to Transform Your Restaurant?
+              {CONTENT.contact.title}
             </Typography>
             <Typography variant="h6" color="text.secondary">
-              Join thousands of successful restaurants using Dino E-Menu
+              {CONTENT.contact.subtitle}
             </Typography>
           </Box>
           
           <Grid container spacing={4} sx={{ mb: 8 }}>
             {[
-              { icon: <Phone />, title: 'Call Us', info: '+91 98765 43210', action: 'tel:+919876543210' },
-              { icon: <Email />, title: 'Email Us', info: 'hello@dinoemenu.in', action: 'mailto:hello@dinoemenu.in' },
-              { icon: <LocationOn />, title: 'Visit Us', info: 'BKC, Mumbai, Maharashtra 400051', action: '#' },
+              { icon: <Phone />, title: 'Call Us', info: COMPANY_INFO.contact.phone.primary, action: `tel:${COMPANY_INFO.contact.phone.primary.replace(/\s/g, '')}` },
+              { icon: <Email />, title: 'Email Us', info: COMPANY_INFO.contact.email.primary, action: `mailto:${COMPANY_INFO.contact.email.primary}` },
+              { icon: <LocationOn />, title: 'Visit Us', info: COMPANY_INFO.contact.address.full, action: '#' },
             ].map((contact, index) => (
               <Grid item xs={12} md={4} key={index}>
                 <Paper

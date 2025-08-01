@@ -32,139 +32,20 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { formatINR } from '../utils/formatters';
+import { 
+  PRICING_PLANS, 
+  PRICING_ADDONS, 
+  FAQS, 
+  PRICING_BENEFITS 
+} from '../data/info';
 
 const PricingPage: React.FC = () => {
   const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(false);
 
-  const pricingPlans = [
-    {
-      id: 'basic',
-      name: 'Basic',
-      description: 'Perfect for small cafes and restaurants',
-      monthlyPrice: 2999,
-      annualPrice: 29990,
-      popular: false,
-      maxCafes: 1,
-      maxUsers: 5,
-      features: [
-        'QR Code Ordering',
-        'Digital Menu Management',
-        'Order Management',
-        'Basic Analytics',
-        'Table Management',
-        'Customer Support',
-        'Mobile App Access',
-        'Payment Integration'
-      ],
-      limitations: [
-        'Limited to 1 cafe location',
-        'Basic reporting only',
-        'Email support only'
-      ]
-    },
-    {
-      id: 'premium',
-      name: 'Premium',
-      description: 'Ideal for growing restaurant chains',
-      monthlyPrice: 7999,
-      annualPrice: 79990,
-      popular: true,
-      maxCafes: 5,
-      maxUsers: 25,
-      features: [
-        'Everything in Basic',
-        'Advanced Analytics & Reports',
-        'Real-time Notifications',
-        'Multi-location Management',
-        'Custom Branding',
-        'Inventory Management',
-        'Staff Management',
-        'Priority Support',
-        'API Access',
-        'Custom Integrations'
-      ],
-      limitations: [
-        'Limited to 5 cafe locations',
-        'Standard API rate limits'
-      ]
-    },
-    {
-      id: 'enterprise',
-      name: 'Enterprise',
-      description: 'For large restaurant enterprises',
-      monthlyPrice: 19999,
-      annualPrice: 199990,
-      popular: false,
-      maxCafes: -1, // Unlimited
-      maxUsers: -1, // Unlimited
-      features: [
-        'Everything in Premium',
-        'Unlimited Locations',
-        'Unlimited Users',
-        'White-label Solution',
-        'Advanced Security Features',
-        'Dedicated Account Manager',
-        'Custom Development',
-        '24/7 Phone Support',
-        'On-premise Deployment',
-        'Advanced API Access',
-        'Custom Reports & Analytics',
-        'Training & Onboarding'
-      ],
-      limitations: []
-    }
-  ];
-
-  const addOns = [
-    {
-      name: 'Additional Location',
-      description: 'Add extra cafe locations to your plan',
-      price: 1500,
-      unit: 'per location/month'
-    },
-    {
-      name: 'Extra Users',
-      description: 'Add more staff users to your account',
-      price: 299,
-      unit: 'per user/month'
-    },
-    {
-      name: 'Custom Integration',
-      description: 'Connect with your existing POS/billing systems',
-      price: 15000,
-      unit: 'one-time setup'
-    },
-    {
-      name: 'Training Session',
-      description: 'Dedicated training for your team',
-      price: 5000,
-      unit: 'per session'
-    }
-  ];
-
-  const faqs = [
-    {
-      question: 'Can I change my plan anytime?',
-      answer: 'Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.'
-    },
-    {
-      question: 'Is there a free trial?',
-      answer: 'Yes, we offer a 14-day free trial for all plans. No credit card required to start.'
-    },
-    {
-      question: 'What payment methods do you accept?',
-      answer: 'We accept all major credit cards, debit cards, UPI, net banking, and bank transfers. For enterprise plans, we also offer invoice-based billing with GST.'
-    },
-    {
-      question: 'Is my data secure?',
-      answer: 'Absolutely. We use bank-level encryption and are compliant with industry standards including PCI DSS, GDPR, and Indian data protection regulations.'
-    },
-    {
-      question: 'Do you offer custom solutions?',
-      answer: 'Yes, our Enterprise plan includes custom development and white-label solutions tailored to your specific needs.'
-    }
-  ];
+  const pricingPlans = PRICING_PLANS;
+  const addOns = PRICING_ADDONS;
+  const faqs = FAQS.slice(0, 5); // Take first 5 FAQs for pricing page
 
 
 
@@ -283,8 +164,8 @@ const PricingPage: React.FC = () => {
                       </Box>
 
                       <Typography variant="body2" color="text.secondary">
-                        {plan.maxCafes === -1 ? 'Unlimited' : plan.maxCafes} cafe{plan.maxCafes !== 1 ? 's' : ''} • {' '}
-                        {plan.maxUsers === -1 ? 'Unlimited' : plan.maxUsers} user{plan.maxUsers !== 1 ? 's' : ''}
+                        {plan.maxCafes === -1 ? 'Unlimited' : plan.maxCafes} cafe{(plan.maxCafes === -1 || plan.maxCafes > 1) ? 's' : ''} • {' '}
+                        {plan.maxUsers === -1 ? 'Unlimited' : plan.maxUsers} user{(plan.maxUsers === -1 || plan.maxUsers > 1) ? 's' : ''}
                       </Typography>
                     </Box>
 
@@ -389,28 +270,7 @@ const PricingPage: React.FC = () => {
         </Box>
 
         <Grid container spacing={4}>
-          {[
-            {
-              icon: <TrendingUp sx={{ fontSize: 40, color: '#4CAF50' }} />,
-              title: 'Proven ROI',
-              description: 'Our customers see an average 40% increase in revenue within 3 months'
-            },
-            {
-              icon: <Security sx={{ fontSize: 40, color: '#2196F3' }} />,
-              title: 'Enterprise Security',
-              description: 'Bank-level security with PCI compliance and end-to-end encryption'
-            },
-            {
-              icon: <Support sx={{ fontSize: 40, color: '#FF9800' }} />,
-              title: 'Expert Support',
-              description: '24/7 support with dedicated account managers for premium plans'
-            },
-            {
-              icon: <CloudDone sx={{ fontSize: 40, color: '#9C27B0' }} />,
-              title: '99.9% Uptime',
-              description: 'Reliable cloud infrastructure with automatic backups and failover'
-            }
-          ].map((benefit, index) => (
+          {PRICING_BENEFITS.map((benefit, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
               <Box sx={{ textAlign: 'center' }}>
                 <Avatar
@@ -422,7 +282,7 @@ const PricingPage: React.FC = () => {
                     backgroundColor: 'transparent',
                   }}
                 >
-                  {benefit.icon}
+                  {React.createElement(benefit.icon, { sx: { fontSize: 40, color: benefit.color } })}
                 </Avatar>
                 <Typography variant="h6" gutterBottom fontWeight="600">
                   {benefit.title}
