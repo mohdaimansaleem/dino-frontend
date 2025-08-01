@@ -880,48 +880,6 @@ const HomePage: React.FC = () => {
               </Grid>
             ))}
           </Grid>
-
-          <Box sx={{ textAlign: 'center' }}>
-            {!user && (
-              <Paper
-                elevation={2}
-                sx={{
-                  display: 'inline-block',
-                  p: 6,
-                  backgroundColor: 'primary.main',
-                  color: 'primary.contrastText',
-                  border: '1px solid',
-                  borderColor: 'primary.dark',
-                }}
-              >
-                <DinoLogo size={60} />
-                <Typography variant="h4" gutterBottom fontWeight="600" sx={{ mt: 2 }}>
-                  Special Launch Offer
-                </Typography>
-                <Typography variant="body1" sx={{ mb: 4, opacity: 0.9 }}>
-                  Get 3 months free when you sign up today!
-                </Typography>
-                <Button
-                  variant="contained"
-                  size="large"
-                  onClick={() => navigate('/login')}
-                  sx={{ 
-                    backgroundColor: 'background.paper',
-                    color: 'primary.main',
-                    px: 4, 
-                    py: 1.5,
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                    '&:hover': {
-                      backgroundColor: 'grey.100',
-                    }
-                  }}
-                >
-                  Start Your Free Trial
-                </Button>
-              </Paper>
-            )}
-          </Box>
         </Container>
       </Box>
 

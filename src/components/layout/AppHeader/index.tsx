@@ -317,7 +317,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                   >
                     {getPageTitle()}
                   </Typography>
-                  {isHomePage && (
                     <Typography
                       variant="caption"
                       sx={{
@@ -330,7 +329,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                     >
                       Digital Menu Revolution
                     </Typography>
-                  )}
                 </Box>
               </Box>
 

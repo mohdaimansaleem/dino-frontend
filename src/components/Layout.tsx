@@ -305,13 +305,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const getPageTitle = () => {
-    if (isPublicMenuRoute) return 'Dino E-Menu';
+    if (isPublicMenuRoute) return 'Dino';
     if (isCheckoutRoute) return 'Checkout';
     if (isAdminRoute) {
       if (isOperator()) return 'Dino Operator';
       return 'Dino Admin';
     }
-    return 'Dino E-Menu';
+    return 'Dino';
   };
 
   return (
