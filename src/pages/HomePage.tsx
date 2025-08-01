@@ -45,6 +45,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DinoLogo from '../components/DinoLogo';
+import AnimatedCounter from '../components/ui/AnimatedCounter';
+import BouncingDice from '../components/ui/BouncingDice';
+import AnimatedBackground from '../components/ui/AnimatedBackground';
 
 import { formatINR } from '../utils/formatters';
 
@@ -226,10 +229,10 @@ const HomePage: React.FC = () => {
   ];
 
   const stats = [
-    { number: "5,000+", label: "Restaurants", icon: <Restaurant /> },
-    { number: "1M+", label: "Orders Daily", icon: <TrendingUp /> },
-    { number: "99.9%", label: "Uptime", icon: <CloudDone /> },
-    { number: "45%", label: "Revenue Boost", icon: <EmojiEvents /> },
+    { number: 5000, suffix: "+", label: "Restaurants", icon: <Restaurant /> },
+    { number: 1000000, suffix: "+", label: "Orders Daily", icon: <TrendingUp /> },
+    { number: 99.9, suffix: "%", label: "Uptime", icon: <CloudDone />, decimals: 1 },
+    { number: 45, suffix: "%", label: "Revenue Boost", icon: <EmojiEvents /> },
   ];
 
   const benefits = [
@@ -245,26 +248,38 @@ const HomePage: React.FC = () => {
 
   return (
     <Box>
+
       {/* Hero Section */}
       <Box
         ref={heroRef}
         id="hero"
         sx={{
-          py: { xs: 8, md: 12 },
-          backgroundColor: 'background.paper',
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          backgroundColor: 'primary.main',
           borderBottom: '1px solid',
           borderColor: 'divider',
+          position: 'relative',
+          overflow: 'hidden',
+          color: 'white',
         }}
       >
-        <Container maxWidth="lg">
+        <AnimatedBackground />
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 3 }}>
                 <Chip 
                   icon={<AutoAwesome />}
                   label="Revolutionary Technology" 
-                  color="primary"
-                  sx={{ mb: 3, fontWeight: 500 }}
+                  sx={{ 
+                    mb: 3, 
+                    fontWeight: 500,
+                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    color: 'white',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                  }}
                 />
                 
                 <Typography 
@@ -272,7 +287,7 @@ const HomePage: React.FC = () => {
                   sx={{ 
                     mb: 3,
                     fontWeight: 700,
-                    color: 'text.primary',
+                    color: 'white',
                   }}
                 >
                   Transform Your Restaurant
@@ -283,7 +298,7 @@ const HomePage: React.FC = () => {
                   sx={{ 
                     mb: 4,
                     fontWeight: 400,
-                    color: 'text.secondary',
+                    color: 'rgba(255,255,255,0.9)',
                   }}
                 >
                   with Digital Menu Ordering
@@ -295,7 +310,7 @@ const HomePage: React.FC = () => {
                     mb: 6,
                     fontSize: '1.1rem',
                     lineHeight: 1.7,
-                    color: 'text.secondary',
+                    color: 'rgba(255,255,255,0.8)',
                     maxWidth: 500,
                   }}
                 >
@@ -309,7 +324,18 @@ const HomePage: React.FC = () => {
                       variant="contained"
                       size="large"
                       onClick={() => navigate((user.role as string) === 'admin' ? '/admin' : '/profile')}
-                      sx={{ px: 4, py: 1.5, fontSize: '1rem' }}
+                      sx={{ 
+                        px: 4, 
+                        py: 1.5, 
+                        fontSize: '1rem',
+                        backgroundColor: 'white',
+                        color: 'primary.main',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255,255,255,0.9)',
+                          transform: 'translateY(-2px)',
+                        },
+                        transition: 'all 0.3s ease',
+                      }}
                     >
                       Go to Dashboard
                     </Button>
@@ -319,7 +345,18 @@ const HomePage: React.FC = () => {
                         variant="contained"
                         size="large"
                         onClick={() => navigate('/login')}
-                        sx={{ px: 4, py: 1.5, fontSize: '1rem' }}
+                        sx={{ 
+                          px: 4, 
+                          py: 1.5, 
+                          fontSize: '1rem',
+                          backgroundColor: 'white',
+                          color: 'primary.main',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255,255,255,0.9)',
+                            transform: 'translateY(-2px)',
+                          },
+                          transition: 'all 0.3s ease',
+                        }}
                       >
                         Start Free Trial
                       </Button>
@@ -328,7 +365,19 @@ const HomePage: React.FC = () => {
                         size="large"
                         startIcon={<PlayArrow />}
                         onClick={() => navigate('/register')}
-                        sx={{ px: 4, py: 1.5, fontSize: '1rem' }}
+                        sx={{ 
+                          px: 4, 
+                          py: 1.5, 
+                          fontSize: '1rem',
+                          borderColor: 'white',
+                          color: 'white',
+                          '&:hover': {
+                            borderColor: 'white',
+                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            transform: 'translateY(-2px)',
+                          },
+                          transition: 'all 0.3s ease',
+                        }}
                       >
                         Create Account
                       </Button>
@@ -339,30 +388,62 @@ const HomePage: React.FC = () => {
                 {/* Navigation Links */}
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 3 }}>
                   <Button
-                    color="inherit"
                     onClick={() => scrollToSection(featuresRef)}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ 
+                      textTransform: 'none',
+                      color: 'rgba(255,255,255,0.8)',
+                      '&:hover': {
+                        color: 'white',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        transform: 'translateY(-1px)',
+                      },
+                      transition: 'all 0.3s ease',
+                    }}
                   >
                     Features
                   </Button>
                   <Button
-                    color="inherit"
                     onClick={() => scrollToSection(pricingRef)}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ 
+                      textTransform: 'none',
+                      color: 'rgba(255,255,255,0.8)',
+                      '&:hover': {
+                        color: 'white',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        transform: 'translateY(-1px)',
+                      },
+                      transition: 'all 0.3s ease',
+                    }}
                   >
                     Pricing
                   </Button>
                   <Button
-                    color="inherit"
                     onClick={() => scrollToSection(testimonialsRef)}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ 
+                      textTransform: 'none',
+                      color: 'rgba(255,255,255,0.8)',
+                      '&:hover': {
+                        color: 'white',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        transform: 'translateY(-1px)',
+                      },
+                      transition: 'all 0.3s ease',
+                    }}
                   >
                     Testimonials
                   </Button>
                   <Button
-                    color="inherit"
                     onClick={() => scrollToSection(contactRef)}
-                    sx={{ textTransform: 'none' }}
+                    sx={{ 
+                      textTransform: 'none',
+                      color: 'rgba(255,255,255,0.8)',
+                      '&:hover': {
+                        color: 'white',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        transform: 'translateY(-1px)',
+                      },
+                      transition: 'all 0.3s ease',
+                    }}
                   >
                     Contact
                   </Button>
@@ -371,89 +452,71 @@ const HomePage: React.FC = () => {
             </Grid>
             
             <Grid item xs={12} md={6}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  position: 'relative',
-                }}
-              >
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 6,
-                    textAlign: 'center',
-                    backgroundColor: 'background.paper',
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      backgroundColor: 'primary.main',
-                      borderRadius: 2,
-                      p: 3,
-                      mb: 3,
-                      display: 'inline-block',
-                      color: 'primary.contrastText',
-                    }}
-                  >
-                    <QrCode sx={{ fontSize: 60 }} />
+              <Grid container spacing={3}>
+                {/* Animated Stats Section */}
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {stats.map((stat, index) => (
+                      <Paper
+                        key={index}
+                        elevation={2}
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          backgroundColor: 'rgba(255,255,255,0.9)',
+                          borderRadius: 2,
+                          border: '1px solid rgba(255,255,255,0.3)',
+                          backdropFilter: 'blur(10px)',
+                          '&:hover': {
+                            transform: 'translateX(10px) scale(1.05)',
+                            backgroundColor: 'rgba(255,255,255,0.95)',
+                          },
+                          transition: 'all 0.3s ease',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Box
+                            sx={{
+                              backgroundColor: 'primary.main',
+                              borderRadius: '50%',
+                              p: 1,
+                              color: 'white',
+                              minWidth: 40,
+                              height: 40,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {stat.icon}
+                          </Box>
+                          <Box sx={{ textAlign: 'left', flex: 1 }}>
+                            <AnimatedCounter
+                              end={stat.number}
+                              suffix={stat.suffix}
+                              decimals={stat.decimals || 0}
+                              duration={2000}
+                              delay={index * 200}
+                              variant="h6"
+                              color="primary.main"
+                              fontWeight="bold"
+                            />
+                            <Typography variant="caption" color="text.secondary">
+                              {stat.label}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Paper>
+                    ))}
                   </Box>
-                  <Typography variant="h5" gutterBottom fontWeight="600" color="text.primary">
-                    Scan & Order
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    Customers scan QR codes to access your digital menu
-                  </Typography>
-                </Paper>
-              </Box>
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
         </Container>
       </Box>
 
-      {/* Stats Section */}
-      <Box sx={{ py: 8, backgroundColor: 'grey.50' }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4}>
-            {stats.map((stat, index) => (
-              <Grid item xs={6} md={3} key={index}>
-                <Paper
-                  elevation={1}
-                  sx={{
-                    p: 4,
-                    textAlign: 'center',
-                    backgroundColor: 'background.paper',
-                    border: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Avatar
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      mx: 'auto',
-                      mb: 2,
-                      backgroundColor: 'primary.main',
-                    }}
-                  >
-                    {stat.icon}
-                  </Avatar>
-                  <Typography variant="h3" fontWeight="bold" color="primary.main">
-                    {stat.number}
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary">
-                    {stat.label}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </Container>
-      </Box>
+
 
       {/* Features Section */}
       <Container maxWidth="lg" sx={{ py: 10 }} ref={featuresRef} id="features">
@@ -475,10 +538,12 @@ const HomePage: React.FC = () => {
                   border: '1px solid',
                   borderColor: 'divider',
                   '&:hover': {
-                    boxShadow: 3,
-                    transform: 'translateY(-4px)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+                    transform: 'translateY(-12px) scale(1.02)',
+                    borderColor: 'primary.main',
                   },
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  cursor: 'pointer',
                 }}
               >
                 <CardContent sx={{ p: 4 }}>
@@ -528,10 +593,12 @@ const HomePage: React.FC = () => {
                     border: plan.popular ? '2px solid' : '1px solid',
                     borderColor: plan.popular ? 'secondary.main' : 'divider',
                     '&:hover': {
-                      boxShadow: 4,
-                      transform: 'translateY(-8px)',
+                      boxShadow: '0 25px 50px rgba(0,0,0,0.2)',
+                      transform: 'translateY(-15px) scale(1.03)',
+                      borderColor: plan.popular ? 'secondary.main' : 'primary.main',
                     },
-                    transition: 'all 0.3s ease',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer',
                   }}
                 >
                   {plan.popular && (
@@ -707,10 +774,12 @@ const HomePage: React.FC = () => {
                     border: '1px solid',
                     borderColor: 'divider',
                     '&:hover': {
-                      boxShadow: 3,
-                      transform: 'translateY(-4px)',
+                      boxShadow: '0 15px 30px rgba(0,0,0,0.12)',
+                      transform: 'translateY(-8px) scale(1.02)',
+                      borderColor: 'primary.main',
                     },
-                    transition: 'all 0.3s ease',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer',
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -767,10 +836,11 @@ const HomePage: React.FC = () => {
                     borderColor: 'divider',
                     cursor: contact.action !== '#' ? 'pointer' : 'default',
                     '&:hover': {
-                      boxShadow: 3,
-                      transform: 'translateY(-4px)',
+                      boxShadow: '0 15px 30px rgba(0,0,0,0.12)',
+                      transform: 'translateY(-10px) scale(1.03)',
+                      borderColor: 'primary.main',
                     },
-                    transition: 'all 0.3s ease',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                   onClick={() => {
                     if (contact.action !== '#') {
