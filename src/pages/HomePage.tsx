@@ -257,16 +257,16 @@ const HomePage: React.FC = () => {
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
-          backgroundColor: 'primary.main',
+          backgroundColor: 'grey.100',
           borderBottom: '1px solid',
           borderColor: 'divider',
           position: 'relative',
           overflow: 'hidden',
-          color: 'white',
+          color: 'text.primary',
         }}
       >
         <AnimatedBackground />
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
           <Grid container spacing={6} alignItems="center">
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 3 }}>
@@ -276,9 +276,10 @@ const HomePage: React.FC = () => {
                   sx={{ 
                     mb: 3, 
                     fontWeight: 500,
-                    backgroundColor: 'rgba(255,255,255,0.2)',
+                    backgroundColor: 'primary.main',
                     color: 'white',
-                    border: '1px solid rgba(255,255,255,0.3)',
+                    border: '1px solid',
+                    borderColor: 'primary.main',
                   }}
                 />
                 
@@ -287,7 +288,7 @@ const HomePage: React.FC = () => {
                   sx={{ 
                     mb: 3,
                     fontWeight: 700,
-                    color: 'white',
+                    color: 'text.primary',
                   }}
                 >
                   Transform Your Restaurant
@@ -298,7 +299,7 @@ const HomePage: React.FC = () => {
                   sx={{ 
                     mb: 4,
                     fontWeight: 400,
-                    color: 'rgba(255,255,255,0.9)',
+                    color: 'text.secondary',
                   }}
                 >
                   with Digital Menu Ordering
@@ -310,7 +311,7 @@ const HomePage: React.FC = () => {
                     mb: 6,
                     fontSize: '1.1rem',
                     lineHeight: 1.7,
-                    color: 'rgba(255,255,255,0.8)',
+                    color: 'text.secondary',
                     maxWidth: 500,
                   }}
                 >
@@ -349,10 +350,10 @@ const HomePage: React.FC = () => {
                           px: 4, 
                           py: 1.5, 
                           fontSize: '1rem',
-                          backgroundColor: 'white',
-                          color: 'primary.main',
+                          backgroundColor: 'primary.main',
+                          color: 'white',
                           '&:hover': {
-                            backgroundColor: 'rgba(255,255,255,0.9)',
+                            backgroundColor: 'primary.dark',
                             transform: 'translateY(-2px)',
                           },
                           transition: 'all 0.3s ease',
@@ -369,11 +370,11 @@ const HomePage: React.FC = () => {
                           px: 4, 
                           py: 1.5, 
                           fontSize: '1rem',
-                          borderColor: 'white',
-                          color: 'white',
+                          borderColor: 'primary.main',
+                          color: 'primary.main',
                           '&:hover': {
-                            borderColor: 'white',
-                            backgroundColor: 'rgba(255,255,255,0.1)',
+                            borderColor: 'primary.dark',
+                            backgroundColor: 'rgba(25, 118, 210, 0.04)',
                             transform: 'translateY(-2px)',
                           },
                           transition: 'all 0.3s ease',
@@ -391,10 +392,10 @@ const HomePage: React.FC = () => {
                     onClick={() => scrollToSection(featuresRef)}
                     sx={{ 
                       textTransform: 'none',
-                      color: 'rgba(255,255,255,0.8)',
+                      color: 'text.secondary',
                       '&:hover': {
-                        color: 'white',
-                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        color: 'primary.main',
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
                         transform: 'translateY(-1px)',
                       },
                       transition: 'all 0.3s ease',
@@ -406,10 +407,10 @@ const HomePage: React.FC = () => {
                     onClick={() => scrollToSection(pricingRef)}
                     sx={{ 
                       textTransform: 'none',
-                      color: 'rgba(255,255,255,0.8)',
+                      color: 'text.secondary',
                       '&:hover': {
-                        color: 'white',
-                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        color: 'primary.main',
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
                         transform: 'translateY(-1px)',
                       },
                       transition: 'all 0.3s ease',
@@ -421,10 +422,10 @@ const HomePage: React.FC = () => {
                     onClick={() => scrollToSection(testimonialsRef)}
                     sx={{ 
                       textTransform: 'none',
-                      color: 'rgba(255,255,255,0.8)',
+                      color: 'text.secondary',
                       '&:hover': {
-                        color: 'white',
-                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        color: 'primary.main',
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
                         transform: 'translateY(-1px)',
                       },
                       transition: 'all 0.3s ease',
@@ -436,10 +437,10 @@ const HomePage: React.FC = () => {
                     onClick={() => scrollToSection(contactRef)}
                     sx={{ 
                       textTransform: 'none',
-                      color: 'rgba(255,255,255,0.8)',
+                      color: 'text.secondary',
                       '&:hover': {
-                        color: 'white',
-                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        color: 'primary.main',
+                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
                         transform: 'translateY(-1px)',
                       },
                       transition: 'all 0.3s ease',
