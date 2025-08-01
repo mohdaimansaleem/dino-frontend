@@ -336,22 +336,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </Fade>
       </Box>
 
-      {/* Clean Footer - Hidden for customer facing pages */}
-      {(isHomePage) && !isCustomerFacingRoute && (
-        <Box
-          component="footer"
-          sx={{
-            py: 4,
-            px: 2,
-            mt: 'auto',
-            backgroundColor: 'grey.50',
-            borderTop: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <Container maxWidth="lg"></Container>
-        </Box>
-      )}
+
     </Box>
   );
 };

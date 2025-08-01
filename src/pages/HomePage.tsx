@@ -46,6 +46,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DinoLogo from '../components/DinoLogo';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
+import Footer from '../components/layout/Footer';
 
 import AnimatedBackground from '../components/ui/AnimatedBackground';
 
@@ -882,6 +883,9 @@ const HomePage: React.FC = () => {
           </Grid>
         </Container>
       </Box>
+
+      {/* Footer */}
+      <Footer />
 
       {/* Scroll to Top Button */}
       <Zoom in={trigger}>
