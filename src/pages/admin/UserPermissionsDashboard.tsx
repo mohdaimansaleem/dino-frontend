@@ -133,7 +133,7 @@ const UserPermissionsDashboard: React.FC = () => {
       name: 'Cafe Management',
       icon: <Restaurant />,
       color: '#00796b',
-      permissions: [PERMISSIONS.CAFE_ACTIVATE, PERMISSIONS.CAFE_DEACTIVATE, PERMISSIONS.CAFE_VIEW_ALL, PERMISSIONS.CAFE_SWITCH]
+      permissions: [PERMISSIONS.VENUE_ACTIVATE, PERMISSIONS.VENUE_DEACTIVATE, PERMISSIONS.VENUE_VIEW_ALL, PERMISSIONS.VENUE_SWITCH]
     }
   ];
 

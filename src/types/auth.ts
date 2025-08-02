@@ -47,51 +47,51 @@ export interface RegisterData {
   lastName: string;
 }
 
-// Permission constants
+// Permission constants (using dot notation to match backend)
 export const PERMISSIONS = {
   // Dashboard permissions
-  DASHBOARD_VIEW: 'dashboard:view',
+  DASHBOARD_VIEW: 'dashboard.read',
   
   // Orders permissions
-  ORDERS_VIEW: 'orders:view',
-  ORDERS_UPDATE: 'orders:update',
-  ORDERS_CREATE: 'orders:create',
-  ORDERS_DELETE: 'orders:delete',
+  ORDERS_VIEW: 'order.read',
+  ORDERS_UPDATE: 'order.update',
+  ORDERS_CREATE: 'order.create',
+  ORDERS_DELETE: 'order.delete',
   
   // Menu permissions
-  MENU_VIEW: 'menu:view',
-  MENU_UPDATE: 'menu:update',
-  MENU_CREATE: 'menu:create',
-  MENU_DELETE: 'menu:delete',
+  MENU_VIEW: 'menu.read',
+  MENU_UPDATE: 'menu.update',
+  MENU_CREATE: 'menu.create',
+  MENU_DELETE: 'menu.delete',
   
   // Tables permissions
-  TABLES_VIEW: 'tables:view',
-  TABLES_UPDATE: 'tables:update',
-  TABLES_CREATE: 'tables:create',
-  TABLES_DELETE: 'tables:delete',
+  TABLES_VIEW: 'table.read',
+  TABLES_UPDATE: 'table.update',
+  TABLES_CREATE: 'table.create',
+  TABLES_DELETE: 'table.delete',
   
   // Settings permissions
-  SETTINGS_VIEW: 'settings:view',
-  SETTINGS_UPDATE: 'settings:update',
+  SETTINGS_VIEW: 'settings.read',
+  SETTINGS_UPDATE: 'settings.update',
   
   // User management permissions
-  USERS_VIEW: 'users:view',
-  USERS_UPDATE: 'users:update',
-  USERS_CREATE: 'users:create',
-  USERS_DELETE: 'users:delete',
+  USERS_VIEW: 'user.read',
+  USERS_UPDATE: 'user.update',
+  USERS_CREATE: 'user.create',
+  USERS_DELETE: 'user.delete',
   
   // Workspace permissions
-  WORKSPACE_VIEW: 'workspace:view',
-  WORKSPACE_UPDATE: 'workspace:update',
-  WORKSPACE_CREATE: 'workspace:create',
-  WORKSPACE_DELETE: 'workspace:delete',
-  WORKSPACE_SWITCH: 'workspace:switch',
+  WORKSPACE_VIEW: 'workspace.read',
+  WORKSPACE_UPDATE: 'workspace.update',
+  WORKSPACE_CREATE: 'workspace.create',
+  WORKSPACE_DELETE: 'workspace.delete',
+  WORKSPACE_SWITCH: 'workspace.manage',
   
-  // Cafe management permissions
-  CAFE_ACTIVATE: 'cafe:activate',
-  CAFE_DEACTIVATE: 'cafe:deactivate',
-  CAFE_VIEW_ALL: 'cafe:view_all',
-  CAFE_SWITCH: 'cafe:switch',
+  // Venue management permissions (renamed from cafe)
+  VENUE_ACTIVATE: 'venue.update',
+  VENUE_DEACTIVATE: 'venue.update',
+  VENUE_VIEW_ALL: 'venue.read',
+  VENUE_SWITCH: 'venue.manage',
 } as const;
 
 // Role definitions

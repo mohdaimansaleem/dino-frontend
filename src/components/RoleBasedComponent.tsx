@@ -71,14 +71,14 @@ export const usePermissions = () => {
     isAdminOrAbove: () => hasRole(ROLES.SUPERADMIN) || hasRole(ROLES.ADMIN),
     isOperatorOrAbove: () => hasRole(ROLES.SUPERADMIN) || hasRole(ROLES.ADMIN) || hasRole(ROLES.OPERATOR),
     
-    // Permission checks
-    canViewDashboard: () => hasPermission('dashboard:view'),
-    canManageUsers: () => hasPermission('users:view') || hasPermission('users:create'),
-    canManageVenues: () => hasPermission('workspace:view') || hasPermission('workspace:create'),
-    canManageOrders: () => hasPermission('orders:view') || hasPermission('orders:update'),
-    canManageMenu: () => hasPermission('menu:view') || hasPermission('menu:create'),
-    canManageTables: () => hasPermission('tables:view') || hasPermission('tables:create'),
-    canViewSettings: () => hasPermission('settings:view'),
+    // Permission checks (using dot notation to match backend)
+    canViewDashboard: () => hasPermission('dashboard.read'),
+    canManageUsers: () => hasPermission('user.read') || hasPermission('user.create'),
+    canManageVenues: () => hasPermission('workspace.read') || hasPermission('workspace.create'),
+    canManageOrders: () => hasPermission('order.read') || hasPermission('order.update'),
+    canManageMenu: () => hasPermission('menu.read') || hasPermission('menu.create'),
+    canManageTables: () => hasPermission('table.read') || hasPermission('table.create'),
+    canViewSettings: () => hasPermission('settings.read'),
   };
 };
 

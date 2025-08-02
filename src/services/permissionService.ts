@@ -9,34 +9,34 @@ class PermissionService {
       displayName: 'Super Administrator',
       description: 'Full system access with workspace management',
       permissions: [
-        { id: '1', name: PERMISSIONS.DASHBOARD_VIEW, resource: 'dashboard', action: 'view', description: 'View dashboard' },
-        { id: '2', name: PERMISSIONS.ORDERS_VIEW, resource: 'orders', action: 'view', description: 'View orders' },
-        { id: '3', name: PERMISSIONS.ORDERS_UPDATE, resource: 'orders', action: 'update', description: 'Update orders' },
-        { id: '4', name: PERMISSIONS.ORDERS_CREATE, resource: 'orders', action: 'create', description: 'Create orders' },
-        { id: '5', name: PERMISSIONS.ORDERS_DELETE, resource: 'orders', action: 'delete', description: 'Delete orders' },
-        { id: '6', name: PERMISSIONS.MENU_VIEW, resource: 'menu', action: 'view', description: 'View menu' },
+        { id: '1', name: PERMISSIONS.DASHBOARD_VIEW, resource: 'dashboard', action: 'read', description: 'View dashboard' },
+        { id: '2', name: PERMISSIONS.ORDERS_VIEW, resource: 'order', action: 'read', description: 'View orders' },
+        { id: '3', name: PERMISSIONS.ORDERS_UPDATE, resource: 'order', action: 'update', description: 'Update orders' },
+        { id: '4', name: PERMISSIONS.ORDERS_CREATE, resource: 'order', action: 'create', description: 'Create orders' },
+        { id: '5', name: PERMISSIONS.ORDERS_DELETE, resource: 'order', action: 'delete', description: 'Delete orders' },
+        { id: '6', name: PERMISSIONS.MENU_VIEW, resource: 'menu', action: 'read', description: 'View menu' },
         { id: '7', name: PERMISSIONS.MENU_UPDATE, resource: 'menu', action: 'update', description: 'Update menu' },
         { id: '8', name: PERMISSIONS.MENU_CREATE, resource: 'menu', action: 'create', description: 'Create menu items' },
         { id: '9', name: PERMISSIONS.MENU_DELETE, resource: 'menu', action: 'delete', description: 'Delete menu items' },
-        { id: '10', name: PERMISSIONS.TABLES_VIEW, resource: 'tables', action: 'view', description: 'View tables' },
-        { id: '11', name: PERMISSIONS.TABLES_UPDATE, resource: 'tables', action: 'update', description: 'Update tables' },
-        { id: '12', name: PERMISSIONS.TABLES_CREATE, resource: 'tables', action: 'create', description: 'Create tables' },
-        { id: '13', name: PERMISSIONS.TABLES_DELETE, resource: 'tables', action: 'delete', description: 'Delete tables' },
-        { id: '14', name: PERMISSIONS.SETTINGS_VIEW, resource: 'settings', action: 'view', description: 'View settings' },
+        { id: '10', name: PERMISSIONS.TABLES_VIEW, resource: 'table', action: 'read', description: 'View tables' },
+        { id: '11', name: PERMISSIONS.TABLES_UPDATE, resource: 'table', action: 'update', description: 'Update tables' },
+        { id: '12', name: PERMISSIONS.TABLES_CREATE, resource: 'table', action: 'create', description: 'Create tables' },
+        { id: '13', name: PERMISSIONS.TABLES_DELETE, resource: 'table', action: 'delete', description: 'Delete tables' },
+        { id: '14', name: PERMISSIONS.SETTINGS_VIEW, resource: 'settings', action: 'read', description: 'View settings' },
         { id: '15', name: PERMISSIONS.SETTINGS_UPDATE, resource: 'settings', action: 'update', description: 'Update settings' },
-        { id: '16', name: PERMISSIONS.USERS_VIEW, resource: 'users', action: 'view', description: 'View users' },
-        { id: '17', name: PERMISSIONS.USERS_UPDATE, resource: 'users', action: 'update', description: 'Update users' },
-        { id: '18', name: PERMISSIONS.USERS_CREATE, resource: 'users', action: 'create', description: 'Create users' },
-        { id: '19', name: PERMISSIONS.USERS_DELETE, resource: 'users', action: 'delete', description: 'Delete users' },
-        { id: '20', name: PERMISSIONS.WORKSPACE_VIEW, resource: 'workspace', action: 'view', description: 'View workspaces' },
+        { id: '16', name: PERMISSIONS.USERS_VIEW, resource: 'user', action: 'read', description: 'View users' },
+        { id: '17', name: PERMISSIONS.USERS_UPDATE, resource: 'user', action: 'update', description: 'Update users' },
+        { id: '18', name: PERMISSIONS.USERS_CREATE, resource: 'user', action: 'create', description: 'Create users' },
+        { id: '19', name: PERMISSIONS.USERS_DELETE, resource: 'user', action: 'delete', description: 'Delete users' },
+        { id: '20', name: PERMISSIONS.WORKSPACE_VIEW, resource: 'workspace', action: 'read', description: 'View workspaces' },
         { id: '21', name: PERMISSIONS.WORKSPACE_UPDATE, resource: 'workspace', action: 'update', description: 'Update workspaces' },
         { id: '22', name: PERMISSIONS.WORKSPACE_CREATE, resource: 'workspace', action: 'create', description: 'Create workspaces' },
         { id: '23', name: PERMISSIONS.WORKSPACE_DELETE, resource: 'workspace', action: 'delete', description: 'Delete workspaces' },
-        { id: '24', name: PERMISSIONS.WORKSPACE_SWITCH, resource: 'workspace', action: 'switch', description: 'Switch workspaces' },
-        { id: '25', name: PERMISSIONS.CAFE_ACTIVATE, resource: 'cafe', action: 'activate', description: 'Activate cafes' },
-        { id: '26', name: PERMISSIONS.CAFE_DEACTIVATE, resource: 'cafe', action: 'deactivate', description: 'Deactivate cafes' },
-        { id: '27', name: PERMISSIONS.CAFE_VIEW_ALL, resource: 'cafe', action: 'view_all', description: 'View all cafes' },
-        { id: '28', name: PERMISSIONS.CAFE_SWITCH, resource: 'cafe', action: 'switch', description: 'Switch cafes' },
+        { id: '24', name: PERMISSIONS.WORKSPACE_SWITCH, resource: 'workspace', action: 'manage', description: 'Switch workspaces' },
+        { id: '25', name: PERMISSIONS.VENUE_ACTIVATE, resource: 'venue', action: 'update', description: 'Activate venues' },
+        { id: '26', name: PERMISSIONS.VENUE_DEACTIVATE, resource: 'venue', action: 'update', description: 'Deactivate venues' },
+        { id: '27', name: PERMISSIONS.VENUE_VIEW_ALL, resource: 'venue', action: 'read', description: 'View all venues' },
+        { id: '28', name: PERMISSIONS.VENUE_SWITCH, resource: 'venue', action: 'manage', description: 'Switch venues' },
       ]
     },
     [ROLES.ADMIN]: {
@@ -45,25 +45,25 @@ class PermissionService {
       displayName: 'Administrator',
       description: 'Full access to all features',
       permissions: [
-        { id: '1', name: PERMISSIONS.DASHBOARD_VIEW, resource: 'dashboard', action: 'view', description: 'View dashboard' },
-        { id: '2', name: PERMISSIONS.ORDERS_VIEW, resource: 'orders', action: 'view', description: 'View orders' },
-        { id: '3', name: PERMISSIONS.ORDERS_UPDATE, resource: 'orders', action: 'update', description: 'Update orders' },
-        { id: '4', name: PERMISSIONS.ORDERS_CREATE, resource: 'orders', action: 'create', description: 'Create orders' },
-        { id: '5', name: PERMISSIONS.ORDERS_DELETE, resource: 'orders', action: 'delete', description: 'Delete orders' },
-        { id: '6', name: PERMISSIONS.MENU_VIEW, resource: 'menu', action: 'view', description: 'View menu' },
+        { id: '1', name: PERMISSIONS.DASHBOARD_VIEW, resource: 'dashboard', action: 'read', description: 'View dashboard' },
+        { id: '2', name: PERMISSIONS.ORDERS_VIEW, resource: 'order', action: 'read', description: 'View orders' },
+        { id: '3', name: PERMISSIONS.ORDERS_UPDATE, resource: 'order', action: 'update', description: 'Update orders' },
+        { id: '4', name: PERMISSIONS.ORDERS_CREATE, resource: 'order', action: 'create', description: 'Create orders' },
+        { id: '5', name: PERMISSIONS.ORDERS_DELETE, resource: 'order', action: 'delete', description: 'Delete orders' },
+        { id: '6', name: PERMISSIONS.MENU_VIEW, resource: 'menu', action: 'read', description: 'View menu' },
         { id: '7', name: PERMISSIONS.MENU_UPDATE, resource: 'menu', action: 'update', description: 'Update menu' },
         { id: '8', name: PERMISSIONS.MENU_CREATE, resource: 'menu', action: 'create', description: 'Create menu items' },
         { id: '9', name: PERMISSIONS.MENU_DELETE, resource: 'menu', action: 'delete', description: 'Delete menu items' },
-        { id: '10', name: PERMISSIONS.TABLES_VIEW, resource: 'tables', action: 'view', description: 'View tables' },
-        { id: '11', name: PERMISSIONS.TABLES_UPDATE, resource: 'tables', action: 'update', description: 'Update tables' },
-        { id: '12', name: PERMISSIONS.TABLES_CREATE, resource: 'tables', action: 'create', description: 'Create tables' },
-        { id: '13', name: PERMISSIONS.TABLES_DELETE, resource: 'tables', action: 'delete', description: 'Delete tables' },
-        { id: '14', name: PERMISSIONS.SETTINGS_VIEW, resource: 'settings', action: 'view', description: 'View settings' },
+        { id: '10', name: PERMISSIONS.TABLES_VIEW, resource: 'table', action: 'read', description: 'View tables' },
+        { id: '11', name: PERMISSIONS.TABLES_UPDATE, resource: 'table', action: 'update', description: 'Update tables' },
+        { id: '12', name: PERMISSIONS.TABLES_CREATE, resource: 'table', action: 'create', description: 'Create tables' },
+        { id: '13', name: PERMISSIONS.TABLES_DELETE, resource: 'table', action: 'delete', description: 'Delete tables' },
+        { id: '14', name: PERMISSIONS.SETTINGS_VIEW, resource: 'settings', action: 'read', description: 'View settings' },
         { id: '15', name: PERMISSIONS.SETTINGS_UPDATE, resource: 'settings', action: 'update', description: 'Update settings' },
-        { id: '16', name: PERMISSIONS.USERS_VIEW, resource: 'users', action: 'view', description: 'View users' },
-        { id: '17', name: PERMISSIONS.USERS_UPDATE, resource: 'users', action: 'update', description: 'Update users' },
-        { id: '18', name: PERMISSIONS.USERS_CREATE, resource: 'users', action: 'create', description: 'Create users' },
-        { id: '19', name: PERMISSIONS.USERS_DELETE, resource: 'users', action: 'delete', description: 'Delete users' },
+        { id: '16', name: PERMISSIONS.USERS_VIEW, resource: 'user', action: 'read', description: 'View users' },
+        { id: '17', name: PERMISSIONS.USERS_UPDATE, resource: 'user', action: 'update', description: 'Update users' },
+        { id: '18', name: PERMISSIONS.USERS_CREATE, resource: 'user', action: 'create', description: 'Create users' },
+        { id: '19', name: PERMISSIONS.USERS_DELETE, resource: 'user', action: 'delete', description: 'Delete users' },
       ]
     },
     [ROLES.OPERATOR]: {
@@ -72,8 +72,8 @@ class PermissionService {
       displayName: 'Operator',
       description: 'Limited access to orders management only',
       permissions: [
-        { id: '2', name: PERMISSIONS.ORDERS_VIEW, resource: 'orders', action: 'view', description: 'View orders' },
-        { id: '3', name: PERMISSIONS.ORDERS_UPDATE, resource: 'orders', action: 'update', description: 'Update order status only' },
+        { id: '2', name: PERMISSIONS.ORDERS_VIEW, resource: 'order', action: 'read', description: 'View orders' },
+        { id: '3', name: PERMISSIONS.ORDERS_UPDATE, resource: 'order', action: 'update', description: 'Update order status only' },
       ]
     }
   };
@@ -89,7 +89,24 @@ class PermissionService {
     // First check backend permissions if available
     const backendPermissions = this.getBackendPermissions();
     if (backendPermissions && backendPermissions.length > 0) {
-      return backendPermissions.some((p: any) => p.name === permission);
+      // Check for exact match first
+      if (backendPermissions.some((p: any) => p.name === permission)) {
+        return true;
+      }
+      
+      // Convert colon notation to dot notation for backend compatibility
+      const dotNotationPermission = permission.replace(':', '.');
+      if (backendPermissions.some((p: any) => p.name === dotNotationPermission)) {
+        return true;
+      }
+      
+      // Check for wildcard permissions
+      const [resource, action] = permission.split(/[:.]/);
+      return backendPermissions.some((p: any) => 
+        p.name === `${resource}.manage` || 
+        p.name === `${resource}:manage` ||
+        (p.resource === resource && p.action === 'manage')
+      );
     }
 
     // Fallback to static permissions
@@ -294,7 +311,7 @@ class PermissionService {
    * Check if user can switch cafes
    */
   static canSwitchCafe(user: User | null): boolean {
-    return this.isSuperAdmin(user) || this.hasPermission(user, PERMISSIONS.CAFE_SWITCH);
+    return this.isSuperAdmin(user) || this.hasPermission(user, PERMISSIONS.VENUE_SWITCH);
   }
 
   /**
@@ -302,8 +319,8 @@ class PermissionService {
    */
   static canManageCafeStatus(user: User | null): boolean {
     return this.isSuperAdmin(user) || 
-           this.hasPermission(user, PERMISSIONS.CAFE_ACTIVATE) ||
-           this.hasPermission(user, PERMISSIONS.CAFE_DEACTIVATE);
+           this.hasPermission(user, PERMISSIONS.VENUE_ACTIVATE) ||
+           this.hasPermission(user, PERMISSIONS.VENUE_DEACTIVATE);
   }
 }
 

@@ -7,6 +7,7 @@ import { ConnectionStatus, LiveDataIndicator, OrderStatusIndicator, TableStatusI
 import ActivityFeed from '../realtime/ActivityFeed';
 import RoleBasedComponent from '../RoleBasedComponent';
 import PermissionGate from '../PermissionGate';
+import { PERMISSIONS } from '../../types/auth';
 
 interface RealTimeDashboardProps {
   className?: string;
@@ -88,7 +89,7 @@ const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({ className = '' })
       </Card>
 
       {/* Live Orders Section */}
-      <PermissionGate permission="orders:view">
+      <PermissionGate permission={PERMISSIONS.ORDERS_VIEW}>
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Live Orders</h3>
@@ -199,7 +200,7 @@ const RealTimeDashboard: React.FC<RealTimeDashboardProps> = ({ className = '' })
       </PermissionGate>
 
       {/* Live Tables Section */}
-      <PermissionGate permission="tables:view">
+      <PermissionGate permission={PERMISSIONS.TABLES_VIEW}>
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Live Table Status</h3>

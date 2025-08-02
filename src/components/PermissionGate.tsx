@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PermissionService from '../services/permissionService';
-import { PermissionName, RoleName } from '../types/auth';
+import { PermissionName, RoleName, PERMISSIONS } from '../types/auth';
 
 interface PermissionGateProps {
   children: ReactNode;
@@ -107,35 +107,35 @@ export default PermissionGate;
 // Convenience components for common permission patterns
 
 export const CanViewDashboard: React.FC<Omit<PermissionGateProps, 'permission'>> = (props) => (
-  <PermissionGate {...props} permission="dashboard:view" />
+  <PermissionGate {...props} permission={PERMISSIONS.DASHBOARD_VIEW} />
 );
 
 export const CanManageOrders: React.FC<Omit<PermissionGateProps, 'permissions'>> = (props) => (
-  <PermissionGate {...props} permissions={["orders:view", "orders:update"]} />
+  <PermissionGate {...props} permissions={[PERMISSIONS.ORDERS_VIEW, PERMISSIONS.ORDERS_UPDATE]} />
 );
 
 export const CanCreateOrders: React.FC<Omit<PermissionGateProps, 'permission'>> = (props) => (
-  <PermissionGate {...props} permission="orders:create" />
+  <PermissionGate {...props} permission={PERMISSIONS.ORDERS_CREATE} />
 );
 
 export const CanManageMenu: React.FC<Omit<PermissionGateProps, 'permissions'>> = (props) => (
-  <PermissionGate {...props} permissions={["menu:view", "menu:update", "menu:create"]} />
+  <PermissionGate {...props} permissions={[PERMISSIONS.MENU_VIEW, PERMISSIONS.MENU_UPDATE, PERMISSIONS.MENU_CREATE]} />
 );
 
 export const CanManageTables: React.FC<Omit<PermissionGateProps, 'permissions'>> = (props) => (
-  <PermissionGate {...props} permissions={["tables:view", "tables:update"]} />
+  <PermissionGate {...props} permissions={[PERMISSIONS.TABLES_VIEW, PERMISSIONS.TABLES_UPDATE]} />
 );
 
 export const CanManageUsers: React.FC<Omit<PermissionGateProps, 'permissions'>> = (props) => (
-  <PermissionGate {...props} permissions={["users:view", "users:create", "users:update"]} />
+  <PermissionGate {...props} permissions={[PERMISSIONS.USERS_VIEW, PERMISSIONS.USERS_CREATE, PERMISSIONS.USERS_UPDATE]} />
 );
 
 export const CanManageSettings: React.FC<Omit<PermissionGateProps, 'permission'>> = (props) => (
-  <PermissionGate {...props} permission="settings:update" />
+  <PermissionGate {...props} permission={PERMISSIONS.SETTINGS_UPDATE} />
 );
 
 export const CanManageWorkspace: React.FC<Omit<PermissionGateProps, 'permissions'>> = (props) => (
-  <PermissionGate {...props} permissions={["workspace:view", "workspace:update"]} />
+  <PermissionGate {...props} permissions={[PERMISSIONS.WORKSPACE_VIEW, PERMISSIONS.WORKSPACE_UPDATE]} />
 );
 
 // Higher-order component for wrapping entire components with permission checks

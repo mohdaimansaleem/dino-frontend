@@ -255,7 +255,7 @@ const WorkspaceManagement: React.FC = () => {
   };
 
   const canManageWorkspaces = hasPermission(PERMISSIONS.WORKSPACE_UPDATE);
-  const canCreateCafes = hasPermission(PERMISSIONS.CAFE_ACTIVATE);
+  const canCreateCafes = hasPermission(PERMISSIONS.VENUE_ACTIVATE);
   const canSwitchWorkspaces = hasPermission(PERMISSIONS.WORKSPACE_SWITCH);
   const canDeleteItems = isSuperAdmin(); // Use proper role check
   const canCreateWorkspaces = false; // SuperAdmin cannot create workspaces

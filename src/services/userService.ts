@@ -134,11 +134,6 @@ class UserService {
         value: 'operator',
         label: 'Operator',
         description: 'Order management and basic venue operations'
-      },
-      {
-        value: 'customer',
-        label: 'Customer',
-        description: 'Basic customer access for ordering'
       }
     ];
   }
@@ -149,37 +144,37 @@ class UserService {
   getRolePermissions(role: string): string[] {
     const permissions = {
       superadmin: [
-        'workspace:*',
-        'venue:*',
-        'user:*',
-        'order:*',
-        'menu:*',
-        'table:*',
-        'analytics:*'
+        'workspace.*',
+        'venue.*',
+        'user.*',
+        'order.*',
+        'menu.*',
+        'table.*',
+        'analytics.*'
       ],
       admin: [
-        'venue:view',
-        'venue:update',
-        'user:view',
-        'user:create',
-        'user:update',
-        'order:*',
-        'menu:*',
-        'table:*',
-        'analytics:view'
+        'venue.read',
+        'venue.update',
+        'user.read',
+        'user.create',
+        'user.update',
+        'order.*',
+        'menu.*',
+        'table.*',
+        'analytics.read'
       ],
       operator: [
-        'venue:view',
-        'order:view',
-        'order:update',
-        'menu:view',
-        'table:view',
-        'table:update'
+        'venue.read',
+        'order.read',
+        'order.update',
+        'menu.read',
+        'table.read',
+        'table.update'
       ],
       customer: [
-        'order:create',
-        'order:view_own',
-        'menu:view'
+        'order.create',
+        'order.read',
+        'menu.read'
       ]
     };
 
@@ -197,11 +192,15 @@ class UserService {
       return true;
     }
 
-    // Check for wildcard permissions
-    const [resource, action] = permission.split(':');
-    const wildcardPermission = `${resource}:*`;
+    // Check for wildcard permissions (both : and . notation)
+    const [resource, action] = permission.split(/[:.]/);
+    const wildcardPermissionDot = `${resource}.*`;
+    const wildcardPermissionColon = `${resource}:*`;
     
-    return userPermissions.includes(wildcardPermission) || userPermissions.includes('*:*');
+    return userPermissions.includes(wildcardPermissionDot) || 
+           userPermissions.includes(wildcardPermissionColon) || 
+           userPermissions.includes('*.*') ||
+           userPermissions.includes('*:*');
   }
 
   /**

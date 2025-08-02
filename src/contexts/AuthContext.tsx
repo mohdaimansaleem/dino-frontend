@@ -258,22 +258,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const getUserWithRole = (): AuthUser | null => {
     if (!user) return null;
 
-    // Check if user already has an RBAC role property (from demo mode)
-    let roleName: RoleName = ROLES.ADMIN;
+    // Get role from backend permissions if available
+    const backendRole = PermissionService.getBackendRole();
+    let roleName: RoleName = ROLES.OPERATOR; // Default fallback
     
-    // If user has an rbacRole property (demo mode), use it
-    if ((user as any).rbacRole) {
-      roleName = (user as any).rbacRole as RoleName;
-    } else if ((user as any).role === 'staff') {
-      // Map staff role to operator for RBAC
-      roleName = ROLES.OPERATOR;
-    } else if ((user as any).role === 'admin') {
-      // Map admin role to admin for RBAC
-      roleName = ROLES.ADMIN;
-    } else {
-      // For regular users, assign roles based on email or default to admin
-      if (user.email?.includes('operator')) {
+    if (backendRole && backendRole.name) {
+      // Use the actual backend role name
+      const backendRoleName = backendRole.name.toLowerCase();
+      if (backendRoleName === 'superadmin') {
+        roleName = ROLES.SUPERADMIN;
+      } else if (backendRoleName === 'admin') {
+        roleName = ROLES.ADMIN;
+      } else if (backendRoleName === 'operator') {
         roleName = ROLES.OPERATOR;
+      }
+    } else {
+      // Fallback to user.role if no backend role
+      const userRole = (user as any).role;
+      if (userRole === 'superadmin') {
+        roleName = ROLES.SUPERADMIN;
+      } else if (userRole === 'admin') {
+        roleName = ROLES.ADMIN;
+      } else if (userRole === 'operator' || userRole === 'staff') {
+        roleName = ROLES.OPERATOR;
+      } else if (user.email?.includes('operator')) {
+        roleName = ROLES.OPERATOR;
+      } else {
+        // Default to admin for backward compatibility
+        roleName = ROLES.ADMIN;
       }
     }
 
@@ -300,6 +312,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const hasRole = (role: string): boolean => {
+    // First check backend role if available
+    const backendRole = PermissionService.getBackendRole();
+    
+    if (backendRole && backendRole.name) {
+      return backendRole.name.toLowerCase() === role.toLowerCase();
+    }
+    
+    // Fallback to static role checking
     const authUser = getUserWithRole();
     return PermissionService.hasRole(authUser, role);
   };
@@ -310,18 +330,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const isAdmin = (): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.isAdmin(authUser);
+    return hasRole(ROLES.ADMIN);
   };
 
   const isOperator = (): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.isOperator(authUser);
+    return hasRole(ROLES.OPERATOR);
   };
 
   const isSuperAdmin = (): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.isSuperAdmin(authUser);
+    return hasRole(ROLES.SUPERADMIN);
   };
 
   // Permission management methods

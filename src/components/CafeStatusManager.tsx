@@ -54,8 +54,8 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
 
   const targetCafe = cafe || currentCafe;
   
-  const canManageStatus = hasPermission(PERMISSIONS.CAFE_ACTIVATE) || 
-                         hasPermission(PERMISSIONS.CAFE_DEACTIVATE);
+  const canManageStatus = hasPermission(PERMISSIONS.VENUE_ACTIVATE) || 
+                         hasPermission(PERMISSIONS.VENUE_DEACTIVATE);
 
   if (!targetCafe) {
     return (
