@@ -314,7 +314,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         }}>
           <Box sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-              Admin Panel
+              Control Panel
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
               {renderNavigation()}

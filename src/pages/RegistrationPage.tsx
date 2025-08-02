@@ -489,7 +489,7 @@ const RegistrationPage: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Venue Email"
+                label="Venue Email (Optional)"
                 value={formData.venueEmail}
                 onChange={(e) => handleInputChange('venueEmail', e.target.value)}
                 error={!!validationErrors.venueEmail}
