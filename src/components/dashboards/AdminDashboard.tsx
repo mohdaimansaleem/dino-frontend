@@ -190,349 +190,363 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   }
 
   return (
-    <Box className={className} sx={{ p: 2, pt: 1 }}>
+    <Box 
+      className={className} 
+      sx={{ 
+        p: { xs: 2, lg: 1 }, 
+        pt: { xs: 1, lg: 0 },
+        height: { lg: '100vh' },
+        overflow: { lg: 'auto' },
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ mb: { xs: 3, lg: 2.5 }, flexShrink: 0 }}>
+        <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
           <DashboardIcon color="primary" />
           Admin Dashboard
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
           Welcome back, {user?.firstName}! Here's your venue overview for today.
         </Typography>
       </Box>
 
-      {/* Row 1: Quick Stats */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Today color="primary" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {displayStats.today_orders || 0}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Today's Orders
-                  </Typography>
+      {/* Dashboard Content Container */}
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 2 }, pt: { xs: 0, lg: 1.5 } }}>
+        {/* Row 1: Quick Stats */}
+        <Grid container spacing={{ xs: 3, lg: 2 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Today color="primary" sx={{ fontSize: { xs: 40, lg: 35 } }} />
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '2rem', lg: '1.8rem' } }}>
+                      {displayStats.today_orders || 0}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Today's Orders
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <TrendingUp color="success" sx={{ fontSize: { xs: 40, lg: 35 } }} />
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '2rem', lg: '1.8rem' } }}>
+                      ₹{displayStats.today_revenue?.toLocaleString() || 0}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Today's Revenue
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <TableRestaurant color="warning" sx={{ fontSize: { xs: 40, lg: 35 } }} />
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '2rem', lg: '1.8rem' } }}>
+                      {displayStats.occupied_tables || 0}/{displayStats.total_tables || 0}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Tables Occupied
+                    </Typography>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={tableOccupancyPercentage} 
+                      sx={{ mt: 1 }}
+                    />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Restaurant color="info" sx={{ fontSize: { xs: 40, lg: 35 } }} />
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '2rem', lg: '1.8rem' } }}>
+                      {displayStats.active_menu_items || 0}/{displayStats.total_menu_items || 0}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Menu Items Active
+                    </Typography>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={menuActivePercentage} 
+                      sx={{ mt: 1 }}
+                    />
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <TrendingUp color="success" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    ₹{displayStats.today_revenue?.toLocaleString() || 0}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Today's Revenue
+        {/* Row 2: Weekly Revenue Chart & Recent Orders Status */}
+        <Grid container spacing={{ xs: 3, lg: 2 }}>
+          {/* Weekly Revenue Trend */}
+          <Grid item xs={12} md={8}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 3, lg: 2 } }}>
+                  <BarChartIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6">
+                    Weekly Revenue & Orders Trend
                   </Typography>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
+                <WeeklyRevenueChart data={weeklyRevenueData} height={280} />
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Recent Orders Status */}
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+                <Typography variant="h6" gutterBottom>
+                  Recent Orders Status
+                </Typography>
+                <DonutChart data={orderStatusData} height={280} />
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <TableRestaurant color="warning" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {displayStats.occupied_tables || 0}/{displayStats.total_tables || 0}
+        {/* Row 3: Table Status & Venue Status */}
+        <Grid container spacing={{ xs: 3, lg: 2 }}>
+          {/* Table Status */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, lg: 1.5 } }}>
+                  <PieChartIcon color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6">
+                    Table Status
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Tables Occupied
-                  </Typography>
+                </Box>
+                <StatusPieChart data={tableStatusData} height={220} />
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Venue Status */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+                <Typography variant="h6" gutterBottom>
+                  Venue Status
+                </Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 2 }, mt: { xs: 4, lg: 2 } }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body1">Table Occupancy</Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {tableOccupancyPercentage}%
+                    </Typography>
+                  </Box>
                   <LinearProgress 
                     variant="determinate" 
                     value={tableOccupancyPercentage} 
-                    sx={{ mt: 1 }}
+                    sx={{ height: 8, borderRadius: 4 }}
                   />
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Restaurant color="info" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography variant="h4" fontWeight="bold">
-                    {displayStats.active_menu_items || 0}/{displayStats.total_menu_items || 0}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Menu Items Active
-                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body1">Menu Availability</Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {menuActivePercentage}%
+                    </Typography>
+                  </Box>
                   <LinearProgress 
                     variant="determinate" 
                     value={menuActivePercentage} 
-                    sx={{ mt: 1 }}
+                    sx={{ height: 8, borderRadius: 4 }}
                   />
+                  
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body1">Staff Count</Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {displayStats.total_staff || 0} Active
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body1">Total Tables</Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {displayStats.total_tables || 0}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body1">Total Menu Items</Typography>
+                    <Typography variant="body1" fontWeight="bold">
+                      {displayStats.total_menu_items || 0}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Row 2: Weekly Revenue Chart & Recent Orders Status */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Weekly Revenue Trend */}
-        <Grid item xs={12} md={8}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <BarChartIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">
-                  Weekly Revenue & Orders Trend
-                </Typography>
-              </Box>
-              <WeeklyRevenueChart data={weeklyRevenueData} height={350} />
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
 
-        {/* Recent Orders Status */}
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Recent Orders Status
+        {/* Recent Orders */}
+        <Card sx={{ mt: { xs: 0, lg: 1 } }}>
+          <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 3, lg: 2 } }}>
+              <Typography variant="h6">
+                Recent Orders
               </Typography>
-              <DonutChart data={orderStatusData} height={350} />
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+              <Button
+                variant="outlined"
+                onClick={() => window.location.href = '/admin/orders'}
+                size="small"
+              >
+                View All Orders
+              </Button>
+            </Box>
 
-      {/* Row 3: Table Status & Venue Status */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* Table Status */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <PieChartIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6">
-                  Table Status
-                </Typography>
-              </Box>
-              <StatusPieChart data={tableStatusData} height={300} />
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Venue Status */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Venue Status
-              </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1">Table Occupancy</Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {tableOccupancyPercentage}%
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={tableOccupancyPercentage} 
-                  sx={{ height: 8, borderRadius: 4 }}
-                />
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1">Menu Availability</Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {menuActivePercentage}%
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={menuActivePercentage} 
-                  sx={{ height: 8, borderRadius: 4 }}
-                />
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1">Staff Count</Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {displayStats.total_staff || 0} Active
-                  </Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1">Total Tables</Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {displayStats.total_tables || 0}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body1">Total Menu Items</Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {displayStats.total_menu_items || 0}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Recent Orders */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h6">
-              Recent Orders
-            </Typography>
-            <Button
-              variant="outlined"
-              onClick={() => window.location.href = '/admin/orders'}
-            >
-              View All Orders
-            </Button>
-          </Box>
-
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Order #</TableCell>
-                  <TableCell align="center">Table</TableCell>
-                  <TableCell align="center">Amount</TableCell>
-                  <TableCell align="center">Status</TableCell>
-                  <TableCell align="center">Time</TableCell>
-                  <TableCell align="center">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {recentOrders.length === 0 ? (
+            <TableContainer component={Paper} variant="outlined">
+              <Table size="small">
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      <Typography variant="body2" color="text.secondary">
-                        No recent orders found
-                      </Typography>
-                    </TableCell>
+                    <TableCell>Order #</TableCell>
+                    <TableCell align="center">Table</TableCell>
+                    <TableCell align="center">Amount</TableCell>
+                    <TableCell align="center">Status</TableCell>
+                    <TableCell align="center">Time</TableCell>
+                    <TableCell align="center">Actions</TableCell>
                   </TableRow>
-                ) : (
-                  recentOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          {order.order_number}
+                </TableHead>
+                <TableBody>
+                  {recentOrders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center">
+                        <Typography variant="body2" color="text.secondary">
+                          No recent orders found
                         </Typography>
                       </TableCell>
-                      <TableCell align="center">
-                        Table {order.table_number}
-                      </TableCell>
-                      <TableCell align="center">
-                        ₹{order.total_amount.toLocaleString()}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={order.status}
-                          color={getStatusColor(order.status) as any}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        {new Date(order.created_at).toLocaleTimeString()}
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
-                          size="small"
-                          onClick={() => window.location.href = `/admin/orders/${order.id}`}
-                        >
-                          <Visibility />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => window.location.href = `/admin/orders/${order.id}/edit`}
-                        >
-                          <Edit />
-                        </IconButton>
-                      </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
+                  ) : (
+                    recentOrders.slice(0, 4).map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell>
+                          <Typography variant="subtitle2" fontWeight="bold">
+                            {order.order_number}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="center">
+                          Table {order.table_number}
+                        </TableCell>
+                        <TableCell align="center">
+                          ₹{order.total_amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={order.status}
+                            color={getStatusColor(order.status) as any}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          {new Date(order.created_at).toLocaleTimeString()}
+                        </TableCell>
+                        <TableCell align="center">
+                          <IconButton
+                            size="small"
+                            onClick={() => window.location.href = `/admin/orders/${order.id}`}
+                          >
+                            <Visibility />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => window.location.href = `/admin/orders/${order.id}/edit`}
+                          >
+                            <Edit />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
 
-      {/* Quick Actions - Full Width */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-            Quick Actions
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="large"
-                startIcon={<ShoppingCart />}
-                onClick={() => window.location.href = '/admin/orders'}
-                sx={{ py: 2 }}
-              >
-                View Orders
-              </Button>
+        {/* Quick Actions - Full Width */}
+        <Card sx={{ flexShrink: 0 }}>
+          <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+            <Typography variant="h6" gutterBottom sx={{ mb: { xs: 3, lg: 2 } }}>
+              Quick Actions
+            </Typography>
+            <Grid container spacing={{ xs: 3, lg: 2 }}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="large"
+                  startIcon={<ShoppingCart />}
+                  onClick={() => window.location.href = '/admin/orders'}
+                  sx={{ py: { xs: 2, lg: 1.5 } }}
+                >
+                  View Orders
+                </Button>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="large"
+                  startIcon={<Restaurant />}
+                  onClick={() => window.location.href = '/admin/menu'}
+                  sx={{ py: { xs: 2, lg: 1.5 } }}
+                >
+                  Manage Menu
+                </Button>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="large"
+                  startIcon={<TableRestaurant />}
+                  onClick={() => window.location.href = '/admin/tables'}
+                  sx={{ py: { xs: 2, lg: 1.5 } }}
+                >
+                  Manage Tables
+                </Button>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="large"
+                  startIcon={<People />}
+                  onClick={() => window.location.href = '/admin/users'}
+                  sx={{ py: { xs: 2, lg: 1.5 } }}
+                >
+                  Manage Staff
+                </Button>
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="large"
-                startIcon={<Restaurant />}
-                onClick={() => window.location.href = '/admin/menu'}
-                sx={{ py: 2 }}
-              >
-                Manage Menu
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="large"
-                startIcon={<TableRestaurant />}
-                onClick={() => window.location.href = '/admin/tables'}
-                sx={{ py: 2 }}
-              >
-                Manage Tables
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="large"
-                startIcon={<People />}
-                onClick={() => window.location.href = '/admin/users'}
-                sx={{ py: 2 }}
-              >
-                Manage Staff
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 };

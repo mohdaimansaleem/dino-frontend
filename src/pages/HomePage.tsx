@@ -208,11 +208,11 @@ const HomePage: React.FC = () => {
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  {user ? (
+                  {user?.role!='operator' ? (
                     <Button
                       variant="contained"
                       size="large"
-                      onClick={() => navigate((user.role as string) === 'admin' ? '/admin' : '/profile')}
+                      onClick={() => navigate(('/admin' ))}
                       sx={{ 
                         px: 4, 
                         py: 1.5, 
