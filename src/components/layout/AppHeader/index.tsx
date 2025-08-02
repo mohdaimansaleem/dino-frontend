@@ -270,7 +270,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
     <>
       <Slide appear={false} direction="down" in={!trigger || isHomePage || isAdminRoute}>
         <AppBar
-          position={isAdminRoute ? "sticky" : "fixed"}
+          position={isAdminRoute ? "static" : "fixed"}
           elevation={isAdminRoute ? 0 : (trigger ? 4 : 0)}
           sx={{
             backgroundColor: trigger || isAdminRoute
@@ -288,7 +288,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
           }}
         >
           <Container maxWidth="xl">
-            <Toolbar sx={{ px: { xs: 0, sm: 2 }, minHeight: 70 }}>
+            <Toolbar sx={{ px: { xs: 0, sm: 0 }, minHeight: 70 }}>
               {/* Logo and Title */}
               <Box
                 sx={{
@@ -296,8 +296,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                   alignItems: 'center',
                   flexGrow: 1,
                   cursor: 'pointer',
-                  gap: 2,
+                  gap: 1.5,
                   minWidth: 0,
+                  pl: { xs: 1, sm: 2 }, // Add left padding to move logo left
                   '&:hover': {
                     opacity: 0.8,
                   },

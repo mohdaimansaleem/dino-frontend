@@ -310,7 +310,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           zIndex: 1050, // Below navbar but above content
           boxShadow: 2,
           overflowY: 'auto',
-          pt: 9 // Add padding top to account for navbar height
+          pt: 0 // No padding needed since navbar is static
         }}>
           <Box sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
@@ -330,7 +330,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           flexGrow: 1,
           backgroundColor: 'background.default',
           minHeight: '100vh',
-          pt: isCustomerFacingRoute ? 0 : 9, // Top padding for sticky navbar
+          pt: isCustomerFacingRoute ? 0 : (isAdminRoute ? 0 : 9), // Top padding for sticky navbar
           pl: isAdminRoute && user ? 30 : 0, // Left padding for sidebar (240px = 30 * 8px)
           transition: 'padding-left 0.3s ease-in-out',
         }}

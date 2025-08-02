@@ -194,7 +194,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       className={className} 
       sx={{ 
         p: { xs: 2, lg: 1 }, 
-        pt: { xs: 1, lg: 0 },
+        pt: { xs: 2, lg: 1 }, // Add some top padding but less than before
         height: { lg: '100vh' },
         overflow: { lg: 'auto' },
         display: 'flex',
@@ -202,8 +202,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       }}
     >
       {/* Header */}
-      <Box sx={{ mb: { xs: 3, lg: 2.5 }, flexShrink: 0 }}>
-        <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+      <Box sx={{ mb: { xs: 2, lg: 1.5 }, flexShrink: 0, mt: 0 }}>
+        <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, mt: 0 }}>
           <DashboardIcon color="primary" />
           Admin Dashboard
         </Typography>
@@ -213,7 +213,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       </Box>
 
       {/* Dashboard Content Container */}
-      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 2 }, pt: { xs: 0, lg: 1.5 } }}>
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 2 } }}>
         {/* Row 1: Quick Stats */}
         <Grid container spacing={{ xs: 3, lg: 2 }}>
           <Grid item xs={12} sm={6} md={3}>
