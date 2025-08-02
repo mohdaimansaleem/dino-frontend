@@ -17,23 +17,27 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [mode, setMode] = useState<ThemeMode>(() => {
-    // Check for saved theme preference or default to light
-    const savedTheme = localStorage.getItem('dino_theme_mode') as ThemeMode;
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-      return savedTheme;
-    }
-    
-    // Check system preference
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
+    // Only check for saved theme preference if theme toggle is enabled
+    if (process.env.REACT_APP_ENABLE_THEME_TOGGLE === 'true') {
+      const savedTheme = localStorage.getItem('dino_theme_mode') as ThemeMode;
+      if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+        return savedTheme;
+      }
+      
+      // Check system preference
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
     }
     
     return 'light';
   });
 
   useEffect(() => {
-    // Save theme preference
-    localStorage.setItem('dino_theme_mode', mode);
+    // Only save theme preference if theme toggle is enabled
+    if (process.env.REACT_APP_ENABLE_THEME_TOGGLE === 'true') {
+      localStorage.setItem('dino_theme_mode', mode);
+    }
     
     // Update document class for additional styling if needed
     document.documentElement.setAttribute('data-theme', mode);
@@ -47,17 +51,20 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   // Listen for system theme changes
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      // Only auto-switch if user hasn't manually set a preference
-      const savedTheme = localStorage.getItem('dino_theme_mode');
-      if (!savedTheme) {
-        setMode(e.matches ? 'dark' : 'light');
-      }
-    };
+    // Only listen for system theme changes if theme toggle is enabled
+    if (process.env.REACT_APP_ENABLE_THEME_TOGGLE === 'true') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = (e: MediaQueryListEvent) => {
+        // Only auto-switch if user hasn't manually set a preference
+        const savedTheme = localStorage.getItem('dino_theme_mode');
+        if (!savedTheme) {
+          setMode(e.matches ? 'dark' : 'light');
+        }
+      };
 
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
+    }
   }, []);
 
   const toggleTheme = () => {
