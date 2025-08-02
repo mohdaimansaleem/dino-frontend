@@ -331,11 +331,51 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               flexGrow: 1,
               backgroundColor: 'background.default',
               minHeight: '100vh',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             <Fade in timeout={300}>
-              <div>{children}</div>
+              <Box sx={{ flexGrow: 1 }}>
+                {children}
+              </Box>
             </Fade>
+            
+            {/* Footer for Admin Routes */}
+            <Box 
+              sx={{ 
+                flexShrink: 0,
+                textAlign: 'center',
+                py: { xs: 2, lg: 1.5 },
+                px: { xs: 2, lg: 1 },
+                borderTop: '1px solid',
+                borderColor: 'divider',
+                backgroundColor: 'background.paper',
+                mt: 'auto'
+              }}
+            >
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: '0.875rem',
+                  fontWeight: 500 
+                }}
+              >
+                © 2024 Dino E-Menu. All rights reserved.
+              </Typography>
+              <Typography 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: '0.75rem',
+                  display: 'block',
+                  mt: 0.5
+                }}
+              >
+                Digital Menu Revolution
+              </Typography>
+            </Box>
           </Box>
         </Box>
       ) : (

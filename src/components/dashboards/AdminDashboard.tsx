@@ -553,40 +553,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <Box 
-          sx={{ 
-            flexShrink: 0,
-            textAlign: 'center',
-            py: { xs: 2, lg: 1.5 },
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            backgroundColor: 'background.paper',
-            mt: 'auto'
-          }}
-        >
-          <Typography 
-            variant="body2" 
-            color="text.secondary"
-            sx={{ 
-              fontSize: '0.875rem',
-              fontWeight: 500 
-            }}
-          >
-            © 2024 Dino E-Menu. All rights reserved.
-          </Typography>
-          <Typography 
-            variant="caption" 
-            color="text.secondary"
-            sx={{ 
-              fontSize: '0.75rem',
-              display: 'block',
-              mt: 0.5
-            }}
-          >
-            Digital Menu Revolution
-          </Typography>
-        </Box>
+
       </Box>
     </Box>
   );
