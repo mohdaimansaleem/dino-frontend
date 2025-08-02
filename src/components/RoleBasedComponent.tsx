@@ -55,7 +55,7 @@ export const RoleBasedComponent: React.FC<RoleBasedComponentProps> = ({
  * Hook to get user permissions and role information
  */
 export const usePermissions = () => {
-  const { getUserWithRole, hasPermission, hasRole, isAdmin, isOperator, isSuperAdmin } = useAuth();
+  const { getUserWithRole, hasPermission, hasRole, isAdmin, isOperator, isSuperAdmin, userPermissions } = useAuth();
   const user = getUserWithRole();
 
   return {
@@ -71,14 +71,52 @@ export const usePermissions = () => {
     isAdminOrAbove: () => hasRole(ROLES.SUPERADMIN) || hasRole(ROLES.ADMIN),
     isOperatorOrAbove: () => hasRole(ROLES.SUPERADMIN) || hasRole(ROLES.ADMIN) || hasRole(ROLES.OPERATOR),
     
-    // Permission checks (using dot notation to match backend)
-    canViewDashboard: () => hasPermission('dashboard.read'),
-    canManageUsers: () => hasPermission('user.read') || hasPermission('user.create'),
-    canManageVenues: () => hasPermission('workspace.read') || hasPermission('workspace.create'),
-    canManageOrders: () => hasPermission('order.read') || hasPermission('order.update'),
-    canManageMenu: () => hasPermission('menu.read') || hasPermission('menu.create'),
-    canManageTables: () => hasPermission('table.read') || hasPermission('table.create'),
-    canViewSettings: () => hasPermission('settings.read'),
+    // Permission checks (using backend permission names and superadmin check)
+    canViewDashboard: () => {
+      // Check if superadmin first
+      if (hasRole(ROLES.SUPERADMIN)) return true;
+      // Check backend dashboard permissions
+      const backendPermissions = userPermissions?.dashboard_permissions;
+      if (backendPermissions?.components?.dashboard) return true;
+      // Fallback to static permissions
+      return hasPermission('dashboard.read');
+    },
+    canManageUsers: () => {
+      if (hasRole(ROLES.SUPERADMIN)) return true;
+      const backendPermissions = userPermissions?.dashboard_permissions;
+      if (backendPermissions?.components?.user_management) return true;
+      return hasPermission('user.read') || hasPermission('user.create');
+    },
+    canManageVenues: () => {
+      if (hasRole(ROLES.SUPERADMIN)) return true;
+      const backendPermissions = userPermissions?.dashboard_permissions;
+      if (backendPermissions?.components?.venue_management) return true;
+      return hasPermission('workspace.read') || hasPermission('workspace.create');
+    },
+    canManageOrders: () => {
+      if (hasRole(ROLES.SUPERADMIN)) return true;
+      const backendPermissions = userPermissions?.dashboard_permissions;
+      if (backendPermissions?.components?.orders) return true;
+      return hasPermission('order.read') || hasPermission('order.update');
+    },
+    canManageMenu: () => {
+      if (hasRole(ROLES.SUPERADMIN)) return true;
+      const backendPermissions = userPermissions?.dashboard_permissions;
+      if (backendPermissions?.components?.menu) return true;
+      return hasPermission('menu.read') || hasPermission('menu.create');
+    },
+    canManageTables: () => {
+      if (hasRole(ROLES.SUPERADMIN)) return true;
+      const backendPermissions = userPermissions?.dashboard_permissions;
+      if (backendPermissions?.components?.tables) return true;
+      return hasPermission('table.read') || hasPermission('table.create');
+    },
+    canViewSettings: () => {
+      if (hasRole(ROLES.SUPERADMIN)) return true;
+      const backendPermissions = userPermissions?.dashboard_permissions;
+      if (backendPermissions?.components?.settings) return true;
+      return hasPermission('settings.read');
+    },
   };
 };
 

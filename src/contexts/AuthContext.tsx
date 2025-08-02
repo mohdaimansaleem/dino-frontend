@@ -315,13 +315,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // First check backend role if available
     const backendRole = PermissionService.getBackendRole();
     
+    console.log('🔍 Role Check:', {
+      requestedRole: role,
+      backendRole: backendRole,
+      backendRoleName: backendRole?.name
+    });
+    
     if (backendRole && backendRole.name) {
-      return backendRole.name.toLowerCase() === role.toLowerCase();
+      const hasRoleResult = backendRole.name.toLowerCase() === role.toLowerCase();
+      console.log('✅ Backend role match:', hasRoleResult);
+      return hasRoleResult;
     }
     
     // Fallback to static role checking
     const authUser = getUserWithRole();
-    return PermissionService.hasRole(authUser, role);
+    const staticResult = PermissionService.hasRole(authUser, role);
+    console.log('🔄 Static role check:', staticResult);
+    return staticResult;
   };
 
   const canAccessRoute = (route: string): boolean => {
@@ -368,8 +378,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const initializePermissions = async () => {
       try {
         const savedPermissions = localStorage.getItem('dino_permissions');
+        console.log('🔄 Initializing permissions from localStorage:', !!savedPermissions);
         if (savedPermissions) {
-          setUserPermissions(JSON.parse(savedPermissions));
+          const parsed = JSON.parse(savedPermissions);
+          console.log('📋 Loaded permissions:', {
+            role: parsed.role?.name,
+            permissionCount: parsed.permissions?.length,
+            dashboardPermissions: parsed.dashboard_permissions
+          });
+          setUserPermissions(parsed);
         }
         
         // If user is logged in but no permissions cached, fetch them

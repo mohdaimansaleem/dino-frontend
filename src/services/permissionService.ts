@@ -88,6 +88,13 @@ class PermissionService {
 
     // First check backend permissions if available
     const backendPermissions = this.getBackendPermissions();
+    const backendRole = this.getBackendRole();
+    
+    // If user is superadmin, grant all permissions
+    if (backendRole && backendRole.name === 'superadmin') {
+      return true;
+    }
+    
     if (backendPermissions && backendPermissions.length > 0) {
       // Check for exact match first
       if (backendPermissions.some((p: any) => p.name === permission)) {
@@ -97,6 +104,41 @@ class PermissionService {
       // Convert colon notation to dot notation for backend compatibility
       const dotNotationPermission = permission.replace(':', '.');
       if (backendPermissions.some((p: any) => p.name === dotNotationPermission)) {
+        return true;
+      }
+      
+      // Map frontend permission constants to backend permissions
+      const permissionMapping: Record<string, string[]> = {
+        'dashboard.read': ['dashboard.read', 'workspace.read'],
+        'order.read': ['order.read', 'order.manage'],
+        'order.update': ['order.update', 'order.manage'],
+        'order.create': ['order.create', 'order.manage'],
+        'order.delete': ['order.delete', 'order.manage'],
+        'menu.read': ['menu.read', 'menu.manage'],
+        'menu.update': ['menu.update', 'menu.manage'],
+        'menu.create': ['menu.create', 'menu.manage'],
+        'menu.delete': ['menu.delete', 'menu.manage'],
+        'table.read': ['table.read', 'table.manage'],
+        'table.update': ['table.update', 'table.manage'],
+        'table.create': ['table.create', 'table.manage'],
+        'table.delete': ['table.delete', 'table.manage'],
+        'user.read': ['user.read', 'user.manage'],
+        'user.update': ['user.update', 'user.manage'],
+        'user.create': ['user.create', 'user.manage'],
+        'user.delete': ['user.delete', 'user.manage'],
+        'workspace.read': ['workspace.read', 'workspace.manage'],
+        'workspace.update': ['workspace.update', 'workspace.manage'],
+        'workspace.create': ['workspace.create', 'workspace.manage'],
+        'workspace.delete': ['workspace.delete', 'workspace.manage'],
+        'settings.read': ['workspace.read', 'venue.read'],
+        'settings.update': ['workspace.update', 'venue.update']
+      };
+      
+      // Check mapped permissions
+      const mappedPermissions = permissionMapping[permission] || [permission];
+      if (mappedPermissions.some(mappedPerm => 
+        backendPermissions.some((p: any) => p.name === mappedPerm)
+      )) {
         return true;
       }
       
@@ -121,6 +163,7 @@ class PermissionService {
       const permissionsData = localStorage.getItem('dino_permissions');
       if (permissionsData) {
         const parsed = JSON.parse(permissionsData);
+        console.log('📋 Backend permissions loaded:', parsed.permissions?.length || 0, 'permissions');
         return parsed.permissions || [];
       }
     } catch (error) {
@@ -137,6 +180,7 @@ class PermissionService {
       const permissionsData = localStorage.getItem('dino_permissions');
       if (permissionsData) {
         const parsed = JSON.parse(permissionsData);
+        console.log('👤 Backend role loaded:', parsed.role?.name || 'No role');
         return parsed.role || null;
       }
     } catch (error) {

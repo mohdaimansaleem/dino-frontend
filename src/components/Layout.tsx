@@ -8,6 +8,7 @@ import {
   Switch,
   FormControlLabel,
   Chip,
+  Typography,
 } from '@mui/material';
 import { 
   ShoppingCart, 
@@ -24,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import PermissionService from '../services/permissionService';
 import { useCart } from '../contexts/CartContext';
 import { PERMISSIONS } from '../types/auth';
 import NotificationCenter from './NotificationCenter';
@@ -36,6 +38,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  console.log('🏗️ Layout component rendered');
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, hasPermission, isAdmin, isOperator } = useAuth();
@@ -58,6 +61,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const renderNavigation = () => {
+    console.log('🔍 renderNavigation called. Current path:', location.pathname, 'isAdminRoute:', isAdminRoute, 'user:', !!user);
     if (isPublicMenuRoute) {
       // Extract cafeId and tableId from current path for proper routing
       const pathParts = location.pathname.split('/');
@@ -97,6 +101,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
 
     if (isAdminRoute && user) {
+      console.log('🔍 Admin route detected. User:', {
+        role: user.role,
+        email: user.email,
+        id: user.id,
+        isAdminRoute,
+        pathname: location.pathname
+      });
       // Define all possible admin navigation items with their required permissions
       const allAdminNavItems = [
         { 
@@ -157,83 +168,58 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         },
       ];
 
-      // Filter navigation items based on user permissions
-      const adminNavItems = allAdminNavItems.filter(item => 
-        hasPermission(item.permission)
-      );
+      // Filter navigation items based on user permissions and roles
+      const adminNavItems = allAdminNavItems.filter(item => {
+        // Check multiple possible role locations
+        const backendRole = PermissionService.getBackendRole();
+        const userRole = backendRole?.name || user.role || (user as any).role || 'unknown';
+        console.log('🔍 Checking user role:', userRole, 'Backend role:', backendRole?.name, 'for item:', item.label);
+        
+        // For superadmin, show all items
+        if (userRole === 'superadmin') {
+          console.log('🔓 Superadmin access granted for:', item.label);
+          return true;
+        }
+        
+        // Check if user has required role
+        if (item.roles && item.roles.length > 0) {
+          const hasRequiredRole = item.roles.includes(userRole as string);
+          if (!hasRequiredRole) {
+            console.log('❌ Role check failed for:', item.label, 'Required:', item.roles, 'User role:', userRole);
+            return false;
+          }
+        }
+        
+        // Check permission (fallback)
+        const hasPermissionResult = hasPermission(item.permission);
+        console.log('🔍 Permission check for:', item.label, 'Permission:', item.permission, 'Result:', hasPermissionResult);
+        return hasPermissionResult;
+      });
+      
+      console.log('📋 Final admin nav items:', adminNavItems.map(item => item.label));
 
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
-          {/* Cafe Status Toggle - Only for Admin */}
-          {isAdmin() && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Chip
-                label={cafeOpen ? 'OPEN' : 'CLOSED'}
-                size="small"
-                color={cafeOpen ? 'success' : 'error'}
-                sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={cafeOpen}
-                    onChange={(e) => setCafeOpen(e.target.checked)}
-                    size="small"
-                    color="success"
-                  />
-                }
-                label=""
-                sx={{ m: 0 }}
-              />
-            </Box>
-          )}
-
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1, 
-            overflow: 'hidden',
-            flexShrink: 1,
-            minWidth: 0
-          }}>
-            {adminNavItems.map((item) => (
-              <Button
-                key={item.label}
-                color="inherit"
-                onClick={() => navigate(item.path)}
-                startIcon={item.icon}
-                sx={{
-                  color: location.pathname === item.path ? 'primary.main' : 'text.primary',
-                  backgroundColor: location.pathname === item.path ? 'primary.50' : 'transparent',
-                  fontWeight: location.pathname === item.path ? 600 : 400,
-                  minWidth: 'auto',
-                  flexShrink: 0,
-                  '&:hover': {
-                    backgroundColor: 'primary.50',
-                  },
-                }}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </Box>
-          
-          {isThemeToggleEnabled && <ThemeToggle variant="switch" size="small" />}
-          
-          <IconButton 
-            color="inherit" 
-            onClick={handleLogout}
-            sx={{
-              color: 'error.main',
-              flexShrink: 0,
-              '&:hover': {
-                backgroundColor: 'error.50',
-              },
-            }}
-          >
-            <ExitToApp />
-          </IconButton>
-        </Box>
+        <>
+          {adminNavItems.map((item) => (
+            <Button
+              key={item.label}
+              color="inherit"
+              onClick={() => navigate(item.path)}
+              startIcon={item.icon}
+              variant={location.pathname === item.path ? 'contained' : 'outlined'}
+              sx={{
+                minWidth: 'auto',
+                flexShrink: 0,
+                mr: 1,
+                '&:hover': {
+                  backgroundColor: 'primary.50',
+                },
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </>
       );
     }
 
@@ -314,6 +300,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <AppHeader />
       )}
 
+      {/* Admin Navigation Bar */}
+      {isAdminRoute && user && (
+        <Box sx={{ 
+          backgroundColor: 'primary.main', 
+          borderBottom: '1px solid', 
+          borderColor: 'divider',
+          px: 2,
+          py: 2,
+          position: 'fixed',
+          top: 70, // Below the main header
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+          boxShadow: 2
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, overflow: 'auto' }}>
+            <Typography variant="h6" sx={{ color: 'white', mr: 2 }}>
+              Admin Navigation:
+            </Typography>
+            {renderNavigation()}
+          </Box>
+        </Box>
+      )}
+
       {/* Main Content */}
       <Box
         component="main"
@@ -321,7 +331,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           flexGrow: 1,
           backgroundColor: 'background.default',
           minHeight: '100vh',
-          pt: isCustomerFacingRoute ? 0 : 9, // No padding for customer facing pages, account for enhanced AppBar for others
+          pt: isCustomerFacingRoute ? 0 : (isAdminRoute ? 16 : 9), // Extra padding for admin routes with navigation
         }}
       >
         <Fade in timeout={300}>

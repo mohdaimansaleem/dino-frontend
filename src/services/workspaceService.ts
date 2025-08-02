@@ -158,15 +158,9 @@ class WorkspaceService {
     return this.getWorkspaceVenues(workspaceId);
   }
 
-  // Pricing Plans
+  // Pricing Plans - Removed API call, using static plans only
   async getPricingPlans(): Promise<any[]> {
-    try {
-      const response = await apiService.get<any[]>('/pricing-plans');
-      return response.data || [];
-    } catch (error) {
-      console.error('Failed to get pricing plans:', error);
-      return this.getDefaultPricingPlans();
-    }
+    return this.getDefaultPricingPlans();
   }
 
   private getDefaultPricingPlans(): any[] {

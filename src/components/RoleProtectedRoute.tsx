@@ -20,12 +20,18 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
   fallbackPath = '/admin',
   showAccessDenied = true,
 }) => {
-  const { isAuthenticated, hasPermission, hasRole, canAccessRoute, isOperator } = useAuth();
+  const { isAuthenticated, hasPermission, hasRole, canAccessRoute, isOperator, user } = useAuth();
   const location = useLocation();
 
   // Check if user is authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Superadmin bypass - grant access to everything
+  if (user?.role === 'superadmin') {
+    console.log('🔓 Superadmin bypass activated for:', location.pathname);
+    return <>{children}</>;
   }
 
   // Check role-based access
@@ -38,9 +44,19 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
 
   // Check permission-based access
   if (requiredPermissions.length > 0) {
-    const hasRequiredPermissions = requiredPermissions.some(permission => 
-      hasPermission(permission)
-    );
+    console.log('🔍 RoleProtectedRoute checking permissions:', {
+      requiredPermissions,
+      userRole: user?.role,
+      path: location.pathname
+    });
+    
+    const hasRequiredPermissions = requiredPermissions.some(permission => {
+      const result = hasPermission(permission);
+      console.log(`🔍 Permission check: ${permission} = ${result}`);
+      return result;
+    });
+    
+    console.log('✅ Final permission result:', hasRequiredPermissions);
     
     if (!hasRequiredPermissions) {
       // Special handling for operators trying to access admin dashboard

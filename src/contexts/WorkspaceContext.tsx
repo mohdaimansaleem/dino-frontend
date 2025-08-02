@@ -73,7 +73,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   const initializeWorkspaceData = async () => {
     setLoading(true);
     try {
-      // Load pricing plans
+      // Load pricing plans (static only, no API call)
       const plans = await workspaceService.getPricingPlans();
       setPricingPlans(plans);
 
