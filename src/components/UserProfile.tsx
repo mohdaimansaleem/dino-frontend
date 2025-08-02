@@ -269,7 +269,7 @@ const UserProfile: React.FC = () => {
                 src={user?.profileImageUrl}
                 sx={{ width: 100, height: 100 }}
               >
-                {user?.firstName?.[0]}{user?.lastName?.[0]}
+                {(user?.firstName || (user as any)?.first_name)?.[0]}{(user?.lastName || (user as any)?.last_name)?.[0]}
               </Avatar>
               <IconButton
                 sx={{
@@ -289,7 +289,7 @@ const UserProfile: React.FC = () => {
           </Grid>
           <Grid item xs>
             <Typography variant="h4" gutterBottom>
-              {user?.firstName} {user?.lastName}
+              {user?.firstName || (user as any)?.first_name} {user?.lastName || (user as any)?.last_name}
             </Typography>
             <Typography variant="body1" color="text.secondary">
               {user?.email}

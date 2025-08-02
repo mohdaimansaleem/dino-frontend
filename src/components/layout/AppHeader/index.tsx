@@ -189,7 +189,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
               transition: 'all 0.3s ease',
             }}
           >
-            {user.firstName || user.email}
+            {user.firstName || (user as any).first_name || user.email}
           </Button>
           <Button
             color="inherit"

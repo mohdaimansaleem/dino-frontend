@@ -136,7 +136,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               </Avatar>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-                  {user.firstName || user.email}
+                  {user.firstName || (user as any).first_name || user.email}
                 </Typography>
                 <Chip
                   label={user.role || 'User'}

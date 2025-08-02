@@ -69,6 +69,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           try {
             const savedUserData = JSON.parse(savedUser);
+            // Ensure firstName is available for display consistency
+            if (savedUserData && !savedUserData.firstName && savedUserData.first_name) {
+              savedUserData.firstName = savedUserData.first_name;
+            }
+            if (savedUserData && !savedUserData.lastName && savedUserData.last_name) {
+              savedUserData.lastName = savedUserData.last_name;
+            }
             setUser(savedUserData);
             
             // Also restore permissions if available
@@ -110,9 +117,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       const response = await authService.login(email, password);
       
-      // Store token and user
+      // Store token
       localStorage.setItem('dino_token', response.access_token);
-      localStorage.setItem('dino_user', JSON.stringify(response.user));
       
       // Convert API user to local user format
       const localUser: UserProfile = {
@@ -136,6 +142,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } as UserProfile;
       
       setUser(localUser);
+      // Store the converted user data
+      localStorage.setItem('dino_user', JSON.stringify(localUser));
       
       // Fetch and store user permissions with caching
       try {
