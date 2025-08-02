@@ -169,8 +169,7 @@ const WorkspaceManagement: React.FC = () => {
       }
       handleCloseWorkspaceDialog();
     } catch (error) {
-      console.error('Failed to save workspace:', error);
-    }
+      }
   };
 
   // Cafe Management
@@ -215,8 +214,7 @@ const WorkspaceManagement: React.FC = () => {
       }
       handleCloseCafeDialog();
     } catch (error) {
-      console.error('Failed to save cafe:', error);
-    }
+      }
   };
 
   const handleMenuClick = (event: React.MouseEvent<HTMLElement>, item: any, type: 'workspace' | 'cafe') => {
@@ -234,24 +232,21 @@ const WorkspaceManagement: React.FC = () => {
     try {
       await switchWorkspace(workspaceId);
     } catch (error) {
-      console.error('Failed to switch workspace:', error);
-    }
+      }
   };
 
   const handleSwitchCafe = async (cafeId: string) => {
     try {
       await switchCafe(cafeId);
     } catch (error) {
-      console.error('Failed to switch cafe:', error);
-    }
+      }
   };
 
   const handleToggleCafeStatus = async (cafeId: string, isOpen: boolean) => {
     try {
       await toggleCafeStatus(cafeId, isOpen);
     } catch (error) {
-      console.error('Failed to toggle cafe status:', error);
-    }
+      }
   };
 
   const canManageWorkspaces = hasPermission(PERMISSIONS.WORKSPACE_UPDATE);

@@ -96,8 +96,7 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
       setOpenDialog(false);
       setReason('');
     } catch (error) {
-      console.error('Failed to update cafe status:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };

@@ -77,8 +77,7 @@ const UserPermissionsDashboard: React.FC = () => {
         // setUsers(usersData);
         setUsers([]); // Empty for now until API is implemented
       } catch (error) {
-        console.error('Failed to load users:', error);
-      } finally {
+        } finally {
         setLoading(false);
       }
     };
@@ -211,7 +210,6 @@ const UserPermissionsDashboard: React.FC = () => {
       LastLogin: user.lastLogin?.toLocaleDateString() || 'Never'
     }));
     
-    console.log('Exporting permissions data:', data);
     // In real app, this would generate and download a CSV/Excel file
   };
 

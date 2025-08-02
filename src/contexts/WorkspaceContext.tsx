@@ -23,6 +23,7 @@ interface WorkspaceContextType {
   switchCafe: (cafeId: string) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
   refreshCafes: () => Promise<void>;
+  initializeVenueFromUser: () => Promise<void>;
   
   // Workspace management
   createWorkspace: (workspaceData: any) => Promise<void>;
@@ -99,32 +100,63 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       }
 
       // Set current cafe from user data or first available
-      if (user?.cafeId) {
-        const venue = await workspaceService.getCafe(user.cafeId);
-        if (venue) {
-          // Convert Venue to Cafe format
-          const cafe = {
-            id: venue.id,
-            name: venue.name,
-            description: venue.description || '',
-            address: venue.location?.address || '',
-            phone: venue.phone || '',
-            email: venue.email || '',
-            ownerId: user.id,
-            workspaceId: venue.workspace_id,
-            logo: '',
-            isActive: venue.is_active,
-            isOpen: venue.is_active,
-            settings: {},
-            createdAt: new Date(venue.created_at),
-            updatedAt: new Date(venue.updated_at || venue.created_at)
-          };
-          setCurrentCafe(cafe as any);
+      const venueId = user?.cafeId || user?.venue_id;
+      if (venueId) {
+        try {
+          const venue = await workspaceService.getCafe(venueId);
+          if (venue) {
+            // Convert Venue to Cafe format
+            const cafe = {
+              id: venue.id,
+              name: venue.name,
+              description: venue.description || '',
+              address: venue.location?.address || '',
+              phone: venue.phone || '',
+              email: venue.email || '',
+              ownerId: user.id,
+              workspaceId: venue.workspace_id,
+              logo: '',
+              isActive: venue.is_active,
+              isOpen: venue.is_active,
+              settings: {},
+              createdAt: new Date(venue.created_at),
+              updatedAt: new Date(venue.updated_at || venue.created_at)
+            };
+            setCurrentCafe(cafe as any);
+          } else {
+            // Try to get all venues as fallback
+            try {
+              const allVenues = await workspaceService.getAllVenues();
+              if (allVenues.length > 0) {
+                // Find venue by ID or use first available
+                const foundVenue = allVenues.find(v => v.id === venueId) || allVenues[0];
+                const cafe = {
+                  id: foundVenue.id,
+                  name: foundVenue.name,
+                  description: foundVenue.description || '',
+                  address: foundVenue.location?.address || '',
+                  phone: foundVenue.phone || '',
+                  email: foundVenue.email || '',
+                  ownerId: user.id,
+                  workspaceId: foundVenue.workspace_id,
+                  logo: '',
+                  isActive: foundVenue.is_active,
+                  isOpen: foundVenue.is_active,
+                  settings: {},
+                  createdAt: new Date(foundVenue.created_at),
+                  updatedAt: new Date(foundVenue.updated_at || foundVenue.created_at)
+                };
+                setCurrentCafe(cafe as any);
+              }
+            } catch (fallbackError) {
+              }
+          }
+        } catch (error) {
+          }
+      } else {
         }
-      }
     } catch (error) {
-      console.error('Failed to initialize workspace data:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -144,8 +176,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       }));
       setWorkspaces(localWorkspaces);
     } catch (error) {
-      console.error('Failed to refresh workspaces:', error);
-    } finally {
+      } finally {
       setWorkspacesLoading(false);
     }
   };
@@ -184,8 +215,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         setCurrentCafe(activeCafe);
       }
     } catch (error) {
-      console.error('Failed to load cafes:', error);
-    } finally {
+      } finally {
       setCafesLoading(false);
     }
   };
@@ -202,7 +232,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         localStorage.setItem('dino_current_workspace', workspaceId);
       }
     } catch (error) {
-      console.error('Failed to switch workspace:', error);
       throw error;
     }
   };
@@ -217,7 +246,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         localStorage.setItem('dino_current_cafe', cafeId);
       }
     } catch (error) {
-      console.error('Failed to switch cafe:', error);
       throw error;
     }
   };
@@ -233,7 +261,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         throw new Error(response.message || 'Failed to create workspace');
       }
     } catch (error) {
-      console.error('Failed to create workspace:', error);
       throw error;
     }
   };
@@ -260,7 +287,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         throw new Error(response.message || 'Failed to update workspace');
       }
     } catch (error) {
-      console.error('Failed to update workspace:', error);
       throw error;
     }
   };
@@ -285,7 +311,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         throw new Error(response.message || 'Failed to delete workspace');
       }
     } catch (error) {
-      console.error('Failed to delete workspace:', error);
       throw error;
     }
   };
@@ -304,7 +329,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         throw new Error(response.message || 'Failed to create cafe');
       }
     } catch (error) {
-      console.error('Failed to create cafe:', error);
       throw error;
     }
   };
@@ -339,7 +363,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         throw new Error(response.message || 'Failed to update cafe');
       }
     } catch (error) {
-      console.error('Failed to update cafe:', error);
       throw error;
     }
   };
@@ -362,7 +385,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         throw new Error(response.message || 'Failed to delete cafe');
       }
     } catch (error) {
-      console.error('Failed to delete cafe:', error);
       throw error;
     }
   };
@@ -376,7 +398,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         throw new Error(response.message || 'Failed to activate cafe');
       }
     } catch (error) {
-      console.error('Failed to activate cafe:', error);
       throw error;
     }
   };
@@ -390,7 +411,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         throw new Error(response.message || 'Failed to deactivate cafe');
       }
     } catch (error) {
-      console.error('Failed to deactivate cafe:', error);
       throw error;
     }
   };
@@ -404,9 +424,42 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         throw new Error(response.message || 'Failed to toggle cafe status');
       }
     } catch (error) {
-      console.error('Failed to toggle cafe status:', error);
       throw error;
     }
+  };
+
+  const initializeVenueFromUser = async () => {
+    if (!user) return;
+    
+    const venueId = user.cafeId || user.venue_id;
+    if (!venueId) {
+      return;
+    }
+
+    try {
+      const venue = await workspaceService.getCafe(venueId);
+      if (venue) {
+        const cafe = {
+          id: venue.id,
+          name: venue.name,
+          description: venue.description || '',
+          address: venue.location?.address || '',
+          phone: venue.phone || '',
+          email: venue.email || '',
+          ownerId: user.id,
+          workspaceId: venue.workspace_id,
+          logo: '',
+          isActive: venue.is_active,
+          isOpen: venue.is_active,
+          settings: {},
+          createdAt: new Date(venue.created_at),
+          updatedAt: new Date(venue.updated_at || venue.created_at)
+        };
+        setCurrentCafe(cafe as any);
+      } else {
+        }
+    } catch (error) {
+      }
   };
 
   const value: WorkspaceContextType = {
@@ -431,6 +484,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     activateCafe,
     deactivateCafe,
     toggleCafeStatus,
+    initializeVenueFromUser,
   };
 
   return (

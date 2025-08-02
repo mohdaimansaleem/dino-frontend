@@ -233,7 +233,6 @@ class AnalyticsService {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get dashboard analytics:', error);
       return null;
     }
   }
@@ -246,7 +245,6 @@ class AnalyticsService {
       );
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get recent orders:', error);
       return [];
     }
   }
@@ -259,7 +257,6 @@ class AnalyticsService {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get live metrics:', error);
       return null;
     }
   }
@@ -281,7 +278,6 @@ class AnalyticsService {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get sales report:', error);
       return null;
     }
   }
@@ -302,7 +298,6 @@ class AnalyticsService {
       );
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get revenue trend:', error);
       return [];
     }
   }
@@ -323,7 +318,6 @@ class AnalyticsService {
       );
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get popular items:', error);
       return [];
     }
   }
@@ -341,7 +335,6 @@ class AnalyticsService {
       );
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get hourly performance:', error);
       return [];
     }
   }
@@ -361,7 +354,6 @@ class AnalyticsService {
       );
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get performance metrics:', error);
       return [];
     }
   }
@@ -383,7 +375,6 @@ class AnalyticsService {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get customer insights:', error);
       return null;
     }
   }
@@ -407,7 +398,6 @@ class AnalyticsService {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get customer satisfaction:', error);
       return null;
     }
   }
@@ -422,7 +412,6 @@ class AnalyticsService {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get inventory analytics:', error);
       return null;
     }
   }
@@ -447,7 +436,6 @@ class AnalyticsService {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Failed to export analytics:', error);
       return null;
     }
   }

@@ -175,8 +175,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy URL:', err);
-    }
+      }
   };
 
   const handlePrint = () => {
@@ -216,8 +215,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
           url: qrData.menuUrl,
         });
       } catch (err) {
-        console.error('Failed to share:', err);
-      }
+        }
     } else {
       // Fallback to copying URL
       handleCopyUrl();

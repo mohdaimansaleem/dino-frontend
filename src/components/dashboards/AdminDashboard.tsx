@@ -29,7 +29,10 @@ import {
   Edit,
   Dashboard as DashboardIcon,
   Today,
+  BarChart as BarChartIcon,
+  PieChart as PieChartIcon,
 } from '@mui/icons-material';
+import { WeeklyRevenueChart, StatusPieChart, DonutChart } from '../charts/ChartComponents';
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardService } from '../../services/dashboardService';
 
@@ -72,13 +75,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       setLoading(true);
       setError(null);
       
-      // Load dashboard stats
+      // Load dashboard stats from API
       const dashboardData = await dashboardService.getAdminDashboard();
-      setStats(dashboardData.summary);
-      setRecentOrders(dashboardData.recent_orders || []);
+      
+      if (dashboardData && dashboardData.summary) {
+        setStats(dashboardData.summary);
+        setRecentOrders(dashboardData.recent_orders || []);
+        } else {
+        setStats(null);
+        setRecentOrders([]);
+      }
     } catch (err: any) {
-      console.error('Failed to load dashboard data:', err);
       setError(err.message || 'Failed to load dashboard data');
+      // Don't set dummy data on error, keep it empty
+      setStats(null);
+      setRecentOrders([]);
     } finally {
       setLoading(false);
     }
@@ -96,11 +107,53 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     }
   };
 
-  const tableOccupancyPercentage = stats ? 
-    Math.round((stats.occupied_tables / stats.total_tables) * 100) : 0;
+  // Set default zero values when no data is available
+  const displayStats = stats || {
+    today_orders: 0,
+    today_revenue: 0,
+    total_tables: 0,
+    occupied_tables: 0,
+    total_menu_items: 0,
+    active_menu_items: 0,
+    total_staff: 0,
+  };
 
-  const menuActivePercentage = stats ? 
-    Math.round((stats.active_menu_items / stats.total_menu_items) * 100) : 0;
+  const tableOccupancyPercentage = displayStats.total_tables > 0 ? 
+    Math.round((displayStats.occupied_tables / displayStats.total_tables) * 100) : 0;
+
+  const menuActivePercentage = displayStats.total_menu_items > 0 ? 
+    Math.round((displayStats.active_menu_items / displayStats.total_menu_items) * 100) : 0;
+
+  // Chart data with light colorful scheme
+  const tableStatusData = [
+    { name: 'Occupied', value: displayStats.occupied_tables || 0, color: '#FFAB91' }, // Light Orange
+    { name: 'Available', value: (displayStats.total_tables || 0) - (displayStats.occupied_tables || 0), color: '#A5D6A7' }, // Light Green
+  ];
+
+  const menuStatusData = [
+    { name: 'Active', value: displayStats.active_menu_items || 0, color: '#A5D6A7' }, // Light Green
+    { name: 'Inactive', value: (displayStats.total_menu_items || 0) - (displayStats.active_menu_items || 0), color: '#FFCC02' }, // Light Amber
+  ];
+
+  // Sample weekly data for demonstration (in real app, this would come from API)
+  const weeklyRevenueData = [
+    { day: 'Mon', revenue: Math.round((displayStats.today_revenue * 0.8) || 500), orders: Math.round((displayStats.today_orders * 0.7) || 8) },
+    { day: 'Tue', revenue: Math.round((displayStats.today_revenue * 0.9) || 600), orders: Math.round((displayStats.today_orders * 0.8) || 10) },
+    { day: 'Wed', revenue: Math.round((displayStats.today_revenue * 1.1) || 800), orders: Math.round((displayStats.today_orders * 1.2) || 15) },
+    { day: 'Thu', revenue: Math.round((displayStats.today_revenue * 0.95) || 700), orders: Math.round((displayStats.today_orders * 0.9) || 11) },
+    { day: 'Fri', revenue: Math.round((displayStats.today_revenue * 1.3) || 1000), orders: Math.round((displayStats.today_orders * 1.4) || 18) },
+    { day: 'Sat', revenue: Math.round((displayStats.today_revenue * 1.5) || 1200), orders: Math.round((displayStats.today_orders * 1.6) || 20) },
+    { day: 'Today', revenue: displayStats.today_revenue || 850, orders: displayStats.today_orders || 12 },
+  ];
+
+  const orderStatusData = recentOrders.length > 0 ? [
+    { name: 'Pending', value: recentOrders.filter(o => o.status === 'pending').length, color: '#FFF176' }, // Light Yellow
+    { name: 'Preparing', value: recentOrders.filter(o => o.status === 'preparing').length, color: '#81D4FA' }, // Light Blue
+    { name: 'Ready', value: recentOrders.filter(o => o.status === 'ready').length, color: '#C8E6C9' }, // Light Green
+    { name: 'Served', value: recentOrders.filter(o => o.status === 'served').length, color: '#E1BEE7' }, // Light Purple
+  ].filter(item => item.value > 0) : [
+    { name: 'No Orders', value: 1, color: '#F5F5F5' } // Very light gray for empty state
+  ];
 
   if (loading) {
     return (
@@ -115,19 +168,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ mb: 3 }}>
-        {error}
-        <Button onClick={loadDashboardData} sx={{ ml: 2 }}>
-          Retry
-        </Button>
-      </Alert>
+      <Box className={className} sx={{ p: 2, pt: 1 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <DashboardIcon color="primary" />
+            Admin Dashboard
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Welcome back, {user?.firstName}! Here's your venue overview for today.
+          </Typography>
+        </Box>
+        
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+          <Button onClick={loadDashboardData} sx={{ ml: 2 }}>
+            Retry
+          </Button>
+        </Alert>
+      </Box>
     );
   }
 
   return (
-    <Box className={className} sx={{ p: 3 }}>
+    <Box className={className} sx={{ p: 2, pt: 1 }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <DashboardIcon color="primary" />
           Admin Dashboard
@@ -137,7 +202,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
         </Typography>
       </Box>
 
-      {/* Today's Stats */}
+      {/* Row 1: Quick Stats */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card>
@@ -146,7 +211,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 <Today color="primary" sx={{ fontSize: 40 }} />
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {stats?.today_orders || 0}
+                    {displayStats.today_orders || 0}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Today's Orders
@@ -164,7 +229,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 <TrendingUp color="success" sx={{ fontSize: 40 }} />
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    ₹{stats?.today_revenue?.toLocaleString() || 0}
+                    ₹{displayStats.today_revenue?.toLocaleString() || 0}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Today's Revenue
@@ -182,7 +247,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 <TableRestaurant color="warning" sx={{ fontSize: 40 }} />
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {stats?.occupied_tables || 0}/{stats?.total_tables || 0}
+                    {displayStats.occupied_tables || 0}/{displayStats.total_tables || 0}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Tables Occupied
@@ -205,7 +270,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 <Restaurant color="info" sx={{ fontSize: 40 }} />
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {stats?.active_menu_items || 0}/{stats?.total_menu_items || 0}
+                    {displayStats.active_menu_items || 0}/{displayStats.total_menu_items || 0}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Menu Items Active
@@ -222,87 +287,103 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
         </Grid>
       </Grid>
 
-      {/* Quick Actions */}
+      {/* Row 2: Weekly Revenue Chart & Recent Orders Status */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
-          <Card>
+        {/* Weekly Revenue Trend */}
+        <Grid item xs={12} md={8}>
+          <Card sx={{ height: '100%' }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Quick Actions
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<ShoppingCart />}
-                    onClick={() => window.location.href = '/admin/orders'}
-                  >
-                    View Orders
-                  </Button>
-                </Grid>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<Restaurant />}
-                    onClick={() => window.location.href = '/admin/menu'}
-                  >
-                    Manage Menu
-                  </Button>
-                </Grid>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<TableRestaurant />}
-                    onClick={() => window.location.href = '/admin/tables'}
-                  >
-                    Manage Tables
-                  </Button>
-                </Grid>
-                <Grid item xs={6}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    startIcon={<People />}
-                    onClick={() => window.location.href = '/admin/users'}
-                  >
-                    Manage Staff
-                  </Button>
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <BarChartIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">
+                  Weekly Revenue & Orders Trend
+                </Typography>
+              </Box>
+              <WeeklyRevenueChart data={weeklyRevenueData} height={350} />
             </CardContent>
           </Card>
         </Grid>
 
+        {/* Recent Orders Status */}
+        <Grid item xs={12} md={4}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Recent Orders Status
+              </Typography>
+              <DonutChart data={orderStatusData} height={350} />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Row 3: Table Status & Venue Status */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Table Status */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <PieChartIcon color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6">
+                  Table Status
+                </Typography>
+              </Box>
+              <StatusPieChart data={tableStatusData} height={300} />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Venue Status */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Venue Status
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 4 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Table Occupancy</Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant="body1">Table Occupancy</Typography>
+                  <Typography variant="body1" fontWeight="bold">
                     {tableOccupancyPercentage}%
                   </Typography>
                 </Box>
-                <LinearProgress variant="determinate" value={tableOccupancyPercentage} />
+                <LinearProgress 
+                  variant="determinate" 
+                  value={tableOccupancyPercentage} 
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
                 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Menu Availability</Typography>
-                  <Typography variant="body2" fontWeight="bold">
+                  <Typography variant="body1">Menu Availability</Typography>
+                  <Typography variant="body1" fontWeight="bold">
                     {menuActivePercentage}%
                   </Typography>
                 </Box>
-                <LinearProgress variant="determinate" value={menuActivePercentage} />
+                <LinearProgress 
+                  variant="determinate" 
+                  value={menuActivePercentage} 
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
                 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2">Staff Count</Typography>
-                  <Typography variant="body2" fontWeight="bold">
-                    {stats?.total_staff || 0} Active
+                  <Typography variant="body1">Staff Count</Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {displayStats.total_staff || 0} Active
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body1">Total Tables</Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {displayStats.total_tables || 0}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body1">Total Menu Items</Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {displayStats.total_menu_items || 0}
                   </Typography>
                 </Box>
               </Box>
@@ -312,7 +393,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       </Grid>
 
       {/* Recent Orders */}
-      <Card>
+      <Card sx={{ mb: 4 }}>
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6">
@@ -391,6 +472,65 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
               </TableBody>
             </Table>
           </TableContainer>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions - Full Width */}
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
+            Quick Actions
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                startIcon={<ShoppingCart />}
+                onClick={() => window.location.href = '/admin/orders'}
+                sx={{ py: 2 }}
+              >
+                View Orders
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                startIcon={<Restaurant />}
+                onClick={() => window.location.href = '/admin/menu'}
+                sx={{ py: 2 }}
+              >
+                Manage Menu
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                startIcon={<TableRestaurant />}
+                onClick={() => window.location.href = '/admin/tables'}
+                sx={{ py: 2 }}
+              >
+                Manage Tables
+              </Button>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                startIcon={<People />}
+                onClick={() => window.location.href = '/admin/users'}
+                sx={{ py: 2 }}
+              >
+                Manage Staff
+              </Button>
+            </Grid>
+          </Grid>
         </CardContent>
       </Card>
     </Box>

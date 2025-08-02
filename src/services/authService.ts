@@ -28,7 +28,6 @@ class AuthService {
       this.setTokens(authToken);
       return authToken;
     } catch (error: any) {
-      console.error('Login error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Login failed');
     }
   }
@@ -75,7 +74,8 @@ class AuthService {
     } catch (error: any) {
       // If unauthorized, clear tokens
       if (error.response?.status === 401) {
-        this.clearTokens();
+        // Temporarily disable automatic logout to debug the issue
+        // this.clearTokens();
       }
       throw new Error(error.response?.data?.detail || error.message || 'Failed to get user profile');
     }
@@ -93,7 +93,8 @@ class AuthService {
     } catch (error: any) {
       // If unauthorized, clear tokens
       if (error.response?.status === 401) {
-        this.clearTokens();
+        // Temporarily disable automatic logout to debug the issue
+        // this.clearTokens();
       }
       throw new Error(error.response?.data?.detail || error.message || 'Failed to get user permissions');
     }
@@ -111,7 +112,8 @@ class AuthService {
     } catch (error: any) {
       // If unauthorized, clear tokens
       if (error.response?.status === 401) {
-        this.clearTokens();
+        // Temporarily disable automatic logout to debug the issue
+        // this.clearTokens();
       }
       throw new Error(error.response?.data?.detail || error.message || 'Failed to refresh user permissions');
     }
@@ -215,7 +217,6 @@ class AuthService {
       
       return [];
     } catch (error: any) {
-      console.error('Failed to get addresses:', error);
       return [];
     }
   }
@@ -242,7 +243,6 @@ class AuthService {
       
       return {};
     } catch (error: any) {
-      console.error('Failed to get preferences:', error);
       return {};
     }
   }

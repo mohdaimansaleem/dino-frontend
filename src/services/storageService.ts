@@ -276,7 +276,6 @@ class StorageService {
 
       return [];
     } catch (error: any) {
-      console.error('Failed to list files:', error);
       return [];
     }
   }

@@ -200,7 +200,6 @@ class PromoService {
       
       return { promo_codes: [], total: 0, page: 1, total_pages: 1 };
     } catch (error) {
-      console.error('Failed to get promo codes:', error);
       return { promo_codes: [], total: 0, page: 1, total_pages: 1 };
     }
   }
@@ -211,7 +210,6 @@ class PromoService {
       const response = await apiService.get<PromoCode[]>(`/promo-codes/public/active?venue_id=${venueId}`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get active promo codes:', error);
       return [];
     }
   }
@@ -222,7 +220,6 @@ class PromoService {
       const response = await apiService.get<PromoCode>(`/promo-codes/${promoCodeId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get promo code:', error);
       return null;
     }
   }
@@ -233,7 +230,6 @@ class PromoService {
       const response = await apiService.get<PromoCode>(`/promo-codes/by-code/${code}?venue_id=${venueId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get promo code by code:', error);
       return null;
     }
   }
@@ -300,7 +296,6 @@ class PromoService {
         error_message: 'Validation failed'
       };
     } catch (error: any) {
-      console.error('Failed to validate promo code:', error);
       return {
         is_valid: false,
         discount_amount: 0,
@@ -385,7 +380,6 @@ class PromoService {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get promo analytics:', error);
       return null;
     }
   }
@@ -426,7 +420,6 @@ class PromoService {
       
       return { usage_history: [], total: 0, page: 1, total_pages: 1 };
     } catch (error) {
-      console.error('Failed to get promo usage history:', error);
       return { usage_history: [], total: 0, page: 1, total_pages: 1 };
     }
   }
@@ -458,7 +451,6 @@ class PromoService {
       );
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get venue promo performance:', error);
       return null;
     }
   }

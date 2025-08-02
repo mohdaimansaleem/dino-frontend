@@ -61,7 +61,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
-        console.log('🔗 WebSocket connected');
         setIsConnected(true);
         setConnectionStatus('connected');
         reconnectCountRef.current = 0;
@@ -98,20 +97,17 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
               try {
                 callback(data);
               } catch (error) {
-                console.error('Error in WebSocket subscriber:', error);
-              }
+                }
             });
           }
 
           // Handle specific event types
           handleWebSocketMessage(data);
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
+          }
       };
 
       wsRef.current.onclose = (event) => {
-        console.log('🔌 WebSocket disconnected:', event.code, event.reason);
         setIsConnected(false);
         setConnectionStatus('disconnected');
 
@@ -122,13 +118,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       };
 
       wsRef.current.onerror = (error) => {
-        console.error('❌ WebSocket error:', error);
         setConnectionStatus('error');
         scheduleReconnect();
       };
 
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
       setConnectionStatus('error');
       scheduleReconnect();
     }
@@ -136,14 +130,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
   const scheduleReconnect = useCallback(() => {
     if (reconnectCountRef.current >= reconnectAttempts) {
-      console.log('Max reconnection attempts reached');
       return;
     }
 
     reconnectCountRef.current++;
     const delay = reconnectInterval * Math.pow(1.5, reconnectCountRef.current - 1);
-    
-    console.log(`🔄 Scheduling reconnection attempt ${reconnectCountRef.current}/${reconnectAttempts} in ${delay}ms`);
     
     reconnectTimeoutRef.current = setTimeout(() => {
       connect();
@@ -183,8 +174,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         break;
       
       default:
-        console.log('Unhandled WebSocket message type:', data.type);
-    }
+        }
   };
 
   const sendMessage = useCallback((type: string, payload: any) => {
@@ -195,7 +185,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     } else {
       // Queue message for when connection is established
       messageQueueRef.current.push(message);
-      console.log('📤 Message queued (WebSocket not connected):', type);
+
     }
   }, []);
 

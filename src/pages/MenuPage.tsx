@@ -190,8 +190,7 @@ const MenuPage: React.FC = () => {
         }
       } catch (err: any) {
         setError('Failed to load menu. Please try again.');
-        console.error('Error loading menu:', err);
-      } finally {
+        } finally {
         setLoading(false);
       }
     };

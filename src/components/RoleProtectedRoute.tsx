@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Box, Typography, Paper, Container } from '@mui/material';
+import { Box, Typography, Paper, Container, CircularProgress } from '@mui/material';
 import { Lock, Warning } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { PermissionName } from '../types/auth';
@@ -20,8 +20,20 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
   fallbackPath = '/admin',
   showAccessDenied = true,
 }) => {
-  const { isAuthenticated, hasPermission, hasRole, canAccessRoute, isOperator, user } = useAuth();
+  const { isAuthenticated, hasPermission, hasRole, canAccessRoute, isOperator, user, loading } = useAuth();
   const location = useLocation();
+
+  // Show loading while authentication is being determined
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress size={60} />
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          Loading...
+        </Typography>
+      </Box>
+    );
+  }
 
   // Check if user is authenticated
   if (!isAuthenticated) {
@@ -30,7 +42,6 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
 
   // Superadmin bypass - grant access to everything
   if (user?.role === 'superadmin') {
-    console.log('🔓 Superadmin bypass activated for:', location.pathname);
     return <>{children}</>;
   }
 
@@ -44,19 +55,10 @@ const RoleProtectedRoute: React.FC<RoleProtectedRouteProps> = ({
 
   // Check permission-based access
   if (requiredPermissions.length > 0) {
-    console.log('🔍 RoleProtectedRoute checking permissions:', {
-      requiredPermissions,
-      userRole: user?.role,
-      path: location.pathname
-    });
-    
     const hasRequiredPermissions = requiredPermissions.some(permission => {
       const result = hasPermission(permission);
-      console.log(`🔍 Permission check: ${permission} = ${result}`);
       return result;
     });
-    
-    console.log('✅ Final permission result:', hasRequiredPermissions);
     
     if (!hasRequiredPermissions) {
       // Special handling for operators trying to access admin dashboard

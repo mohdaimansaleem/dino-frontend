@@ -35,7 +35,6 @@ class MenuService {
         has_prev: false
       };
     } catch (error) {
-      console.error('Failed to get menu categories:', error);
       return {
         success: true,
         data: [],
@@ -54,7 +53,6 @@ class MenuService {
       const response = await apiService.get<MenuCategory[]>(`/menu/venues/${venueId}/categories`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get venue categories:', error);
       return [];
     }
   }
@@ -64,7 +62,6 @@ class MenuService {
       const response = await apiService.get<MenuCategory>(`/menu/categories/${categoryId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get menu category:', error);
       return null;
     }
   }
@@ -119,7 +116,6 @@ class MenuService {
         has_prev: false
       };
     } catch (error) {
-      console.error('Failed to get menu items:', error);
       return {
         success: true,
         data: [],
@@ -139,7 +135,6 @@ class MenuService {
       const response = await apiService.get<MenuItem[]>(`/menu/venues/${venueId}/items${params}`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get venue menu items:', error);
       return [];
     }
   }
@@ -149,7 +144,6 @@ class MenuService {
       const response = await apiService.get<MenuItem>(`/menu/items/${itemId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get menu item:', error);
       return null;
     }
   }
@@ -185,7 +179,6 @@ class MenuService {
       const response = await apiService.get<MenuItem[]>(`/menu/venues/${venueId}/search?q=${encodeURIComponent(query)}`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to search menu items:', error);
       return [];
     }
   }

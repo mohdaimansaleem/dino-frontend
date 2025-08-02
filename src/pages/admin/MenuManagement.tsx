@@ -101,7 +101,6 @@ const MenuManagement: React.FC = () => {
           preparationTime: item.preparation_time_minutes || 15
         } as unknown as MenuItemType)));
       } catch (error) {
-        console.error('Failed to load menu data:', error);
         setError('Failed to load menu data. Please try again.');
         setSnackbar({ 
           open: true, 
@@ -133,7 +132,6 @@ const MenuManagement: React.FC = () => {
       setMenuItems(prev => prev.filter(item => item.id !== itemId));
       setSnackbar({ open: true, message: `${item?.name} deleted successfully`, severity: 'success' });
     } catch (error) {
-      console.error('Failed to delete menu item:', error);
       setSnackbar({ open: true, message: 'Failed to delete menu item', severity: 'error' });
     }
   };
@@ -192,7 +190,6 @@ const MenuManagement: React.FC = () => {
       }
       setOpenItemDialog(false);
     } catch (error) {
-      console.error('Failed to save menu item:', error);
       setSnackbar({ open: true, message: 'Failed to save menu item', severity: 'error' });
     }
   };
@@ -225,7 +222,6 @@ const MenuManagement: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Failed to toggle availability:', error);
       setSnackbar({ open: true, message: 'Failed to update availability', severity: 'error' });
     }
   };
@@ -280,7 +276,6 @@ const MenuManagement: React.FC = () => {
       }
       setOpenCategoryDialog(false);
     } catch (error) {
-      console.error('Failed to save category:', error);
       setSnackbar({ open: true, message: 'Failed to save category', severity: 'error' });
     }
   };

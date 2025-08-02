@@ -68,7 +68,6 @@ class QRService {
       
       return [];
     } catch (error: any) {
-      console.error('Failed to get cafe QR codes:', error);
       return [];
     }
   }

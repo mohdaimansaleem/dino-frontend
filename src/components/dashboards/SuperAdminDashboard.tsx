@@ -74,7 +74,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
       setStats(dashboardData.summary);
       setWorkspaces(dashboardData.workspaces || []);
     } catch (err: any) {
-      console.error('Failed to load dashboard data:', err);
       setError(err.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);

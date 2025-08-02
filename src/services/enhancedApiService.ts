@@ -33,10 +33,7 @@ class EnhancedApiService {
     this.timeout = config.api.timeout;
     
     // Log API service initialization
-    console.log('🚀 Enhanced API Service initialized');
-    console.log('📡 Base URL:', this.baseUrl);
-    console.log('⏱️ Timeout:', this.timeout + 'ms');
-  }
+    }
 
   private generateId(): string {
     return `api_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -55,15 +52,8 @@ class EnhancedApiService {
     this.apiCalls.push({ id, request });
 
     // Console logging with emojis and formatting
-    console.group(`🔄 API Request [${id}]`);
-    console.log(`📤 ${method.toUpperCase()} ${url}`);
-    console.log('📋 Headers:', headers);
     if (body) {
-      console.log('📦 Body:', body);
-    }
-    console.log('🕐 Timestamp:', request.timestamp.toISOString());
-    console.groupEnd();
-
+      }
     return id;
   }
 
@@ -88,22 +78,13 @@ class EnhancedApiService {
     // Console logging with status-based emojis
     const statusEmoji = status >= 200 && status < 300 ? '✅' : status >= 400 ? '❌' : '⚠️';
     
-    console.group(`${statusEmoji} API Response [${id}]`);
-    console.log(`📥 ${status} ${statusText}`);
-    console.log(`⏱️ Duration: ${duration}ms`);
-    
     if (data) {
-      console.log('📄 Response Data:', data);
-    }
+      }
     if (error) {
-      console.log('💥 Error:', error);
-    }
+      }
     
-    console.groupEnd();
-
     // Show summary
-    console.info(`📡 API call completed: ${call.request.method} ${call.request.url}`);
-  }
+    }
 
   private async makeRequest<T>(
     endpoint: string,
@@ -207,8 +188,7 @@ class EnhancedApiService {
   // Clear API call history
   clearApiCallHistory(): void {
     this.apiCalls = [];
-    console.log('🧹 API call history cleared');
-  }
+    }
 
   // Get API statistics
   getApiStats(): {
@@ -236,13 +216,7 @@ class EnhancedApiService {
   showApiStatus(): void {
     const stats = this.getApiStats();
     
-    console.group('📊 API Service Status');
-    console.log('📈 Total API Calls:', stats.totalCalls);
-    console.log('✅ Successful Calls:', stats.successfulCalls);
-    console.log('❌ Failed Calls:', stats.failedCalls);
-    console.log('⚡ Average Response Time:', stats.averageResponseTime + 'ms');
-    console.groupEnd();
-  }
+    }
 }
 
 export const enhancedApiService = new EnhancedApiService();

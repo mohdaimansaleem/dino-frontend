@@ -40,7 +40,6 @@ class UserService {
         has_prev: false
       };
     } catch (error) {
-      console.error('Failed to get users:', error);
       return {
         success: true,
         data: [],
@@ -62,7 +61,6 @@ class UserService {
       const response = await apiService.get<User>(`/users/${userId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get user:', error);
       return null;
     }
   }
@@ -265,7 +263,6 @@ class UserService {
         recent_logins: 0
       };
     } catch (error) {
-      console.error('Failed to get user statistics:', error);
       return {
         total_users: 0,
         active_users: 0,

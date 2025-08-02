@@ -48,7 +48,6 @@ class OrderService {
         has_prev: false
       };
     } catch (error) {
-      console.error('Failed to get orders:', error);
       return {
         success: true,
         data: [],
@@ -68,7 +67,6 @@ class OrderService {
       const response = await apiService.get<Order>(`/orders/${orderId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get order:', error);
       return null;
     }
   }
@@ -142,7 +140,6 @@ class OrderService {
       const response = await apiService.get<Order[]>(`/orders/venues/${venueId}/orders?${params.toString()}`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get venue orders:', error);
       return [];
     }
   }
@@ -154,7 +151,6 @@ class OrderService {
       const response = await apiService.get<Order[]>(`/orders/customers/${customerId}/orders${params}`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get customer orders:', error);
       return [];
     }
   }
@@ -169,7 +165,6 @@ class OrderService {
       const response = await apiService.get<VenueAnalyticsData>(`/orders/venues/${venueId}/analytics?${params.toString()}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get order analytics:', error);
       return null;
     }
   }
@@ -180,7 +175,6 @@ class OrderService {
       const response = await apiService.get<LiveOrderData>(`/orders/venues/${venueId}/live`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get live order status:', error);
       return null;
     }
   }
@@ -193,7 +187,6 @@ class OrderService {
       const response = await apiService.get<any>(`/orders/public/qr/${qrCode}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to access menu by QR:', error);
       throw error;
     }
   }
@@ -204,7 +197,6 @@ class OrderService {
       const response = await apiService.get<any>(`/orders/public/venue/${venueId}/status`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to check venue status:', error);
       return null;
     }
   }
@@ -222,7 +214,6 @@ class OrderService {
         errors: ['Validation failed']
       };
     } catch (error) {
-      console.error('Failed to validate order:', error);
       return {
         is_valid: false,
         venue_open: false,
@@ -240,7 +231,6 @@ class OrderService {
       const response = await apiService.get<any>(`/orders/public/${orderId}/status`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to track order status:', error);
       return null;
     }
   }
@@ -251,7 +241,6 @@ class OrderService {
       const response = await apiService.get<OrderReceipt>(`/orders/public/${orderId}/receipt`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get order receipt:', error);
       return null;
     }
   }

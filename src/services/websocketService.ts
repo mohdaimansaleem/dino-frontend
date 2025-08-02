@@ -42,7 +42,6 @@ class WebSocketService {
    */
   connectToVenue(venueId: string, token: string, handlers: WebSocketEventHandlers = {}) {
     if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
-      console.log('WebSocket already connected or connecting');
       return;
     }
 
@@ -59,9 +58,7 @@ class WebSocketService {
       this.ws = new WebSocket(wsUrl);
       this.setupEventListeners();
       
-      console.log(`🔌 Connecting to venue WebSocket: ${venueId}`);
-    } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
+      } catch (error) {
       this.isConnecting = false;
       this.handleConnectionError();
     }
@@ -72,7 +69,6 @@ class WebSocketService {
    */
   connectToUser(userId: string, token: string, handlers: WebSocketEventHandlers = {}) {
     if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
-      console.log('WebSocket already connected or connecting');
       return;
     }
 
@@ -89,9 +85,7 @@ class WebSocketService {
       this.ws = new WebSocket(wsUrl);
       this.setupEventListeners();
       
-      console.log(`🔌 Connecting to user WebSocket: ${userId}`);
-    } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
+      } catch (error) {
       this.isConnecting = false;
       this.handleConnectionError();
     }
@@ -104,7 +98,6 @@ class WebSocketService {
     if (!this.ws) return;
 
     this.ws.onopen = () => {
-      console.log('✅ WebSocket connected');
       this.isConnecting = false;
       this.reconnectAttempts = 0;
       this.startHeartbeat();
@@ -119,12 +112,10 @@ class WebSocketService {
         const message: WebSocketMessage = JSON.parse(event.data);
         this.handleMessage(message);
       } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
-      }
+        }
     };
 
     this.ws.onclose = (event) => {
-      console.log(`🔌 WebSocket closed: ${event.code} - ${event.reason}`);
       this.isConnecting = false;
       this.stopHeartbeat();
       
@@ -139,7 +130,6 @@ class WebSocketService {
     };
 
     this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
       this.isConnecting = false;
       this.handleConnectionError();
     };
@@ -149,11 +139,8 @@ class WebSocketService {
    * Handle incoming WebSocket messages
    */
   private handleMessage(message: WebSocketMessage) {
-    console.log('📨 WebSocket message received:', message.type);
-
     switch (message.type) {
       case 'connection_established':
-        console.log('🎉 WebSocket connection established');
         break;
 
       case 'pong':
@@ -219,15 +206,13 @@ class WebSocketService {
         break;
 
       case 'error':
-        console.error('WebSocket server error:', message.message);
         if (this.eventHandlers.onError) {
           this.eventHandlers.onError(message.message || 'Unknown error');
         }
         break;
 
       default:
-        console.warn('Unknown WebSocket message type:', message.type);
-    }
+        }
   }
 
   /**
@@ -237,8 +222,7 @@ class WebSocketService {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.warn('WebSocket not connected, cannot send message');
-    }
+      }
   }
 
   /**
@@ -337,7 +321,6 @@ class WebSocketService {
    */
   private attemptReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnection attempts reached');
       if (this.eventHandlers.onError) {
         this.eventHandlers.onError('Failed to reconnect after multiple attempts');
       }
@@ -345,14 +328,12 @@ class WebSocketService {
     }
 
     this.reconnectAttempts++;
-    console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
 
     setTimeout(() => {
       if (this.shouldReconnect && (!this.ws || this.ws.readyState === WebSocket.CLOSED)) {
         // Note: This is a simplified reconnection. In a real implementation,
         // you'd need to store the connection parameters and retry the original connection
-        console.log('Reconnection would happen here with stored parameters');
-      }
+        }
     }, this.reconnectInterval * this.reconnectAttempts);
   }
 
@@ -368,8 +349,7 @@ class WebSocketService {
       this.ws = null;
     }
     
-    console.log('🔌 WebSocket disconnected manually');
-  }
+    }
 
   /**
    * Check if WebSocket is connected

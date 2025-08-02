@@ -100,8 +100,7 @@ const CheckoutPage: React.FC = () => {
         const promoCodes = await promoService.getActivePromoCodes(cafeId);
         setAvailablePromos(promoCodes.map(promo => promo.code));
       } catch (error) {
-        console.error('Failed to load promo codes:', error);
-      }
+        }
     };
 
     loadAvailablePromos();
@@ -183,7 +182,6 @@ const CheckoutPage: React.FC = () => {
         alert(validation.error_message || 'Invalid promo code');
       }
     } catch (error) {
-      console.error('Failed to validate promo code:', error);
       alert('Failed to validate promo code. Please try again.');
     } finally {
       setPromoLoading(false);
@@ -239,7 +237,6 @@ const CheckoutPage: React.FC = () => {
         throw new Error('Failed to create order');
       }
     } catch (error) {
-      console.error('Failed to place order:', error);
       alert('Failed to place order. Please try again.');
     } finally {
       setLoading(false);

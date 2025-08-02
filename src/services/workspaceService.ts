@@ -39,7 +39,6 @@ class WorkspaceService {
         has_prev: false
       };
     } catch (error) {
-      console.error('Failed to get workspaces:', error);
       return {
         success: true,
         data: [],
@@ -58,7 +57,6 @@ class WorkspaceService {
       const response = await apiService.get<Workspace>(`/workspaces/${workspaceId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get workspace:', error);
       return null;
     }
   }
@@ -93,7 +91,6 @@ class WorkspaceService {
       const response = await apiService.get<Venue[]>(`/workspaces/${workspaceId}/venues`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get workspace venues:', error);
       return [];
     }
   }
@@ -101,10 +98,25 @@ class WorkspaceService {
   async getCafe(cafeId: string): Promise<Venue | null> {
     try {
       const response = await apiService.get<Venue>(`/venues/${cafeId}`);
-      return response.data || null;
-    } catch (error) {
-      console.error('Failed to get venue:', error);
+      if (response.success && response.data) {
+        return response.data;
+      }
       return null;
+    } catch (error: any) {
+      return null;
+    }
+  }
+
+  // Get all venues (for debugging and fallback)
+  async getAllVenues(): Promise<Venue[]> {
+    try {
+      const response = await apiService.get<Venue[]>('/venues');
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return [];
+    } catch (error: any) {
+      return [];
     }
   }
 
@@ -222,7 +234,6 @@ class WorkspaceService {
       const response = await apiService.get<WorkspaceStatistics>(`/workspaces/${workspaceId}/statistics`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get workspace statistics:', error);
       return null;
     }
   }
@@ -233,7 +244,6 @@ class WorkspaceService {
       const response = await apiService.get<User[]>(`/workspaces/${workspaceId}/users`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get workspace users:', error);
       return [];
     }
   }
@@ -260,7 +270,6 @@ class WorkspaceService {
       const response = await apiService.get<any>(`/workspaces/${workspaceId}/analytics${params}`);
       return response.data || {};
     } catch (error) {
-      console.error('Failed to get workspace analytics:', error);
       return {};
     }
   }

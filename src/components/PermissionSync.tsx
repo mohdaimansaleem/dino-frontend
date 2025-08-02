@@ -32,7 +32,6 @@ const PermissionSync: React.FC<PermissionSyncProps> = ({
         await refreshPermissions();
         setLastSync(new Date());
       } catch (error) {
-        console.error('Permission sync failed:', error);
         setSyncError(error instanceof Error ? error.message : 'Sync failed');
       } finally {
         setIsSyncing(false);
@@ -50,7 +49,6 @@ const PermissionSync: React.FC<PermissionSyncProps> = ({
       await refreshPermissions();
       setLastSync(new Date());
     } catch (error) {
-      console.error('Manual permission sync failed:', error);
       setSyncError(error instanceof Error ? error.message : 'Sync failed');
     } finally {
       setIsSyncing(false);
@@ -65,8 +63,7 @@ const PermissionSync: React.FC<PermissionSyncProps> = ({
           // Permissions updated in another tab, refresh local state
           handleManualRefresh();
         } catch (error) {
-          console.error('Failed to sync permissions from storage:', error);
-        }
+          }
       }
     };
 
@@ -153,7 +150,6 @@ export const usePermissionSync = () => {
       setLastSync(new Date());
       return true;
     } catch (error) {
-      console.error('Permission sync failed:', error);
       setSyncError(error instanceof Error ? error.message : 'Sync failed');
       return false;
     } finally {

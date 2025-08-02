@@ -59,6 +59,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
   });
 
   const isHomePage = location.pathname === '/' || location.pathname === '/home';
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   // Navigation items for home page
   const homeNavItems = NAVIGATION.home.map(item => ({
@@ -267,21 +268,23 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
 
   return (
     <>
-      <Slide appear={false} direction="down" in={!trigger || isHomePage}>
+      <Slide appear={false} direction="down" in={!trigger || isHomePage || isAdminRoute}>
         <AppBar
-          position="fixed"
-          elevation={trigger ? 4 : 0}
+          position={isAdminRoute ? "sticky" : "fixed"}
+          elevation={isAdminRoute ? 0 : (trigger ? 4 : 0)}
           sx={{
-            backgroundColor: trigger 
+            backgroundColor: trigger || isAdminRoute
               ? 'rgba(255, 255, 255, 0.95)' 
               : isHomePage 
                 ? 'rgba(255, 255, 255, 0.1)' 
                 : 'background.paper',
-            backdropFilter: trigger || isHomePage ? 'blur(20px)' : 'none',
-            borderBottom: trigger ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
+            backdropFilter: trigger || isHomePage || isAdminRoute ? 'blur(20px)' : 'none',
+            borderBottom: trigger || isAdminRoute ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
             color: 'text.primary',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             zIndex: 1100,
+            top: isAdminRoute ? 0 : 'auto',
+            boxShadow: isAdminRoute ? 'none' : undefined,
           }}
         >
           <Container maxWidth="xl">

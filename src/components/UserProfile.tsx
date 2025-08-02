@@ -133,8 +133,7 @@ const UserProfile: React.FC = () => {
       setAddresses(addressesData);
       setPreferences(preferencesData);
     } catch (err: any) {
-      console.error('Failed to load user data:', err);
-    }
+      }
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {

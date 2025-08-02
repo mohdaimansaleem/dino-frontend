@@ -21,7 +21,6 @@ class ValidationService {
       const response = await apiService.post<ValidationResponse>('/validation/workspace-data', data);
       return response.data || { valid: false, errors: ['Validation failed'], warnings: [] };
     } catch (error) {
-      console.error('Failed to validate workspace data:', error);
       return { valid: false, errors: ['Validation service unavailable'], warnings: [] };
     }
   }
@@ -34,7 +33,6 @@ class ValidationService {
       const response = await apiService.post<ValidationResponse>('/validation/venue-data', data);
       return response.data || { valid: false, errors: ['Validation failed'], warnings: [] };
     } catch (error) {
-      console.error('Failed to validate venue data:', error);
       return { valid: false, errors: ['Validation service unavailable'], warnings: [] };
     }
   }
@@ -47,7 +45,6 @@ class ValidationService {
       const response = await apiService.post<ValidationResponse>('/validation/user-data', data);
       return response.data || { valid: false, errors: ['Validation failed'], warnings: [] };
     } catch (error) {
-      console.error('Failed to validate user data:', error);
       return { valid: false, errors: ['Validation service unavailable'], warnings: [] };
     }
   }
@@ -60,7 +57,6 @@ class ValidationService {
       const response = await apiService.post<ValidationResponse>('/validation/menu-item-data', data);
       return response.data || { valid: false, errors: ['Validation failed'], warnings: [] };
     } catch (error) {
-      console.error('Failed to validate menu item data:', error);
       return { valid: false, errors: ['Validation service unavailable'], warnings: [] };
     }
   }

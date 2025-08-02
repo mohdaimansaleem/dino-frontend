@@ -42,7 +42,6 @@ class TableService {
         has_prev: false
       };
     } catch (error) {
-      console.error('Failed to get tables:', error);
       return {
         success: true,
         data: [],
@@ -64,7 +63,6 @@ class TableService {
       const response = await apiService.get<Table>(`/tables/${tableId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get table:', error);
       return null;
     }
   }
@@ -151,7 +149,6 @@ class TableService {
       const response = await apiService.get<TableQRCode>(`/tables/${tableId}/qr-code`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get table QR code:', error);
       return null;
     }
   }
@@ -175,7 +172,6 @@ class TableService {
       const response = await apiService.post<QRCodeVerification>('/tables/verify-qr', { qr_code: qrCode });
       return response.data || null;
     } catch (error) {
-      console.error('Failed to verify QR code:', error);
       return null;
     }
   }
@@ -193,7 +189,6 @@ class TableService {
       const response = await apiService.get<Table[]>(`/tables/venues/${venueId}/tables${params}`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get venue tables:', error);
       return [];
     }
   }
@@ -493,7 +488,6 @@ class TableService {
       const response = await apiService.get<any[]>(`/venues/${venueId}/areas`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get areas:', error);
       return [];
     }
   }

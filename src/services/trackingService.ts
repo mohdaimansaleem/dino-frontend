@@ -189,7 +189,6 @@ class TrackingService {
       const response = await apiService.get<OrderTracking>(`/tracking/orders/${orderId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get order tracking:', error);
       return null;
     }
   }
@@ -200,7 +199,6 @@ class TrackingService {
       const response = await apiService.get<OrderTracking>(`/tracking/public/orders/${orderNumber}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get order tracking by number:', error);
       return null;
     }
   }
@@ -212,7 +210,6 @@ class TrackingService {
       const response = await apiService.get<OrderTracking[]>(`/tracking/customers/${customerId}/orders${params}`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get customer orders tracking:', error);
       return [];
     }
   }
@@ -234,7 +231,6 @@ class TrackingService {
       );
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get venue orders tracking:', error);
       return [];
     }
   }
@@ -253,8 +249,7 @@ class TrackingService {
             callback(response.data);
           }
         } catch (error) {
-          console.error('Failed to get live order updates:', error);
-        }
+          }
       }, 30000); // Poll every 30 seconds
 
       // Return unsubscribe function
@@ -262,7 +257,6 @@ class TrackingService {
         clearInterval(pollInterval);
       };
     } catch (error) {
-      console.error('Failed to subscribe to order updates:', error);
       return () => {}; // Return empty unsubscribe function
     }
   }
@@ -273,7 +267,6 @@ class TrackingService {
       const response = await apiService.get<KitchenStatus>(`/tracking/venues/${venueId}/kitchen-status`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get kitchen status:', error);
       return null;
     }
   }
@@ -286,7 +279,6 @@ class TrackingService {
       const response = await apiService.get<OrderEstimate>(`/tracking/orders/${orderId}/estimate`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get order estimate:', error);
       return null;
     }
   }
@@ -306,7 +298,6 @@ class TrackingService {
       }>(`/tracking/venues/${venueId}/estimate-preparation-time`, { items });
       return response.data || null;
     } catch (error) {
-      console.error('Failed to calculate preparation time:', error);
       return null;
     }
   }
@@ -330,7 +321,6 @@ class TrackingService {
       const response = await apiService.get<DeliveryTracking>(`/tracking/orders/${orderId}/delivery`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get delivery tracking:', error);
       return null;
     }
   }
@@ -359,7 +349,6 @@ class TrackingService {
       const response = await apiService.get<CustomerNotification[]>(`/tracking/orders/${orderId}/notifications`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get order notifications:', error);
       return [];
     }
   }
@@ -408,7 +397,6 @@ class TrackingService {
       const response = await apiService.get<FeedbackRequest>(`/tracking/orders/${orderId}/feedback`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get order feedback:', error);
       return null;
     }
   }

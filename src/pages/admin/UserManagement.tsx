@@ -105,7 +105,6 @@ const UserManagement: React.FC = () => {
       const usersData = await userService.getUsers(filters);
       setUsers(usersData.data || []);
     } catch (error) {
-      console.error('Failed to load users:', error);
       setError('Failed to load users. Please try again.');
     } finally {
       setLoading(false);
@@ -178,7 +177,6 @@ const UserManagement: React.FC = () => {
       await loadUsers();
       handleCloseDialog();
     } catch (error) {
-      console.error('Failed to save user:', error);
       // Show error message to user
     }
   };
@@ -189,8 +187,7 @@ const UserManagement: React.FC = () => {
         await userService.deleteUser(userId);
         await loadUsers(); // Reload users after deletion
       } catch (error) {
-        console.error('Failed to delete user:', error);
-      }
+        }
     }
   };
 
@@ -199,21 +196,18 @@ const UserManagement: React.FC = () => {
       await userService.toggleUserStatus(userId, !currentStatus);
       await loadUsers(); // Reload users after status change
     } catch (error) {
-      console.error('Failed to toggle user status:', error);
-    }
+      }
   };
 
   const handlePasswordUpdate = async (userId: string, newPassword: string) => {
     try {
       // This would use the userService password update method
-      console.log(`Updating password for user ${userId}`);
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Show success message or handle response
       alert('Password updated successfully!');
     } catch (error) {
-      console.error('Failed to update password:', error);
       throw error;
     }
   };

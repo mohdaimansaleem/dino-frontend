@@ -83,8 +83,6 @@ const ContactPage: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Here you would typically send the form data to your backend
-      console.log('Form submitted:', formData);
-      
       setSubmitted(true);
       setFormData({
         name: '',
@@ -96,8 +94,7 @@ const ContactPage: React.FC = () => {
         inquiryType: 'general'
       });
     } catch (error) {
-      console.error('Failed to submit form:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };

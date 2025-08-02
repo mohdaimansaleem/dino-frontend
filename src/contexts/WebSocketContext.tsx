@@ -132,13 +132,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   // Connect to WebSocket when user is authenticated
   const connect = (venueId?: string) => {
     if (!isAuthenticated || !user) {
-      console.log('Cannot connect WebSocket: User not authenticated');
       return;
     }
 
     const token = localStorage.getItem('dino_token');
     if (!token) {
-      console.log('Cannot connect WebSocket: No token found');
       return;
     }
 

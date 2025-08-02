@@ -48,6 +48,9 @@ import {
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import AuthDebug from '../../components/debug/AuthDebug';
+import ApiDebug from '../../components/debug/ApiDebug';
+import VenueDebug from '../../components/debug/VenueDebug';
 import { PERMISSIONS } from '../../types/auth';
 import { orderService, Order, OrderStatus, PaymentStatus, PaymentMethod } from '../../services/orderService';
 import {
@@ -74,8 +77,8 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const OrdersManagement: React.FC = () => {
-  const { hasPermission, isOperator, isAdmin } = useAuth();
-  const { currentCafe } = useWorkspace();
+  const { hasPermission, isOperator, isAdmin, user } = useAuth();
+  const { currentCafe, refreshCafes, loading: workspaceLoading } = useWorkspace();
   const [tabValue, setTabValue] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -90,8 +93,17 @@ const OrdersManagement: React.FC = () => {
   // Load orders from API
   useEffect(() => {
     const loadOrders = async () => {
-      if (!currentCafe?.id) {
-        setError('No cafe selected');
+      // Try to get venue ID from user data if currentCafe is not available
+      const venueId = currentCafe?.id || user?.cafeId || user?.venue_id;
+      
+      if (!venueId) {
+        // Try to refresh workspace data to get venue
+        try {
+          await refreshCafes();
+          setError('No cafe selected. Please ensure you have a venue assigned to your account.');
+        } catch (refreshError) {
+          setError('Unable to load venue data. Please contact support.');
+        }
         setLoading(false);
         return;
       }
@@ -100,10 +112,9 @@ const OrdersManagement: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const ordersData = await orderService.getVenueOrders(currentCafe.id);
+        const ordersData = await orderService.getVenueOrders(venueId);
         setOrders(ordersData);
       } catch (error) {
-        console.error('Failed to load orders:', error);
         setError('Failed to load orders. Please try again.');
       } finally {
         setLoading(false);
@@ -118,6 +129,25 @@ const OrdersManagement: React.FC = () => {
     return () => {
       clearInterval(refreshTimer);
     };
+  }, [currentCafe?.id, user?.cafeId, user?.venue_id]);
+
+  // Retry loading orders when currentCafe becomes available
+  useEffect(() => {
+    if (currentCafe?.id && orders.length === 0 && !loading) {
+      const loadOrders = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const ordersData = await orderService.getVenueOrders(currentCafe.id);
+          setOrders(ordersData);
+        } catch (error) {
+          setError('Failed to load orders. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadOrders();
+    }
   }, [currentCafe?.id]);
 
   // Filter orders based on search and status
@@ -234,7 +264,6 @@ const OrdersManagement: React.FC = () => {
         severity: 'success' 
       });
     } catch (error) {
-      console.error('Failed to update order status:', error);
       setSnackbar({ 
         open: true, 
         message: 'Failed to update order status. Please try again.', 
@@ -244,11 +273,12 @@ const OrdersManagement: React.FC = () => {
   };
 
   const handleRefreshOrders = async () => {
-    if (!currentCafe?.id) return;
+    const venueId = currentCafe?.id || user?.cafeId || user?.venue_id;
+    if (!venueId) return;
 
     try {
       setLoading(true);
-      const ordersData = await orderService.getVenueOrders(currentCafe.id);
+      const ordersData = await orderService.getVenueOrders(venueId);
       setOrders(ordersData);
       setSnackbar({ 
         open: true, 
@@ -256,7 +286,6 @@ const OrdersManagement: React.FC = () => {
         severity: 'success' 
       });
     } catch (error) {
-      console.error('Failed to refresh orders:', error);
       setSnackbar({ 
         open: true, 
         message: 'Failed to refresh orders. Please try again.', 
@@ -453,6 +482,11 @@ const OrdersManagement: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
+      {/* Debug Info */}
+      <AuthDebug />
+      <ApiDebug />
+      <VenueDebug />
+      
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>

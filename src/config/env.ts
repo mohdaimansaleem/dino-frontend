@@ -120,6 +120,24 @@ export const config = {
     enableAnimations: getBooleanEnvVar('REACT_APP_ENABLE_ANIMATIONS', true),
   },
 
+  // Chart Configuration
+  charts: {
+    // Animation interval in milliseconds (30 seconds = 30000ms)
+    animationInterval: getNumberEnvVar('REACT_APP_CHART_ANIMATION_INTERVAL', 30000),
+    
+    // Animation duration in milliseconds
+    animationDuration: getNumberEnvVar('REACT_APP_CHART_ANIMATION_DURATION', 1000),
+    
+    // Animation easing
+    animationEasing: getEnvVar('REACT_APP_CHART_ANIMATION_EASING', 'easeInOutQuart'),
+    
+    // Whether animations are enabled
+    animationsEnabled: getBooleanEnvVar('REACT_APP_CHART_ANIMATIONS_ENABLED', true),
+    
+    // Auto-refresh data
+    autoRefreshEnabled: getBooleanEnvVar('REACT_APP_CHART_AUTO_REFRESH_ENABLED', true),
+  },
+
   // Performance Settings
   performance: {
     imageOptimization: getBooleanEnvVar('REACT_APP_ENABLE_IMAGE_OPTIMIZATION', true),
@@ -165,8 +183,8 @@ export const validateConfig = (): void => {
     }
   }
 
-  // Log warnings if any
-  if (warnings.length > 0 && config.logging.enableConsole) {
+  // Log warnings if any (only in development)
+  if (warnings.length > 0 && config.logging.enableConsole && config.app.env === 'development') {
     console.warn('Configuration warnings:', warnings);
   }
 };

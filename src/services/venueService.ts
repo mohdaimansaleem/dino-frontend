@@ -42,7 +42,6 @@ class VenueService {
         has_prev: false
       };
     } catch (error) {
-      console.error('Failed to get public venues:', error);
       return {
         success: true,
         data: [],
@@ -64,7 +63,6 @@ class VenueService {
       const response = await apiService.get<Venue>(`/venues/public/${venueId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get public venue:', error);
       return null;
     }
   }
@@ -99,7 +97,6 @@ class VenueService {
         has_prev: false
       };
     } catch (error) {
-      console.error('Failed to get venues:', error);
       return {
         success: true,
         data: [],
@@ -121,7 +118,6 @@ class VenueService {
       const response = await apiService.get<Venue>(`/venues/${venueId}`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get venue:', error);
       return null;
     }
   }
@@ -178,7 +174,6 @@ class VenueService {
       const response = await apiService.get<VenueAnalytics>(`/venues/${venueId}/analytics`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to get venue analytics:', error);
       return null;
     }
   }
@@ -195,7 +190,6 @@ class VenueService {
       const response = await apiService.get<OperatingHours[]>(`/venues/${venueId}/hours`);
       return response.data || [];
     } catch (error) {
-      console.error('Failed to get operating hours:', error);
       return [];
     }
   }
@@ -219,7 +213,6 @@ class VenueService {
       const response = await apiService.get<VenueStatus>(`/orders/public/venue/${venueId}/status`);
       return response.data || null;
     } catch (error) {
-      console.error('Failed to check venue status:', error);
       return null;
     }
   }
@@ -304,7 +297,6 @@ class VenueService {
 
       return venuesWithDistance;
     } catch (error) {
-      console.error('Failed to get venues near location:', error);
       return [];
     }
   }

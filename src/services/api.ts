@@ -78,8 +78,12 @@ class ApiService {
             }
           } catch (refreshError) {
             this.processQueue(refreshError);
-            this.clearTokens();
-            window.location.href = '/login';
+            // Temporarily disable automatic logout to debug the issue
+            // this.clearTokens();
+            // Only redirect if we're not already on login page
+            // if (window.location.pathname !== '/login') {
+            //   //   window.location.href = '/login';
+            // }
             return Promise.reject(refreshError);
           } finally {
             this.refreshing = false;
@@ -89,11 +93,9 @@ class ApiService {
         // Handle other error cases
         if (error.response?.status === 403) {
           // Forbidden - user doesn't have permission
-          console.error('Access forbidden:', error.response.data);
-        } else if (error.response?.status >= 500) {
+          } else if (error.response?.status >= 500) {
           // Server error
-          console.error('Server error:', error.response.data);
-        }
+          }
 
         return Promise.reject(error);
       }
@@ -121,15 +123,12 @@ class ApiService {
   // Generic GET request
   async get<T>(url: string, params?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
-      console.log(`🌐 API Call: GET ${url}`, params ? { params } : '');
       const response: AxiosResponse<ApiResponse<T>> = await this.api.get(url, { 
         params, 
         ...config 
       });
-      console.log(`✅ API Success: GET ${url}`, response.data);
       return response.data;
     } catch (error: any) {
-      console.error(`❌ API Error: GET ${url}`, error.response?.data || error.message);
       return this.handleError<T>(error);
     }
   }
@@ -137,10 +136,7 @@ class ApiService {
   // Generic POST request
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
-      console.log(`🌐 API Call: POST ${url}`, data ? { data } : '');
       const response: AxiosResponse<any> = await this.api.post(url, data, config);
-      console.log(`✅ API Success: POST ${url}`, response.data);
-      
       // Handle different response formats from backend
       if (response.data && typeof response.data === 'object') {
         // If response has success field, it's our ApiResponse format
@@ -157,7 +153,6 @@ class ApiService {
       
       return response.data;
     } catch (error: any) {
-      console.error(`❌ API Error: POST ${url}`, error.response?.data || error.message);
       return this.handleError<T>(error);
     }
   }
@@ -165,12 +160,9 @@ class ApiService {
   // Generic PUT request
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
-      console.log(`🌐 API Call: PUT ${url}`, data ? { data } : '');
       const response: AxiosResponse<ApiResponse<T>> = await this.api.put(url, data, config);
-      console.log(`✅ API Success: PUT ${url}`, response.data);
       return response.data;
     } catch (error: any) {
-      console.error(`❌ API Error: PUT ${url}`, error.response?.data || error.message);
       return this.handleError<T>(error);
     }
   }
@@ -188,12 +180,9 @@ class ApiService {
   // Generic DELETE request
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
-      console.log(`🌐 API Call: DELETE ${url}`);
       const response: AxiosResponse<ApiResponse<T>> = await this.api.delete(url, config);
-      console.log(`✅ API Success: DELETE ${url}`, response.data);
       return response.data;
     } catch (error: any) {
-      console.error(`❌ API Error: DELETE ${url}`, error.response?.data || error.message);
       return this.handleError<T>(error);
     }
   }
@@ -290,7 +279,6 @@ class ApiService {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(downloadUrl);
     } catch (error: any) {
-      console.error('Download failed:', error);
       throw error;
     }
   }

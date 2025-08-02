@@ -18,8 +18,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         const parsedCart = JSON.parse(savedCart);
         setItems(parsedCart);
       } catch (error) {
-        console.error('Failed to load cart from localStorage:', error);
-      }
+        }
     }
   }, []);
 

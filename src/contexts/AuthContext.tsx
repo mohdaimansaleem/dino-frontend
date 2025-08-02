@@ -48,30 +48,55 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const token = localStorage.getItem('dino_token');
         const savedUser = localStorage.getItem('dino_user');
+        const savedPermissions = localStorage.getItem('dino_permissions');
         
-        console.log('🔐 Initializing auth...', { hasToken: !!token, hasUser: !!savedUser });
+
+        
+        // Check if we're being redirected to login unexpectedly
+        if (token && savedUser && window.location.pathname === '/login') {
+          }
         
         if (token && savedUser) {
+          // Check if token is expired
+          if (isTokenExpired(token)) {
+            localStorage.removeItem('dino_token');
+            localStorage.removeItem('dino_user');
+            localStorage.removeItem('dino_permissions');
+            setUser(null);
+            setUserPermissions(null);
+            return;
+          }
+
           try {
             const savedUserData = JSON.parse(savedUser);
-            console.log('✅ User restored from storage:', savedUserData.email);
             setUser(savedUserData);
+            
+            // Also restore permissions if available
+            if (savedPermissions) {
+              try {
+                const permissionsData = JSON.parse(savedPermissions);
+                setUserPermissions(permissionsData);
+                } catch (permError) {
+                }
+            }
           } catch (error) {
-            console.error('❌ Invalid user data:', error);
             // Invalid user data, clear storage
             localStorage.removeItem('dino_token');
             localStorage.removeItem('dino_user');
+            localStorage.removeItem('dino_permissions');
             setUser(null);
+            setUserPermissions(null);
           }
         } else {
-          console.log('ℹ️ No stored auth data found');
           setUser(null);
+          setUserPermissions(null);
         }
       } catch (error) {
-        console.error('❌ Failed to initialize auth:', error);
         localStorage.removeItem('dino_token');
         localStorage.removeItem('dino_user');
+        localStorage.removeItem('dino_permissions');
         setUser(null);
+        setUserPermissions(null);
       } finally {
         setLoading(false);
       }
@@ -122,7 +147,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUserPermissions(permissionsData);
         localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
       } catch (error) {
-        console.warn('Failed to fetch user permissions:', error);
         // Continue with login even if permissions fetch fails
       }
 
@@ -170,12 +194,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = (): void => {
+    // This will show us where logout is being called from
     localStorage.removeItem('dino_token');
     localStorage.removeItem('dino_user');
     localStorage.removeItem('dino_refresh_token');
     localStorage.removeItem('dino_permissions');
     setUser(null);
     setUserPermissions(null);
+  };
+
+  // Check if token is expired
+  const isTokenExpired = (token: string): boolean => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      return payload.exp < currentTime;
+    } catch (error) {
+      return true; // Assume expired if can't parse
+    }
   };
 
   const updateUser = async (userData: Partial<UserProfile>): Promise<void> => {
@@ -247,7 +283,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(localUser);
       localStorage.setItem('dino_user', JSON.stringify(localUser));
     } catch (error) {
-      console.error('Failed to refresh user:', error);
       // If refresh fails, user might need to login again
       logout();
       throw error;
@@ -315,22 +350,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // First check backend role if available
     const backendRole = PermissionService.getBackendRole();
     
-    console.log('🔍 Role Check:', {
-      requestedRole: role,
-      backendRole: backendRole,
-      backendRoleName: backendRole?.name
-    });
-    
     if (backendRole && backendRole.name) {
       const hasRoleResult = backendRole.name.toLowerCase() === role.toLowerCase();
-      console.log('✅ Backend role match:', hasRoleResult);
       return hasRoleResult;
     }
     
     // Fallback to static role checking
     const authUser = getUserWithRole();
     const staticResult = PermissionService.hasRole(authUser, role);
-    console.log('🔄 Static role check:', staticResult);
     return staticResult;
   };
 
@@ -358,7 +385,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUserPermissions(permissionsData);
       localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
     } catch (error) {
-      console.error('Failed to refresh permissions:', error);
       throw error;
     }
   };
@@ -378,30 +404,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const initializePermissions = async () => {
       try {
         const savedPermissions = localStorage.getItem('dino_permissions');
-        console.log('🔄 Initializing permissions from localStorage:', !!savedPermissions);
         if (savedPermissions) {
           const parsed = JSON.parse(savedPermissions);
-          console.log('📋 Loaded permissions:', {
-            role: parsed.role?.name,
-            permissionCount: parsed.permissions?.length,
-            dashboardPermissions: parsed.dashboard_permissions
-          });
           setUserPermissions(parsed);
         }
         
-        // If user is logged in but no permissions cached, fetch them
+        // If user is logged in but no permissions cached, fetch them (but only if token is valid)
         if (user && !savedPermissions) {
-          try {
-            const permissionsData = await authService.getUserPermissions();
-            setUserPermissions(permissionsData);
-            localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
-          } catch (error) {
-            console.warn('Failed to fetch permissions on init:', error);
+          const token = localStorage.getItem('dino_token');
+          if (token && !isTokenExpired(token)) {
+            try {
+              const permissionsData = await authService.getUserPermissions();
+              setUserPermissions(permissionsData);
+              localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
+              } catch (error) {
+              // Don't logout on permission fetch failure
+            }
           }
         }
       } catch (error) {
-        console.error('Failed to initialize permissions:', error);
-      }
+        }
     };
 
     if (!loading) {

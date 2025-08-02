@@ -163,12 +163,10 @@ class PermissionService {
       const permissionsData = localStorage.getItem('dino_permissions');
       if (permissionsData) {
         const parsed = JSON.parse(permissionsData);
-        console.log('📋 Backend permissions loaded:', parsed.permissions?.length || 0, 'permissions');
         return parsed.permissions || [];
       }
     } catch (error) {
-      console.warn('Failed to parse backend permissions:', error);
-    }
+      }
     return [];
   }
 
@@ -180,12 +178,10 @@ class PermissionService {
       const permissionsData = localStorage.getItem('dino_permissions');
       if (permissionsData) {
         const parsed = JSON.parse(permissionsData);
-        console.log('👤 Backend role loaded:', parsed.role?.name || 'No role');
         return parsed.role || null;
       }
     } catch (error) {
-      console.warn('Failed to parse backend role:', error);
-    }
+      }
     return null;
   }
 

@@ -88,7 +88,6 @@ const TableManagement: React.FC = () => {
         setAreas(areasData);
         setTables(tablesData.data || []);
       } catch (error) {
-        console.error('Failed to load table data:', error);
         setError('Failed to load table data. Please try again.');
         setSnackbar({ 
           open: true, 
@@ -119,7 +118,6 @@ const TableManagement: React.FC = () => {
       setTables(prev => prev.filter(table => table.id !== tableId));
       setSnackbar({ open: true, message: 'Table deleted successfully', severity: 'success' });
     } catch (error) {
-      console.error('Failed to delete table:', error);
       setSnackbar({ open: true, message: 'Failed to delete table', severity: 'error' });
     }
   };
@@ -156,7 +154,6 @@ const TableManagement: React.FC = () => {
       }
       setOpenTableDialog(false);
     } catch (error) {
-      console.error('Failed to save table:', error);
       setSnackbar({ open: true, message: 'Failed to save table', severity: 'error' });
     }
   };
@@ -173,7 +170,6 @@ const TableManagement: React.FC = () => {
         severity: 'success' 
       });
     } catch (error) {
-      console.error('Failed to toggle table status:', error);
       setSnackbar({ open: true, message: 'Failed to update table status', severity: 'error' });
     }
   };
@@ -213,7 +209,6 @@ const TableManagement: React.FC = () => {
       }
       setOpenAreaDialog(false);
     } catch (error) {
-      console.error('Failed to save area:', error);
       setSnackbar({ open: true, message: 'Failed to save area', severity: 'error' });
     }
   };

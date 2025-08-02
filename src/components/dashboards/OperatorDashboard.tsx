@@ -83,7 +83,6 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
       setStats(dashboardData.summary);
       setActiveOrders(dashboardData.active_orders || []);
     } catch (err: any) {
-      console.error('Failed to load dashboard data:', err);
       setError(err.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
@@ -104,8 +103,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
       // Refresh data
       await loadDashboardData();
     } catch (err: any) {
-      console.error('Failed to update order status:', err);
-    }
+      }
   };
 
   const getStatusColor = (status: string) => {

@@ -62,7 +62,6 @@ class CacheService {
       this.saveToStorage(key, item);
     }
 
-    console.log(`📦 Cache SET: ${key} (TTL: ${item.ttl}ms)`);
   }
 
   /**
@@ -72,18 +71,15 @@ class CacheService {
     const item = this.cache.get(key);
 
     if (!item) {
-      console.log(`📦 Cache MISS: ${key}`);
       return null;
     }
 
     // Check if item has expired
     if (this.isExpired(item)) {
-      console.log(`📦 Cache EXPIRED: ${key}`);
       this.delete(key);
       return null;
     }
 
-    console.log(`📦 Cache HIT: ${key}`);
     return item.data as T;
   }
 
@@ -106,8 +102,7 @@ class CacheService {
     }
 
     if (deleted) {
-      console.log(`📦 Cache DELETE: ${key}`);
-    }
+      }
 
     return deleted;
   }
@@ -122,8 +117,7 @@ class CacheService {
       this.clearStorage();
     }
 
-    console.log('📦 Cache CLEARED');
-  }
+    }
 
   /**
    * Get or set pattern - fetch data if not in cache
@@ -145,7 +139,6 @@ class CacheService {
       this.set(key, data, ttl);
       return data;
     } catch (error) {
-      console.error(`Failed to fetch data for cache key: ${key}`, error);
       throw error;
     }
   }
@@ -164,7 +157,6 @@ class CacheService {
     });
 
     keysToDelete.forEach(key => this.delete(key));
-    console.log(`📦 Cache INVALIDATED pattern: ${pattern} (${keysToDelete.length} items)`);
   }
 
   /**
@@ -198,10 +190,8 @@ class CacheService {
       try {
         const data = await fetchFunction();
         this.set(key, data, ttl);
-        console.log(`📦 Cache PRELOADED: ${key}`);
-      } catch (error) {
-        console.error(`Failed to preload cache key: ${key}`, error);
-      }
+        } catch (error) {
+        }
     }
   }
 
@@ -212,10 +202,8 @@ class CacheService {
     try {
       const data = await fetchFunction();
       this.set(key, data, ttl);
-      console.log(`📦 Cache REFRESHED: ${key}`);
       return data;
     } catch (error) {
-      console.error(`Failed to refresh cache key: ${key}`, error);
       throw error;
     }
   }
@@ -252,8 +240,7 @@ class CacheService {
     expiredKeys.forEach(key => this.delete(key));
 
     if (expiredKeys.length > 0) {
-      console.log(`📦 Cache CLEANUP: Removed ${expiredKeys.length} expired items`);
-    }
+      }
   }
 
   private loadFromStorage(): void {
@@ -276,10 +263,8 @@ class CacheService {
         }
       }
 
-      console.log(`📦 Cache LOADED from storage: ${this.cache.size} items`);
-    } catch (error) {
-      console.error('Failed to load cache from storage:', error);
-    }
+      } catch (error) {
+      }
   }
 
   private saveToStorage(key: string, item: CacheItem<any>): void {
@@ -287,8 +272,7 @@ class CacheService {
       const storageKey = `dino_cache_${key}`;
       localStorage.setItem(storageKey, JSON.stringify(item));
     } catch (error) {
-      console.error(`Failed to save cache item to storage: ${key}`, error);
-    }
+      }
   }
 
   private removeFromStorage(key: string): void {
@@ -296,8 +280,7 @@ class CacheService {
       const storageKey = `dino_cache_${key}`;
       localStorage.removeItem(storageKey);
     } catch (error) {
-      console.error(`Failed to remove cache item from storage: ${key}`, error);
-    }
+      }
   }
 
   private clearStorage(): void {
@@ -305,8 +288,7 @@ class CacheService {
       const keys = Object.keys(localStorage).filter(key => key.startsWith('dino_cache_'));
       keys.forEach(key => localStorage.removeItem(key));
     } catch (error) {
-      console.error('Failed to clear cache from storage:', error);
-    }
+      }
   }
 }
 

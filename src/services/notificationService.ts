@@ -34,7 +34,6 @@ class NotificationService {
       this.ws = new WebSocket(`${wsUrl}?token=${token}`);
 
       this.ws.onopen = () => {
-        console.log('WebSocket connected');
         this.isConnecting = false;
         this.reconnectAttempts = 0;
         this.notifyConnectionCallbacks(true);
@@ -45,23 +44,19 @@ class NotificationService {
           const data = JSON.parse(event.data);
           this.handleMessage(data);
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
-        }
+          }
       };
 
       this.ws.onclose = () => {
-        console.log('WebSocket disconnected');
         this.isConnecting = false;
         this.notifyConnectionCallbacks(false);
         this.scheduleReconnect();
       };
 
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
         this.isConnecting = false;
       };
     } catch (error) {
-      console.error('Failed to create WebSocket connection:', error);
       this.isConnecting = false;
       this.scheduleReconnect();
     }
@@ -73,7 +68,6 @@ class NotificationService {
       const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
       
       setTimeout(() => {
-        console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
         this.connect();
       }, delay);
     }
@@ -91,8 +85,7 @@ class NotificationService {
         this.handleCafeStatusUpdate(data.payload);
         break;
       default:
-        console.log('Unknown message type:', data.type);
-    }
+        }
   }
 
   private handleNotification(payload: any) {
@@ -158,8 +151,7 @@ class NotificationService {
       try {
         callback(notification);
       } catch (error) {
-        console.error('Error in notification callback:', error);
-      }
+        }
     });
   }
 
@@ -168,8 +160,7 @@ class NotificationService {
       try {
         callback(connected);
       } catch (error) {
-        console.error('Error in connection callback:', error);
-      }
+        }
     });
   }
 
@@ -239,8 +230,7 @@ class NotificationService {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type, payload }));
     } else {
-      console.warn('WebSocket is not connected');
-    }
+      }
   }
 
   // Request browser notification permission

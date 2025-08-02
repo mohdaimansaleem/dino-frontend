@@ -84,7 +84,6 @@ const OrderTrackingPage: React.FC = () => {
           setError('Order not found');
         }
       } catch (error) {
-        console.error('Failed to load order tracking:', error);
         setError('Failed to load order tracking. Please try again.');
       } finally {
         setLoading(false);
@@ -150,8 +149,7 @@ const OrderTrackingPage: React.FC = () => {
         setOrder(trackingData);
       }
     } catch (error) {
-      console.error('Failed to refresh order tracking:', error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };

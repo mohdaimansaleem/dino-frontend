@@ -38,7 +38,6 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
-  console.log('🏗️ Layout component rendered');
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, hasPermission, isAdmin, isOperator } = useAuth();
@@ -61,7 +60,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const renderNavigation = () => {
-    console.log('🔍 renderNavigation called. Current path:', location.pathname, 'isAdminRoute:', isAdminRoute, 'user:', !!user);
     if (isPublicMenuRoute) {
       // Extract cafeId and tableId from current path for proper routing
       const pathParts = location.pathname.split('/');
@@ -101,13 +99,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
 
     if (isAdminRoute && user) {
-      console.log('🔍 Admin route detected. User:', {
-        role: user.role,
-        email: user.email,
-        id: user.id,
-        isAdminRoute,
-        pathname: location.pathname
-      });
       // Define all possible admin navigation items with their required permissions
       const allAdminNavItems = [
         { 
@@ -173,11 +164,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         // Check multiple possible role locations
         const backendRole = PermissionService.getBackendRole();
         const userRole = backendRole?.name || user.role || (user as any).role || 'unknown';
-        console.log('🔍 Checking user role:', userRole, 'Backend role:', backendRole?.name, 'for item:', item.label);
-        
         // For superadmin, show all items
         if (userRole === 'superadmin') {
-          console.log('🔓 Superadmin access granted for:', item.label);
           return true;
         }
         
@@ -185,34 +173,42 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         if (item.roles && item.roles.length > 0) {
           const hasRequiredRole = item.roles.includes(userRole as string);
           if (!hasRequiredRole) {
-            console.log('❌ Role check failed for:', item.label, 'Required:', item.roles, 'User role:', userRole);
             return false;
           }
         }
         
         // Check permission (fallback)
         const hasPermissionResult = hasPermission(item.permission);
-        console.log('🔍 Permission check for:', item.label, 'Permission:', item.permission, 'Result:', hasPermissionResult);
         return hasPermissionResult;
       });
       
-      console.log('📋 Final admin nav items:', adminNavItems.map(item => item.label));
+
 
       return (
         <>
           {adminNavItems.map((item) => (
             <Button
               key={item.label}
-              color="inherit"
               onClick={() => navigate(item.path)}
               startIcon={item.icon}
-              variant={location.pathname === item.path ? 'contained' : 'outlined'}
+              fullWidth
               sx={{
-                minWidth: 'auto',
-                flexShrink: 0,
-                mr: 1,
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+                py: 1.5,
+                px: 2,
+                borderRadius: 2,
+                color: location.pathname === item.path ? 'primary.main' : 'text.primary',
+                backgroundColor: location.pathname === item.path ? 'primary.50' : 'transparent',
+                fontWeight: location.pathname === item.path ? 600 : 400,
                 '&:hover': {
-                  backgroundColor: 'primary.50',
+                  backgroundColor: location.pathname === item.path ? 'primary.100' : 'action.hover',
+                  transform: 'translateX(4px)',
+                },
+                transition: 'all 0.2s ease-in-out',
+                '& .MuiButton-startIcon': {
+                  mr: 2,
+                  color: location.pathname === item.path ? 'primary.main' : 'text.secondary',
                 },
               }}
             >
@@ -300,26 +296,29 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <AppHeader />
       )}
 
-      {/* Admin Navigation Bar */}
+      {/* Admin Sidebar Navigation */}
       {isAdminRoute && user && (
         <Box sx={{ 
-          backgroundColor: 'primary.main', 
-          borderBottom: '1px solid', 
-          borderColor: 'divider',
-          px: 2,
-          py: 2,
           position: 'fixed',
-          top: 70, // Below the main header
           left: 0,
-          right: 0,
-          zIndex: 1000,
-          boxShadow: 2
+          top: 0, // Start from top to overlap with navbar
+          bottom: 0,
+          width: 240,
+          backgroundColor: 'background.paper',
+          borderRight: '1px solid',
+          borderColor: 'divider',
+          zIndex: 1050, // Below navbar but above content
+          boxShadow: 2,
+          overflowY: 'auto',
+          pt: 9 // Add padding top to account for navbar height
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, overflow: 'auto' }}>
-            <Typography variant="h6" sx={{ color: 'white', mr: 2 }}>
-              Admin Navigation:
+          <Box sx={{ p: 2 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+              Admin Panel
             </Typography>
-            {renderNavigation()}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {renderNavigation()}
+            </Box>
           </Box>
         </Box>
       )}
@@ -331,7 +330,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           flexGrow: 1,
           backgroundColor: 'background.default',
           minHeight: '100vh',
-          pt: isCustomerFacingRoute ? 0 : (isAdminRoute ? 16 : 9), // Extra padding for admin routes with navigation
+          pt: isCustomerFacingRoute ? 0 : 9, // Top padding for sticky navbar
+          pl: isAdminRoute && user ? 30 : 0, // Left padding for sidebar (240px = 30 * 8px)
+          transition: 'padding-left 0.3s ease-in-out',
         }}
       >
         <Fade in timeout={300}>
