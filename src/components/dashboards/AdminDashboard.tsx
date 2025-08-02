@@ -68,6 +68,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
 
   useEffect(() => {
     loadDashboardData();
+    
+    // Add smooth scrolling to the document
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    // Cleanup on unmount
+    return () => {
+      document.documentElement.style.scrollBehavior = 'auto';
+    };
   }, []);
 
   const loadDashboardData = async () => {
@@ -195,8 +203,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       sx={{ 
         p: { xs: 2, lg: 1 }, 
         pt: { xs: 2, lg: 1 }, // Add some top padding but less than before
-        height: { lg: '100vh' },
-        overflow: { lg: 'auto' },
         display: 'flex',
         flexDirection: 'column'
       }}
@@ -489,7 +495,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
         </Card>
 
         {/* Quick Actions - Full Width */}
-        <Card sx={{ flexShrink: 0 }}>
+        <Card sx={{ flexShrink: 0, mb: { xs: 4, lg: 3 } }}>
           <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
             <Typography variant="h6" gutterBottom sx={{ mb: { xs: 3, lg: 2 } }}>
               Quick Actions
@@ -546,6 +552,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
             </Grid>
           </CardContent>
         </Card>
+
+        {/* Footer */}
+        <Box 
+          sx={{ 
+            flexShrink: 0,
+            textAlign: 'center',
+            py: { xs: 2, lg: 1.5 },
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
+            mt: 'auto'
+          }}
+        >
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ 
+              fontSize: '0.875rem',
+              fontWeight: 500 
+            }}
+          >
+            © 2024 Dino E-Menu. All rights reserved.
+          </Typography>
+          <Typography 
+            variant="caption" 
+            color="text.secondary"
+            sx={{ 
+              fontSize: '0.75rem',
+              display: 'block',
+              mt: 0.5
+            }}
+          >
+            Digital Menu Revolution
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

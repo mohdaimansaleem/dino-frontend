@@ -270,7 +270,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
     <>
       <Slide appear={false} direction="down" in={!trigger || isHomePage || isAdminRoute}>
         <AppBar
-          position={isAdminRoute ? "static" : "fixed"}
+          position={isAdminRoute ? "sticky" : "fixed"}
           elevation={isAdminRoute ? 0 : (trigger ? 4 : 0)}
           sx={{
             backgroundColor: trigger || isAdminRoute

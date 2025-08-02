@@ -296,51 +296,67 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <AppHeader />
       )}
 
-      {/* Admin Sidebar Navigation */}
-      {isAdminRoute && user && (
-        <Box sx={{ 
-          position: 'fixed',
-          left: 0,
-          top: 0, // Start from top to overlap with navbar
-          bottom: 0,
-          width: 240,
-          backgroundColor: 'background.paper',
-          borderRight: '1px solid',
-          borderColor: 'divider',
-          zIndex: 1050, // Below navbar but above content
-          boxShadow: 2,
-          overflowY: 'auto',
-          pt: 0 // No padding needed since navbar is static
-        }}>
-          <Box sx={{ p: 2 }}>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-              Control Panel
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              {renderNavigation()}
+      {/* Admin Layout with Sidebar */}
+      {isAdminRoute && user ? (
+        <Box sx={{ display: 'flex', flexGrow: 1 }}>
+          {/* Admin Sidebar Navigation */}
+          <Box sx={{ 
+            position: 'sticky',
+            top: 70, // Position below the sticky navbar (navbar height ~70px)
+            height: 'calc(100vh - 70px)', // Adjust height to account for navbar
+            width: 240,
+            backgroundColor: 'background.paper',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+            zIndex: 1050,
+            boxShadow: 2,
+            overflow: 'hidden', // Remove scroll from sidebar
+            pt: 2,
+            flexShrink: 0,
+          }}>
+            <Box sx={{ p: 2 }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+                Control Panel
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {renderNavigation()}
+              </Box>
             </Box>
           </Box>
+
+          {/* Main Content */}
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              backgroundColor: 'background.default',
+              minHeight: '100vh',
+            }}
+          >
+            <Fade in timeout={300}>
+              <div>{children}</div>
+            </Fade>
+          </Box>
+        </Box>
+      ) : (
+        /* Non-admin routes */
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            backgroundColor: 'background.default',
+            minHeight: '100vh',
+            pt: isCustomerFacingRoute ? 0 : 9, // Top padding for sticky navbar
+            transition: 'padding-top 0.3s ease-in-out',
+            // Smooth scrolling
+            scrollBehavior: 'smooth',
+          }}
+        >
+          <Fade in timeout={300}>
+            <div>{children}</div>
+          </Fade>
         </Box>
       )}
-
-      {/* Main Content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          backgroundColor: 'background.default',
-          minHeight: '100vh',
-          pt: isCustomerFacingRoute ? 0 : (isAdminRoute ? 0 : 9), // Top padding for sticky navbar
-          pl: isAdminRoute && user ? 30 : 0, // Left padding for sidebar (240px = 30 * 8px)
-          transition: 'padding-left 0.3s ease-in-out',
-        }}
-      >
-        <Fade in timeout={300}>
-          <div>{children}</div>
-        </Fade>
-      </Box>
-
-
     </Box>
   );
 };
