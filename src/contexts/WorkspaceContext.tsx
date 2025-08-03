@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Workspace, Cafe, PricingPlan } from '../types/auth';
 import { workspaceService } from '../services/workspaceService';
 import { useAuth } from './AuthContext';
@@ -58,25 +58,53 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
   const [cafesLoading, setCafesLoading] = useState(false);
 
-  // Initialize workspace data when user is authenticated
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      initializeWorkspaceData();
-    } else {
-      // Clear data when user logs out
-      setCurrentWorkspace(null);
-      setCurrentCafe(null);
-      setWorkspaces([]);
-      setCafes([]);
+  const loadCafesForWorkspace = useCallback(async (workspaceId: string) => {
+    setCafesLoading(true);
+    try {
+      const venueList = await workspaceService.getCafes(workspaceId);
+      // Convert venues to cafes
+      const cafeList = venueList.map((venue: any) => ({
+        id: venue.id,
+        name: venue.name,
+        description: venue.description || '',
+        address: venue.location?.address || '',
+        phone: venue.phone || '',
+        email: venue.email || '',
+        ownerId: (venue as any).owner_id || '',
+        workspaceId: venue.workspace_id,
+        logo: '',
+        isActive: venue.is_active,
+        isOpen: venue.is_active,
+        settings: {},
+        createdAt: new Date(venue.created_at),
+        updatedAt: new Date(venue.updated_at || venue.created_at)
+      })) as any[];
+      setCafes(cafeList);
+      
+      // If no current cafe is set, set the first active cafe
+      if (!currentCafe && cafeList.length > 0) {
+        const activeCafe = cafeList.find((cafe: any) => cafe.isActive) || cafeList[0];
+        setCurrentCafe(activeCafe);
+      }
+    } catch (error) {
+      } finally {
+      setCafesLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [currentCafe]);
 
-  const initializeWorkspaceData = async () => {
+  const initializeWorkspaceData = useCallback(async () => {
     setLoading(true);
     try {
       // Load pricing plans (static only, no API call)
       const plans = await workspaceService.getPricingPlans();
       setPricingPlans(plans);
+
+      // Check if user is authenticated before loading workspaces
+      if (!isAuthenticated || !user) {
+        console.log('User not authenticated, skipping workspace loading');
+        setLoading(false);
+        return;
+      }
 
       // Load workspaces
       await refreshWorkspaces();
@@ -159,12 +187,28 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       } finally {
       setLoading(false);
     }
-  };
+  }, [user, loadCafesForWorkspace]);
+
+  // Initialize workspace data when user is authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      initializeWorkspaceData();
+    } else {
+      // Clear data when user logs out
+      setCurrentWorkspace(null);
+      setCurrentCafe(null);
+      setWorkspaces([]);
+      setCafes([]);
+    }
+  }, [isAuthenticated, user, initializeWorkspaceData]);
 
   const refreshWorkspaces = async () => {
     setWorkspacesLoading(true);
     try {
+      console.log('Refreshing workspaces...');
       const workspaceList = await workspaceService.getWorkspaces();
+      console.log('Workspace list received:', workspaceList);
+      
       // Extract data from paginated response and convert to local format
       const localWorkspaces = (workspaceList.data || []).map((workspace: any) => ({
         ...workspace,
@@ -174,9 +218,27 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         createdAt: new Date(workspace.created_at),
         updatedAt: new Date(workspace.updated_at || workspace.created_at)
       }));
+      
+      console.log('Local workspaces:', localWorkspaces);
       setWorkspaces(localWorkspaces);
-    } catch (error) {
-      } finally {
+    } catch (error: any) {
+      console.error('Error refreshing workspaces:', error);
+      
+      // If authentication error, clear workspaces but don't logout automatically
+      if (error.message?.includes('Authentication required')) {
+        console.warn('Authentication required for workspaces');
+        setWorkspaces([]);
+      } else if (error.message?.includes('permission')) {
+        console.warn('Permission denied for workspaces');
+        setWorkspaces([]);
+      } else if (error.message?.includes('404') || error.message?.includes('Not Found')) {
+        console.warn('Workspaces endpoint not found, using fallback');
+        setWorkspaces([]);
+      } else {
+        console.error('Unexpected error:', error);
+        setWorkspaces([]);
+      }
+    } finally {
       setWorkspacesLoading(false);
     }
   };
@@ -186,39 +248,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     await loadCafesForWorkspace(currentWorkspace.id);
   };
 
-  const loadCafesForWorkspace = async (workspaceId: string) => {
-    setCafesLoading(true);
-    try {
-      const venueList = await workspaceService.getCafes(workspaceId);
-      // Convert venues to cafes
-      const cafeList = venueList.map((venue: any) => ({
-        id: venue.id,
-        name: venue.name,
-        description: venue.description || '',
-        address: venue.location?.address || '',
-        phone: venue.phone || '',
-        email: venue.email || '',
-        ownerId: (venue as any).owner_id || '',
-        workspaceId: venue.workspace_id,
-        logo: '',
-        isActive: venue.is_active,
-        isOpen: venue.is_active,
-        settings: {},
-        createdAt: new Date(venue.created_at),
-        updatedAt: new Date(venue.updated_at || venue.created_at)
-      })) as any[];
-      setCafes(cafeList);
-      
-      // If no current cafe is set, set the first active cafe
-      if (!currentCafe && cafeList.length > 0) {
-        const activeCafe = cafeList.find((cafe: any) => cafe.isActive) || cafeList[0];
-        setCurrentCafe(activeCafe);
-      }
-    } catch (error) {
-      } finally {
-      setCafesLoading(false);
-    }
-  };
+
 
   const switchWorkspace = async (workspaceId: string) => {
     try {

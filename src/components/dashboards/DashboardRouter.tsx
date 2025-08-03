@@ -1,9 +1,11 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUserData } from '../../contexts/UserDataContext';
 import { usePermissions } from '../RoleBasedComponent';
 import SuperAdminDashboard from './SuperAdminDashboard';
 import AdminDashboard from './AdminDashboard';
 import OperatorDashboard from './OperatorDashboard';
+import UserDataDashboard from './UserDataDashboard';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface DashboardRouterProps {
@@ -16,10 +18,11 @@ interface DashboardRouterProps {
  */
 const DashboardRouter: React.FC<DashboardRouterProps> = ({ className }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { userData, loading: userDataLoading } = useUserData();
   const { isSuperAdmin, isAdmin, isOperator } = usePermissions();
 
   // Show loading state while authentication is being determined
-  if (isLoading) {
+  if (isLoading || userDataLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <LoadingSpinner size="lg" />
@@ -50,7 +53,12 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ className }) => {
   const adminCheck = isAdmin();
   const operatorCheck = isOperator();
 
-  // Render appropriate dashboard based on user role
+  // If we have user data, use the new UserDataDashboard
+  if (userData) {
+    return <UserDataDashboard className={className} />;
+  }
+
+  // Fallback to old dashboards if no user data
   if (superAdminCheck) {
     return <SuperAdminDashboard className={className} />;
   }

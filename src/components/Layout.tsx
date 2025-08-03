@@ -5,16 +5,14 @@ import {
   IconButton, 
   Badge,
   Fade,
-  Switch,
-  FormControlLabel,
-  Chip,
+
   Typography,
 } from '@mui/material';
 import { 
   ShoppingCart, 
   Restaurant, 
   AccountCircle, 
-  ExitToApp,
+
   Dashboard,
   TableRestaurant,
   Settings,
@@ -40,8 +38,9 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, hasPermission, isAdmin, isOperator } = useAuth();
+  const { user, logout, hasPermission, isOperator } = useAuth();
   const { getTotalItems } = useCart();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [cafeOpen, setCafeOpen] = useState(true);
   
   // Feature flags
@@ -279,6 +278,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return null;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getPageTitle = () => {
     if (isPublicMenuRoute) return 'Dino';
     if (isCheckoutRoute) return 'Checkout';

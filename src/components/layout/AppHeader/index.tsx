@@ -9,8 +9,7 @@ import {
   IconButton,
   useScrollTrigger,
   Slide,
-  Fade,
-  Chip,
+
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -18,14 +17,8 @@ import {
   Menu as MenuIcon,
   AccountCircle,
   ExitToApp,
-  Dashboard,
   Login,
   PersonAdd,
-  Home,
-  Info,
-  AttachMoney,
-  RateReview,
-  ContactMail,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -108,7 +101,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isHomePage]);
+  }, [isHomePage, homeNavItems]);
 
   const handleLogout = () => {
     logout();

@@ -5,6 +5,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
+import { UserDataProvider } from './contexts/UserDataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -15,6 +16,7 @@ import FeaturesPage from './pages/FeaturesPage';
 import PricingPage from './pages/PricingPage';
 import ContactPage from './pages/ContactPage';
 import TestimonialsPage from './pages/TestimonialsPage';
+import DebugPage from './pages/DebugPage';
 // RegistrationPage now imported from LazyComponents
 import LoginPage from './pages/LoginPage';
 
@@ -34,7 +36,7 @@ import {
   CheckoutPage,
   OrderTrackingPage,
   RegistrationPage,
-  preloadCriticalComponents,
+
 } from './components/LazyComponents';
 
 // Components
@@ -52,9 +54,10 @@ function App() {
         {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
           <AuthProvider>
             <PermissionSync autoRefreshInterval={5 * 60 * 1000} showSyncStatus={process.env.NODE_ENV === 'development'}>
-              <WorkspaceProvider>
-                <NotificationProvider>
-                  <CartProvider>
+              <UserDataProvider>
+                <WorkspaceProvider>
+                  <NotificationProvider>
+                    <CartProvider>
                   <Layout>
               <Routes>
                 {/* Public Routes */}
@@ -66,6 +69,7 @@ function App() {
                 <Route path="/testimonials" element={<TestimonialsPage />} />
                 <Route path="/register" element={<RegistrationPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/debug" element={<DebugPage />} />
                 <Route path="/menu/:cafeId/:tableId" element={<MenuPage />} />
                 <Route path="/checkout/:cafeId/:tableId" element={<CheckoutPage />} />
                 <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
@@ -124,9 +128,10 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
                   </Layout>
-                  </CartProvider>
-                </NotificationProvider>
-              </WorkspaceProvider>
+                    </CartProvider>
+                  </NotificationProvider>
+                </WorkspaceProvider>
+              </UserDataProvider>
             </PermissionSync>
           </AuthProvider>
         {/* </LocalizationProvider> */}

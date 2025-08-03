@@ -54,6 +54,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useUserData } from '../../contexts/UserDataContext';
 import PermissionService from '../../services/permissionService';
 import { ROLES, PERMISSIONS } from '../../types/auth';
 import PasswordUpdateDialog from '../../components/PasswordUpdateDialog';
@@ -64,6 +65,14 @@ import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
 const UserManagement: React.FC = () => {
   const { user: currentUser, hasPermission, getUserWithRole, isSuperAdmin, isAdmin } = useAuth();
   const { currentWorkspace, currentCafe, cafes } = useWorkspace();
+  const { 
+    userData, 
+    hasPermission: hasUserDataPermission, 
+    getUsers: getUserDataUsers,
+    getVenue,
+    getWorkspace,
+    getVenueDisplayName
+  } = useUserData();
   
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +101,15 @@ const UserManagement: React.FC = () => {
   }, [currentWorkspace, currentCafe]);
 
   const loadUsers = async () => {
+    // Try to use userData first
+    if (userData) {
+      const venueUsers = getUserDataUsers();
+      setUsers(venueUsers);
+      setLoading(false);
+      return;
+    }
+
+    // Fallback to old method
     if (!currentWorkspace?.id) {
       setUsers([]);
       setLoading(false);
@@ -136,8 +154,8 @@ const UserManagement: React.FC = () => {
         last_name: '',
         phone: '',
         role_name: ROLES.OPERATOR as string,
-        workspace_id: currentWorkspace?.id || '',
-        venue_id: currentCafe?.id || '',
+        workspace_id: getWorkspace()?.id || currentWorkspace?.id || '',
+        venue_id: getVenue()?.id || currentCafe?.id || '',
         is_active: true,
       });
     }
@@ -381,8 +399,11 @@ const UserManagement: React.FC = () => {
     );
   }
 
-  // No workspace selected state
-  if (!currentWorkspace?.id) {
+  // No workspace selected state (check userData first)
+  const venue = getVenue();
+  const workspace = getWorkspace();
+  
+  if (!venue && !currentWorkspace?.id) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         {/* Header */}
@@ -469,7 +490,7 @@ const UserManagement: React.FC = () => {
               User Management
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Manage users and their permissions for {currentCafe?.name || currentWorkspace?.name || 'your workspace'}
+              Manage users and their permissions for {getVenueDisplayName()}
             </Typography>
           </Box>
           <Button

@@ -26,7 +26,16 @@ class WorkspaceService {
       if (filters?.search) params.append('search', filters.search);
       if (filters?.is_active !== undefined) params.append('is_active', filters.is_active.toString());
 
-      const response = await apiService.get<PaginatedResponse<Workspace>>(`/workspaces?${params.toString()}`);
+      const queryString = params.toString();
+      const url = queryString ? `/workspaces?${queryString}` : '/workspaces';
+      
+      console.log('Fetching workspaces from:', url);
+      const response = await apiService.get<PaginatedResponse<Workspace>>(url);
+      
+      if (response.success && response.data) {
+        console.log('Workspaces fetched successfully:', response.data);
+        return response.data;
+      }
       
       return response.data || {
         success: true,
@@ -38,7 +47,22 @@ class WorkspaceService {
         has_next: false,
         has_prev: false
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error fetching workspaces:', error);
+      
+      // If it's an authentication error, don't return empty data
+      if (error.response?.status === 401) {
+        throw new Error('Authentication required. Please log in again.');
+      }
+      
+      if (error.response?.status === 403) {
+        throw new Error('You do not have permission to access workspaces.');
+      }
+      
+      if (error.response?.status === 404) {
+        console.warn('Workspaces endpoint not found, returning empty data');
+      }
+      
       return {
         success: true,
         data: [],
@@ -310,6 +334,35 @@ class WorkspaceService {
     }
 
     return { isValid: errors.length === 0, errors };
+  }
+
+  // Debug methods
+  async debugWorkspaces(): Promise<any> {
+    try {
+      const response = await apiService.get<any>('/workspaces/debug');
+      return response.data || response;
+    } catch (error: any) {
+      console.error('Debug workspaces error:', error);
+      return {
+        success: false,
+        error: error.message,
+        status: error.response?.status
+      };
+    }
+  }
+
+  async testPublicWorkspaces(): Promise<any> {
+    try {
+      const response = await apiService.get<any>('/workspaces/public-debug');
+      return response.data || response;
+    } catch (error: any) {
+      console.error('Public debug workspaces error:', error);
+      return {
+        success: false,
+        error: error.message,
+        status: error.response?.status
+      };
+    }
   }
 }
 

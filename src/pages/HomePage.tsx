@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import {
   Box,
   Container,
@@ -21,29 +21,21 @@ import {
   useScrollTrigger,
 } from '@mui/material';
 import {
-  QrCode,
-  Restaurant,
-  Analytics,
-  Speed,
-  Security,
-  Support,
+
   CheckCircle,
   Phone,
   Email,
   LocationOn,
-  TrendingUp,
-  CloudDone,
+
   PlayArrow,
-  EmojiEvents,
-  Smartphone,
+
   AutoAwesome,
   KeyboardArrowUp,
-  AttachMoney,
-  Business,
-  CorporateFare,
+
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import DinoLogo from '../components/DinoLogo';
 import AnimatedCounter from '../components/ui/AnimatedCounter';
 import Footer from '../components/layout/Footer';
@@ -208,7 +200,7 @@ const HomePage: React.FC = () => {
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  {user?.role!='operator' ? (
+                  {user?.role !== 'operator' ? (
                     <Button
                       variant="contained"
                       size="large"

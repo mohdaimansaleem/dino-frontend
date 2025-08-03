@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Grid,
@@ -42,7 +42,7 @@ import {
 } from '@mui/icons-material';
 import { WeeklyRevenueChart, StatusPieChart, DonutChart } from '../charts/ChartComponents';
 import { useAuth } from '../../contexts/AuthContext';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useUserData } from '../../contexts/UserDataContext';
 import { PERMISSIONS } from '../../types/auth';
 import { dashboardService } from '../../services/dashboardService';
 import { analyticsService } from '../../services/analyticsService';
@@ -99,7 +99,8 @@ interface ChartData {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const { user, hasPermission, hasBackendPermission } = useAuth();
-  const { currentCafe } = useWorkspace();
+  const { userData, loading: userDataLoading } = useUserData();
+  const currentCafe = userData?.venue;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -111,21 +112,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const [statusLoading, setStatusLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
-  useEffect(() => {
-    loadDashboardData();
-    loadCafeStatus();
-    loadChartData();
-    
-    // Add smooth scrolling to the document
-    document.documentElement.style.scrollBehavior = 'smooth';
-    
-    // Cleanup on unmount
-    return () => {
-      document.documentElement.style.scrollBehavior = 'auto';
-    };
-  }, [currentCafe?.id, user]);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -157,9 +144,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentCafe?.id]);
 
-  const loadChartData = async () => {
+  const loadChartData = useCallback(async () => {
     if (!currentCafe?.id) return;
 
     try {
@@ -219,7 +206,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     } finally {
       setChartLoading(false);
     }
-  };
+  }, []);
 
 
 
@@ -243,7 +230,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     ]);
   };
 
-  const loadCafeStatus = async () => {
+  const loadCafeStatus = useCallback(async () => {
     if (!currentCafe?.id) return;
     
     try {
@@ -251,12 +238,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       if (venue) {
         setCafeActive(venue.is_active || false);
         // Check venue status or fall back to currentCafe isOpen
-        setCafeOpen(venue.status === 'active' || currentCafe.isOpen || false);
+        setCafeOpen(venue.status === 'active' || currentCafe?.is_open || false);
       }
     } catch (error) {
       console.error('Error loading cafe status:', error);
     }
-  };
+  }, [currentCafe?.id, currentCafe?.is_open]);
+
+  useEffect(() => {
+    loadDashboardData();
+    loadCafeStatus();
+    loadChartData();
+    
+    // Add smooth scrolling to the document
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    // Cleanup on unmount
+    return () => {
+      document.documentElement.style.scrollBehavior = 'auto';
+    };
+  }, [currentCafe?.id, user, loadDashboardData, loadCafeStatus, loadChartData]);
 
   const handleToggleCafeActive = async () => {
     if (!currentCafe?.id || statusLoading) return;
@@ -372,6 +373,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     { name: 'Available', value: (displayStats.total_tables || 0) - (displayStats.occupied_tables || 0), color: '#A5D6A7' },
   ];
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const getMenuStatusData = () => [
     { name: 'Active', value: displayStats.active_menu_items || 0, color: '#A5D6A7' },
     { name: 'Inactive', value: (displayStats.total_menu_items || 0) - (displayStats.active_menu_items || 0), color: '#FFCC02' },

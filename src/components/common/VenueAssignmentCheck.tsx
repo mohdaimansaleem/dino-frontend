@@ -26,6 +26,7 @@ const VenueAssignmentCheck: React.FC<VenueAssignmentCheckProps> = ({
   showFullPage = false,
   customMessage
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useAuth();
   const { requiresVenueAssignment, canBypassVenueCheck } = useVenueCheck();
   

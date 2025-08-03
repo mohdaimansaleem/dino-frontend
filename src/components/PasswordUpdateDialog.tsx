@@ -19,6 +19,8 @@ import {
   Lock,
   Person,
 } from '@mui/icons-material';
+import { validatePasswordStrength } from '../utils/passwordUtils';
+import PasswordStrengthIndicator from './PasswordStrengthIndicator';
 
 interface User {
   id: string;
@@ -58,27 +60,7 @@ const PasswordUpdateDialog: React.FC<PasswordUpdateDialogProps> = ({
     onClose();
   };
 
-  const validatePassword = (password: string): string[] => {
-    const errors: string[] = [];
-    
-    if (password.length < 8) {
-      errors.push('Password must be at least 8 characters long');
-    }
-    if (!/(?=.*[a-z])/.test(password)) {
-      errors.push('Password must contain at least one lowercase letter');
-    }
-    if (!/(?=.*[A-Z])/.test(password)) {
-      errors.push('Password must contain at least one uppercase letter');
-    }
-    if (!/(?=.*\d)/.test(password)) {
-      errors.push('Password must contain at least one number');
-    }
-    if (!/(?=.*[@$!%*?&])/.test(password)) {
-      errors.push('Password must contain at least one special character (@$!%*?&)');
-    }
-    
-    return errors;
-  };
+
 
   const handleSubmit = async () => {
     setError('');
@@ -94,9 +76,9 @@ const PasswordUpdateDialog: React.FC<PasswordUpdateDialogProps> = ({
       return;
     }
 
-    const passwordErrors = validatePassword(formData.newPassword);
-    if (passwordErrors.length > 0) {
-      setError(passwordErrors.join('. '));
+    const passwordValidation = validatePasswordStrength(formData.newPassword);
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.errors.join('. '));
       return;
     }
 
@@ -225,25 +207,13 @@ const PasswordUpdateDialog: React.FC<PasswordUpdateDialogProps> = ({
             />
           </Grid>
 
-          {/* Password Requirements */}
+          {/* Password Strength Indicator */}
           <Grid item xs={12}>
-            <Typography variant="caption" color="text.secondary">
-              Password Requirements:
-            </Typography>
-            <Box component="ul" sx={{ mt: 0.5, pl: 2 }}>
-              <Typography component="li" variant="caption" color="text.secondary">
-                At least 8 characters long
-              </Typography>
-              <Typography component="li" variant="caption" color="text.secondary">
-                Contains uppercase and lowercase letters
-              </Typography>
-              <Typography component="li" variant="caption" color="text.secondary">
-                Contains at least one number
-              </Typography>
-              <Typography component="li" variant="caption" color="text.secondary">
-                Contains at least one special character (@$!%*?&)
-              </Typography>
-            </Box>
+            <PasswordStrengthIndicator 
+              password={formData.newPassword}
+              showRequirements={true}
+              compact={false}
+            />
           </Grid>
         </Grid>
       </DialogContent>

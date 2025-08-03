@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface PermissionSyncProps {
@@ -42,7 +42,7 @@ const PermissionSync: React.FC<PermissionSyncProps> = ({
   }, [isAuthenticated, autoRefreshInterval, refreshPermissions]);
 
   // Manual refresh function
-  const handleManualRefresh = async () => {
+  const handleManualRefresh = useCallback(async () => {
     try {
       setIsSyncing(true);
       setSyncError(null);
@@ -53,7 +53,7 @@ const PermissionSync: React.FC<PermissionSyncProps> = ({
     } finally {
       setIsSyncing(false);
     }
-  };
+  }, [refreshPermissions]);
 
   // Listen for permission changes in other tabs
   useEffect(() => {
@@ -69,7 +69,7 @@ const PermissionSync: React.FC<PermissionSyncProps> = ({
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [handleManualRefresh]);
 
   if (!isAuthenticated) {
     return <>{children}</>;

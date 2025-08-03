@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import QRCodeViewer from '../../components/QRCodeViewer';
 import QRCodeManager from '../../components/QRCodeManager';
 import { tableService, Table } from '../../services/tableService';
-import { DEFAULTS } from '../../constants/app';
+import { useUserData } from '../../contexts/UserDataContext';
 import {
   Box,
   Container,
@@ -59,6 +59,7 @@ interface TableArea {
 }
 
 const TableManagement: React.FC = () => {
+  const { getVenue, getTables, getVenueDisplayName } = useUserData();
   const [tables, setTables] = useState<Table[]>([]);
   const [areas, setAreas] = useState<TableArea[]>([]);
   const [selectedArea, setSelectedArea] = useState<string>('all');
@@ -75,18 +76,36 @@ const TableManagement: React.FC = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      const venue = getVenue();
+      
+      if (!venue?.id) {
+        setError('No venue assigned to your account. Please contact support.');
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
 
-        // Load areas and tables in parallel
+        // Try to use tables from user data first
+        const userDataTables = getTables();
+        if (userDataTables && userDataTables.length > 0) {
+          setTables(userDataTables);
+        }
+
+        // Load areas and tables from API
         const [areasData, tablesData] = await Promise.all([
-          tableService.getAreas(DEFAULTS.CAFE_ID),
-          tableService.getTables({ venue_id: DEFAULTS.CAFE_ID })
+          tableService.getAreas(venue.id),
+          userDataTables && userDataTables.length > 0 ? 
+            Promise.resolve({ data: userDataTables }) : 
+            tableService.getTables({ venue_id: venue.id })
         ]);
 
         setAreas(areasData);
-        setTables(tablesData.data || []);
+        if (!userDataTables || userDataTables.length === 0) {
+          setTables(tablesData.data || []);
+        }
       } catch (error) {
         setError('Failed to load table data. Please try again.');
         setSnackbar({ 
@@ -100,7 +119,7 @@ const TableManagement: React.FC = () => {
     };
 
     loadData();
-  }, []);
+  }, [getVenue]);
 
   const handleAddTable = () => {
     setEditingTable(null);
@@ -148,11 +167,16 @@ const TableManagement: React.FC = () => {
         }
       } else {
         // Create new table
+        const venue = getVenue();
+        if (!venue?.id) {
+          throw new Error('No venue available');
+        }
+        
         const response = await tableService.createTable({
           table_number: parseInt(tableData.table_number || '1'),
           capacity: tableData.capacity || 2,
           location: tableData.location || '',
-          venue_id: DEFAULTS.CAFE_ID,
+          venue_id: venue.id,
         });
         if (response.success && response.data) {
           setTables(prev => [...prev, response.data!]);
@@ -577,8 +601,8 @@ const TableManagement: React.FC = () => {
           setSelectedTableForQR(null);
         }}
         tableId={selectedTableForQR?.id}
-        cafeId={DEFAULTS.CAFE_ID}
-        cafeName={DEFAULTS.CAFE_NAME}
+        cafeId={getVenue()?.id || ''}
+        cafeName={getVenueDisplayName()}
         tableNumber={selectedTableForQR?.table_number.toString()}
       />
 
@@ -588,11 +612,11 @@ const TableManagement: React.FC = () => {
         tables={tables.map(table => ({
           id: table.id,
           number: table.table_number.toString(),
-          cafeId: DEFAULTS.CAFE_ID,
-          cafeName: DEFAULTS.CAFE_NAME
+          cafeId: getVenue()?.id || '',
+          cafeName: getVenueDisplayName()
         }))}
-        cafeId={DEFAULTS.CAFE_ID}
-        cafeName={DEFAULTS.CAFE_NAME}
+        cafeId={getVenue()?.id || ''}
+        cafeName={getVenueDisplayName()}
       />
     </Container>
   );

@@ -14,9 +14,7 @@ import {
 } from '@mui/material';
 import {
   Restaurant,
-  TrendingUp,
-  Speed,
-  Star,
+
   FormatQuote,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';

@@ -1,0 +1,560 @@
+import React, { useState } from 'react';
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  IconButton,
+  Alert,
+  CircularProgress,
+  Tabs,
+  Tab,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
+import {
+  Business,
+  Store,
+  People,
+  TrendingUp,
+  Visibility,
+  Edit,
+  Add,
+  Dashboard as DashboardIcon,
+  BugReport,
+  Restaurant,
+  TableBar,
+  Receipt,
+  SwapHoriz,
+} from '@mui/icons-material';
+import { useUserData } from '../../contexts/UserDataContext';
+import { useAuth } from '../../contexts/AuthContext';
+import WorkspaceDebug from '../debug/WorkspaceDebug';
+
+interface UserDataDashboardProps {
+  className?: string;
+}
+
+const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
+  const { user } = useAuth();
+  const {
+    userData,
+    availableVenues,
+    loading,
+    venueLoading,
+    refreshUserData,
+    switchVenue,
+    hasPermission,
+    getUserRole,
+    isSuperAdmin,
+    isAdmin,
+    getVenueDisplayName,
+    getWorkspaceDisplayName,
+    getUserDisplayName,
+    getVenueStatsSummary,
+    getStatistics,
+    getMenuItems,
+    getTables,
+    getRecentOrders,
+    getUsers,
+  } = useUserData();
+
+  const [currentTab, setCurrentTab] = useState(0);
+  const [selectedVenueId, setSelectedVenueId] = useState('');
+
+  const handleVenueSwitch = async () => {
+    if (!selectedVenueId) return;
+    
+    try {
+      await switchVenue(selectedVenueId);
+      setSelectedVenueId('');
+    } catch (error: any) {
+      console.error('Error switching venue:', error);
+      alert(error.message || 'Failed to switch venue');
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress size={60} />
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          Loading Dashboard...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <Alert severity="error" sx={{ mb: 3 }}>
+        <Typography variant="h6">No Data Available</Typography>
+        <Typography>
+          Unable to load your venue data. Please ensure you have a venue assigned to your account.
+        </Typography>
+        <Button onClick={refreshUserData} sx={{ mt: 2 }}>
+          Retry
+        </Button>
+      </Alert>
+    );
+  }
+
+  const statistics = getStatistics();
+  const menuItems = getMenuItems();
+  const tables = getTables();
+  const recentOrders = getRecentOrders();
+  const users = getUsers();
+
+  return (
+    <Box className={className} sx={{ p: 3 }}>
+      {/* Header */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Box>
+            <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DashboardIcon color="primary" />
+              {getUserRole() === 'superadmin' ? 'Super Admin' : getUserRole() === 'admin' ? 'Admin' : 'Operator'} Dashboard
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Welcome back, {getUserDisplayName()}! Managing {getVenueDisplayName()}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {getVenueStatsSummary()}
+            </Typography>
+          </Box>
+          
+          {/* Venue Switcher for SuperAdmin */}
+          {isSuperAdmin() && availableVenues && availableVenues.venues.length > 1 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Switch Venue</InputLabel>
+                <Select
+                  value={selectedVenueId}
+                  onChange={(e) => setSelectedVenueId(e.target.value)}
+                  label="Switch Venue"
+                  disabled={venueLoading}
+                >
+                  {availableVenues.venues
+                    .filter(venue => venue.id !== userData.venue.id)
+                    .map((venue) => (
+                      <MenuItem key={venue.id} value={venue.id}>
+                        {venue.name} {venue.is_active ? '(Active)' : '(Inactive)'}
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+              <Button
+                variant="contained"
+                startIcon={venueLoading ? <CircularProgress size={16} /> : <SwapHoriz />}
+                onClick={handleVenueSwitch}
+                disabled={!selectedVenueId || venueLoading}
+              >
+                Switch
+              </Button>
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)}>
+          <Tab label="Dashboard" />
+          <Tab label="Menu Items" />
+          <Tab label="Tables" />
+          <Tab label="Recent Orders" />
+          {hasPermission('can_manage_users') && <Tab label="Users" />}
+          <Tab label="Debug" icon={<BugReport />} />
+        </Tabs>
+      </Box>
+
+      {/* Tab Content */}
+      {currentTab === 0 && (
+        <>
+          {/* Stats Cards */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Receipt color="primary" sx={{ fontSize: 40 }} />
+                    <Box>
+                      <Typography variant="h4" fontWeight="bold">
+                        {statistics?.total_orders || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Orders
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <TrendingUp color="success" sx={{ fontSize: 40 }} />
+                    <Box>
+                      <Typography variant="h4" fontWeight="bold">
+                        ₹{statistics?.total_revenue?.toLocaleString() || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Revenue
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <TableBar color="warning" sx={{ fontSize: 40 }} />
+                    <Box>
+                      <Typography variant="h4" fontWeight="bold">
+                        {statistics?.active_tables || 0}/{statistics?.total_tables || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Active Tables
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Card>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Restaurant color="info" sx={{ fontSize: 40 }} />
+                    <Box>
+                      <Typography variant="h4" fontWeight="bold">
+                        {statistics?.total_menu_items || 0}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Menu Items
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          {/* Recent Orders Summary */}
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                Recent Orders
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Order ID</TableCell>
+                      <TableCell>Table</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Time</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {recentOrders.slice(0, 5).map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell>#{order.id.slice(-6)}</TableCell>
+                        <TableCell>Table {order.table_number || 'N/A'}</TableCell>
+                        <TableCell>₹{order.total_amount?.toLocaleString() || 0}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={order.status || 'pending'}
+                            color={order.status === 'completed' ? 'success' : 'warning'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {new Date(order.created_at).toLocaleTimeString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </>
+      )}
+
+      {/* Menu Items Tab */}
+      {currentTab === 1 && (
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6">
+                Menu Items ({menuItems.length})
+              </Typography>
+              {hasPermission('can_manage_menu') && (
+                <Button variant="contained" startIcon={<Add />}>
+                  Add Menu Item
+                </Button>
+              )}
+            </Box>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Category</TableCell>
+                    <TableCell>Price</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {menuItems.slice(0, 10).map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>{item.category}</TableCell>
+                      <TableCell>₹{item.price}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={item.is_available ? 'Available' : 'Unavailable'}
+                          color={item.is_available ? 'success' : 'error'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {hasPermission('can_manage_menu') && (
+                          <>
+                            <IconButton size="small">
+                              <Visibility />
+                            </IconButton>
+                            <IconButton size="small">
+                              <Edit />
+                            </IconButton>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Tables Tab */}
+      {currentTab === 2 && (
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6">
+                Tables ({tables.length})
+              </Typography>
+              {hasPermission('can_manage_tables') && (
+                <Button variant="contained" startIcon={<Add />}>
+                  Add Table
+                </Button>
+              )}
+            </Box>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Table Number</TableCell>
+                    <TableCell>Capacity</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>QR Code</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {tables.map((table) => (
+                    <TableRow key={table.id}>
+                      <TableCell>{table.table_number}</TableCell>
+                      <TableCell>{table.capacity} seats</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={table.is_active ? 'Active' : 'Inactive'}
+                          color={table.is_active ? 'success' : 'error'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {table.qr_code ? (
+                          <Chip label="Generated" color="success" size="small" />
+                        ) : (
+                          <Chip label="Not Generated" color="warning" size="small" />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {hasPermission('can_manage_tables') && (
+                          <>
+                            <IconButton size="small">
+                              <Visibility />
+                            </IconButton>
+                            <IconButton size="small">
+                              <Edit />
+                            </IconButton>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Recent Orders Tab */}
+      {currentTab === 3 && (
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Recent Orders ({recentOrders.length})
+            </Typography>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Order ID</TableCell>
+                    <TableCell>Customer</TableCell>
+                    <TableCell>Table</TableCell>
+                    <TableCell>Items</TableCell>
+                    <TableCell>Amount</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Time</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {recentOrders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell>#{order.id.slice(-6)}</TableCell>
+                      <TableCell>{order.customer_name || 'Guest'}</TableCell>
+                      <TableCell>Table {order.table_number || 'N/A'}</TableCell>
+                      <TableCell>{order.items?.length || 0} items</TableCell>
+                      <TableCell>₹{order.total_amount?.toLocaleString() || 0}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={order.status || 'pending'}
+                          color={
+                            order.status === 'completed' ? 'success' :
+                            order.status === 'preparing' ? 'warning' :
+                            order.status === 'cancelled' ? 'error' : 'default'
+                          }
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {new Date(order.created_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton size="small">
+                          <Visibility />
+                        </IconButton>
+                        {hasPermission('can_manage_orders') && (
+                          <IconButton size="small">
+                            <Edit />
+                          </IconButton>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Users Tab */}
+      {currentTab === 4 && hasPermission('can_manage_users') && (
+        <Card>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6">
+                Users ({users.length})
+              </Typography>
+              <Button variant="contained" startIcon={<Add />}>
+                Add User
+              </Button>
+            </Box>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.first_name} {user.last_name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.role}
+                          color={
+                            user.role === 'superadmin' ? 'error' :
+                            user.role === 'admin' ? 'primary' : 'secondary'
+                          }
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.is_active ? 'Active' : 'Inactive'}
+                          color={user.is_active ? 'success' : 'error'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton size="small">
+                          <Visibility />
+                        </IconButton>
+                        <IconButton size="small">
+                          <Edit />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Debug Tab */}
+      {currentTab === (hasPermission('can_manage_users') ? 5 : 4) && (
+        <WorkspaceDebug />
+      )}
+    </Box>
+  );
+};
+
+export default UserDataDashboard;

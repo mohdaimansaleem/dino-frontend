@@ -3,6 +3,7 @@
  * Centralized role definitions to avoid hardcoding throughout the app
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ROLES } from '../types/auth';
 
 // Role name constants (matching backend)

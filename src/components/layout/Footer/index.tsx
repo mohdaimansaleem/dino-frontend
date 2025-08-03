@@ -10,19 +10,12 @@ import {
   keyframes,
 } from '@mui/material';
 import {
-  Facebook,
-  Twitter,
-  Instagram,
-  LinkedIn,
+
   Phone,
   Email,
   LocationOn,
   Restaurant,
-  QrCode,
-  Analytics,
-  Security,
-  Speed,
-  ArrowUpward,
+
 } from '@mui/icons-material';
 import { 
   COMPANY_INFO, 
@@ -62,6 +55,7 @@ const wave = keyframes`
   75% { transform: rotate(-10deg); }
 `;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const glow = keyframes`
   0%, 100% { box-shadow: 0 0 5px rgba(25, 118, 210, 0.5); }
   50% { box-shadow: 0 0 20px rgba(25, 118, 210, 0.8), 0 0 30px rgba(25, 118, 210, 0.6); }
@@ -74,6 +68,7 @@ interface FooterProps {
 const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
   const currentYear = new Date().getFullYear();
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

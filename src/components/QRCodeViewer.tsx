@@ -91,6 +91,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
   }, [tableId, cafeId, cafeName, tableNumber, template]);
 
   // Generate a demo QR code as base64 image
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const generateDemoQRCode = () => {
     // This is a simple demo QR code - in a real app, you'd use a QR library
     const canvas = document.createElement('canvas');

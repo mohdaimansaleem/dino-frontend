@@ -24,10 +24,9 @@ import {
 import {
   CheckCircle,
   Schedule,
-  Restaurant,
-  LocalDining,
+
   Refresh,
-  Receipt,
+
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { trackingService, OrderTracking } from '../services/trackingService';
@@ -112,7 +111,7 @@ const OrderTrackingPage: React.FC = () => {
         unsubscribe();
       }
     };
-  }, [orderId]);
+  }, [orderId, order.status]);
 
   const getStatusColor = (status: string) => {
     const colors = trackingService.getStatusDisplayInfo(status as any);

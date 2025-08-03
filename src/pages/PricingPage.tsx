@@ -15,20 +15,13 @@ import {
   Switch,
   FormControlLabel,
   Paper,
-  Divider,
+
   Avatar,
 } from '@mui/material';
 import {
   CheckCircle,
-  Star,
-  TrendingUp,
-  Security,
-  Support,
-  Business,
-  Restaurant,
-  People,
-  Analytics,
-  CloudDone,
+
+
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { formatINR } from '../utils/formatters';

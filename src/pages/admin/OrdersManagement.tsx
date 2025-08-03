@@ -47,7 +47,7 @@ import {
 } from '@mui/icons-material';
 
 import { useAuth } from '../../contexts/AuthContext';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useUserData } from '../../contexts/UserDataContext';
 import AuthDebug from '../../components/debug/AuthDebug';
 import ApiDebug from '../../components/debug/ApiDebug';
 import VenueDebug from '../../components/debug/VenueDebug';
@@ -77,8 +77,14 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const OrdersManagement: React.FC = () => {
-  const { hasPermission, isOperator, isAdmin, user } = useAuth();
-  const { currentCafe, refreshCafes, loading: workspaceLoading } = useWorkspace();
+  const { hasPermission, isOperator, isAdmin } = useAuth();
+  const { 
+    userData, 
+    loading: userDataLoading, 
+    getVenue, 
+    getVenueDisplayName,
+    refreshUserData 
+  } = useUserData();
   const [tabValue, setTabValue] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -93,14 +99,13 @@ const OrdersManagement: React.FC = () => {
   // Load orders from API
   useEffect(() => {
     const loadOrders = async () => {
-      // Try to get venue ID from user data if currentCafe is not available
-      const venueId = currentCafe?.id || user?.cafeId || user?.venue_id;
+      const venue = getVenue();
       
-      if (!venueId) {
-        // Try to refresh workspace data to get venue
+      if (!venue?.id) {
+        // Try to refresh user data to get venue
         try {
-          await refreshCafes();
-          setError('No cafe selected. Please ensure you have a venue assigned to your account.');
+          await refreshUserData();
+          setError('No venue assigned to your account. Please contact support.');
         } catch (refreshError) {
           setError('Unable to load venue data. Please contact support.');
         }
@@ -112,7 +117,7 @@ const OrdersManagement: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const ordersData = await orderService.getVenueOrders(venueId);
+        const ordersData = await orderService.getVenueOrders(venue.id);
         setOrders(ordersData);
       } catch (error) {
         setError('Failed to load orders. Please try again.');
@@ -129,16 +134,17 @@ const OrdersManagement: React.FC = () => {
     return () => {
       clearInterval(refreshTimer);
     };
-  }, [currentCafe?.id, user?.cafeId, user?.venue_id]);
+  }, [userData?.venue?.id]);
 
-  // Retry loading orders when currentCafe becomes available
+  // Retry loading orders when venue becomes available
   useEffect(() => {
-    if (currentCafe?.id && orders.length === 0 && !loading) {
+    const venue = getVenue();
+    if (venue?.id && orders.length === 0 && !loading) {
       const loadOrders = async () => {
         try {
           setLoading(true);
           setError(null);
-          const ordersData = await orderService.getVenueOrders(currentCafe.id);
+          const ordersData = await orderService.getVenueOrders(venue.id);
           setOrders(ordersData);
         } catch (error) {
           setError('Failed to load orders. Please try again.');
@@ -148,7 +154,7 @@ const OrdersManagement: React.FC = () => {
       };
       loadOrders();
     }
-  }, [currentCafe?.id]);
+  }, [userData?.venue?.id]);
 
   // Filter orders based on search and status
   useEffect(() => {
@@ -273,12 +279,12 @@ const OrdersManagement: React.FC = () => {
   };
 
   const handleRefreshOrders = async () => {
-    const venueId = currentCafe?.id || user?.cafeId || user?.venue_id;
-    if (!venueId) return;
+    const venue = getVenue();
+    if (!venue?.id) return;
 
     try {
       setLoading(true);
-      const ordersData = await orderService.getVenueOrders(venueId);
+      const ordersData = await orderService.getVenueOrders(venue.id);
       setOrders(ordersData);
       setSnackbar({ 
         open: true, 
@@ -496,8 +502,8 @@ const OrdersManagement: React.FC = () => {
             </Typography>
             <Typography variant="body1" color="text.secondary">
               {isOperator() 
-                ? `View and update order status for ${currentCafe?.name || 'your cafe'}` 
-                : `Manage and track all orders for ${currentCafe?.name || 'your cafe'}`
+                ? `View and update order status for ${getVenueDisplayName()}` 
+                : `Manage and track all orders for ${getVenueDisplayName()}`
               }
             </Typography>
           </Box>

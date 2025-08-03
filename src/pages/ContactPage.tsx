@@ -12,22 +12,17 @@ import {
   Avatar,
   List,
   ListItem,
-  ListItemIcon,
+
   ListItemText,
   Chip,
   Alert,
   CircularProgress,
 } from '@mui/material';
 import {
-  Phone,
-  Email,
-  LocationOn,
-  Schedule,
+
   Send,
   CheckCircle,
-  Business,
-  Support,
-  Engineering,
+
 } from '@mui/icons-material';
 
 import { 

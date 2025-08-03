@@ -5,7 +5,7 @@ import {
   Typography,
   List,
   ListItem,
-  ListItemText,
+
   ListItemAvatar,
   Avatar,
   IconButton,

@@ -16,24 +16,11 @@ import {
   Avatar,
 } from '@mui/material';
 import {
-  QrCode,
-  Analytics,
-  Speed,
-  Security,
-  Smartphone,
-  CloudDone,
-  Restaurant,
-  TableRestaurant,
-  ShoppingCart,
-  Notifications,
-  TrendingUp,
-  Support,
+
   CheckCircle,
   Star,
   AutoAwesome,
-  Inventory,
-  People,
-  Assessment,
+
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { 

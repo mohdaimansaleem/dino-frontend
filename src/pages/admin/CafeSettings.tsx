@@ -45,7 +45,7 @@ import {
   PowerSettingsNew,
 } from '@mui/icons-material';
 import { venueService } from '../../services/venueService';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useUserData } from '../../contexts/UserDataContext';
 import { CircularProgress } from '@mui/material';
 
 interface CafeSettings {
@@ -112,7 +112,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const CafeSettings: React.FC = () => {
-  const { currentCafe } = useWorkspace();
+  const { getVenue, getVenueDisplayName, refreshUserData } = useUserData();
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -169,39 +169,33 @@ const CafeSettings: React.FC = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [hasChanges, setHasChanges] = useState(false);
   const [cafeActive, setCafeActive] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load cafe settings from API
   useEffect(() => {
     const loadCafeSettings = async () => {
-      if (!currentCafe?.id) {
+      const venue = getVenue();
+      
+      if (!venue?.id) {
+        setError('No venue assigned to your account. Please contact support.');
         setLoading(false);
         return;
       }
 
       try {
         setLoading(true);
-        const venue = await venueService.getVenue(currentCafe.id);
+        const venueData = venue;
         
-        if (venue) {
+        if (venueData) {
           // Map venue data to settings format
           setSettings({
-            name: venue.name,
-            description: venue.description || '',
-            address: venue.location?.address || '',
-            phone: venue.phone || '',
-            email: venue.email || '',
-            website: venue.website || '',
-            operatingHours: venue.operating_hours ? 
-              venue.operating_hours.reduce((acc, hours) => {
-                const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                const dayName = dayNames[hours.day_of_week];
-                acc[dayName] = {
-                  open: hours.open_time || '09:00',
-                  close: hours.close_time || '22:00',
-                  closed: !hours.is_open
-                };
-                return acc;
-              }, {} as any) : settings.operatingHours,
+            name: venueData.name,
+            description: venueData.description || '',
+            address: venueData.location?.address || '',
+            phone: venueData.phone || '',
+            email: venueData.email || '',
+            website: '', // Website not available in venue data
+            operatingHours: settings.operatingHours, // Keep existing operating hours settings
             theme: settings.theme, // Keep existing theme settings
             features: settings.features, // Keep existing feature settings
             paymentMethods: settings.paymentMethods, // Keep existing payment settings
@@ -209,7 +203,7 @@ const CafeSettings: React.FC = () => {
             advanced: settings.advanced, // Keep existing advanced settings
           });
           
-          setCafeActive(venue.is_active || false);
+          setCafeActive(venueData.is_active || false);
         }
       } catch (error) {
         console.error('Error loading cafe settings:', error);
@@ -224,7 +218,7 @@ const CafeSettings: React.FC = () => {
     };
 
     loadCafeSettings();
-  }, [currentCafe?.id]);
+  }, [getVenue]);
 
   const handleSettingChange = (section: keyof CafeSettings, field: string, value: any) => {
     setSettings(prev => ({
@@ -238,8 +232,10 @@ const CafeSettings: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!currentCafe?.id) {
-      setSnackbar({ open: true, message: 'No cafe selected', severity: 'error' });
+    const venue = getVenue();
+    
+    if (!venue?.id) {
+      setSnackbar({ open: true, message: 'No venue available', severity: 'error' });
       return;
     }
 
@@ -263,7 +259,7 @@ const CafeSettings: React.FC = () => {
       };
 
       // Update venue
-      await venueService.updateVenue(currentCafe.id, updateData);
+      await venueService.updateVenue(venue.id, updateData);
 
       // Update operating hours if changed
       const operatingHours = Object.entries(settings.operatingHours).map(([day, hours], index) => ({
@@ -274,7 +270,10 @@ const CafeSettings: React.FC = () => {
         is_24_hours: false
       }));
 
-      await venueService.updateOperatingHours(currentCafe.id, operatingHours);
+      await venueService.updateOperatingHours(venue.id, operatingHours);
+      
+      // Refresh user data to get updated venue information
+      await refreshUserData();
 
       setSnackbar({ open: true, message: 'Settings saved successfully', severity: 'success' });
       setHasChanges(false);
@@ -292,8 +291,10 @@ const CafeSettings: React.FC = () => {
   };
 
   const handleToggleCafeStatus = async () => {
-    if (!currentCafe?.id) {
-      setSnackbar({ open: true, message: 'No cafe selected', severity: 'error' });
+    const venue = getVenue();
+    
+    if (!venue?.id) {
+      setSnackbar({ open: true, message: 'No venue available', severity: 'error' });
       return;
     }
 
@@ -301,11 +302,14 @@ const CafeSettings: React.FC = () => {
       const newStatus = !cafeActive;
       
       if (newStatus) {
-        await venueService.activateVenue(currentCafe.id);
+        await venueService.activateVenue(venue.id);
       } else {
         // Deactivate by updating is_active to false
-        await venueService.updateVenue(currentCafe.id, { is_active: false });
+        await venueService.updateVenue(venue.id, { is_active: false });
       }
+      
+      // Refresh user data to get updated venue status
+      await refreshUserData();
 
       setCafeActive(newStatus);
       setSnackbar({ 
@@ -336,6 +340,25 @@ const CafeSettings: React.FC = () => {
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <CircularProgress size={60} />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+        <Box sx={{ textAlign: 'center' }}>
+          <Button 
+            variant="contained" 
+            onClick={() => window.location.reload()}
+            sx={{ mt: 2 }}
+          >
+            Reload Page
+          </Button>
         </Box>
       </Container>
     );

@@ -46,7 +46,7 @@ import {
   Store,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useUserData } from '../../contexts/UserDataContext';
 import PermissionService from '../../services/permissionService';
 import { PERMISSIONS } from '../../types/auth';
 import { venueService } from '../../services/venueService';
@@ -72,15 +72,11 @@ const venueTypeOptions = [
 
 const WorkspaceManagement: React.FC = () => {
   const { user: currentUser, hasPermission, isSuperAdmin } = useAuth();
-  const {
-    currentCafe,
-    cafes,
-    switchCafe,
-    createCafe,
-    updateCafe,
-    deleteCafe,
-    toggleCafeStatus,
-  } = useWorkspace();
+  const { userData, loading: userDataLoading, refreshUserData } = useUserData();
+  
+  // Extract venue data from userData
+  const currentCafe = userData?.venue;
+  const cafes = currentCafe ? [currentCafe] : [];
 
   const [openCafeDialog, setOpenCafeDialog] = useState(false);
   const [editingCafe, setEditingCafe] = useState<any>(null);
@@ -118,7 +114,7 @@ const WorkspaceManagement: React.FC = () => {
         description: cafe.description || '',
         venueType: cafe.venueType || 'cafe',
         location: {
-          address: cafe.address || cafe.location?.address || '',
+          address: cafe.location?.address || '',
           city: cafe.location?.city || '',
           state: cafe.location?.state || '',
           country: cafe.location?.country || 'India',
@@ -129,8 +125,8 @@ const WorkspaceManagement: React.FC = () => {
         email: cafe.email,
         website: cafe.website || '',
         priceRange: cafe.priceRange || 'mid_range',
-        isActive: cafe.isActive,
-        isOpen: cafe.isOpen,
+        isActive: cafe.is_active,
+        isOpen: cafe.is_open,
       });
     } else {
       setEditingCafe(null);
@@ -194,8 +190,8 @@ const WorkspaceManagement: React.FC = () => {
             message: 'Cafe updated successfully', 
             severity: 'success' 
           });
-          // Update local state through workspace context
-          await updateCafe(editingCafe.id, cafeFormData);
+          // Refresh user data to get updated venue information
+          await refreshUserData();
         }
       } else {
         // Create new cafe
@@ -225,8 +221,8 @@ const WorkspaceManagement: React.FC = () => {
             message: 'Cafe created successfully', 
             severity: 'success' 
           });
-          // Update local state through workspace context
-          await createCafe(cafeFormData);
+          // Refresh user data to get updated venue information
+          await refreshUserData();
         }
       }
       
@@ -272,11 +268,12 @@ const WorkspaceManagement: React.FC = () => {
   };
 
   const handleSwitchCafe = async (cafeId: string) => {
-    try {
-      await switchCafe(cafeId);
-    } catch (error) {
-      // Handle error
-    }
+    // For single venue users, switching is not needed
+    setSnackbar({ 
+      open: true, 
+      message: 'You are already using this venue', 
+      severity: 'success' 
+    });
   };
 
   const handleToggleCafeStatus = async (cafeId: string, isOpen: boolean) => {
@@ -289,8 +286,8 @@ const WorkspaceManagement: React.FC = () => {
           message: `Cafe ${isOpen ? 'opened' : 'closed'} successfully`, 
           severity: 'success' 
         });
-        // Update local state through workspace context
-        await toggleCafeStatus(cafeId, isOpen);
+        // Refresh user data to get updated venue information
+        await refreshUserData();
       }
     } catch (error: any) {
       console.error('Error toggling cafe status:', error);
@@ -311,8 +308,8 @@ const WorkspaceManagement: React.FC = () => {
           message: 'Cafe deleted successfully', 
           severity: 'success' 
         });
-        // Update local state through workspace context
-        await deleteCafe(cafeId);
+        // Refresh user data to get updated venue information
+        await refreshUserData();
       }
     } catch (error: any) {
       console.error('Error deleting cafe:', error);
@@ -379,7 +376,7 @@ const WorkspaceManagement: React.FC = () => {
                   </Box>
                   
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {cafe.address}
+                    {cafe.location?.address || 'No address available'}
                   </Typography>
                   
                   {cafe.description && (
@@ -390,13 +387,13 @@ const WorkspaceManagement: React.FC = () => {
                   
                   <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                     <Chip
-                      label={cafe.isActive ? 'Active' : 'Inactive'}
-                      color={cafe.isActive ? 'success' : 'default'}
+                      label={cafe.is_active ? 'Active' : 'Inactive'}
+                      color={cafe.is_active ? 'success' : 'default'}
                       size="small"
                     />
                     <Chip
-                      label={cafe.isOpen ? 'Open' : 'Closed'}
-                      color={cafe.isOpen ? 'success' : 'error'}
+                      label={cafe.is_open ? 'Open' : 'Closed'}
+                      color={cafe.is_open ? 'success' : 'error'}
                       size="small"
                     />
                   </Box>
@@ -404,10 +401,10 @@ const WorkspaceManagement: React.FC = () => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
                     <Button
                       size="small"
-                      startIcon={cafe.isOpen ? <VisibilityOff /> : <Visibility />}
-                      onClick={() => handleToggleCafeStatus(cafe.id, !cafe.isOpen)}
+                      startIcon={cafe.is_open ? <VisibilityOff /> : <Visibility />}
+                      onClick={() => handleToggleCafeStatus(cafe.id, !cafe.is_open)}
                     >
-                      {cafe.isOpen ? 'Close' : 'Open'}
+                      {cafe.is_open ? 'Close' : 'Open'}
                     </Button>
                     
                     {cafe.id !== currentCafe?.id && (
@@ -700,15 +697,15 @@ const WorkspaceManagement: React.FC = () => {
         
         <MenuItem onClick={() => {
           if (selectedItem) {
-            handleToggleCafeStatus(selectedItem.id, !selectedItem.isOpen);
+            handleToggleCafeStatus(selectedItem.id, !selectedItem.is_open);
           }
           handleMenuClose();
         }}>
           <ListItemIcon>
-            {selectedItem?.isOpen ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+            {selectedItem?.is_open ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
           </ListItemIcon>
           <ListItemText>
-            {selectedItem?.isOpen ? 'Close Cafe' : 'Open Cafe'}
+            {selectedItem?.is_open ? 'Close Cafe' : 'Open Cafe'}
           </ListItemText>
         </MenuItem>
 

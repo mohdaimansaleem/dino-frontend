@@ -17,6 +17,8 @@ import {
   IconButton,
   Alert,
   CircularProgress,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Business,
@@ -27,9 +29,11 @@ import {
   Edit,
   Add,
   Dashboard as DashboardIcon,
+  BugReport,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardService } from '../../services/dashboardService';
+import WorkspaceDebug from '../debug/WorkspaceDebug';
 
 interface SuperAdminDashboardProps {
   className?: string;
@@ -59,6 +63,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [workspaces, setWorkspaces] = useState<WorkspaceData[]>([]);
+  const [currentTab, setCurrentTab] = useState(0);
 
   useEffect(() => {
     loadDashboardData();
@@ -115,8 +120,19 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
         </Typography>
       </Box>
 
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      {/* Tabs */}
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)}>
+          <Tab label="Dashboard" />
+          <Tab label="Debug" icon={<BugReport />} />
+        </Tabs>
+      </Box>
+
+      {/* Tab Content */}
+      {currentTab === 0 && (
+        <>
+          {/* Stats Cards */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={2}>
           <Card>
             <CardContent>
@@ -309,6 +325,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
           </TableContainer>
         </CardContent>
       </Card>
+        </>
+      )}
+
+      {/* Debug Tab */}
+      {currentTab === 1 && (
+        <WorkspaceDebug />
+      )}
     </Box>
   );
 };

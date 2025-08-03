@@ -40,7 +40,7 @@ import {
   LocalDining,
 } from '@mui/icons-material';
 import { menuService } from '../../services/menuService';
-import { DEFAULTS } from '../../constants/app';
+import { useUserData } from '../../contexts/UserDataContext';
 import { MenuItem, MenuCategory } from '../../types';
 
 interface MenuItemType extends MenuItem {
@@ -57,6 +57,7 @@ interface CategoryType extends MenuCategory {
 }
 
 const MenuManagement: React.FC = () => {
+  const { getVenue, getMenuItems, getVenueDisplayName } = useUserData();
   const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
   const [categories, setCategories] = useState<CategoryType[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -74,14 +75,39 @@ const MenuManagement: React.FC = () => {
   // Load menu data from API
   useEffect(() => {
     const loadMenuData = async () => {
+      const venue = getVenue();
+      
+      if (!venue?.id) {
+        setError('No venue assigned to your account. Please contact support.');
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         setError(null);
 
-        // Load categories and menu items in parallel
+        // Try to use menu items from user data first
+        const userDataMenuItems = getMenuItems();
+        if (userDataMenuItems && userDataMenuItems.length > 0) {
+          // Map user data menu items to component format
+          setMenuItems(userDataMenuItems.map((item: any) => ({
+            ...item,
+            price: item.base_price || item.price,
+            category: item.category_id || item.category,
+            isVeg: item.is_vegetarian || item.isVeg || false,
+            available: item.is_available !== undefined ? item.is_available : item.available,
+            isAvailable: item.is_available !== undefined ? item.is_available : item.available,
+            preparationTime: item.preparation_time_minutes || item.preparationTime || 15
+          } as unknown as MenuItemType)));
+        }
+
+        // Load categories and menu items from API
         const [categoriesData, menuItemsData] = await Promise.all([
-          menuService.getMenuCategories({ venue_id: DEFAULTS.CAFE_ID }),
-          menuService.getMenuItems({ venue_id: DEFAULTS.CAFE_ID })
+          menuService.getMenuCategories({ venue_id: venue.id }),
+          userDataMenuItems && userDataMenuItems.length > 0 ? 
+            Promise.resolve({ data: userDataMenuItems }) : 
+            menuService.getMenuItems({ venue_id: venue.id })
         ]);
 
         // Map API data to component types
@@ -91,15 +117,18 @@ const MenuManagement: React.FC = () => {
           order: 0,
           cafeId: cat.venue_id
         } as unknown as CategoryType)));
-        setMenuItems(menuItemsData.data.map((item: any) => ({
-          ...item,
-          price: item.base_price,
-          category: item.category_id,
-          isVeg: item.is_vegetarian || false,
-          available: item.is_available,
-          isAvailable: item.is_available,
-          preparationTime: item.preparation_time_minutes || 15
-        } as unknown as MenuItemType)));
+        
+        if (!userDataMenuItems || userDataMenuItems.length === 0) {
+          setMenuItems(menuItemsData.data.map((item: any) => ({
+            ...item,
+            price: item.base_price,
+            category: item.category_id,
+            isVeg: item.is_vegetarian || false,
+            available: item.is_available,
+            isAvailable: item.is_available,
+            preparationTime: item.preparation_time_minutes || 15
+          } as unknown as MenuItemType)));
+        }
       } catch (error) {
         setError('Failed to load menu data. Please try again.');
         setSnackbar({ 
@@ -113,7 +142,7 @@ const MenuManagement: React.FC = () => {
     };
 
     loadMenuData();
-  }, []);
+  }, [getVenue]);
 
   const handleAddItem = () => {
     setEditingItem(null);
@@ -165,12 +194,17 @@ const MenuManagement: React.FC = () => {
         setSnackbar({ open: true, message: 'Menu item updated successfully', severity: 'success' });
       } else {
         // Create new item
+        const venue = getVenue();
+        if (!venue?.id) {
+          throw new Error('No venue available');
+        }
+        
         const response = await menuService.createMenuItem({
           name: itemData.name || '',
           description: itemData.description || '',
           base_price: itemData.price || 0,
           category_id: itemData.category || '',
-          venue_id: DEFAULTS.CAFE_ID,
+          venue_id: venue.id,
           is_vegetarian: itemData.isVeg ?? true,
           preparation_time_minutes: itemData.preparationTime || 15,
         });
@@ -258,10 +292,15 @@ const MenuManagement: React.FC = () => {
         setSnackbar({ open: true, message: 'Category updated successfully', severity: 'success' });
       } else {
         // Create new category
+        const venue = getVenue();
+        if (!venue?.id) {
+          throw new Error('No venue available');
+        }
+        
         const response = await menuService.createMenuCategory({
           name: categoryData.name || '',
           description: categoryData.description || '',
-          venue_id: DEFAULTS.CAFE_ID,
+          venue_id: venue.id,
         });
         if (response.data) {
           const newCategory = {
@@ -337,7 +376,7 @@ const MenuManagement: React.FC = () => {
           Menu Management
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Manage your restaurant's menu items and categories for Dino Cafe
+          Manage your restaurant's menu items and categories for {getVenueDisplayName()}
         </Typography>
       </Box>
 

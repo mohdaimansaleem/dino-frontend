@@ -49,13 +49,13 @@ import {
   Refresh,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
-import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { useUserData } from '../../contexts/UserDataContext';
 import PermissionService from '../../services/permissionService';
 import { PERMISSIONS, ROLES } from '../../types/auth';
 
 const UserPermissionsDashboard: React.FC = () => {
   const { user, getUserWithRole, hasPermission, isSuperAdmin } = useAuth();
-  const { currentCafe, cafes } = useWorkspace();
+  const { userData, loading: userDataLoading } = useUserData();
   
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -205,7 +205,7 @@ const UserPermissionsDashboard: React.FC = () => {
       Email: user.email,
       Role: getRoleDisplayName(user.role),
       Status: user.isActive ? 'Active' : 'Inactive',
-      Cafe: cafes.find(c => c.id === user.cafeId)?.name || 'All Cafes',
+      Cafe: userData?.venue?.name || 'All Cafes',
       Permissions: user.permissions.length,
       LastLogin: user.lastLogin?.toLocaleDateString() || 'Never'
     }));
@@ -285,7 +285,7 @@ const UserPermissionsDashboard: React.FC = () => {
                 email: user?.email,
                 isActive: true,
                 lastLogin: new Date(),
-                cafeId: currentCafe?.id,
+                cafeId: userData?.venue?.id,
               })}
             >
               View My Permissions
@@ -411,7 +411,7 @@ const UserPermissionsDashboard: React.FC = () => {
                     <TableCell>
                       <Typography variant="body2">
                         {user.cafeId ? 
-                          cafes.find(c => c.id === user.cafeId)?.name || 'Unknown Cafe' : 
+                          userData?.venue?.name || 'Unknown Cafe' : 
                           'All Cafes'
                         }
                       </Typography>
