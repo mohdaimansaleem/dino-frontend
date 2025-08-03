@@ -3,9 +3,11 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-RUN npm ci --only=production
+# Copy package files and npm config
+COPY package*.json .npmrc ./
+
+# Install all dependencies (including dev dependencies for build)
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
