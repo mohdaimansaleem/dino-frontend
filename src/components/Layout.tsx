@@ -100,6 +100,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
     if (isAdminRoute && user) {
       // Define all possible admin navigation items with their required permissions
+      // Reordered according to user request: Dashboard, Orders, Menu, Tables, Users, Permissions, Settings, Workspace
       const allAdminNavItems = [
         { 
           label: 'Dashboard', 
@@ -130,13 +131,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           roles: ['admin'] 
         },
         { 
-          label: 'Settings', 
-          path: '/admin/settings', 
-          icon: <Settings />, 
-          permission: PERMISSIONS.SETTINGS_VIEW,
-          roles: ['admin'] 
-        },
-        { 
           label: 'Users', 
           path: '/admin/users', 
           icon: <People />, 
@@ -149,6 +143,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           icon: <Security />, 
           permission: PERMISSIONS.USERS_VIEW,
           roles: ['admin', 'superadmin'] 
+        },
+        { 
+          label: 'Settings', 
+          path: '/admin/settings', 
+          icon: <Settings />, 
+          permission: PERMISSIONS.SETTINGS_VIEW,
+          roles: ['admin'] 
         },
         { 
           label: 'Workspace', 

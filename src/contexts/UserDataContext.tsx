@@ -1,20 +1,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { userDataService, UserData, VenueData, AvailableVenues } from '../services/userDataService';
+import { userDataService, UserData, VenueData } from '../services/userDataService';
 import { useAuth } from './AuthContext';
 
 interface UserDataContextType {
   // Current data
   userData: UserData | null;
-  availableVenues: AvailableVenues | null;
   
   // Loading states
   loading: boolean;
-  venueLoading: boolean;
   
   // Actions
   refreshUserData: () => Promise<void>;
-  switchVenue: (venueId: string) => Promise<void>;
-  loadAvailableVenues: () => Promise<void>;
   
   // Convenience methods
   hasPermission: (permission: keyof UserData['permissions']) => boolean;
@@ -49,16 +45,13 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
   const { isAuthenticated, user } = useAuth();
   
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [availableVenues, setAvailableVenues] = useState<AvailableVenues | null>(null);
   const [loading, setLoading] = useState(false);
-  const [venueLoading, setVenueLoading] = useState(false);
 
   // Load user data when authenticated
   const loadUserData = useCallback(async () => {
     if (!isAuthenticated || !user) {
       console.log('User not authenticated, skipping user data loading');
       setUserData(null);
-      setAvailableVenues(null);
       return;
     }
 
@@ -67,22 +60,10 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
       console.log('Loading user data...');
       const data = await userDataService.getUserData();
       setUserData(data);
-      
-      // If user is superadmin, also load available venues
-      if (data && userDataService.isSuperAdmin(data)) {
-        try {
-          const venues = await userDataService.getAvailableVenues();
-          setAvailableVenues(venues);
-        } catch (error) {
-          console.warn('Failed to load available venues:', error);
-        }
-      }
-      
       console.log('User data loaded successfully');
     } catch (error: any) {
       console.error('Error loading user data:', error);
       setUserData(null);
-      setAvailableVenues(null);
       
       // Don't throw error here, let components handle the null state
     } finally {
@@ -100,57 +81,9 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
     await loadUserData();
   };
 
-  // Switch venue (for superadmin)
-  const switchVenue = async (venueId: string) => {
-    if (!userData || !userDataService.isSuperAdmin(userData)) {
-      throw new Error('Only superadmin can switch venues');
-    }
-
-    setVenueLoading(true);
-    try {
-      console.log('Switching to venue:', venueId);
-      const venueData = await userDataService.getVenueData(venueId);
-      
-      if (venueData && userData) {
-        // Update current user data with new venue data
-        const updatedUserData: UserData = {
-          ...userData,
-          venue: venueData.venue,
-          statistics: venueData.statistics,
-          menu_items: venueData.menu_items,
-          tables: venueData.tables,
-          recent_orders: venueData.recent_orders,
-          users: venueData.users,
-          user: {
-            ...userData.user,
-            venue_id: venueData.venue.id
-          }
-        };
-        
-        setUserData(updatedUserData);
-        console.log('Venue switched successfully');
-      }
-    } catch (error: any) {
-      console.error('Error switching venue:', error);
-      throw error;
-    } finally {
-      setVenueLoading(false);
-    }
-  };
-
-  // Load available venues
-  const loadAvailableVenues = async () => {
-    if (!userData || !userDataService.isSuperAdmin(userData)) {
-      return;
-    }
-
-    try {
-      const venues = await userDataService.getAvailableVenues();
-      setAvailableVenues(venues);
-    } catch (error) {
-      console.error('Error loading available venues:', error);
-    }
-  };
+  // SECURITY FIX: Venue switching functionality removed
+  // Reason: It allowed superadmin to access all venue data, violating security principles
+  // Users should only access their assigned venue
 
   // Convenience methods
   const hasPermission = (permission: keyof UserData['permissions']): boolean => {
@@ -202,12 +135,8 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
 
   const value: UserDataContextType = {
     userData,
-    availableVenues,
     loading,
-    venueLoading,
     refreshUserData,
-    switchVenue,
-    loadAvailableVenues,
     hasPermission,
     getUserRole,
     isSuperAdmin,

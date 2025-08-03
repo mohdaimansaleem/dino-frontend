@@ -68,7 +68,7 @@ const MenuManagement: React.FC = () => {
   const [openCategoryDialog, setOpenCategoryDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItemType | null>(null);
   const [editingCategory, setEditingCategory] = useState<CategoryType | null>(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'warning' | 'info' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -130,12 +130,20 @@ const MenuManagement: React.FC = () => {
           } as unknown as MenuItemType)));
         }
       } catch (error) {
-        setError('Failed to load menu data. Please try again.');
-        setSnackbar({ 
-          open: true, 
-          message: 'Failed to load menu data. Please check your connection.', 
-          severity: 'error' 
-        });
+        console.warn('Failed to load menu data:', error);
+        // Don't set error state - let the component show empty state gracefully
+        setMenuItems([]);
+        setCategories([]);
+        // Only show snackbar for actual API errors, not empty data
+        if (error && typeof error === 'object' && 'message' in error && 
+            typeof (error as any).message === 'string' &&
+            !(error as any).message.includes('No menu items found')) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Unable to load menu data. You can still add new items.', 
+            severity: 'warning' 
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -358,12 +366,23 @@ const MenuManagement: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error" sx={{ mb: 4 }}>
-          {error}
+        <Alert severity="warning" sx={{ mb: 4 }}>
+          <Typography variant="h6" gutterBottom>Unable to Load Menu Data</Typography>
+          <Typography variant="body2">
+            Don't worry! You can still manage your menu. Start by adding your first menu item or category.
+          </Typography>
         </Alert>
-        <Button variant="contained" onClick={() => window.location.reload()}>
-          Retry
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button variant="contained" onClick={handleAddItem}>
+            Add Menu Item
+          </Button>
+          <Button variant="outlined" onClick={handleAddCategory}>
+            Add Category
+          </Button>
+          <Button variant="outlined" onClick={() => window.location.reload()}>
+            Retry Loading
+          </Button>
+        </Box>
       </Container>
     );
   }

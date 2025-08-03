@@ -489,7 +489,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Cafe Name"
-                value={cafeFormData.name}
+                value={String(cafeFormData.name || '')}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 required
               />
@@ -499,7 +499,7 @@ const WorkspaceManagement: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>Venue Type</InputLabel>
                 <Select
-                  value={cafeFormData.venueType}
+                  value={String(cafeFormData.venueType || 'cafe')}
                   label="Venue Type"
                   onChange={(e) => handleInputChange('venueType', e.target.value)}
                 >
@@ -516,7 +516,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Description"
-                value={cafeFormData.description}
+                value={String(cafeFormData.description || '')}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 multiline
                 rows={2}
@@ -537,7 +537,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Address"
-                value={cafeFormData.location.address}
+                value={String(cafeFormData.location?.address || '')}
                 onChange={(e) => handleInputChange('location.address', e.target.value)}
                 required
               />
@@ -547,7 +547,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="City"
-                value={cafeFormData.location.city}
+                value={String(cafeFormData.location?.city || '')}
                 onChange={(e) => handleInputChange('location.city', e.target.value)}
                 required
               />
@@ -557,7 +557,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="State"
-                value={cafeFormData.location.state}
+                value={String(cafeFormData.location?.state || '')}
                 onChange={(e) => handleInputChange('location.state', e.target.value)}
                 required
               />
@@ -567,7 +567,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Postal Code"
-                value={cafeFormData.location.postal_code}
+                value={String(cafeFormData.location?.postal_code || '')}
                 onChange={(e) => handleInputChange('location.postal_code', e.target.value)}
                 required
               />
@@ -577,7 +577,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Country"
-                value={cafeFormData.location.country}
+                value={String(cafeFormData.location?.country || 'India')}
                 onChange={(e) => handleInputChange('location.country', e.target.value)}
                 disabled
               />
@@ -587,7 +587,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Landmark (Optional)"
-                value={cafeFormData.location.landmark}
+                value={String(cafeFormData.location?.landmark || '')}
                 onChange={(e) => handleInputChange('location.landmark', e.target.value)}
                 helperText="Nearby landmark to help customers find you"
               />
@@ -605,7 +605,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Phone"
-                value={cafeFormData.phone}
+                value={String(cafeFormData.phone || '')}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -621,7 +621,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Email (Optional)"
-                value={cafeFormData.email}
+                value={String(cafeFormData.email || '')}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -637,7 +637,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Website (Optional)"
-                value={cafeFormData.website}
+                value={String(cafeFormData.website || '')}
                 onChange={(e) => handleInputChange('website', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -653,7 +653,7 @@ const WorkspaceManagement: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>Price Range</InputLabel>
                 <Select
-                  value={cafeFormData.priceRange}
+                  value={String(cafeFormData.priceRange || 'mid_range')}
                   label="Price Range"
                   onChange={(e) => handleInputChange('priceRange', e.target.value)}
                 >

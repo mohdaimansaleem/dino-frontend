@@ -53,23 +53,9 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ className }) => {
   const adminCheck = isAdmin();
   const operatorCheck = isOperator();
 
-  // If we have user data, use the new UserDataDashboard
-  if (userData) {
-    return <UserDataDashboard className={className} />;
-  }
-
-  // Fallback to old dashboards if no user data
-  if (superAdminCheck) {
-    return <SuperAdminDashboard className={className} />;
-  }
-
-  if (adminCheck) {
-    return <AdminDashboard className={className} />;
-  }
-
-  if (operatorCheck) {
-    return <OperatorDashboard className={className} />;
-  }
+  // Always use the new UserDataDashboard - it handles empty states gracefully
+  // The old dashboards are kept for reference but no longer used
+  return <UserDataDashboard className={className} />;
 
   // Fallback for users without recognized roles
   return (
@@ -84,7 +70,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ className }) => {
             Your account doesn't have the necessary permissions to access this dashboard.
           </p>
           <p className="text-red-600 text-sm mt-2">
-            Current role: {user.role || 'Unknown'}
+            Current role: {user?.role || 'Unknown'}
           </p>
         </div>
       </div>

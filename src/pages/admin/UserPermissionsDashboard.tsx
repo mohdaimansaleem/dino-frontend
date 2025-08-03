@@ -136,32 +136,56 @@ const UserPermissionsDashboard: React.FC = () => {
     }
   ];
 
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case ROLES.SUPERADMIN:
+  const getRoleColor = (role: string | any) => {
+    // Extract role name from object or use string directly
+    let roleName = role;
+    if (typeof role === 'object' && role !== null) {
+      roleName = role.name || role.displayName || 'unknown';
+    }
+    
+    // Convert to lowercase for comparison
+    const roleStr = String(roleName).toLowerCase();
+    
+    switch (roleStr) {
+      case ROLES.SUPERADMIN.toLowerCase():
+      case 'superadmin':
         return 'error';
-      case ROLES.ADMIN:
+      case ROLES.ADMIN.toLowerCase():
+      case 'admin':
         return 'primary';
-      case ROLES.OPERATOR:
+      case ROLES.OPERATOR.toLowerCase():
+      case 'operator':
+      case 'staff':
         return 'secondary';
       default:
         return 'default';
     }
   };
 
-  const getRoleDisplayName = (role: string) => {
-    if (!role || typeof role !== 'string') {
+  const getRoleDisplayName = (role: string | any) => {
+    // Handle role object (from getUserWithRole)
+    if (typeof role === 'object' && role !== null) {
+      if (role.displayName) return String(role.displayName);
+      if (role.name) return String(role.name);
+    }
+    
+    // Handle string role
+    if (!role || (typeof role !== 'string' && typeof role !== 'object')) {
       return 'Unknown Role';
     }
     
-    const roleDefinition = PermissionService.getRoleDefinition(role);
-    
-    // Ensure we always return a string
-    if (typeof roleDefinition === 'object' && roleDefinition?.displayName) {
-      return String(roleDefinition.displayName);
+    if (typeof role === 'string') {
+      const roleDefinition = PermissionService.getRoleDefinition(role);
+      
+      // Ensure we always return a string
+      if (typeof roleDefinition === 'object' && roleDefinition?.displayName) {
+        return String(roleDefinition.displayName);
+      }
+      
+      return String(role);
     }
     
-    return String(role);
+    return 'Unknown Role';
   };
 
   const getActionIcon = (action: string) => {
@@ -189,9 +213,64 @@ const UserPermissionsDashboard: React.FC = () => {
         return 'warning';
       case 'delete':
         return 'error';
+      case 'activate':
+      case 'deactivate':
+        return 'warning';
+      case 'switch':
+        return 'primary';
       default:
         return 'default';
     }
+  };
+
+  const getPermissionDescription = (permissionName: string): string => {
+    const descriptions: { [key: string]: string } = {
+      // Dashboard
+      'dashboard:view': 'View dashboard',
+      
+      // Orders
+      'orders:view': 'View orders',
+      'orders:create': 'Create orders',
+      'orders:update': 'Update orders',
+      'orders:delete': 'Delete orders',
+      
+      // Menu
+      'menu:view': 'View menu',
+      'menu:create': 'Create menu items',
+      'menu:update': 'Update menu',
+      'menu:delete': 'Delete menu items',
+      
+      // Tables
+      'tables:view': 'View tables',
+      'tables:create': 'Create tables',
+      'tables:update': 'Update tables',
+      'tables:delete': 'Delete tables',
+      
+      // Settings
+      'settings:view': 'View settings',
+      'settings:update': 'Update settings',
+      
+      // Users
+      'users:view': 'View users',
+      'users:create': 'Create users',
+      'users:update': 'Update users',
+      'users:delete': 'Delete users',
+      
+      // Workspace
+      'workspace:view': 'View workspaces',
+      'workspace:create': 'Create workspaces',
+      'workspace:update': 'Update workspaces',
+      'workspace:delete': 'Delete workspaces',
+      'workspace:switch': 'Switch workspaces',
+      
+      // Cafe Management
+      'venue:activate': 'Activate venues',
+      'venue:deactivate': 'Deactivate venues',
+      'venue:view_all': 'View all venues',
+      'venue:switch': 'Switch venues',
+    };
+    
+    return descriptions[permissionName] || permissionName.replace(/[_:]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const filteredUsers = users.filter(user => {
@@ -313,12 +392,12 @@ const UserPermissionsDashboard: React.FC = () => {
                     label={getRoleDisplayName(
                       typeof currentUserAuth?.role === 'string' 
                         ? currentUserAuth.role 
-                        : (currentUserAuth?.role?.name || currentUserAuth?.role?.displayName || 'Unknown')
+                        : (currentUserAuth?.role?.displayName || currentUserAuth?.role?.name || user?.role || 'Unknown')
                     )}
                     color={getRoleColor(
                       typeof currentUserAuth?.role === 'string' 
                         ? currentUserAuth.role 
-                        : (currentUserAuth?.role?.name || currentUserAuth?.role?.displayName || 'unknown')
+                        : (currentUserAuth?.role?.name || currentUserAuth?.role?.displayName || user?.role || 'unknown')
                     ) as any}
                     size="small"
                     sx={{ mr: 1 }}
@@ -513,12 +592,16 @@ const UserPermissionsDashboard: React.FC = () => {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={7} align="center">
-                          <Box sx={{ py: 4 }}>
+                          <Box sx={{ py: 6 }}>
+                            <Security sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
                             <Typography variant="h6" color="text.secondary" gutterBottom>
                               No Users Available
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                               The user management API is not yet implemented. This page will show user permissions once the backend API is ready.
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              💡 Check back later or contact your administrator for updates.
                             </Typography>
                           </Box>
                         </TableCell>
@@ -549,72 +632,127 @@ const UserPermissionsDashboard: React.FC = () => {
                 {selectedUser?.firstName} {selectedUser?.lastName}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {selectedUser?.email} • {String(getRoleDisplayName(selectedUser?.role || ''))}
+                {selectedUser?.email} • {String(getRoleDisplayName(
+                  typeof selectedUser?.role === 'string' 
+                    ? selectedUser.role 
+                    : (selectedUser?.role?.displayName || selectedUser?.role?.name || 'Unknown')
+                ))}
               </Typography>
             </Box>
           </Box>
         </DialogTitle>
         
         <DialogContent>
-          <Grid container spacing={2}>
+          <Grid container spacing={3}>
             {permissionCategories.map((category) => {
               const userPermissions = selectedUser?.permissions || [];
               const categoryPermissions = userPermissions.filter((p: any) => 
                 (category.permissions as string[]).includes(p.name)
               );
               
-              if (categoryPermissions.length === 0) return null;
+              // Show all categories, even if user doesn't have permissions for them
+              const allCategoryPermissions = category.permissions.map(permName => {
+                const userPerm = categoryPermissions.find((p: any) => p.name === permName);
+                const action = permName.split(':')[1] || permName.split('_')[1] || 'view';
+                return {
+                  name: permName,
+                  action: action,
+                  description: getPermissionDescription(permName),
+                  hasPermission: !!userPerm
+                };
+              });
 
               return (
-                <Grid item xs={12} sm={6} key={category.name}>
-                  <Paper
-                    elevation={1}
+                <Grid item xs={12} sm={6} md={4} key={category.name}>
+                  <Card
+                    elevation={2}
                     sx={{
-                      p: 2,
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
                       border: '1px solid',
                       borderColor: 'divider',
+                      '&:hover': {
+                        boxShadow: 4,
+                        transform: 'translateY(-2px)',
+                      },
+                      transition: 'all 0.2s ease-in-out',
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <Avatar
-                        sx={{
-                          bgcolor: category.color,
-                          width: 32,
-                          height: 32,
-                          mr: 1,
-                        }}
-                      >
-                        {React.cloneElement(category.icon, { fontSize: 'small' })}
-                      </Avatar>
-                      <Typography variant="subtitle1" fontWeight="600">
-                        {String(category.name)}
-                      </Typography>
-                    </Box>
+                    <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                      {/* Category Header */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                        <Avatar
+                          sx={{
+                            bgcolor: category.color,
+                            width: 36,
+                            height: 36,
+                            mr: 1.5,
+                          }}
+                        >
+                          {React.cloneElement(category.icon, { fontSize: 'small' })}
+                        </Avatar>
+                        <Box>
+                          <Typography variant="h6" fontWeight="600" sx={{ fontSize: '1.1rem' }}>
+                            {String(category.name)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {allCategoryPermissions.filter(p => p.hasPermission).length} of {allCategoryPermissions.length} permissions
+                          </Typography>
+                        </Box>
+                      </Box>
 
-                    <List dense>
-                      {categoryPermissions.map((permission: any, index: number) => (
-                        <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
-                          <ListItemIcon sx={{ minWidth: 32 }}>
-                            <Chip
-                              icon={getActionIcon(String(permission.action || ''))}
-                              label={String(permission.action || 'Unknown')}
-                              size="small"
-                              color={getActionColor(String(permission.action || '')) as any}
-                              variant="outlined"
-                              sx={{ fontSize: '0.7rem', height: 20 }}
-                            />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={String(permission.description || permission.name || 'No description')}
-                            primaryTypographyProps={{
-                              variant: 'body2',
-                              fontSize: '0.875rem'
+                      {/* Permissions List */}
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {allCategoryPermissions.map((permission, index) => (
+                          <Box
+                            key={index}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              p: 1,
+                              borderRadius: 1,
+                              backgroundColor: permission.hasPermission ? 'success.50' : 'grey.50',
+                              border: '1px solid',
+                              borderColor: permission.hasPermission ? 'success.200' : 'grey.200',
+                              opacity: permission.hasPermission ? 1 : 0.6,
                             }}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Paper>
+                          >
+                            <Box sx={{ mr: 1 }}>
+                              {permission.hasPermission ? (
+                                <CheckCircle sx={{ fontSize: 16, color: 'success.main' }} />
+                              ) : (
+                                <Cancel sx={{ fontSize: 16, color: 'grey.400' }} />
+                              )}
+                            </Box>
+                            <Box sx={{ flexGrow: 1 }}>
+                              <Typography 
+                                variant="body2" 
+                                fontWeight={permission.hasPermission ? 500 : 400}
+                                sx={{ 
+                                  fontSize: '0.875rem',
+                                  color: permission.hasPermission ? 'text.primary' : 'text.secondary'
+                                }}
+                              >
+                                {permission.description}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label={permission.action}
+                              size="small"
+                              color={permission.hasPermission ? getActionColor(permission.action) as any : 'default'}
+                              variant={permission.hasPermission ? 'filled' : 'outlined'}
+                              sx={{ 
+                                fontSize: '0.7rem', 
+                                height: 20,
+                                opacity: permission.hasPermission ? 1 : 0.5
+                              }}
+                            />
+                          </Box>
+                        ))}
+                      </Box>
+                    </CardContent>
+                  </Card>
                 </Grid>
               );
             })}

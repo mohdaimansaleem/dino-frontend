@@ -106,25 +106,23 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         return;
       }
 
-      // Load workspaces
-      await refreshWorkspaces();
+      // Skip loading workspaces from API - use user data instead
+      console.log('Skipping workspace API call - using user data instead');
 
-      // Set current workspace from user data or first available
-      if (user?.workspaceId) {
-        const workspace = await workspaceService.getWorkspace(user.workspaceId);
-        if (workspace) {
-          // Convert API workspace to local format
-          const localWorkspace = {
-            ...workspace,
-            ownerId: workspace.owner_id || '',
-            isActive: workspace.is_active,
-            pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxCafes: 1, maxUsers: 5 },
-            createdAt: workspace.created_at,
-            updatedAt: workspace.updated_at || workspace.created_at
-          };
-          setCurrentWorkspace(localWorkspace as any);
-          await loadCafesForWorkspace(workspace.id);
-        }
+      // Set current workspace from user data (no API call needed)
+      if (user?.workspace_id) {
+        const localWorkspace = {
+          id: user.workspace_id,
+          name: 'Default Workspace',
+          description: '',
+          ownerId: user.id,
+          isActive: true,
+          pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxCafes: 1, maxUsers: 5 },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        setCurrentWorkspace(localWorkspace as any);
+        await loadCafesForWorkspace(user.workspace_id);
       }
 
       // Set current cafe from user data or first available
@@ -205,39 +203,29 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   const refreshWorkspaces = async () => {
     setWorkspacesLoading(true);
     try {
-      console.log('Refreshing workspaces...');
-      const workspaceList = await workspaceService.getWorkspaces();
-      console.log('Workspace list received:', workspaceList);
+      console.log('Skipping workspace API call - workspace data comes from user-data API');
       
-      // Extract data from paginated response and convert to local format
-      const localWorkspaces = (workspaceList.data || []).map((workspace: any) => ({
-        ...workspace,
-        ownerId: workspace.owner_id || '',
-        isActive: workspace.is_active,
-        pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxCafes: 1, maxUsers: 5 },
-        createdAt: new Date(workspace.created_at),
-        updatedAt: new Date(workspace.updated_at || workspace.created_at)
-      }));
-      
-      console.log('Local workspaces:', localWorkspaces);
-      setWorkspaces(localWorkspaces);
-    } catch (error: any) {
-      console.error('Error refreshing workspaces:', error);
-      
-      // If authentication error, clear workspaces but don't logout automatically
-      if (error.message?.includes('Authentication required')) {
-        console.warn('Authentication required for workspaces');
-        setWorkspaces([]);
-      } else if (error.message?.includes('permission')) {
-        console.warn('Permission denied for workspaces');
-        setWorkspaces([]);
-      } else if (error.message?.includes('404') || error.message?.includes('Not Found')) {
-        console.warn('Workspaces endpoint not found, using fallback');
-        setWorkspaces([]);
+      // Create workspace from user data if available
+      if (user?.workspace_id) {
+        const localWorkspace = {
+          id: user.workspace_id,
+          name: 'Default Workspace',
+          description: '',
+          ownerId: user.id,
+          isActive: true,
+          pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxCafes: 1, maxUsers: 5 },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        setWorkspaces([localWorkspace as any]);
+        setCurrentWorkspace(localWorkspace as any);
       } else {
-        console.error('Unexpected error:', error);
         setWorkspaces([]);
       }
+    } catch (error: any) {
+      console.error('Error setting up workspace from user data:', error);
+      setWorkspaces([]);
     } finally {
       setWorkspacesLoading(false);
     }

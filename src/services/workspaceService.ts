@@ -12,6 +12,7 @@ import {
 
 class WorkspaceService {
   // Workspace Management
+  // NOTE: This method is deprecated - workspace data now comes from user-data API
   async getWorkspaces(filters?: {
     page?: number;
     page_size?: number;

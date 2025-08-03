@@ -81,16 +81,7 @@ export interface VenueData {
   users: any[];
 }
 
-export interface AvailableVenues {
-  venues: Array<{
-    id: string;
-    name: string;
-    description: string;
-    is_active: boolean;
-    is_open: boolean;
-    location: any;
-  }>;
-}
+// REMOVED: AvailableVenues interface - no longer needed for security reasons
 
 class UserDataService {
   /**
@@ -159,30 +150,10 @@ class UserDataService {
   }
 
   /**
-   * Get available venues for superadmin
+   * SECURITY FIX: This method has been completely removed
+   * Reason: It was exposing all venue data to superadmin users, violating the principle of least privilege
+   * Solution: Users should only access venues they are explicitly assigned to
    */
-  async getAvailableVenues(): Promise<AvailableVenues | null> {
-    try {
-      console.log('Fetching available venues...');
-      const response = await apiService.get<AvailableVenues>('/auth/available-venues');
-      
-      if (response.success && response.data) {
-        console.log('Available venues fetched successfully:', response.data);
-        return response.data;
-      }
-      
-      console.warn('Available venues fetch failed:', response.message);
-      return null;
-    } catch (error: any) {
-      console.error('Error fetching available venues:', error);
-      
-      if (error.response?.status === 403) {
-        throw new Error('Only superadmin can view all venues.');
-      }
-      
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch available venues');
-    }
-  }
 
   /**
    * Refresh user data (useful after venue switching or data updates)

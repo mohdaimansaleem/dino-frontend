@@ -44,8 +44,11 @@ const WorkspaceDebug: React.FC = () => {
   const testWorkspacesFetch = async () => {
     setLoading(true);
     try {
-      const result = await workspaceService.getWorkspaces();
-      setWorkspacesInfo(result);
+      // No longer calling workspace API - using user data instead
+      setWorkspacesInfo({ 
+        message: 'Workspace API call removed - workspace data comes from user-data API',
+        userData: userData?.workspace || null
+      });
     } catch (error: any) {
       setWorkspacesInfo({ error: error.message });
     } finally {

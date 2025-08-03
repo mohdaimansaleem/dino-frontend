@@ -51,6 +51,7 @@ import {
   CheckCircle,
   Cancel,
   Lock,
+  People,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
@@ -321,50 +322,11 @@ const UserManagement: React.FC = () => {
     return userService.formatLastLogin(dateString);
   };
 
-  // Role-based restrictions with detailed debugging
-  const superAdminCheck = isSuperAdmin();
-  const userCreatePermCheck = hasPermission(PERMISSIONS.USERS_CREATE);
-  const canCreateUsers = superAdminCheck || userCreatePermCheck;
+  // Role-based restrictions
+  const canCreateUsers = isSuperAdmin() || hasPermission(PERMISSIONS.USERS_CREATE);
   const canEditUsers = hasPermission(PERMISSIONS.USERS_UPDATE);
   const canDeleteUsers = hasPermission(PERMISSIONS.USERS_DELETE);
   const canUpdatePasswords = isAdmin() || isSuperAdmin();
-
-  // Debug logging
-  console.log('🔍 Detailed Permission Debug:');
-  console.log('PERMISSIONS.USERS_CREATE constant:', PERMISSIONS.USERS_CREATE);
-  console.log('isSuperAdmin():', superAdminCheck);
-  console.log('hasPermission(USERS_CREATE):', userCreatePermCheck);
-  console.log('canCreateUsers final:', canCreateUsers);
-  
-  // Test the exact permission that should work
-  const testUserManage = hasPermission('user.manage' as any);
-  const testUserCreate = hasPermission('user.create' as any);
-  console.log('Direct test - hasPermission("user.manage"):', testUserManage);
-  console.log('Direct test - hasPermission("user.create"):', testUserCreate);
-  
-  // Check backend permissions directly
-  const backendPermissions = (() => {
-    try {
-      const perms = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
-      return perms ? JSON.parse(perms).permissions : [];
-    } catch {
-      return [];
-    }
-  })();
-  
-  console.log('Backend permissions:', backendPermissions);
-  console.log('Looking for user.create or user.manage:', 
-    backendPermissions.filter((p: any) => p.name.includes('user')));
-  
-  // Force enable for testing
-  const forceCanCreateUsers = true; // Temporary override
-  
-  // Additional debugging
-  console.log('🚨 Button render check:');
-  console.log('canCreateUsers:', canCreateUsers);
-  console.log('forceCanCreateUsers:', forceCanCreateUsers);
-  console.log('Final condition:', canCreateUsers || forceCanCreateUsers);
-  console.log('Should render button:', (canCreateUsers || forceCanCreateUsers) ? 'YES' : 'NO');
 
   if (loading) {
     return (
@@ -450,37 +412,7 @@ const UserManagement: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Debug Info - Remove this after fixing */}
-      <Alert severity="warning" sx={{ mb: 2 }}>
-        <Typography variant="subtitle2">🔍 Detailed Debug Info:</Typography>
-        <Typography variant="body2" component="div" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-          • isSuperAdmin(): {superAdminCheck.toString()}<br/>
-          • hasPermission(USERS_CREATE): {userCreatePermCheck.toString()}<br/>
-          • PERMISSIONS.USERS_CREATE: "{PERMISSIONS.USERS_CREATE}"<br/>
-          • canCreateUsers: {canCreateUsers.toString()}<br/>
-          • forceCanCreateUsers: {forceCanCreateUsers.toString()}<br/>
-          • Backend Role: {(() => {
-            try {
-              const permissions = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
-              const parsed = JSON.parse(permissions || '{}');
-              return parsed.role?.name || 'none';
-            } catch {
-              return 'error parsing';
-            }
-          })()}<br/>
-          • User Manage Permission: {(() => {
-            try {
-              const permissions = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
-              const parsed = JSON.parse(permissions || '{}');
-              const userPerms = parsed.permissions?.filter((p: any) => p.name.includes('user')) || [];
-              return userPerms.map((p: any) => p.name).join(', ') || 'none';
-            } catch {
-              return 'error';
-            }
-          })()}<br/>
-          • Check browser console for more details
-        </Typography>
-      </Alert>
+
 
       {/* Header */}
       <Box sx={{ mb: 4 }}>
@@ -493,93 +425,113 @@ const UserManagement: React.FC = () => {
               Manage users and their permissions for {getVenueDisplayName()}
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => handleOpenDialog()}
-            color={canCreateUsers ? "primary" : "warning"}
-            sx={{ mb: 1 }}
-          >
-            Add User {canCreateUsers ? "(Permissions OK)" : "(Force Enabled)"}
-          </Button>
-          
-          {/* Debug button info */}
-          <Typography variant="caption" display="block" color="text.secondary">
-            Debug: canCreate={canCreateUsers.toString()}, super={superAdminCheck.toString()}, perm={userCreatePermCheck.toString()}
-          </Typography>
+          {canCreateUsers && (
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => handleOpenDialog()}
+            >
+              Add User
+            </Button>
+          )}
         </Box>
       </Box>
 
       {/* Users Table */}
       <Card>
         <CardContent>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>User</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Last Login</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar>
-                          {user.first_name.charAt(0)}{user.last_name.charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" fontWeight="600">
-                            {user.first_name} {user.last_name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {user.email}
-                          </Typography>
-                          {user.phone && (
-                            <Typography variant="body2" color="text.secondary">
-                              {user.phone}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getDisplayName(user.role)}
-                        color={getRoleColor(user.role) as any}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={user.is_active ? 'Active' : 'Inactive'}
-                        color={user.is_active ? 'success' : 'default'}
-                        size="small"
-                        icon={user.is_active ? <CheckCircle /> : <Cancel />}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {formatLastLogin(user.updated_at || user.created_at)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <IconButton
-                        onClick={(e) => handleMenuClick(e, user)}
-                        size="small"
-                      >
-                        <MoreVert />
-                      </IconButton>
-                    </TableCell>
+          {users.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 8 }}>
+              <People sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No Users Found
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {canCreateUsers 
+                  ? "Get started by adding your first team member to help manage your restaurant operations."
+                  : "No team members have been added yet. Contact your administrator to add users."
+                }
+              </Typography>
+              {canCreateUsers && (
+                <Button 
+                  variant="contained" 
+                  startIcon={<Add />} 
+                  size="large"
+                  onClick={() => handleOpenDialog()}
+                >
+                  Add Your First User
+                </Button>
+              )}
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>User</TableCell>
+                    <TableCell>Role</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Last Login</TableCell>
+                    <TableCell>Actions</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar>
+                            {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle2" fontWeight="600">
+                              {user.first_name} {user.last_name}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {user.email}
+                            </Typography>
+                            {user.phone && (
+                              <Typography variant="body2" color="text.secondary">
+                                {user.phone}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={getDisplayName(user.role)}
+                          color={getRoleColor(user.role) as any}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.is_active ? 'Active' : 'Inactive'}
+                          color={user.is_active ? 'success' : 'default'}
+                          size="small"
+                          icon={user.is_active ? <CheckCircle /> : <Cancel />}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {formatLastLogin(user.updated_at || user.created_at)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          onClick={(e) => handleMenuClick(e, user)}
+                          size="small"
+                        >
+                          <MoreVert />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </CardContent>
       </Card>
 

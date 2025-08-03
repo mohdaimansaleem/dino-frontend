@@ -12,22 +12,14 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Chip,
   IconButton,
   Alert,
   CircularProgress,
   Tabs,
   Tab,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
 } from '@mui/material';
 import {
-  Business,
-  Store,
-  People,
   TrendingUp,
   Visibility,
   Edit,
@@ -37,7 +29,7 @@ import {
   Restaurant,
   TableBar,
   Receipt,
-  SwapHoriz,
+  People,
 } from '@mui/icons-material';
 import { useUserData } from '../../contexts/UserDataContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -51,11 +43,8 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
   const { user } = useAuth();
   const {
     userData,
-    availableVenues,
     loading,
-    venueLoading,
     refreshUserData,
-    switchVenue,
     hasPermission,
     getUserRole,
     isSuperAdmin,
@@ -72,19 +61,6 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
   } = useUserData();
 
   const [currentTab, setCurrentTab] = useState(0);
-  const [selectedVenueId, setSelectedVenueId] = useState('');
-
-  const handleVenueSwitch = async () => {
-    if (!selectedVenueId) return;
-    
-    try {
-      await switchVenue(selectedVenueId);
-      setSelectedVenueId('');
-    } catch (error: any) {
-      console.error('Error switching venue:', error);
-      alert(error.message || 'Failed to switch venue');
-    }
-  };
 
   if (loading) {
     return (
@@ -135,35 +111,13 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
             </Typography>
           </Box>
           
-          {/* Venue Switcher for SuperAdmin */}
-          {isSuperAdmin() && availableVenues && availableVenues.venues.length > 1 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <FormControl size="small" sx={{ minWidth: 200 }}>
-                <InputLabel>Switch Venue</InputLabel>
-                <Select
-                  value={selectedVenueId}
-                  onChange={(e) => setSelectedVenueId(e.target.value)}
-                  label="Switch Venue"
-                  disabled={venueLoading}
-                >
-                  {availableVenues.venues
-                    .filter(venue => venue.id !== userData.venue.id)
-                    .map((venue) => (
-                      <MenuItem key={venue.id} value={venue.id}>
-                        {venue.name} {venue.is_active ? '(Active)' : '(Inactive)'}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
-              <Button
-                variant="contained"
-                startIcon={venueLoading ? <CircularProgress size={16} /> : <SwapHoriz />}
-                onClick={handleVenueSwitch}
-                disabled={!selectedVenueId || venueLoading}
-              >
-                Switch
-              </Button>
-            </Box>
+          {/* SECURITY FIX: Removed venue switcher - users should only access their assigned venue */}
+          {isSuperAdmin() && (
+            <Alert severity="info" sx={{ maxWidth: 300 }}>
+              <Typography variant="body2">
+                🔒 Security Enhancement: Venue switching has been disabled. Users now only access their assigned venue.
+              </Typography>
+            </Alert>
           )}
         </Box>
       </Box>
@@ -264,38 +218,60 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
               <Typography variant="h6" gutterBottom>
                 Recent Orders
               </Typography>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Order ID</TableCell>
-                      <TableCell>Table</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Time</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {recentOrders.slice(0, 5).map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell>#{order.id.slice(-6)}</TableCell>
-                        <TableCell>Table {order.table_number || 'N/A'}</TableCell>
-                        <TableCell>₹{order.total_amount?.toLocaleString() || 0}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={order.status || 'pending'}
-                            color={order.status === 'completed' ? 'success' : 'warning'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {new Date(order.created_at).toLocaleTimeString()}
-                        </TableCell>
+              
+              {recentOrders.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Receipt sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                  <Typography variant="body1" color="text.secondary">
+                    No recent orders yet
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Orders will appear here once customers start placing them
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Order ID</TableCell>
+                        <TableCell>Table</TableCell>
+                        <TableCell>Amount</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Time</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {recentOrders.slice(0, 5).map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell>#{order.id.slice(-6)}</TableCell>
+                          <TableCell>Table {order.table_number || 'N/A'}</TableCell>
+                          <TableCell>₹{order.total_amount?.toLocaleString() || 0}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={order.status || 'pending'}
+                              color={order.status === 'completed' ? 'success' : 'warning'}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {new Date(order.created_at).toLocaleTimeString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {recentOrders.length > 5 && (
+                        <TableRow>
+                          <TableCell colSpan={5} sx={{ textAlign: 'center', py: 1 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              Showing 5 of {recentOrders.length} recent orders
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </CardContent>
           </Card>
         </>
@@ -315,47 +291,80 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                 </Button>
               )}
             </Box>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Price</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {menuItems.slice(0, 10).map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>{item.name}</TableCell>
-                      <TableCell>{item.category}</TableCell>
-                      <TableCell>₹{item.price}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={item.is_available ? 'Available' : 'Unavailable'}
-                          color={item.is_available ? 'success' : 'error'}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {hasPermission('can_manage_menu') && (
-                          <>
-                            <IconButton size="small">
-                              <Visibility />
-                            </IconButton>
-                            <IconButton size="small">
-                              <Edit />
-                            </IconButton>
-                          </>
-                        )}
-                      </TableCell>
+            
+            {menuItems.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 6 }}>
+                <Restaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No Menu Items Found
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  {hasPermission('can_manage_menu') 
+                    ? "Get started by adding your first menu item to showcase your delicious offerings."
+                    : "Menu items will appear here once they are added by the restaurant manager."
+                  }
+                </Typography>
+                {hasPermission('can_manage_menu') && (
+                  <Button variant="contained" startIcon={<Add />} size="large">
+                    Add Your First Menu Item
+                  </Button>
+                )}
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Category</TableCell>
+                      <TableCell>Price</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {menuItems.slice(0, 10).map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.category}</TableCell>
+                        <TableCell>₹{item.price}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={item.is_available ? 'Available' : 'Unavailable'}
+                            color={item.is_available ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {hasPermission('can_manage_menu') && (
+                            <>
+                              <IconButton size="small">
+                                <Visibility />
+                              </IconButton>
+                              <IconButton size="small">
+                                <Edit />
+                              </IconButton>
+                            </>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {menuItems.length > 10 && (
+                      <TableRow>
+                        <TableCell colSpan={5} sx={{ textAlign: 'center', py: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Showing 10 of {menuItems.length} menu items
+                          </Typography>
+                          <Button size="small" sx={{ mt: 1 }}>
+                            View All Menu Items
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </CardContent>
         </Card>
       )}
@@ -374,53 +383,74 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                 </Button>
               )}
             </Box>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Table Number</TableCell>
-                    <TableCell>Capacity</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>QR Code</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {tables.map((table) => (
-                    <TableRow key={table.id}>
-                      <TableCell>{table.table_number}</TableCell>
-                      <TableCell>{table.capacity} seats</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={table.is_active ? 'Active' : 'Inactive'}
-                          color={table.is_active ? 'success' : 'error'}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {table.qr_code ? (
-                          <Chip label="Generated" color="success" size="small" />
-                        ) : (
-                          <Chip label="Not Generated" color="warning" size="small" />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {hasPermission('can_manage_tables') && (
-                          <>
-                            <IconButton size="small">
-                              <Visibility />
-                            </IconButton>
-                            <IconButton size="small">
-                              <Edit />
-                            </IconButton>
-                          </>
-                        )}
-                      </TableCell>
+            
+            {tables.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 6 }}>
+                <TableBar sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No Tables Found
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  {hasPermission('can_manage_tables') 
+                    ? "Set up your dining area by adding tables for customers to book and dine."
+                    : "Tables will appear here once they are configured by the restaurant manager."
+                  }
+                </Typography>
+                {hasPermission('can_manage_tables') && (
+                  <Button variant="contained" startIcon={<Add />} size="large">
+                    Add Your First Table
+                  </Button>
+                )}
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Table Number</TableCell>
+                      <TableCell>Capacity</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>QR Code</TableCell>
+                      <TableCell>Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {tables.map((table) => (
+                      <TableRow key={table.id}>
+                        <TableCell>{table.table_number}</TableCell>
+                        <TableCell>{table.capacity} seats</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={table.is_active ? 'Active' : 'Inactive'}
+                            color={table.is_active ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {table.qr_code ? (
+                            <Chip label="Generated" color="success" size="small" />
+                          ) : (
+                            <Chip label="Not Generated" color="warning" size="small" />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {hasPermission('can_manage_tables') && (
+                            <>
+                              <IconButton size="small">
+                                <Visibility />
+                              </IconButton>
+                              <IconButton size="small">
+                                <Edit />
+                              </IconButton>
+                            </>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </CardContent>
         </Card>
       )}
@@ -432,57 +462,73 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
             <Typography variant="h6" gutterBottom>
               Recent Orders ({recentOrders.length})
             </Typography>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Order ID</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell>Table</TableCell>
-                    <TableCell>Items</TableCell>
-                    <TableCell>Amount</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Time</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {recentOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell>#{order.id.slice(-6)}</TableCell>
-                      <TableCell>{order.customer_name || 'Guest'}</TableCell>
-                      <TableCell>Table {order.table_number || 'N/A'}</TableCell>
-                      <TableCell>{order.items?.length || 0} items</TableCell>
-                      <TableCell>₹{order.total_amount?.toLocaleString() || 0}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={order.status || 'pending'}
-                          color={
-                            order.status === 'completed' ? 'success' :
-                            order.status === 'preparing' ? 'warning' :
-                            order.status === 'cancelled' ? 'error' : 'default'
-                          }
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {new Date(order.created_at).toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <IconButton size="small">
-                          <Visibility />
-                        </IconButton>
-                        {hasPermission('can_manage_orders') && (
-                          <IconButton size="small">
-                            <Edit />
-                          </IconButton>
-                        )}
-                      </TableCell>
+            
+            {recentOrders.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 6 }}>
+                <Receipt sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No Orders Found
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Orders from customers will appear here once they start placing orders through your menu.
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  💡 Make sure your menu items and tables are set up to start receiving orders!
+                </Typography>
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Order ID</TableCell>
+                      <TableCell>Customer</TableCell>
+                      <TableCell>Table</TableCell>
+                      <TableCell>Items</TableCell>
+                      <TableCell>Amount</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Time</TableCell>
+                      <TableCell>Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {recentOrders.map((order) => (
+                      <TableRow key={order.id}>
+                        <TableCell>#{order.id.slice(-6)}</TableCell>
+                        <TableCell>{order.customer_name || 'Guest'}</TableCell>
+                        <TableCell>Table {order.table_number || 'N/A'}</TableCell>
+                        <TableCell>{order.items?.length || 0} items</TableCell>
+                        <TableCell>₹{order.total_amount?.toLocaleString() || 0}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={order.status || 'pending'}
+                            color={
+                              order.status === 'completed' ? 'success' :
+                              order.status === 'preparing' ? 'warning' :
+                              order.status === 'cancelled' ? 'error' : 'default'
+                            }
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {new Date(order.created_at).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <IconButton size="small">
+                            <Visibility />
+                          </IconButton>
+                          {hasPermission('can_manage_orders') && (
+                            <IconButton size="small">
+                              <Edit />
+                            </IconButton>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </CardContent>
         </Card>
       )}
@@ -499,52 +545,68 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                 Add User
               </Button>
             </Box>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.first_name} {user.last_name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={user.role}
-                          color={
-                            user.role === 'superadmin' ? 'error' :
-                            user.role === 'admin' ? 'primary' : 'secondary'
-                          }
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={user.is_active ? 'Active' : 'Inactive'}
-                          color={user.is_active ? 'success' : 'error'}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton size="small">
-                          <Visibility />
-                        </IconButton>
-                        <IconButton size="small">
-                          <Edit />
-                        </IconButton>
-                      </TableCell>
+            
+            {users.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 6 }}>
+                <People sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  No Team Members Found
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Build your team by adding staff members who can help manage your restaurant operations.
+                </Typography>
+                <Button variant="contained" startIcon={<Add />} size="large">
+                  Add Your First Team Member
+                </Button>
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Email</TableCell>
+                      <TableCell>Role</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Actions</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>{user.first_name} {user.last_name}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={user.role}
+                            color={
+                              user.role === 'superadmin' ? 'error' :
+                              user.role === 'admin' ? 'primary' : 'secondary'
+                            }
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={user.is_active ? 'Active' : 'Inactive'}
+                            color={user.is_active ? 'success' : 'error'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton size="small">
+                            <Visibility />
+                          </IconButton>
+                          <IconButton size="small">
+                            <Edit />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </CardContent>
         </Card>
       )}

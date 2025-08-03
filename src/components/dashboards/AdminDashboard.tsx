@@ -763,10 +763,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                   <TableBody>
                     {recentOrders.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} align="center">
-                          <Typography variant="body2" color="text.secondary">
-                            No recent orders found
-                          </Typography>
+                        <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                            <ShoppingCart sx={{ fontSize: 48, color: 'text.secondary' }} />
+                            <Typography variant="h6" color="text.secondary" gutterBottom>
+                              No Recent Orders Found
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 400 }}>
+                              Orders will appear here once customers start placing them. Check back soon or refresh the dashboard.
+                            </Typography>
+                          </Box>
                         </TableCell>
                       </TableRow>
                     ) : (

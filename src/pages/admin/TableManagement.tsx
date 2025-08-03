@@ -480,104 +480,127 @@ const TableManagement: React.FC = () => {
         </Grid>
       </Paper>
 
-      <Grid container spacing={3}>
-        {filteredTables.map(table => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={table.id}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                border: '1px solid', 
-                borderColor: 'divider',
-                borderLeft: `4px solid ${getAreaColor(table.location || '')}`,
-                opacity: table.is_active ? 1 : 0.6,
-                '&:hover': { boxShadow: 2 }
-              }}
-            >
-              <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 350 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Box>
-                    <Typography variant="h6" fontWeight="600" color="text.primary">
-                      Table {table.table_number}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {getAreaName(table.location || '')}
-                    </Typography>
+      {filteredTables.length === 0 ? (
+        <Paper elevation={1} sx={{ p: 6, textAlign: 'center', border: '1px solid', borderColor: 'divider' }}>
+          <TableRestaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No Tables Found
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            {selectedArea === 'all' 
+              ? "Get started by adding your first table to set up your dining area and enable customer ordering."
+              : `No tables found in the selected area. Try selecting a different area or add tables to "${areas.find(a => a.id === selectedArea)?.name || 'this area'}".`
+            }
+          </Typography>
+          <Button 
+            variant="contained" 
+            startIcon={<Add />} 
+            size="large"
+            onClick={handleAddTable}
+          >
+            Add Your First Table
+          </Button>
+        </Paper>
+      ) : (
+        <Grid container spacing={3}>
+          {filteredTables.map(table => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={table.id}>
+              <Card 
+                sx={{ 
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  border: '1px solid', 
+                  borderColor: 'divider',
+                  borderLeft: `4px solid ${getAreaColor(table.location || '')}`,
+                  opacity: table.is_active ? 1 : 0.6,
+                  '&:hover': { boxShadow: 2 }
+                }}
+              >
+                <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 350 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box>
+                      <Typography variant="h6" fontWeight="600" color="text.primary">
+                        Table {table.table_number}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {getAreaName(table.location || '')}
+                      </Typography>
+                    </Box>
+                    <Chip 
+                      icon={getStatusIcon(table.table_status)}
+                      label={table.table_status.charAt(0).toUpperCase() + table.table_status.slice(1)}
+                      size="small"
+                      sx={{ 
+                        backgroundColor: getStatusColor(table.table_status),
+                        color: 'white',
+                        '& .MuiChip-icon': { color: 'white' }
+                      }}
+                    />
                   </Box>
-                  <Chip 
-                    icon={getStatusIcon(table.table_status)}
-                    label={table.table_status.charAt(0).toUpperCase() + table.table_status.slice(1)}
-                    size="small"
-                    sx={{ 
-                      backgroundColor: getStatusColor(table.table_status),
-                      color: 'white',
-                      '& .MuiChip-icon': { color: 'white' }
-                    }}
-                  />
-                </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <People fontSize="small" color="action" />
-                    <Typography variant="body2" color="text.secondary">
-                      {table.capacity} seats
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <TableRestaurant fontSize="small" color="action" />
-                    <Typography variant="body2" color="text.secondary">
-                      Table
-                    </Typography>
-                  </Box>
-                </Box>
-                
-                {/* Notes section - API doesn't have notes field yet */}
-                
-                {/* Current order section - API doesn't have currentOrder field yet */}
-
-                <Box sx={{ mt: 'auto' }}>
-                  <Divider sx={{ my: 2 }} />
                   
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    gap: 1,
-                    flexWrap: 'wrap'
-                  }}>
-                    <Tooltip title="Generate QR Code">
-                      <IconButton size="small" onClick={() => generateQRCode(table.id)}>
-                        <QrCode fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Print QR Code">
-                      <IconButton size="small" onClick={() => printQRCode(table.id)}>
-                        <Print fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Toggle Status">
-                      <IconButton size="small" onClick={() => handleToggleTableStatus(table.id)}>
-                        {table.is_active ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Edit Table">
-                      <IconButton size="small" onClick={() => handleEditTable(table)}>
-                        <Edit fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete Table">
-                      <IconButton size="small" color="error" onClick={() => handleDeleteTable(table.id)}>
-                        <Delete fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <People fontSize="small" color="action" />
+                      <Typography variant="body2" color="text.secondary">
+                        {table.capacity} seats
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <TableRestaurant fontSize="small" color="action" />
+                      <Typography variant="body2" color="text.secondary">
+                        Table
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                  
+                  {/* Notes section - API doesn't have notes field yet */}
+                  
+                  {/* Current order section - API doesn't have currentOrder field yet */}
+
+                  <Box sx={{ mt: 'auto' }}>
+                    <Divider sx={{ my: 2 }} />
+                    
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: 1,
+                      flexWrap: 'wrap'
+                    }}>
+                      <Tooltip title="Generate QR Code">
+                        <IconButton size="small" onClick={() => generateQRCode(table.id)}>
+                          <QrCode fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Print QR Code">
+                        <IconButton size="small" onClick={() => printQRCode(table.id)}>
+                          <Print fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Toggle Status">
+                        <IconButton size="small" onClick={() => handleToggleTableStatus(table.id)}>
+                          {table.is_active ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Edit Table">
+                        <IconButton size="small" onClick={() => handleEditTable(table)}>
+                          <Edit fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete Table">
+                        <IconButton size="small" color="error" onClick={() => handleDeleteTable(table.id)}>
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       <TableDialog
         open={openTableDialog}
