@@ -23,6 +23,9 @@ import {
   Menu,
   ListItemIcon,
   ListItemText,
+  InputAdornment,
+  FormHelperText,
+  Divider,
 } from '@mui/material';
 import {
   Add,
@@ -33,11 +36,35 @@ import {
   VisibilityOff,
   SwapHoriz,
   Restaurant,
+  LocationOn,
+  Email,
+  Phone,
+  Language,
+  Store,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import PermissionService from '../../services/permissionService';
 import { PERMISSIONS } from '../../types/auth';
+
+const priceRangeOptions = [
+  { value: 'budget', label: 'Budget (₹ - Under ₹500 per person)' },
+  { value: 'mid_range', label: 'Mid Range (₹₹ - ₹500-₹1500 per person)' },
+  { value: 'premium', label: 'Premium (₹₹₹ - ₹1500-₹3000 per person)' },
+  { value: 'luxury', label: 'Luxury (₹₹₹₹ - Above ₹3000 per person)' }
+];
+
+const venueTypeOptions = [
+  'restaurant',
+  'cafe',
+  'bar',
+  'fast_food',
+  'fine_dining',
+  'bakery',
+  'food_truck',
+  'cloud_kitchen',
+  'other'
+];
 
 const WorkspaceManagement: React.FC = () => {
   const { user: currentUser, hasPermission, isSuperAdmin } = useAuth();
@@ -59,9 +86,19 @@ const WorkspaceManagement: React.FC = () => {
   const [cafeFormData, setCafeFormData] = useState({
     name: '',
     description: '',
-    address: '',
+    venueType: 'cafe',
+    location: {
+      address: '',
+      city: '',
+      state: '',
+      country: 'India',
+      postal_code: '',
+      landmark: ''
+    },
     phone: '',
     email: '',
+    website: '',
+    priceRange: 'mid_range',
     isActive: true,
     isOpen: true,
   });
@@ -73,9 +110,19 @@ const WorkspaceManagement: React.FC = () => {
       setCafeFormData({
         name: cafe.name,
         description: cafe.description || '',
-        address: cafe.address,
+        venueType: cafe.venueType || 'cafe',
+        location: {
+          address: cafe.address || cafe.location?.address || '',
+          city: cafe.location?.city || '',
+          state: cafe.location?.state || '',
+          country: cafe.location?.country || 'India',
+          postal_code: cafe.location?.postal_code || '',
+          landmark: cafe.location?.landmark || ''
+        },
         phone: cafe.phone,
         email: cafe.email,
+        website: cafe.website || '',
+        priceRange: cafe.priceRange || 'mid_range',
         isActive: cafe.isActive,
         isOpen: cafe.isOpen,
       });
@@ -84,9 +131,19 @@ const WorkspaceManagement: React.FC = () => {
       setCafeFormData({
         name: '',
         description: '',
-        address: '',
+        venueType: 'cafe',
+        location: {
+          address: '',
+          city: '',
+          state: '',
+          country: 'India',
+          postal_code: '',
+          landmark: ''
+        },
         phone: '',
         email: '',
+        website: '',
+        priceRange: 'mid_range',
         isActive: true,
         isOpen: true,
       });
@@ -120,6 +177,24 @@ const WorkspaceManagement: React.FC = () => {
   const handleMenuClose = () => {
     setAnchorEl(null);
     setSelectedItem(null);
+  };
+
+  const handleInputChange = (field: string, value: any) => {
+    if (field.startsWith('location.')) {
+      const locationField = field.split('.')[1];
+      setCafeFormData(prev => ({
+        ...prev,
+        location: {
+          ...prev.location,
+          [locationField]: value
+        }
+      }));
+    } else {
+      setCafeFormData(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
   const handleSwitchCafe = async (cafeId: string) => {
@@ -281,79 +356,206 @@ const WorkspaceManagement: React.FC = () => {
       )}
 
       {/* Cafe Dialog */}
-      <Dialog open={openCafeDialog} onClose={handleCloseCafeDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openCafeDialog} onClose={handleCloseCafeDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          {editingCafe ? 'Edit Cafe' : 'Add New Cafe'}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Store color="primary" />
+            {editingCafe ? 'Edit Cafe' : 'Add New Cafe'}
+          </Box>
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid container spacing={3} sx={{ mt: 1 }}>
+            {/* Basic Information */}
             <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Store color="primary" />
+                Basic Information
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Cafe Name"
                 value={cafeFormData.name}
-                onChange={(e) => setCafeFormData({ ...cafeFormData, name: e.target.value })}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                required
               />
             </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Venue Type</InputLabel>
+                <Select
+                  value={cafeFormData.venueType}
+                  label="Venue Type"
+                  onChange={(e) => handleInputChange('venueType', e.target.value)}
+                >
+                  {venueTypeOptions.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Description"
+                value={cafeFormData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
                 multiline
                 rows={2}
-                value={cafeFormData.description}
-                onChange={(e) => setCafeFormData({ ...cafeFormData, description: e.target.value })}
+                helperText="Describe your venue's atmosphere and specialties"
               />
             </Grid>
+
+            {/* Location Details */}
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <LocationOn color="primary" />
+                Location Details
+              </Typography>
+            </Grid>
+            
             <Grid item xs={12}>
               <TextField
                 fullWidth
                 label="Address"
-                multiline
-                rows={2}
-                value={cafeFormData.address}
-                onChange={(e) => setCafeFormData({ ...cafeFormData, address: e.target.value })}
+                value={cafeFormData.location.address}
+                onChange={(e) => handleInputChange('location.address', e.target.value)}
+                required
               />
             </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="City"
+                value={cafeFormData.location.city}
+                onChange={(e) => handleInputChange('location.city', e.target.value)}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="State"
+                value={cafeFormData.location.state}
+                onChange={(e) => handleInputChange('location.state', e.target.value)}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Postal Code"
+                value={cafeFormData.location.postal_code}
+                onChange={(e) => handleInputChange('location.postal_code', e.target.value)}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Country"
+                value={cafeFormData.location.country}
+                onChange={(e) => handleInputChange('location.country', e.target.value)}
+                disabled
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Landmark (Optional)"
+                value={cafeFormData.location.landmark}
+                onChange={(e) => handleInputChange('location.landmark', e.target.value)}
+                helperText="Nearby landmark to help customers find you"
+              />
+            </Grid>
+
+            {/* Contact & Business Details */}
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="h6" gutterBottom>
+                Contact & Business Details
+              </Typography>
+            </Grid>
+            
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Phone"
                 value={cafeFormData.phone}
-                onChange={(e) => setCafeFormData({ ...cafeFormData, phone: e.target.value })}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Phone />
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
+            
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Email"
-                type="email"
+                label="Email (Optional)"
                 value={cafeFormData.email}
-                onChange={(e) => setCafeFormData({ ...cafeFormData, email: e.target.value })}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email />
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={cafeFormData.isActive}
-                    onChange={(e) => setCafeFormData({ ...cafeFormData, isActive: e.target.checked })}
-                  />
-                }
-                label="Active Cafe"
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Website (Optional)"
+                value={cafeFormData.website}
+                onChange={(e) => handleInputChange('website', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Language />
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={cafeFormData.isOpen}
-                    onChange={(e) => setCafeFormData({ ...cafeFormData, isOpen: e.target.checked })}
-                  />
-                }
-                label="Currently Open"
-              />
+            
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Price Range</InputLabel>
+                <Select
+                  value={cafeFormData.priceRange}
+                  label="Price Range"
+                  onChange={(e) => handleInputChange('priceRange', e.target.value)}
+                >
+                  {priceRangeOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>Average cost per person</FormHelperText>
+              </FormControl>
             </Grid>
+
+
           </Grid>
         </DialogContent>
         <DialogActions>

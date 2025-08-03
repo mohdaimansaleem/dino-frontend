@@ -1,4 +1,6 @@
 import { User, Permission, UserRole, PERMISSIONS, ROLES, PermissionName, RoleName } from '../types/auth';
+import { STORAGE_KEYS } from '../constants/storage';
+import { ROLE_NAMES } from '../constants/roles';
 
 class PermissionService {
   // Role definitions - these should be loaded from API in production
@@ -82,7 +84,13 @@ class PermissionService {
    * Check if user has a specific permission (with backend fallback)
    */
   static hasPermission(user: User | null, permission: PermissionName): boolean {
-    if (!user || !user.permissions) {
+    if (!user) {
+      return false;
+    }
+
+
+
+    if (!user.permissions) {
       return false;
     }
 
@@ -91,7 +99,8 @@ class PermissionService {
     const backendRole = this.getBackendRole();
     
     // If user is superadmin, grant all permissions
-    if (backendRole && backendRole.name === 'superadmin') {
+    if (backendRole && backendRole.name === ROLE_NAMES.SUPERADMIN) {
+      console.log('✅ Granting permission due to superadmin role:', permission);
       return true;
     }
     
@@ -109,7 +118,7 @@ class PermissionService {
       
       // Map frontend permission constants to backend permissions
       const permissionMapping: Record<string, string[]> = {
-        'dashboard.read': ['dashboard.read', 'workspace.read'],
+        'dashboard.read': ['dashboard.read', 'workspace.read', 'workspace.manage'],
         'order.read': ['order.read', 'order.manage'],
         'order.update': ['order.update', 'order.manage'],
         'order.create': ['order.create', 'order.manage'],
@@ -130,8 +139,10 @@ class PermissionService {
         'workspace.update': ['workspace.update', 'workspace.manage'],
         'workspace.create': ['workspace.create', 'workspace.manage'],
         'workspace.delete': ['workspace.delete', 'workspace.manage'],
-        'settings.read': ['workspace.read', 'venue.read'],
-        'settings.update': ['workspace.update', 'venue.update']
+        'venue.update': ['venue.update', 'venue.manage'],
+        'venue.manage': ['venue.manage'],
+        'settings.read': ['workspace.read', 'venue.read', 'workspace.manage', 'venue.manage'],
+        'settings.update': ['workspace.update', 'venue.update', 'workspace.manage', 'venue.manage']
       };
       
       // Check mapped permissions
@@ -160,7 +171,7 @@ class PermissionService {
    */
   static getBackendPermissions(): any[] {
     try {
-      const permissionsData = localStorage.getItem('dino_permissions');
+      const permissionsData = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
       if (permissionsData) {
         const parsed = JSON.parse(permissionsData);
         return parsed.permissions || [];
@@ -175,7 +186,7 @@ class PermissionService {
    */
   static getBackendRole(): any | null {
     try {
-      const permissionsData = localStorage.getItem('dino_permissions');
+      const permissionsData = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
       if (permissionsData) {
         const parsed = JSON.parse(permissionsData);
         return parsed.role || null;
@@ -211,14 +222,23 @@ class PermissionService {
    * Check if user has a specific role (with backend fallback)
    */
   static hasRole(user: User | null, roleName: string | RoleName): boolean {
+    if (!user) {
+      return false;
+    }
+
+
+
     // First check backend role if available
     const backendRole = this.getBackendRole();
+    console.log('🔍 hasRole check:', { roleName, backendRole, user: user?.email });
     if (backendRole) {
-      return backendRole.name === roleName;
+      const hasRole = backendRole.name === roleName;
+      console.log('Backend role check result:', hasRole);
+      return hasRole;
     }
 
     // Fallback to static role
-    if (!user || !user.role) {
+    if (!user.role) {
       return false;
     }
 

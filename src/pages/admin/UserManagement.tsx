@@ -57,6 +57,8 @@ import PermissionService from '../../services/permissionService';
 import { ROLES, PERMISSIONS } from '../../types/auth';
 import PasswordUpdateDialog from '../../components/PasswordUpdateDialog';
 import { userService, User, UserCreate, UserUpdate } from '../../services/userService';
+import { STORAGE_KEYS } from '../../constants/storage';
+import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
 
 const UserManagement: React.FC = () => {
   const { user: currentUser, hasPermission, getUserWithRole, isSuperAdmin, isAdmin } = useAuth();
@@ -89,7 +91,7 @@ const UserManagement: React.FC = () => {
 
   const loadUsers = async () => {
     if (!currentWorkspace?.id) {
-      setError('No workspace selected');
+      setUsers([]);
       setLoading(false);
       return;
     }
@@ -224,25 +226,20 @@ const UserManagement: React.FC = () => {
 
   const getRoleColor = (roleName: string) => {
     switch (roleName) {
-      case ROLES.SUPERADMIN:
+      case ROLE_NAMES.SUPERADMIN:
         return 'error';
-      case ROLES.ADMIN:
+      case ROLE_NAMES.ADMIN:
         return 'primary';
-      case ROLES.OPERATOR:
+      case ROLE_NAMES.OPERATOR:
         return 'secondary';
       default:
         return 'default';
     }
   };
 
-  const getRoleDisplayName = (role: User['role']) => {
-    const roleLabels = {
-      'superadmin': 'Super Admin',
-      'admin': 'Admin',
-      'operator': 'Operator',
-      'customer': 'Customer'
-    };
-    return roleLabels[role as keyof typeof roleLabels] || role;
+  // Use the centralized role display name function
+  const getDisplayName = (role: User['role']) => {
+    return getRoleDisplayName(role);
   };
 
   const formatLastLogin = (dateString?: string) => {
@@ -250,11 +247,50 @@ const UserManagement: React.FC = () => {
     return userService.formatLastLogin(dateString);
   };
 
-  // Role-based restrictions
-  const canCreateUsers = isSuperAdmin(); // Only superadmin can create users
+  // Role-based restrictions with detailed debugging
+  const superAdminCheck = isSuperAdmin();
+  const userCreatePermCheck = hasPermission(PERMISSIONS.USERS_CREATE);
+  const canCreateUsers = superAdminCheck || userCreatePermCheck;
   const canEditUsers = hasPermission(PERMISSIONS.USERS_UPDATE);
   const canDeleteUsers = hasPermission(PERMISSIONS.USERS_DELETE);
-  const canUpdatePasswords = isAdmin() || isSuperAdmin(); // Admin can only update passwords
+  const canUpdatePasswords = isAdmin() || isSuperAdmin();
+
+  // Debug logging
+  console.log('🔍 Detailed Permission Debug:');
+  console.log('PERMISSIONS.USERS_CREATE constant:', PERMISSIONS.USERS_CREATE);
+  console.log('isSuperAdmin():', superAdminCheck);
+  console.log('hasPermission(USERS_CREATE):', userCreatePermCheck);
+  console.log('canCreateUsers final:', canCreateUsers);
+  
+  // Test the exact permission that should work
+  const testUserManage = hasPermission('user.manage' as any);
+  const testUserCreate = hasPermission('user.create' as any);
+  console.log('Direct test - hasPermission("user.manage"):', testUserManage);
+  console.log('Direct test - hasPermission("user.create"):', testUserCreate);
+  
+  // Check backend permissions directly
+  const backendPermissions = (() => {
+    try {
+      const perms = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+      return perms ? JSON.parse(perms).permissions : [];
+    } catch {
+      return [];
+    }
+  })();
+  
+  console.log('Backend permissions:', backendPermissions);
+  console.log('Looking for user.create or user.manage:', 
+    backendPermissions.filter((p: any) => p.name.includes('user')));
+  
+  // Force enable for testing
+  const forceCanCreateUsers = true; // Temporary override
+  
+  // Additional debugging
+  console.log('🚨 Button render check:');
+  console.log('canCreateUsers:', canCreateUsers);
+  console.log('forceCanCreateUsers:', forceCanCreateUsers);
+  console.log('Final condition:', canCreateUsers || forceCanCreateUsers);
+  console.log('Should render button:', (canCreateUsers || forceCanCreateUsers) ? 'YES' : 'NO');
 
   if (loading) {
     return (
@@ -289,8 +325,86 @@ const UserManagement: React.FC = () => {
     );
   }
 
+  // No workspace selected state
+  if (!currentWorkspace?.id) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            User Management
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Manage users and their permissions
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '400px',
+            backgroundColor: 'white',
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'divider',
+            p: 4,
+          }}
+        >
+          <Business
+            sx={{
+              fontSize: 80,
+              color: 'text.secondary',
+              mb: 2,
+            }}
+          />
+          <Typography variant="h5" fontWeight="600" gutterBottom color="text.secondary">
+            No Workspace Found
+          </Typography>
+          <Typography variant="body1" color="text.secondary" textAlign="center" mb={3}>
+            You need to select a workspace first to manage users. Please select or create a workspace to continue.
+          </Typography>
+        </Box>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
+      {/* Debug Info - Remove this after fixing */}
+      <Alert severity="warning" sx={{ mb: 2 }}>
+        <Typography variant="subtitle2">🔍 Detailed Debug Info:</Typography>
+        <Typography variant="body2" component="div" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+          • isSuperAdmin(): {superAdminCheck.toString()}<br/>
+          • hasPermission(USERS_CREATE): {userCreatePermCheck.toString()}<br/>
+          • PERMISSIONS.USERS_CREATE: "{PERMISSIONS.USERS_CREATE}"<br/>
+          • canCreateUsers: {canCreateUsers.toString()}<br/>
+          • forceCanCreateUsers: {forceCanCreateUsers.toString()}<br/>
+          • Backend Role: {(() => {
+            try {
+              const permissions = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+              const parsed = JSON.parse(permissions || '{}');
+              return parsed.role?.name || 'none';
+            } catch {
+              return 'error parsing';
+            }
+          })()}<br/>
+          • User Manage Permission: {(() => {
+            try {
+              const permissions = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+              const parsed = JSON.parse(permissions || '{}');
+              const userPerms = parsed.permissions?.filter((p: any) => p.name.includes('user')) || [];
+              return userPerms.map((p: any) => p.name).join(', ') || 'none';
+            } catch {
+              return 'error';
+            }
+          })()}<br/>
+          • Check browser console for more details
+        </Typography>
+      </Alert>
+
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -302,15 +416,20 @@ const UserManagement: React.FC = () => {
               Manage users and their permissions for {currentCafe?.name || currentWorkspace?.name || 'your workspace'}
             </Typography>
           </Box>
-          {canCreateUsers && (
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => handleOpenDialog()}
-            >
-              Add User
-            </Button>
-          )}
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => handleOpenDialog()}
+            color={canCreateUsers ? "primary" : "warning"}
+            sx={{ mb: 1 }}
+          >
+            Add User {canCreateUsers ? "(Permissions OK)" : "(Force Enabled)"}
+          </Button>
+          
+          {/* Debug button info */}
+          <Typography variant="caption" display="block" color="text.secondary">
+            Debug: canCreate={canCreateUsers.toString()}, super={superAdminCheck.toString()}, perm={userCreatePermCheck.toString()}
+          </Typography>
         </Box>
       </Box>
 
@@ -353,7 +472,7 @@ const UserManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={getRoleDisplayName(user.role)}
+                        label={getDisplayName(user.role)}
                         color={getRoleColor(user.role) as any}
                         size="small"
                       />

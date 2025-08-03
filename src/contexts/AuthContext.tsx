@@ -5,6 +5,8 @@ import { authService } from '../services/authService';
 import PermissionService from '../services/permissionService';
 import { userCache, CacheKeys, cacheUtils } from '../services/cacheService';
 import { preloadCriticalComponents } from '../components/LazyComponents';
+import { STORAGE_KEYS } from '../constants/storage';
+import { ROLE_NAMES } from '../constants/roles';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -46,9 +48,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for existing token on app load
     const initializeAuth = async () => {
       try {
-        const token = localStorage.getItem('dino_token');
-        const savedUser = localStorage.getItem('dino_user');
-        const savedPermissions = localStorage.getItem('dino_permissions');
+        const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
+        const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
+        const savedPermissions = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
         
 
         
@@ -59,9 +61,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (token && savedUser) {
           // Check if token is expired
           if (isTokenExpired(token)) {
-            localStorage.removeItem('dino_token');
-            localStorage.removeItem('dino_user');
-            localStorage.removeItem('dino_permissions');
+            localStorage.removeItem(STORAGE_KEYS.TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.USER);
+            localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
             setUser(null);
             setUserPermissions(null);
             return;
@@ -88,9 +90,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           } catch (error) {
             // Invalid user data, clear storage
-            localStorage.removeItem('dino_token');
-            localStorage.removeItem('dino_user');
-            localStorage.removeItem('dino_permissions');
+            localStorage.removeItem(STORAGE_KEYS.TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.USER);
+            localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
             setUser(null);
             setUserPermissions(null);
           }
@@ -99,9 +101,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUserPermissions(null);
         }
       } catch (error) {
-        localStorage.removeItem('dino_token');
-        localStorage.removeItem('dino_user');
-        localStorage.removeItem('dino_permissions');
+        localStorage.removeItem(STORAGE_KEYS.TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
         setUser(null);
         setUserPermissions(null);
       } finally {
@@ -118,7 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.login(email, password);
       
       // Store token
-      localStorage.setItem('dino_token', response.access_token);
+      localStorage.setItem(STORAGE_KEYS.TOKEN, response.access_token);
       
       // Convert API user to local user format
       const localUser: UserProfile = {
@@ -143,7 +145,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setUser(localUser);
       // Store the converted user data
-      localStorage.setItem('dino_user', JSON.stringify(localUser));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
       
       // Fetch and store user permissions with caching
       try {
@@ -153,7 +155,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           10 * 60 * 1000 // 10 minutes TTL
         );
         setUserPermissions(permissionsData);
-        localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
+        localStorage.setItem(STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissionsData));
       } catch (error) {
         // Continue with login even if permissions fetch fails
       }
@@ -203,10 +205,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = (): void => {
     // This will show us where logout is being called from
-    localStorage.removeItem('dino_token');
-    localStorage.removeItem('dino_user');
-    localStorage.removeItem('dino_refresh_token');
-    localStorage.removeItem('dino_permissions');
+    localStorage.removeItem(STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.USER);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
     setUser(null);
     setUserPermissions(null);
   };
@@ -257,7 +259,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } as UserProfile;
       
       setUser(localUser);
-      localStorage.setItem('dino_user', JSON.stringify(localUser));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
     } catch (error) {
       throw error;
     }
@@ -289,7 +291,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } as UserProfile;
       
       setUser(localUser);
-      localStorage.setItem('dino_user', JSON.stringify(localUser));
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
     } catch (error) {
       // If refresh fails, user might need to login again
       logout();
@@ -308,21 +310,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (backendRole && backendRole.name) {
       // Use the actual backend role name
       const backendRoleName = backendRole.name.toLowerCase();
-      if (backendRoleName === 'superadmin') {
+      if (backendRoleName === ROLE_NAMES.SUPERADMIN) {
         roleName = ROLES.SUPERADMIN;
-      } else if (backendRoleName === 'admin') {
+      } else if (backendRoleName === ROLE_NAMES.ADMIN) {
         roleName = ROLES.ADMIN;
-      } else if (backendRoleName === 'operator') {
+      } else if (backendRoleName === ROLE_NAMES.OPERATOR) {
         roleName = ROLES.OPERATOR;
       }
     } else {
       // Fallback to user.role if no backend role
       const userRole = (user as any).role;
-      if (userRole === 'superadmin') {
+      if (userRole === ROLE_NAMES.SUPERADMIN) {
         roleName = ROLES.SUPERADMIN;
-      } else if (userRole === 'admin') {
+      } else if (userRole === ROLE_NAMES.ADMIN) {
         roleName = ROLES.ADMIN;
-      } else if (userRole === 'operator' || userRole === 'staff') {
+      } else if (userRole === ROLE_NAMES.OPERATOR || userRole === ROLE_NAMES.STAFF) {
         roleName = ROLES.OPERATOR;
       } else if (user.email?.includes('operator')) {
         roleName = ROLES.OPERATOR;
@@ -375,7 +377,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const isAdmin = (): boolean => {
-    return hasRole(ROLES.ADMIN);
+    // Check backend role first
+    const backendRole = PermissionService.getBackendRole();
+    if (backendRole && (backendRole.name === ROLE_NAMES.ADMIN || backendRole.name === ROLE_NAMES.SUPERADMIN)) {
+      return true;
+    }
+    
+    // Check user role
+    if (user?.role === ROLE_NAMES.ADMIN || (user as any)?.role === ROLE_NAMES.ADMIN || 
+        user?.role === ROLE_NAMES.SUPERADMIN || (user as any)?.role === ROLE_NAMES.SUPERADMIN) {
+      return true;
+    }
+    
+    // Fallback to hasRole check
+    return hasRole(ROLES.ADMIN) || hasRole(ROLES.SUPERADMIN);
   };
 
   const isOperator = (): boolean => {
@@ -383,6 +398,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const isSuperAdmin = (): boolean => {
+    // Check backend role first
+    const backendRole = PermissionService.getBackendRole();
+    if (backendRole && backendRole.name === ROLE_NAMES.SUPERADMIN) {
+      return true;
+    }
+    
+    // Check user role
+    if (user?.role === ROLE_NAMES.SUPERADMIN || (user as any)?.role === ROLE_NAMES.SUPERADMIN) {
+      return true;
+    }
+    
+
+    
+    // Fallback to hasRole check
     return hasRole(ROLES.SUPERADMIN);
   };
 
@@ -391,7 +420,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const permissionsData = await authService.refreshUserPermissions();
       setUserPermissions(permissionsData);
-      localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
+      localStorage.setItem(STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissionsData));
     } catch (error) {
       throw error;
     }
@@ -411,7 +440,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializePermissions = async () => {
       try {
-        const savedPermissions = localStorage.getItem('dino_permissions');
+        const savedPermissions = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
         if (savedPermissions) {
           const parsed = JSON.parse(savedPermissions);
           setUserPermissions(parsed);
@@ -419,12 +448,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // If user is logged in but no permissions cached, fetch them (but only if token is valid)
         if (user && !savedPermissions) {
-          const token = localStorage.getItem('dino_token');
+          const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
           if (token && !isTokenExpired(token)) {
             try {
               const permissionsData = await authService.getUserPermissions();
               setUserPermissions(permissionsData);
-              localStorage.setItem('dino_permissions', JSON.stringify(permissionsData));
+              localStorage.setItem(STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissionsData));
               } catch (error) {
               // Don't logout on permission fetch failure
             }
