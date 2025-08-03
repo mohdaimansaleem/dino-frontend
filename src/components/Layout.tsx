@@ -30,6 +30,7 @@ import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import AppHeader from './layout/AppHeader';
+import CafeStatusControl from './CafeStatusControl';
 
 interface LayoutProps {
   children: ReactNode;
@@ -318,6 +319,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
                 Control Panel
               </Typography>
+              
+              {/* Cafe Status Control */}
+              <CafeStatusControl />
+              
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {renderNavigation()}
               </Box>

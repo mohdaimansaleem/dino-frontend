@@ -109,24 +109,28 @@ const WorkspaceManagement: React.FC = () => {
   const handleOpenCafeDialog = (cafe?: any) => {
     if (cafe) {
       setEditingCafe(cafe);
+      
+      // Debug logging to see the cafe object structure
+      console.log('Editing cafe:', cafe);
+      
       setCafeFormData({
-        name: cafe.name,
-        description: cafe.description || '',
-        venueType: cafe.venueType || 'cafe',
+        name: String(cafe.name || ''),
+        description: String(cafe.description || ''),
+        venueType: String(cafe.venueType || cafe.venue_type || 'cafe'),
         location: {
-          address: cafe.location?.address || '',
-          city: cafe.location?.city || '',
-          state: cafe.location?.state || '',
-          country: cafe.location?.country || 'India',
-          postal_code: cafe.location?.postal_code || '',
-          landmark: cafe.location?.landmark || ''
+          address: String(cafe.location?.address || ''),
+          city: String(cafe.location?.city || ''),
+          state: String(cafe.location?.state || ''),
+          country: String(cafe.location?.country || 'India'),
+          postal_code: String(cafe.location?.postal_code || cafe.location?.postalCode || ''),
+          landmark: String(cafe.location?.landmark || '')
         },
-        phone: cafe.phone,
-        email: cafe.email,
-        website: cafe.website || '',
-        priceRange: cafe.priceRange || 'mid_range',
-        isActive: cafe.is_active,
-        isOpen: cafe.is_open,
+        phone: String(cafe.phone || ''),
+        email: String(cafe.email || ''),
+        website: String(cafe.website || ''),
+        priceRange: String(cafe.priceRange || cafe.price_range || 'mid_range'),
+        isActive: Boolean(cafe.is_active !== undefined ? cafe.is_active : cafe.isActive !== undefined ? cafe.isActive : true),
+        isOpen: Boolean(cafe.is_open !== undefined ? cafe.is_open : cafe.isOpen !== undefined ? cafe.isOpen : true),
       });
     } else {
       setEditingCafe(null);

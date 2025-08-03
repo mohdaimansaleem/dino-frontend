@@ -495,9 +495,12 @@ class TableService {
   /**
    * Create area (for backward compatibility)
    */
-  async createArea(areaData: any): Promise<any> {
+  async createArea(areaData: any, venueId?: string): Promise<any> {
     try {
-      const response = await apiService.post<any>('/tables/areas', areaData);
+      const response = await apiService.post<any>('/tables/areas', {
+        ...areaData,
+        venue_id: venueId || areaData.venue_id
+      });
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to create area');

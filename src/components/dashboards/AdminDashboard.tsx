@@ -39,16 +39,17 @@ import {
   CheckCircle,
   Cancel,
   Settings,
+  Refresh,
 } from '@mui/icons-material';
 import { WeeklyRevenueChart, StatusPieChart, DonutChart } from '../charts/ChartComponents';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
+import { useNavigate } from 'react-router-dom';
 import { PERMISSIONS } from '../../types/auth';
 import { dashboardService } from '../../services/dashboardService';
 import { analyticsService } from '../../services/analyticsService';
 import { venueService } from '../../services/venueService';
 import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
-import UserDebugInfo from '../debug/UserDebugInfo';
 
 /**
  * AdminDashboard Component
@@ -100,8 +101,9 @@ interface ChartData {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const { user, hasPermission, hasBackendPermission } = useAuth();
   const { userData, loading: userDataLoading } = useUserData();
+  const navigate = useNavigate();
   const currentCafe = userData?.venue;
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
@@ -206,7 +208,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     } finally {
       setChartLoading(false);
     }
-  }, []);
+  }, [currentCafe?.id]);
 
 
 
@@ -246,9 +248,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   }, [currentCafe?.id, currentCafe?.is_open]);
 
   useEffect(() => {
-    loadDashboardData();
-    loadCafeStatus();
-    loadChartData();
+    if (currentCafe?.id) {
+      loadDashboardData();
+      loadCafeStatus();
+      loadChartData();
+    } else {
+      // If no cafe, set loading to false to show the venue assignment check
+      setLoading(false);
+    }
     
     // Add smooth scrolling to the document
     document.documentElement.style.scrollBehavior = 'smooth';
@@ -404,7 +411,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   };
 
   const renderDashboardContent = () => {
-    if (loading) {
+    if (loading && currentCafe?.id) {
       return (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
           <CircularProgress size={60} />
@@ -448,22 +455,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
           flexDirection: 'column'
         }}
       >
-        {/* Debug Info - Only in development */}
-        {process.env.NODE_ENV === 'development' && <UserDebugInfo />}
+
         
-        {/* Debug: Show current state */}
-        {process.env.NODE_ENV === 'development' && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2">
-              <strong>Debug Info:</strong><br/>
-              Current Cafe: {currentCafe ? `${currentCafe.name} (${currentCafe.id})` : 'None'}<br/>
-              User Role: {user?.role || 'Unknown'}<br/>
-              Can Manage Venue: {canManageVenue() ? 'Yes' : 'No'}<br/>
-              Can View Dashboard: {canViewDashboard() ? 'Yes' : 'No'}<br/>
-              Should Show Toggle: {(currentCafe && canManageVenue()) ? 'Yes' : 'No'}
-            </Typography>
-          </Alert>
-        )}
+
 
         {/* Header */}
         <Box sx={{ mb: { xs: 2, lg: 1.5 }, flexShrink: 0, mt: 0 }}>
@@ -477,118 +471,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 Welcome back, {user?.firstName}! Here's your venue overview for today.
               </Typography>
             </Box>
-            <Button
-              variant="outlined"
+            <IconButton
               onClick={refreshDashboard}
               disabled={loading || chartLoading}
               size="small"
               sx={{ mt: 1 }}
+              title={loading || chartLoading ? 'Refreshing...' : 'Refresh Dashboard'}
             >
-              {loading || chartLoading ? 'Refreshing...' : 'Refresh'}
-            </Button>
+              <Refresh />
+            </IconButton>
           </Box>
         </Box>
-
-        {/* Cafe Status Control Panel - Only for users with venue management permissions */}
-        {currentCafe && canManageVenue() && (
-          <Card sx={{ mb: { xs: 3, lg: 2 }, border: '2px solid', borderColor: cafeActive ? 'success.main' : 'error.main' }}>
-            <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar
-                    sx={{
-                      bgcolor: cafeActive ? 'success.main' : 'error.main',
-                      width: 48,
-                      height: 48,
-                    }}
-                  >
-                    {cafeActive ? <CheckCircle /> : <Cancel />}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" fontWeight="600">
-                      {currentCafe.name || 'Current Cafe'}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Status: {cafeActive ? (cafeOpen ? 'Open for Orders' : 'Closed for Orders') : 'Inactive'}
-                    </Typography>
-                  </Box>
-                </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
-                  {/* Cafe Active/Inactive Toggle */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Settings sx={{ color: 'text.secondary' }} />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={cafeActive}
-                          onChange={handleToggleCafeActive}
-                          disabled={statusLoading}
-                          color="primary"
-                          size="medium"
-                        />
-                      }
-                      label={
-                        <Box>
-                          <Typography variant="body2" fontWeight="500">
-                            {cafeActive ? 'Active' : 'Inactive'}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {cafeActive ? 'Cafe is operational' : 'Cafe is disabled'}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </Box>
-
-                  <Divider orientation="vertical" flexItem />
-
-                  {/* Cafe Open/Closed Toggle */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Restaurant sx={{ color: 'text.secondary' }} />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={cafeOpen}
-                          onChange={handleToggleCafeOpen}
-                          disabled={statusLoading || !cafeActive}
-                          color="success"
-                          size="medium"
-                        />
-                      }
-                      label={
-                        <Box>
-                          <Typography variant="body2" fontWeight="500">
-                            {cafeOpen ? 'Open' : 'Closed'}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {cafeOpen ? 'Accepting orders' : 'Orders disabled'}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </Box>
-
-                  {/* Quick Settings Button */}
-                  <Button
-                    variant="outlined"
-                    startIcon={<Settings />}
-                    onClick={() => window.location.href = '/admin/cafe-settings'}
-                    size="small"
-                  >
-                    Settings
-                  </Button>
-                </Box>
-              </Box>
-
-              {statusLoading && (
-                <Box sx={{ mt: 2 }}>
-                  <LinearProgress />
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        )}
 
         {/* Fallback Toggle for Testing - Always Visible */}
         {!currentCafe && (
@@ -847,7 +740,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 {canManageOrders() && (
                   <Button
                     variant="outlined"
-                    onClick={() => window.location.href = '/admin/orders'}
+                    onClick={() => navigate('/admin/orders')}
                     size="small"
                   >
                     View All Orders
@@ -904,7 +797,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                             {canManageOrders() && (
                               <IconButton
                                 size="small"
-                                onClick={() => window.location.href = `/admin/orders/${order.id}`}
+                                onClick={() => navigate(`/admin/orders/${order.id}`)}
                               >
                                 <Visibility />
                               </IconButton>
@@ -912,7 +805,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                             {(hasPermission(PERMISSIONS.ORDERS_UPDATE) || hasBackendPermission('order.update')) && (
                               <IconButton
                                 size="small"
-                                onClick={() => window.location.href = `/admin/orders/${order.id}/edit`}
+                                onClick={() => navigate(`/admin/orders/${order.id}/edit`)}
                               >
                                 <Edit />
                               </IconButton>
@@ -941,7 +834,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       variant="outlined"
                       size="large"
                       startIcon={<ShoppingCart />}
-                      onClick={() => window.location.href = '/admin/orders'}
+                      onClick={() => navigate('/admin/orders')}
                       sx={{ py: { xs: 2, lg: 1.5 } }}
                     >
                       View Orders
@@ -955,7 +848,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       variant="outlined"
                       size="large"
                       startIcon={<Restaurant />}
-                      onClick={() => window.location.href = '/admin/menu'}
+                      onClick={() => navigate('/admin/menu')}
                       sx={{ py: { xs: 2, lg: 1.5 } }}
                     >
                       Manage Menu
@@ -969,7 +862,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       variant="outlined"
                       size="large"
                       startIcon={<TableRestaurant />}
-                      onClick={() => window.location.href = '/admin/tables'}
+                      onClick={() => navigate('/admin/tables')}
                       sx={{ py: { xs: 2, lg: 1.5 } }}
                     >
                       Manage Tables
@@ -983,7 +876,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       variant="outlined"
                       size="large"
                       startIcon={<People />}
-                      onClick={() => window.location.href = '/admin/users'}
+                      onClick={() => navigate('/admin/users')}
                       sx={{ py: { xs: 2, lg: 1.5 } }}
                     >
                       Manage Staff

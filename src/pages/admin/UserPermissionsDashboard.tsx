@@ -150,8 +150,18 @@ const UserPermissionsDashboard: React.FC = () => {
   };
 
   const getRoleDisplayName = (role: string) => {
+    if (!role || typeof role !== 'string') {
+      return 'Unknown Role';
+    }
+    
     const roleDefinition = PermissionService.getRoleDefinition(role);
-    return roleDefinition?.displayName || role;
+    
+    // Ensure we always return a string
+    if (typeof roleDefinition === 'object' && roleDefinition?.displayName) {
+      return String(roleDefinition.displayName);
+    }
+    
+    return String(role);
   };
 
   const getActionIcon = (action: string) => {
@@ -185,9 +195,15 @@ const UserPermissionsDashboard: React.FC = () => {
   };
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!user) return false;
+    
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    const email = user.email || '';
+    
+    const matchesSearch = firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesActive = showInactive || user.isActive;
     
@@ -200,21 +216,42 @@ const UserPermissionsDashboard: React.FC = () => {
   };
 
   const exportPermissions = () => {
+    if (filteredUsers.length === 0) {
+      alert('No users available to export');
+      return;
+    }
+    
     const data = filteredUsers.map(user => ({
-      Name: `${user.firstName} ${user.lastName}`,
-      Email: user.email,
-      Role: getRoleDisplayName(user.role),
+      Name: `${user.firstName || 'Unknown'} ${user.lastName || 'User'}`,
+      Email: user.email || 'No email',
+      Role: getRoleDisplayName(user.role || 'unknown'),
       Status: user.isActive ? 'Active' : 'Inactive',
       Cafe: userData?.venue?.name || 'All Cafes',
-      Permissions: user.permissions.length,
+      Permissions: user.permissions?.length || 0,
       LastLogin: user.lastLogin?.toLocaleDateString() || 'Never'
     }));
     
     // In real app, this would generate and download a CSV/Excel file
+    console.log('Export data:', data);
   };
 
   const currentUserAuth = getUserWithRole();
   const canViewAllUsers = isSuperAdmin() || hasPermission(PERMISSIONS.USERS_VIEW);
+
+  // Add error handling for currentUserAuth
+  if (!currentUserAuth && !userDataLoading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Alert severity="error">
+          Unable to load user authentication data. Please try refreshing the page or contact support.
+        </Alert>
+      </Container>
+    );
+  }
+
+  // Debug logging
+  console.log('currentUserAuth:', currentUserAuth);
+  console.log('currentUserAuth.role:', currentUserAuth?.role);
 
   if (!canViewAllUsers) {
     return (
@@ -222,6 +259,17 @@ const UserPermissionsDashboard: React.FC = () => {
         <Alert severity="warning">
           You don't have permission to view user permissions. Contact your administrator.
         </Alert>
+      </Container>
+    );
+  }
+
+  // Don't render if currentUserAuth is still loading or null
+  if (!currentUserAuth) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <Typography>Loading user permissions...</Typography>
+        </Box>
       </Container>
     );
   }
@@ -262,8 +310,16 @@ const UserPermissionsDashboard: React.FC = () => {
                 </Typography>
                 <Box sx={{ mt: 1 }}>
                   <Chip
-                    label={getRoleDisplayName(typeof currentUserAuth?.role === 'string' ? currentUserAuth.role : currentUserAuth?.role?.name || '')}
-                    color={getRoleColor(typeof currentUserAuth?.role === 'string' ? currentUserAuth.role : currentUserAuth?.role?.name || '') as any}
+                    label={getRoleDisplayName(
+                      typeof currentUserAuth?.role === 'string' 
+                        ? currentUserAuth.role 
+                        : (currentUserAuth?.role?.name || currentUserAuth?.role?.displayName || 'Unknown')
+                    )}
+                    color={getRoleColor(
+                      typeof currentUserAuth?.role === 'string' 
+                        ? currentUserAuth.role 
+                        : (currentUserAuth?.role?.name || currentUserAuth?.role?.displayName || 'unknown')
+                    ) as any}
                     size="small"
                     sx={{ mr: 1 }}
                   />
@@ -279,7 +335,7 @@ const UserPermissionsDashboard: React.FC = () => {
               variant="outlined"
               startIcon={<Visibility />}
               onClick={() => handleViewPermissions({
-                ...currentUserAuth,
+                ...(currentUserAuth || {}),
                 firstName: user?.firstName,
                 lastName: user?.lastName,
                 email: user?.email,
@@ -370,102 +426,108 @@ const UserPermissionsDashboard: React.FC = () => {
               <Typography>Loading users...</Typography>
             </Box>
           ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>User</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Cafe</TableCell>
-                    <TableCell>Permissions</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Last Login</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar sx={{ width: 40, height: 40 }}>
-                          {user.firstName[0]}{user.lastName[0]}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="body2" fontWeight="500">
-                            {user.firstName} {user.lastName}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {user.email}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getRoleDisplayName(user.role)}
-                        color={getRoleColor(user.role) as any}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {user.cafeId ? 
-                          userData?.venue?.name || 'Unknown Cafe' : 
-                          'All Cafes'
-                        }
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={`${user.permissions.length} permissions`}
-                        variant="outlined"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={user.isActive ? 'Active' : 'Inactive'}
-                        color={user.isActive ? 'success' : 'default'}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {user.lastLogin ? user.lastLogin.toLocaleDateString() : 'Never'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<Visibility />}
-                        onClick={() => handleViewPermissions(user)}
-                        sx={{ 
-                          minWidth: 'auto', 
-                          whiteSpace: 'nowrap',
-                          px: 2
-                        }}
-                      >
-                        View
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {filteredUsers.length === 0 && (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography variant="h6" color="text.secondary">
-                No users found
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Try adjusting your search or filter criteria
-              </Typography>
-            </Box>
+            <>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>User</TableCell>
+                      <TableCell>Role</TableCell>
+                      <TableCell>Cafe</TableCell>
+                      <TableCell>Permissions</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Last Login</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredUsers.length > 0 ? (
+                      filteredUsers.map((user) => (
+                        <TableRow key={user.id || Math.random()}>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Avatar sx={{ width: 40, height: 40 }}>
+                                {(user.firstName?.[0] || '?')}{(user.lastName?.[0] || '')}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="body2" fontWeight="500">
+                                  {user.firstName || 'Unknown'} {user.lastName || 'User'}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {user.email || 'No email'}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={getRoleDisplayName(user.role || 'unknown')}
+                              color={getRoleColor(user.role || 'unknown') as any}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {user.cafeId ? 
+                                userData?.venue?.name || 'Unknown Cafe' : 
+                                'All Cafes'
+                              }
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={`${user.permissions?.length || 0} permissions`}
+                              variant="outlined"
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={user.isActive ? 'Active' : 'Inactive'}
+                              color={user.isActive ? 'success' : 'default'}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {user.lastLogin ? user.lastLogin.toLocaleDateString() : 'Never'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              startIcon={<Visibility />}
+                              onClick={() => handleViewPermissions(user)}
+                              sx={{ 
+                                minWidth: 'auto', 
+                                whiteSpace: 'nowrap',
+                                px: 2
+                              }}
+                            >
+                              View
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">
+                          <Box sx={{ py: 4 }}>
+                            <Typography variant="h6" color="text.secondary" gutterBottom>
+                              No Users Available
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              The user management API is not yet implemented. This page will show user permissions once the backend API is ready.
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
           )}
         </CardContent>
       </Card>
@@ -487,7 +549,7 @@ const UserPermissionsDashboard: React.FC = () => {
                 {selectedUser?.firstName} {selectedUser?.lastName}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {selectedUser?.email} • {getRoleDisplayName(selectedUser?.role || '')}
+                {selectedUser?.email} • {String(getRoleDisplayName(selectedUser?.role || ''))}
               </Typography>
             </Box>
           </Box>
@@ -525,7 +587,7 @@ const UserPermissionsDashboard: React.FC = () => {
                         {React.cloneElement(category.icon, { fontSize: 'small' })}
                       </Avatar>
                       <Typography variant="subtitle1" fontWeight="600">
-                        {category.name}
+                        {String(category.name)}
                       </Typography>
                     </Box>
 
@@ -534,16 +596,16 @@ const UserPermissionsDashboard: React.FC = () => {
                         <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
                           <ListItemIcon sx={{ minWidth: 32 }}>
                             <Chip
-                              icon={getActionIcon(permission.action || '')}
-                              label={permission.action || 'Unknown'}
+                              icon={getActionIcon(String(permission.action || ''))}
+                              label={String(permission.action || 'Unknown')}
                               size="small"
-                              color={getActionColor(permission.action || '') as any}
+                              color={getActionColor(String(permission.action || '')) as any}
                               variant="outlined"
                               sx={{ fontSize: '0.7rem', height: 20 }}
                             />
                           </ListItemIcon>
                           <ListItemText
-                            primary={permission.description || permission.name || 'No description'}
+                            primary={String(permission.description || permission.name || 'No description')}
                             primaryTypographyProps={{
                               variant: 'body2',
                               fontSize: '0.875rem'
@@ -568,7 +630,7 @@ const UserPermissionsDashboard: React.FC = () => {
               Total Permissions: {selectedUser?.permissions?.length || 0}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Role: {getRoleDisplayName(selectedUser?.role || '')}
+              Role: {String(getRoleDisplayName(selectedUser?.role || ''))}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Status: {selectedUser?.isActive ? 'Active' : 'Inactive'}

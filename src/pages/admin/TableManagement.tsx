@@ -234,6 +234,11 @@ const TableManagement: React.FC = () => {
 
   const handleSaveArea = async (areaData: Partial<TableArea>) => {
     try {
+      const venue = getVenue();
+      if (!venue?.id) {
+        throw new Error('No venue available');
+      }
+
       if (editingArea) {
         // Update existing area
         const updatedArea = await tableService.updateArea({
@@ -251,13 +256,18 @@ const TableManagement: React.FC = () => {
           description: areaData.description || '',
           color: areaData.color || '#2196F3',
           active: areaData.active ?? true,
-        });
+        }, venue.id);
         setAreas(prev => [...prev, newArea]);
         setSnackbar({ open: true, message: 'Area added successfully', severity: 'success' });
       }
       setOpenAreaDialog(false);
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Failed to save area', severity: 'error' });
+    } catch (error: any) {
+      console.error('Error saving area:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to save area', 
+        severity: 'error' 
+      });
     }
   };
 
