@@ -18,6 +18,11 @@ import {
   Alert,
   CircularProgress,
   LinearProgress,
+  Switch,
+  FormControlLabel,
+  Divider,
+  Avatar,
+  Snackbar,
 } from '@mui/material';
 import {
   Restaurant,
@@ -31,12 +36,36 @@ import {
   Today,
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
+  CheckCircle,
+  Cancel,
+  Settings,
 } from '@mui/icons-material';
 import { WeeklyRevenueChart, StatusPieChart, DonutChart } from '../charts/ChartComponents';
 import { useAuth } from '../../contexts/AuthContext';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { PERMISSIONS } from '../../types/auth';
 import { dashboardService } from '../../services/dashboardService';
+import { analyticsService } from '../../services/analyticsService';
+import { venueService } from '../../services/venueService';
 import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
 import UserDebugInfo from '../debug/UserDebugInfo';
+
+/**
+ * AdminDashboard Component
+ * 
+ * A comprehensive dashboard for administrators with:
+ * - Dynamic data loading from APIs
+ * - Permission-based access control
+ * - Real-time chart updates
+ * - Venue management controls
+ * - Quick action buttons
+ * 
+ * Features:
+ * - Removes hardcoded chart metadata
+ * - Uses analytics service for chart data
+ * - Dynamic role and permission checking
+ * - Clean, maintainable code structure
+ */
 
 interface AdminDashboardProps {
   className?: string;
@@ -61,15 +90,31 @@ interface RecentOrder {
   created_at: string;
 }
 
+interface ChartData {
+  weeklyRevenue: Array<{ day: string; revenue: number; orders: number }>;
+  tableStatus: Array<{ name: string; value: number; color: string }>;
+  menuStatus: Array<{ name: string; value: number; color: string }>;
+  orderStatus: Array<{ name: string; value: number; color: string }>;
+}
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
-  const { user } = useAuth();
+  const { user, hasPermission, hasBackendPermission } = useAuth();
+  const { currentCafe } = useWorkspace();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [chartData, setChartData] = useState<ChartData | null>(null);
+  const [chartLoading, setChartLoading] = useState(false);
+  const [cafeActive, setCafeActive] = useState(true);
+  const [cafeOpen, setCafeOpen] = useState(true);
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   useEffect(() => {
     loadDashboardData();
+    loadCafeStatus();
+    loadChartData();
     
     // Add smooth scrolling to the document
     document.documentElement.style.scrollBehavior = 'smooth';
@@ -78,7 +123,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     return () => {
       document.documentElement.style.scrollBehavior = 'auto';
     };
-  }, []);
+  }, [currentCafe?.id, user]);
 
   const loadDashboardData = async () => {
     try {
@@ -114,6 +159,165 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     }
   };
 
+  const loadChartData = async () => {
+    if (!currentCafe?.id) return;
+
+    try {
+      setChartLoading(true);
+      // Get analytics data for charts with proper error handling
+      const [dashboardAnalytics, revenueTrend] = await Promise.allSettled([
+        analyticsService.getDashboardAnalytics(currentCafe.id),
+        analyticsService.getRevenueTrend(currentCafe.id, analyticsService.generateDateRange(7))
+      ]);
+
+      // Extract successful results and log any failures
+      const analyticsData = dashboardAnalytics.status === 'fulfilled' ? dashboardAnalytics.value : null;
+      const trendData = revenueTrend.status === 'fulfilled' ? revenueTrend.value : null;
+
+      // Log specific API failures for debugging
+      if (dashboardAnalytics.status === 'rejected') {
+        console.warn('Dashboard analytics API failed:', dashboardAnalytics.reason);
+      }
+      if (revenueTrend.status === 'rejected') {
+        console.warn('Revenue trend API failed:', revenueTrend.reason);
+      }
+
+      // Process revenue trend data - only use real data
+      const weeklyRevenue = trendData && trendData.length > 0 
+        ? trendData.map(item => ({
+            day: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
+            revenue: item.revenue,
+            orders: item.orders
+          }))
+        : [];
+
+      // Process order status data from dashboard analytics - only use real data
+      const orderStatus = analyticsData?.order_status_breakdown && 
+                         analyticsData.order_status_breakdown.length > 0
+        ? analyticsData.order_status_breakdown.map(item => ({
+            name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+            value: item.count,
+            color: item.color || getDefaultStatusColor(item.status)
+          }))
+        : [];
+
+      setChartData({
+        weeklyRevenue,
+        tableStatus: [], // Will be generated from stats
+        menuStatus: [], // Will be generated from stats
+        orderStatus
+      });
+    } catch (error) {
+      console.warn('Failed to load chart data:', error);
+      
+      setChartData({
+        weeklyRevenue: [],
+        tableStatus: [],
+        menuStatus: [],
+        orderStatus: []
+      });
+    } finally {
+      setChartLoading(false);
+    }
+  };
+
+
+
+  const getDefaultStatusColor = (status: string) => {
+    const colors: { [key: string]: string } = {
+      pending: '#FFF176',
+      preparing: '#81D4FA',
+      ready: '#C8E6C9',
+      served: '#E1BEE7',
+      confirmed: '#FFCC02',
+      cancelled: '#FFAB91'
+    };
+    return colors[status.toLowerCase()] || '#F5F5F5';
+  };
+
+  const refreshDashboard = async () => {
+    await Promise.all([
+      loadDashboardData(),
+      loadCafeStatus(),
+      loadChartData()
+    ]);
+  };
+
+  const loadCafeStatus = async () => {
+    if (!currentCafe?.id) return;
+    
+    try {
+      const venue = await venueService.getVenue(currentCafe.id);
+      if (venue) {
+        setCafeActive(venue.is_active || false);
+        // Check venue status or fall back to currentCafe isOpen
+        setCafeOpen(venue.status === 'active' || currentCafe.isOpen || false);
+      }
+    } catch (error) {
+      console.error('Error loading cafe status:', error);
+    }
+  };
+
+  const handleToggleCafeActive = async () => {
+    if (!currentCafe?.id || statusLoading) return;
+
+    try {
+      setStatusLoading(true);
+      const newStatus = !cafeActive;
+      
+      if (newStatus) {
+        await venueService.activateVenue(currentCafe.id);
+      } else {
+        await venueService.updateVenue(currentCafe.id, { is_active: false });
+      }
+
+      setCafeActive(newStatus);
+      setSnackbar({ 
+        open: true, 
+        message: `Cafe ${newStatus ? 'activated' : 'deactivated'} successfully`, 
+        severity: 'success' 
+      });
+    } catch (error) {
+      console.error('Error toggling cafe status:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to update cafe status', 
+        severity: 'error' 
+      });
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleToggleCafeOpen = async () => {
+    if (!currentCafe?.id || statusLoading) return;
+
+    try {
+      setStatusLoading(true);
+      const newStatus = !cafeOpen;
+      
+      await venueService.updateVenue(currentCafe.id, { 
+        status: newStatus ? 'active' : 'closed' 
+      });
+
+      setCafeOpen(newStatus);
+      setSnackbar({ 
+        open: true, 
+        message: `Cafe ${newStatus ? 'opened' : 'closed'} for orders`, 
+        severity: 'success' 
+      });
+    } catch (error) {
+      console.error('Error toggling cafe open status:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to update cafe open status', 
+        severity: 'error' 
+      });
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'pending': return 'warning';
@@ -124,6 +328,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       case 'cancelled': return 'error';
       default: return 'default';
     }
+  };
+
+  // Dynamic permission checks
+  const canManageVenue = () => {
+    return hasPermission(PERMISSIONS.VENUE_ACTIVATE) || 
+           hasBackendPermission('venue.update') ||
+           hasBackendPermission('venue.manage');
+  };
+
+  const canViewDashboard = () => {
+    return hasPermission(PERMISSIONS.DASHBOARD_VIEW) || 
+           hasBackendPermission('dashboard.read') ||
+           hasBackendPermission('dashboard.view');
+  };
+
+  const canManageOrders = () => {
+    return hasPermission(PERMISSIONS.ORDERS_VIEW) || 
+           hasBackendPermission('order.read') ||
+           hasBackendPermission('order.manage');
   };
 
   // Set default zero values when no data is available
@@ -143,36 +366,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const menuActivePercentage = displayStats.total_menu_items > 0 ? 
     Math.round((displayStats.active_menu_items / displayStats.total_menu_items) * 100) : 0;
 
-  // Chart data with light colorful scheme
-  const tableStatusData = [
-    { name: 'Occupied', value: displayStats.occupied_tables || 0, color: '#FFAB91' }, // Light Orange
-    { name: 'Available', value: (displayStats.total_tables || 0) - (displayStats.occupied_tables || 0), color: '#A5D6A7' }, // Light Green
+  // Generate dynamic chart data based on current stats and API data
+  const getTableStatusData = () => [
+    { name: 'Occupied', value: displayStats.occupied_tables || 0, color: '#FFAB91' },
+    { name: 'Available', value: (displayStats.total_tables || 0) - (displayStats.occupied_tables || 0), color: '#A5D6A7' },
   ];
 
-  const menuStatusData = [
-    { name: 'Active', value: displayStats.active_menu_items || 0, color: '#A5D6A7' }, // Light Green
-    { name: 'Inactive', value: (displayStats.total_menu_items || 0) - (displayStats.active_menu_items || 0), color: '#FFCC02' }, // Light Amber
+  const getMenuStatusData = () => [
+    { name: 'Active', value: displayStats.active_menu_items || 0, color: '#A5D6A7' },
+    { name: 'Inactive', value: (displayStats.total_menu_items || 0) - (displayStats.active_menu_items || 0), color: '#FFCC02' },
   ];
 
-  // Sample weekly data for demonstration (in real app, this would come from API)
-  const weeklyRevenueData = [
-    { day: 'Mon', revenue: Math.round((displayStats.today_revenue * 0.8) || 500), orders: Math.round((displayStats.today_orders * 0.7) || 8) },
-    { day: 'Tue', revenue: Math.round((displayStats.today_revenue * 0.9) || 600), orders: Math.round((displayStats.today_orders * 0.8) || 10) },
-    { day: 'Wed', revenue: Math.round((displayStats.today_revenue * 1.1) || 800), orders: Math.round((displayStats.today_orders * 1.2) || 15) },
-    { day: 'Thu', revenue: Math.round((displayStats.today_revenue * 0.95) || 700), orders: Math.round((displayStats.today_orders * 0.9) || 11) },
-    { day: 'Fri', revenue: Math.round((displayStats.today_revenue * 1.3) || 1000), orders: Math.round((displayStats.today_orders * 1.4) || 18) },
-    { day: 'Sat', revenue: Math.round((displayStats.today_revenue * 1.5) || 1200), orders: Math.round((displayStats.today_orders * 1.6) || 20) },
-    { day: 'Today', revenue: displayStats.today_revenue || 850, orders: displayStats.today_orders || 12 },
-  ];
+  const getWeeklyRevenueData = () => {
+    return chartData?.weeklyRevenue || [];
+  };
 
-  const orderStatusData = recentOrders.length > 0 ? [
-    { name: 'Pending', value: recentOrders.filter(o => o.status === 'pending').length, color: '#FFF176' }, // Light Yellow
-    { name: 'Preparing', value: recentOrders.filter(o => o.status === 'preparing').length, color: '#81D4FA' }, // Light Blue
-    { name: 'Ready', value: recentOrders.filter(o => o.status === 'ready').length, color: '#C8E6C9' }, // Light Green
-    { name: 'Served', value: recentOrders.filter(o => o.status === 'served').length, color: '#E1BEE7' }, // Light Purple
-  ].filter(item => item.value > 0) : [
-    { name: 'No Orders', value: 1, color: '#F5F5F5' } // Very light gray for empty state
-  ];
+  const getOrderStatusData = () => {
+    if (chartData?.orderStatus && chartData.orderStatus.length > 0) {
+      return chartData.orderStatus;
+    }
+    
+    // Use recent orders analysis only if we have real data
+    if (recentOrders.length > 0) {
+      const statusData = [
+        { name: 'Pending', value: recentOrders.filter(o => o.status === 'pending').length, color: '#FFF176' },
+        { name: 'Preparing', value: recentOrders.filter(o => o.status === 'preparing').length, color: '#81D4FA' },
+        { name: 'Ready', value: recentOrders.filter(o => o.status === 'ready').length, color: '#C8E6C9' },
+        { name: 'Served', value: recentOrders.filter(o => o.status === 'served').length, color: '#E1BEE7' },
+      ].filter(item => item.value > 0);
+      
+      return statusData.length > 0 ? statusData : [];
+    }
+    
+    return [];
+  };
 
   const renderDashboardContent = () => {
     if (loading) {
@@ -201,7 +428,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
           
           <Alert severity="error" sx={{ mb: 3 }}>
             {error}
-            <Button onClick={loadDashboardData} sx={{ ml: 2 }}>
+            <Button onClick={refreshDashboard} sx={{ ml: 2 }}>
               Retry
             </Button>
           </Alert>
@@ -219,19 +446,166 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
           flexDirection: 'column'
         }}
       >
-        {/* Debug Info */}
-        <UserDebugInfo />
+        {/* Debug Info - Only in development */}
+        {process.env.NODE_ENV === 'development' && <UserDebugInfo />}
+        
+        {/* Debug: Show current state */}
+        {process.env.NODE_ENV === 'development' && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Debug Info:</strong><br/>
+              Current Cafe: {currentCafe ? `${currentCafe.name} (${currentCafe.id})` : 'None'}<br/>
+              User Role: {user?.role || 'Unknown'}<br/>
+              Can Manage Venue: {canManageVenue() ? 'Yes' : 'No'}<br/>
+              Can View Dashboard: {canViewDashboard() ? 'Yes' : 'No'}<br/>
+              Should Show Toggle: {(currentCafe && canManageVenue()) ? 'Yes' : 'No'}
+            </Typography>
+          </Alert>
+        )}
 
         {/* Header */}
         <Box sx={{ mb: { xs: 2, lg: 1.5 }, flexShrink: 0, mt: 0 }}>
-          <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, mt: 0 }}>
-            <DashboardIcon color="primary" />
-            Admin Dashboard
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-            Welcome back, {user?.firstName}! Here's your venue overview for today.
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+            <Box>
+              <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, mt: 0 }}>
+                <DashboardIcon color="primary" />
+                Admin Dashboard
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Welcome back, {user?.firstName}! Here's your venue overview for today.
+              </Typography>
+            </Box>
+            <Button
+              variant="outlined"
+              onClick={refreshDashboard}
+              disabled={loading || chartLoading}
+              size="small"
+              sx={{ mt: 1 }}
+            >
+              {loading || chartLoading ? 'Refreshing...' : 'Refresh'}
+            </Button>
+          </Box>
         </Box>
+
+        {/* Cafe Status Control Panel - Only for users with venue management permissions */}
+        {currentCafe && canManageVenue() && (
+          <Card sx={{ mb: { xs: 3, lg: 2 }, border: '2px solid', borderColor: cafeActive ? 'success.main' : 'error.main' }}>
+            <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar
+                    sx={{
+                      bgcolor: cafeActive ? 'success.main' : 'error.main',
+                      width: 48,
+                      height: 48,
+                    }}
+                  >
+                    {cafeActive ? <CheckCircle /> : <Cancel />}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" fontWeight="600">
+                      {currentCafe.name || 'Current Cafe'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Status: {cafeActive ? (cafeOpen ? 'Open for Orders' : 'Closed for Orders') : 'Inactive'}
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+                  {/* Cafe Active/Inactive Toggle */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Settings sx={{ color: 'text.secondary' }} />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={cafeActive}
+                          onChange={handleToggleCafeActive}
+                          disabled={statusLoading}
+                          color="primary"
+                          size="medium"
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography variant="body2" fontWeight="500">
+                            {cafeActive ? 'Active' : 'Inactive'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {cafeActive ? 'Cafe is operational' : 'Cafe is disabled'}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </Box>
+
+                  <Divider orientation="vertical" flexItem />
+
+                  {/* Cafe Open/Closed Toggle */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Restaurant sx={{ color: 'text.secondary' }} />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={cafeOpen}
+                          onChange={handleToggleCafeOpen}
+                          disabled={statusLoading || !cafeActive}
+                          color="success"
+                          size="medium"
+                        />
+                      }
+                      label={
+                        <Box>
+                          <Typography variant="body2" fontWeight="500">
+                            {cafeOpen ? 'Open' : 'Closed'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {cafeOpen ? 'Accepting orders' : 'Orders disabled'}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </Box>
+
+                  {/* Quick Settings Button */}
+                  <Button
+                    variant="outlined"
+                    startIcon={<Settings />}
+                    onClick={() => window.location.href = '/admin/cafe-settings'}
+                    size="small"
+                  >
+                    Settings
+                  </Button>
+                </Box>
+              </Box>
+
+              {statusLoading && (
+                <Box sx={{ mt: 2 }}>
+                  <LinearProgress />
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Fallback Toggle for Testing - Always Visible */}
+        {!currentCafe && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>No Cafe Available:</strong> Please ensure you have a cafe assigned to your account to see the status toggle controls.
+            </Typography>
+          </Alert>
+        )}
+
+        {/* Show message if user lacks venue management permissions */}
+        {currentCafe && !canManageVenue() && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Permission Required:</strong> Cafe status controls require venue management permissions.
+              <br/>Your current role: {user?.role || 'Unknown'}
+            </Typography>
+          </Alert>
+        )}
 
         {/* Dashboard Content Container */}
         <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 2 } }}>
@@ -332,7 +706,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       Weekly Revenue & Orders Trend
                     </Typography>
                   </Box>
-                  <WeeklyRevenueChart data={weeklyRevenueData} height={280} />
+                  {chartLoading ? (
+                    <Box display="flex" justifyContent="center" alignItems="center" height={280}>
+                      <CircularProgress />
+                    </Box>
+                  ) : getWeeklyRevenueData().length > 0 ? (
+                    <WeeklyRevenueChart data={getWeeklyRevenueData()} height={280} />
+                  ) : (
+                    <Box display="flex" justifyContent="center" alignItems="center" height={280}>
+                      <Typography variant="body2" color="text.secondary">
+                        No revenue data available
+                      </Typography>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -344,7 +730,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                   <Typography variant="h6" gutterBottom>
                     Recent Orders Status
                   </Typography>
-                  <DonutChart data={orderStatusData} height={280} />
+                  {chartLoading ? (
+                    <Box display="flex" justifyContent="center" alignItems="center" height={280}>
+                      <CircularProgress />
+                    </Box>
+                  ) : getOrderStatusData().length > 0 ? (
+                    <DonutChart data={getOrderStatusData()} height={280} />
+                  ) : (
+                    <Box display="flex" justifyContent="center" alignItems="center" height={280}>
+                      <Typography variant="body2" color="text.secondary">
+                        No order status data available
+                      </Typography>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -362,7 +760,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       Table Status
                     </Typography>
                   </Box>
-                  <StatusPieChart data={tableStatusData} height={220} />
+                  {chartLoading ? (
+                    <Box display="flex" justifyContent="center" alignItems="center" height={220}>
+                      <CircularProgress />
+                    </Box>
+                  ) : getTableStatusData().some(item => item.value > 0) ? (
+                    <StatusPieChart data={getTableStatusData()} height={220} />
+                  ) : (
+                    <Box display="flex" justifyContent="center" alignItems="center" height={220}>
+                      <Typography variant="body2" color="text.secondary">
+                        No table data available
+                      </Typography>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -432,13 +842,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 <Typography variant="h6">
                   Recent Orders
                 </Typography>
-                <Button
-                  variant="outlined"
-                  onClick={() => window.location.href = '/admin/orders'}
-                  size="small"
-                >
-                  View All Orders
-                </Button>
+                {canManageOrders() && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => window.location.href = '/admin/orders'}
+                    size="small"
+                  >
+                    View All Orders
+                  </Button>
+                )}
               </Box>
 
               <TableContainer component={Paper} variant="outlined">
@@ -487,18 +899,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                             {new Date(order.created_at).toLocaleTimeString()}
                           </TableCell>
                           <TableCell align="center">
-                            <IconButton
-                              size="small"
-                              onClick={() => window.location.href = `/admin/orders/${order.id}`}
-                            >
-                              <Visibility />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => window.location.href = `/admin/orders/${order.id}/edit`}
-                            >
-                              <Edit />
-                            </IconButton>
+                            {canManageOrders() && (
+                              <IconButton
+                                size="small"
+                                onClick={() => window.location.href = `/admin/orders/${order.id}`}
+                              >
+                                <Visibility />
+                              </IconButton>
+                            )}
+                            {(hasPermission(PERMISSIONS.ORDERS_UPDATE) || hasBackendPermission('order.update')) && (
+                              <IconButton
+                                size="small"
+                                onClick={() => window.location.href = `/admin/orders/${order.id}/edit`}
+                              >
+                                <Edit />
+                              </IconButton>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))
@@ -516,54 +932,76 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 Quick Actions
               </Typography>
               <Grid container spacing={{ xs: 3, lg: 2 }}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    size="large"
-                    startIcon={<ShoppingCart />}
-                    onClick={() => window.location.href = '/admin/orders'}
-                    sx={{ py: { xs: 2, lg: 1.5 } }}
-                  >
-                    View Orders
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    size="large"
-                    startIcon={<Restaurant />}
-                    onClick={() => window.location.href = '/admin/menu'}
-                    sx={{ py: { xs: 2, lg: 1.5 } }}
-                  >
-                    Manage Menu
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    size="large"
-                    startIcon={<TableRestaurant />}
-                    onClick={() => window.location.href = '/admin/tables'}
-                    sx={{ py: { xs: 2, lg: 1.5 } }}
-                  >
-                    Manage Tables
-                  </Button>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    size="large"
-                    startIcon={<People />}
-                    onClick={() => window.location.href = '/admin/users'}
-                    sx={{ py: { xs: 2, lg: 1.5 } }}
-                  >
-                    Manage Staff
-                  </Button>
-                </Grid>
+                {canManageOrders() && (
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      size="large"
+                      startIcon={<ShoppingCart />}
+                      onClick={() => window.location.href = '/admin/orders'}
+                      sx={{ py: { xs: 2, lg: 1.5 } }}
+                    >
+                      View Orders
+                    </Button>
+                  </Grid>
+                )}
+                {(hasPermission(PERMISSIONS.MENU_VIEW) || hasBackendPermission('menu.read')) && (
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      size="large"
+                      startIcon={<Restaurant />}
+                      onClick={() => window.location.href = '/admin/menu'}
+                      sx={{ py: { xs: 2, lg: 1.5 } }}
+                    >
+                      Manage Menu
+                    </Button>
+                  </Grid>
+                )}
+                {(hasPermission(PERMISSIONS.TABLES_VIEW) || hasBackendPermission('table.read')) && (
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      size="large"
+                      startIcon={<TableRestaurant />}
+                      onClick={() => window.location.href = '/admin/tables'}
+                      sx={{ py: { xs: 2, lg: 1.5 } }}
+                    >
+                      Manage Tables
+                    </Button>
+                  </Grid>
+                )}
+                {(hasPermission(PERMISSIONS.USERS_VIEW) || hasBackendPermission('user.read')) && (
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      size="large"
+                      startIcon={<People />}
+                      onClick={() => window.location.href = '/admin/users'}
+                      sx={{ py: { xs: 2, lg: 1.5 } }}
+                    >
+                      Manage Staff
+                    </Button>
+                  </Grid>
+                )}
+                
+                {/* Show message if no quick actions are available */}
+                {!canManageOrders() && 
+                 !hasPermission(PERMISSIONS.MENU_VIEW) && !hasBackendPermission('menu.read') &&
+                 !hasPermission(PERMISSIONS.TABLES_VIEW) && !hasBackendPermission('table.read') &&
+                 !hasPermission(PERMISSIONS.USERS_VIEW) && !hasBackendPermission('user.read') && (
+                  <Grid item xs={12}>
+                    <Alert severity="info">
+                      <Typography variant="body2">
+                        No quick actions available. Contact your administrator to request additional permissions.
+                      </Typography>
+                    </Alert>
+                  </Grid>
+                )}
               </Grid>
             </CardContent>
           </Card>
@@ -575,6 +1013,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   return (
     <VenueAssignmentCheck showFullPage={true}>
       {renderDashboardContent()}
+      
+      {/* Status Update Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          severity={snackbar.severity} 
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </VenueAssignmentCheck>
   );
 };

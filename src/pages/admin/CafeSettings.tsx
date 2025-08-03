@@ -252,10 +252,10 @@ const CafeSettings: React.FC = () => {
         description: settings.description,
         location: {
           address: settings.address,
-          city: currentCafe.location?.city || '',
-          state: currentCafe.location?.state || '',
-          country: currentCafe.location?.country || 'India',
-          postal_code: currentCafe.location?.postal_code || ''
+          city: '',
+          state: '',
+          country: 'India',
+          postal_code: ''
         },
         phone: settings.phone,
         email: settings.email,
@@ -269,8 +269,8 @@ const CafeSettings: React.FC = () => {
       const operatingHours = Object.entries(settings.operatingHours).map(([day, hours], index) => ({
         day_of_week: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].indexOf(day),
         is_open: !hours.closed,
-        open_time: hours.closed ? null : hours.open,
-        close_time: hours.closed ? null : hours.close,
+        open_time: hours.closed ? undefined : hours.open,
+        close_time: hours.closed ? undefined : hours.close,
         is_24_hours: false
       }));
 
@@ -521,7 +521,7 @@ const CafeSettings: React.FC = () => {
                       setSnackbar({ 
                         open: true, 
                         message: 'Logo upload feature coming soon', 
-                        severity: 'info' 
+                        severity: 'success' 
                       });
                     }}
                   >

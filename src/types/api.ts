@@ -152,6 +152,7 @@ export interface Venue {
   rating?: number;
   total_reviews?: number;
   is_active: boolean;
+  status?: string;
   workspace_id: string;
   operating_hours?: OperatingHours[];
   subscription_status?: string;
@@ -203,6 +204,7 @@ export interface VenueUpdate {
   cuisine_types?: string[];
   price_range?: PriceRange;
   is_active?: boolean;
+  status?: string;
 }
 
 export interface VenueAnalytics {

@@ -67,54 +67,7 @@ interface OperatorDashboard {
 }
 
 class DashboardService {
-  // Default data methods
-  private getDefaultAdminData(): AdminDashboard {
-    return {
-      summary: {
-        today_orders: 12,
-        today_revenue: 8500,
-        total_tables: 15,
-        occupied_tables: 8,
-        total_menu_items: 35,
-        active_menu_items: 32,
-        total_staff: 6,
-      },
-      recent_orders: [
-        {
-          id: '1',
-          order_number: 'ORD-001',
-          table_number: 5,
-          total_amount: 850,
-          status: 'preparing',
-          created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(), // 15 minutes ago
-        },
-        {
-          id: '2',
-          order_number: 'ORD-002',
-          table_number: 3,
-          total_amount: 1200,
-          status: 'ready',
-          created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(), // 25 minutes ago
-        },
-        {
-          id: '3',
-          order_number: 'ORD-003',
-          table_number: 8,
-          total_amount: 650,
-          status: 'pending',
-          created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-        },
-        {
-          id: '4',
-          order_number: 'ORD-004',
-          table_number: 12,
-          total_amount: 950,
-          status: 'served',
-          created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString(), // 45 minutes ago
-        },
-      ],
-    };
-  }
+
 
   async getSuperAdminDashboard(): Promise<SuperAdminDashboard> {
     return dashboardCache.getOrSet(
@@ -127,10 +80,10 @@ class DashboardService {
             return response.data;
           }
           
-          // Return mock data if API fails
-          return this.getMockSuperAdminData();
+          // Throw error if API fails - no mock data
+          throw new Error('Failed to load SuperAdmin dashboard data');
         } catch (error) {
-          return this.getMockSuperAdminData();
+          throw error;
         }
       },
       2 * 60 * 1000 // 2 minutes TTL for dashboard data
@@ -193,18 +146,12 @@ class DashboardService {
         throw new Error('Dashboard endpoints not found. Please check your permissions or contact support.');
       }
       
-      // For other errors, log and return default data
-      console.warn('Dashboard API failed, using default data:', lastError?.message);
-      return this.getDefaultAdminData();
+      // For other errors, throw the error - no mock data
+      console.error('Dashboard API failed:', lastError?.message);
+      throw new Error('Failed to load dashboard data. Please check your connection and try again.');
     } catch (error: any) {
-      // Re-throw specific errors so the component can handle them appropriately
-      if (error.message.includes('venue') || error.message.includes('Dashboard endpoints')) {
-        throw error;
-      }
-      
-      // For unexpected errors, log and return default data
-      console.error('Unexpected dashboard error:', error);
-      return this.getDefaultAdminData();
+      // Re-throw all errors - no fallback to mock data
+      throw error;
     }
   }
 
@@ -219,10 +166,10 @@ class DashboardService {
             return response.data;
           }
           
-          // Return mock data if API fails
-          return this.getMockOperatorData();
+          // Throw error if API fails - no mock data
+          throw new Error('Failed to load Operator dashboard data');
         } catch (error) {
-          return this.getMockOperatorData();
+          throw error;
         }
       },
       1 * 60 * 1000 // 1 minute TTL for operator dashboard (more real-time)
@@ -256,27 +203,10 @@ class DashboardService {
         return response.data;
       }
       
-      // Return mock data if API fails
+      // Return empty data if API fails - no mock data
       return {
-        summary: {
-          total_active_orders: 5,
-          pending_orders: 2,
-          preparing_orders: 2,
-          ready_orders: 1,
-        },
-        orders_by_status: {
-          pending: [
-            { id: '1', order_number: 'ORD-001', table_number: 5, total_amount: 850, status: 'pending' },
-            { id: '2', order_number: 'ORD-002', table_number: 3, total_amount: 1200, status: 'pending' }
-          ],
-          preparing: [
-            { id: '3', order_number: 'ORD-003', table_number: 8, total_amount: 650, status: 'preparing' },
-            { id: '4', order_number: 'ORD-004', table_number: 12, total_amount: 950, status: 'preparing' }
-          ],
-          ready: [
-            { id: '5', order_number: 'ORD-005', table_number: 7, total_amount: 750, status: 'ready' }
-          ]
-        }
+        summary: { total_active_orders: 0, pending_orders: 0, preparing_orders: 0, ready_orders: 0 },
+        orders_by_status: {}
       };
     } catch (error) {
       return {
@@ -294,22 +224,10 @@ class DashboardService {
         return response.data;
       }
       
-      // Return mock data if API fails
+      // Return empty data if API fails - no mock data
       return {
-        tables: [
-          { id: '1', table_number: 1, capacity: 4, status: 'available' },
-          { id: '2', table_number: 2, capacity: 2, status: 'occupied' },
-          { id: '3', table_number: 3, capacity: 6, status: 'occupied' },
-          { id: '4', table_number: 4, capacity: 4, status: 'available' },
-          { id: '5', table_number: 5, capacity: 2, status: 'reserved' },
-        ],
-        summary: {
-          total_tables: 5,
-          available: 2,
-          occupied: 2,
-          reserved: 1,
-          maintenance: 0
-        }
+        tables: [],
+        summary: { total_tables: 0, available: 0, occupied: 0, reserved: 0, maintenance: 0 }
       };
     } catch (error) {
       return {
@@ -338,136 +256,7 @@ class DashboardService {
     }
   }
 
-  // Mock data methods for development/fallback
-  private getMockSuperAdminData(): SuperAdminDashboard {
-    return {
-      summary: {
-        total_workspaces: 5,
-        total_venues: 12,
-        total_users: 45,
-        total_orders: 1250,
-        total_revenue: 125000,
-        active_venues: 10,
-      },
-      workspaces: [
-        {
-          id: '1',
-          name: 'Pizza Palace Group',
-          venue_count: 3,
-          user_count: 12,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          name: 'Burger Barn Chain',
-          venue_count: 2,
-          user_count: 8,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          name: 'Coffee Corner',
-          venue_count: 1,
-          user_count: 5,
-          is_active: false,
-          created_at: new Date().toISOString(),
-        },
-      ],
-    };
-  }
 
-  private getMockAdminData(): AdminDashboard {
-    return {
-      summary: {
-        today_orders: 25,
-        today_revenue: 12500,
-        total_tables: 20,
-        occupied_tables: 12,
-        total_menu_items: 45,
-        active_menu_items: 40,
-        total_staff: 8,
-      },
-      recent_orders: [
-        {
-          id: '1',
-          order_number: 'ORD-001',
-          table_number: 5,
-          total_amount: 850,
-          status: 'preparing',
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          order_number: 'ORD-002',
-          table_number: 3,
-          total_amount: 1200,
-          status: 'ready',
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: '3',
-          order_number: 'ORD-003',
-          table_number: 8,
-          total_amount: 650,
-          status: 'pending',
-          created_at: new Date().toISOString(),
-        },
-      ],
-    };
-  }
-
-  private getMockOperatorData(): OperatorDashboard {
-    return {
-      summary: {
-        active_orders: 8,
-        pending_orders: 3,
-        preparing_orders: 4,
-        ready_orders: 1,
-        occupied_tables: 12,
-        total_tables: 20,
-      },
-      active_orders: [
-        {
-          id: '1',
-          order_number: 'ORD-001',
-          table_number: 5,
-          total_amount: 850,
-          status: 'preparing',
-          created_at: new Date().toISOString(),
-          items_count: 3,
-        },
-        {
-          id: '2',
-          order_number: 'ORD-002',
-          table_number: 3,
-          total_amount: 1200,
-          status: 'ready',
-          created_at: new Date().toISOString(),
-          items_count: 5,
-        },
-        {
-          id: '3',
-          order_number: 'ORD-003',
-          table_number: 8,
-          total_amount: 650,
-          status: 'pending',
-          created_at: new Date().toISOString(),
-          items_count: 2,
-        },
-        {
-          id: '4',
-          order_number: 'ORD-004',
-          table_number: 12,
-          total_amount: 950,
-          status: 'confirmed',
-          created_at: new Date().toISOString(),
-          items_count: 4,
-        },
-      ],
-    };
-  }
 }
 
 export const dashboardService = new DashboardService();

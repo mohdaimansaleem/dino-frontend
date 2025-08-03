@@ -182,8 +182,8 @@ const WorkspaceManagement: React.FC = () => {
           phone: cafeFormData.phone,
           email: cafeFormData.email,
           website: cafeFormData.website,
-          venue_type: cafeFormData.venueType,
-          price_range: cafeFormData.priceRange,
+          cuisine_types: [cafeFormData.venueType],
+          price_range: cafeFormData.priceRange as any,
           is_active: cafeFormData.isActive
         };
         
@@ -213,8 +213,8 @@ const WorkspaceManagement: React.FC = () => {
           phone: cafeFormData.phone,
           email: cafeFormData.email,
           website: cafeFormData.website,
-          venue_type: cafeFormData.venueType,
-          price_range: cafeFormData.priceRange,
+          cuisine_types: [cafeFormData.venueType],
+          price_range: cafeFormData.priceRange as any,
           workspace_id: currentUser?.workspace_id || ''
         };
         
