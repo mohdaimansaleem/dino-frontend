@@ -210,7 +210,7 @@ class VenueService {
    */
   async checkVenueStatus(venueId: string): Promise<VenueStatus | null> {
     try {
-      const response = await apiService.get<VenueStatus>(`/orders/public/venue/${venueId}/status`);
+      const response = await apiService.get<VenueStatus>(`/venues/${venueId}/status`);
       return response.data || null;
     } catch (error) {
       return null;

@@ -139,6 +139,15 @@ class DashboardService {
 
   async getAdminDashboard(): Promise<AdminDashboard> {
     try {
+      // Check if user has venue assigned first
+      const userData = localStorage.getItem('dino_user');
+      if (userData) {
+        const user = JSON.parse(userData);
+        if (!user.venue_id && !user.cafeId && user.role !== 'superadmin') {
+          throw new Error('No venue assigned to your account. Please contact your administrator to assign you to a venue.');
+        }
+      }
+
       // Try multiple possible endpoints in order of preference
       const endpoints = [
         '/dashboard/admin',
@@ -147,24 +156,54 @@ class DashboardService {
         '/admin/dashboard'
       ];
       
-      let response;
       let lastError;
       
       for (const endpoint of endpoints) {
         try {
-          response = await apiService.get<AdminDashboard>(endpoint);
+          const response = await apiService.get<AdminDashboard>(endpoint);
           if (response.success && response.data) {
             return response.data;
           }
         } catch (error: any) {
           lastError = error;
-          continue; // Try next endpoint
+          // Check if it's a venue assignment error
+          if (error.response?.status === 400 && error.response?.data?.detail?.includes('venue')) {
+            throw new Error('No venue assigned. Please contact your administrator to assign you to a venue.');
+          }
+          // For 404s, continue to try next endpoint
+          if (error.response?.status === 404) {
+            continue;
+          }
+          // For other errors, break and handle below
+          break;
         }
       }
       
-      // If all endpoints failed, log the last error and return default data
+      // If all endpoints failed with 404s, it might be a venue assignment issue
+      if (lastError?.response?.status === 404) {
+        console.warn('All dashboard endpoints returned 404. This might indicate a venue assignment issue or backend configuration problem.');
+        // Check user data again for venue assignment
+        const userData = localStorage.getItem('dino_user');
+        if (userData) {
+          const user = JSON.parse(userData);
+          if (!user.venue_id && !user.cafeId) {
+            throw new Error('Dashboard endpoints not found. This appears to be related to missing venue assignment. Please contact your administrator.');
+          }
+        }
+        throw new Error('Dashboard endpoints not found. Please check your permissions or contact support.');
+      }
+      
+      // For other errors, log and return default data
+      console.warn('Dashboard API failed, using default data:', lastError?.message);
       return this.getDefaultAdminData();
-    } catch (error) {
+    } catch (error: any) {
+      // Re-throw specific errors so the component can handle them appropriately
+      if (error.message.includes('venue') || error.message.includes('Dashboard endpoints')) {
+        throw error;
+      }
+      
+      // For unexpected errors, log and return default data
+      console.error('Unexpected dashboard error:', error);
       return this.getDefaultAdminData();
     }
   }

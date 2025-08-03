@@ -26,6 +26,9 @@ import {
   InputAdornment,
   FormHelperText,
   Divider,
+  Snackbar,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   Add,
@@ -46,6 +49,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import PermissionService from '../../services/permissionService';
 import { PERMISSIONS } from '../../types/auth';
+import { venueService } from '../../services/venueService';
 
 const priceRangeOptions = [
   { value: 'budget', label: 'Budget (₹ - Under ₹500 per person)' },
@@ -82,6 +86,8 @@ const WorkspaceManagement: React.FC = () => {
   const [editingCafe, setEditingCafe] = useState<any>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   const [cafeFormData, setCafeFormData] = useState({
     name: '',
@@ -158,14 +164,82 @@ const WorkspaceManagement: React.FC = () => {
 
   const handleSubmitCafe = async () => {
     try {
+      setSaving(true);
+      
       if (editingCafe) {
-        await updateCafe(editingCafe.id, cafeFormData);
+        // Update existing cafe
+        const updateData = {
+          name: cafeFormData.name,
+          description: cafeFormData.description,
+          location: {
+            address: cafeFormData.location.address,
+            city: cafeFormData.location.city,
+            state: cafeFormData.location.state,
+            country: cafeFormData.location.country,
+            postal_code: cafeFormData.location.postal_code,
+            landmark: cafeFormData.location.landmark
+          },
+          phone: cafeFormData.phone,
+          email: cafeFormData.email,
+          website: cafeFormData.website,
+          venue_type: cafeFormData.venueType,
+          price_range: cafeFormData.priceRange,
+          is_active: cafeFormData.isActive
+        };
+        
+        const response = await venueService.updateVenue(editingCafe.id, updateData);
+        if (response.success) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Cafe updated successfully', 
+            severity: 'success' 
+          });
+          // Update local state through workspace context
+          await updateCafe(editingCafe.id, cafeFormData);
+        }
       } else {
-        await createCafe(cafeFormData);
+        // Create new cafe
+        const createData = {
+          name: cafeFormData.name,
+          description: cafeFormData.description,
+          location: {
+            address: cafeFormData.location.address,
+            city: cafeFormData.location.city,
+            state: cafeFormData.location.state,
+            country: cafeFormData.location.country,
+            postal_code: cafeFormData.location.postal_code,
+            landmark: cafeFormData.location.landmark
+          },
+          phone: cafeFormData.phone,
+          email: cafeFormData.email,
+          website: cafeFormData.website,
+          venue_type: cafeFormData.venueType,
+          price_range: cafeFormData.priceRange,
+          workspace_id: currentUser?.workspace_id || ''
+        };
+        
+        const response = await venueService.createVenue(createData);
+        if (response.success) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Cafe created successfully', 
+            severity: 'success' 
+          });
+          // Update local state through workspace context
+          await createCafe(cafeFormData);
+        }
       }
+      
       handleCloseCafeDialog();
-    } catch (error) {
-      // Handle error
+    } catch (error: any) {
+      console.error('Error saving cafe:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to save cafe', 
+        severity: 'error' 
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -207,9 +281,46 @@ const WorkspaceManagement: React.FC = () => {
 
   const handleToggleCafeStatus = async (cafeId: string, isOpen: boolean) => {
     try {
-      await toggleCafeStatus(cafeId, isOpen);
-    } catch (error) {
-      // Handle error
+      // Update venue status via API
+      const response = await venueService.updateVenue(cafeId, { is_active: isOpen });
+      if (response.success) {
+        setSnackbar({ 
+          open: true, 
+          message: `Cafe ${isOpen ? 'opened' : 'closed'} successfully`, 
+          severity: 'success' 
+        });
+        // Update local state through workspace context
+        await toggleCafeStatus(cafeId, isOpen);
+      }
+    } catch (error: any) {
+      console.error('Error toggling cafe status:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to update cafe status', 
+        severity: 'error' 
+      });
+    }
+  };
+
+  const handleDeleteCafe = async (cafeId: string) => {
+    try {
+      const response = await venueService.deleteVenue(cafeId);
+      if (response.success) {
+        setSnackbar({ 
+          open: true, 
+          message: 'Cafe deleted successfully', 
+          severity: 'success' 
+        });
+        // Update local state through workspace context
+        await deleteCafe(cafeId);
+      }
+    } catch (error: any) {
+      console.error('Error deleting cafe:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to delete cafe', 
+        severity: 'error' 
+      });
     }
   };
 
@@ -559,9 +670,14 @@ const WorkspaceManagement: React.FC = () => {
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseCafeDialog}>Cancel</Button>
-          <Button onClick={handleSubmitCafe} variant="contained">
-            {editingCafe ? 'Update' : 'Create'}
+          <Button onClick={handleCloseCafeDialog} disabled={saving}>Cancel</Button>
+          <Button 
+            onClick={handleSubmitCafe} 
+            variant="contained"
+            disabled={saving}
+            startIcon={saving ? <CircularProgress size={16} /> : null}
+          >
+            {saving ? 'Saving...' : (editingCafe ? 'Update' : 'Create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -600,7 +716,7 @@ const WorkspaceManagement: React.FC = () => {
           <MenuItem onClick={() => {
             if (window.confirm('Are you sure you want to delete this cafe?')) {
               if (selectedItem) {
-                deleteCafe(selectedItem.id);
+                handleDeleteCafe(selectedItem.id);
               }
             }
             handleMenuClose();
@@ -612,6 +728,17 @@ const WorkspaceManagement: React.FC = () => {
           </MenuItem>
         )}
       </Menu>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

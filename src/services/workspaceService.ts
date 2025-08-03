@@ -162,7 +162,7 @@ class WorkspaceService {
   }
 
   async toggleCafeStatus(cafeId: string, isOpen: boolean): Promise<ApiResponse<void>> {
-    return await apiService.post<void>(`/venues/${cafeId}/toggle-status`, { isOpen });
+    return await apiService.post<void>(`/venues/${cafeId}/toggle-status`, { is_open: isOpen });
   }
 
   // Add missing getCafes method for backward compatibility

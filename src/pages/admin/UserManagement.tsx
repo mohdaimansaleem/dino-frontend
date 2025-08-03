@@ -34,6 +34,7 @@ import {
   ListItemIcon,
   ListItemText,
   Skeleton,
+  Snackbar,
 } from '@mui/material';
 import {
   Add,
@@ -73,6 +74,7 @@ const UserManagement: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showPermissions, setShowPermissions] = useState<string | null>(null);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   const [formData, setFormData] = useState({
     email: '',
@@ -158,7 +160,14 @@ const UserManagement: React.FC = () => {
           is_active: formData.is_active,
         };
         
-        await userService.updateUser(editingUser.id, updateData);
+        const response = await userService.updateUser(editingUser.id, updateData);
+        if (response.success) {
+          setSnackbar({ 
+            open: true, 
+            message: 'User updated successfully', 
+            severity: 'success' 
+          });
+        }
       } else {
         // Create new user
         const createData: UserCreate = {
@@ -172,44 +181,91 @@ const UserManagement: React.FC = () => {
           venue_id: formData.venue_id,
         };
         
-        await userService.createUser(createData);
+        const response = await userService.createUser(createData);
+        if (response.success) {
+          setSnackbar({ 
+            open: true, 
+            message: 'User created successfully', 
+            severity: 'success' 
+          });
+        }
       }
       
       // Reload users after successful operation
       await loadUsers();
       handleCloseDialog();
-    } catch (error) {
-      // Show error message to user
+    } catch (error: any) {
+      console.error('Error saving user:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to save user', 
+        severity: 'error' 
+      });
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        await userService.deleteUser(userId);
-        await loadUsers(); // Reload users after deletion
-      } catch (error) {
+        const response = await userService.deleteUser(userId);
+        if (response.success) {
+          setSnackbar({ 
+            open: true, 
+            message: 'User deleted successfully', 
+            severity: 'success' 
+          });
+          await loadUsers(); // Reload users after deletion
         }
+      } catch (error: any) {
+        console.error('Error deleting user:', error);
+        setSnackbar({ 
+          open: true, 
+          message: error.message || 'Failed to delete user', 
+          severity: 'error' 
+        });
+      }
     }
   };
 
   const handleToggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      await userService.toggleUserStatus(userId, !currentStatus);
-      await loadUsers(); // Reload users after status change
-    } catch (error) {
+      const response = await userService.toggleUserStatus(userId, !currentStatus);
+      if (response.success) {
+        setSnackbar({ 
+          open: true, 
+          message: `User ${!currentStatus ? 'activated' : 'deactivated'} successfully`, 
+          severity: 'success' 
+        });
+        await loadUsers(); // Reload users after status change
       }
+    } catch (error: any) {
+      console.error('Error toggling user status:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to update user status', 
+        severity: 'error' 
+      });
+    }
   };
 
   const handlePasswordUpdate = async (userId: string, newPassword: string) => {
     try {
+      // TODO: Implement password update API call
       // This would use the userService password update method
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Show success message or handle response
-      alert('Password updated successfully!');
-    } catch (error) {
+      setSnackbar({ 
+        open: true, 
+        message: 'Password updated successfully', 
+        severity: 'success' 
+      });
+    } catch (error: any) {
+      console.error('Error updating password:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to update password', 
+        severity: 'error' 
+      });
       throw error;
     }
   };
@@ -673,6 +729,17 @@ const UserManagement: React.FC = () => {
           }}
         />
       )}
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

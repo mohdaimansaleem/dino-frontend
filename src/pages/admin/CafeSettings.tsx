@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -44,6 +44,9 @@ import {
   EmojiEvents,
   PowerSettingsNew,
 } from '@mui/icons-material';
+import { venueService } from '../../services/venueService';
+import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { CircularProgress } from '@mui/material';
 
 interface CafeSettings {
   name: string;
@@ -109,7 +112,10 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const CafeSettings: React.FC = () => {
+  const { currentCafe } = useWorkspace();
   const [tabValue, setTabValue] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<CafeSettings>({
     name: 'Dino Cafe',
     description: 'Authentic Indian flavors with modern digital ordering experience',
@@ -164,6 +170,62 @@ const CafeSettings: React.FC = () => {
   const [hasChanges, setHasChanges] = useState(false);
   const [cafeActive, setCafeActive] = useState(true);
 
+  // Load cafe settings from API
+  useEffect(() => {
+    const loadCafeSettings = async () => {
+      if (!currentCafe?.id) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const venue = await venueService.getVenue(currentCafe.id);
+        
+        if (venue) {
+          // Map venue data to settings format
+          setSettings({
+            name: venue.name,
+            description: venue.description || '',
+            address: venue.location?.address || '',
+            phone: venue.phone || '',
+            email: venue.email || '',
+            website: venue.website || '',
+            operatingHours: venue.operating_hours ? 
+              venue.operating_hours.reduce((acc, hours) => {
+                const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                const dayName = dayNames[hours.day_of_week];
+                acc[dayName] = {
+                  open: hours.open_time || '09:00',
+                  close: hours.close_time || '22:00',
+                  closed: !hours.is_open
+                };
+                return acc;
+              }, {} as any) : settings.operatingHours,
+            theme: settings.theme, // Keep existing theme settings
+            features: settings.features, // Keep existing feature settings
+            paymentMethods: settings.paymentMethods, // Keep existing payment settings
+            notifications: settings.notifications, // Keep existing notification settings
+            advanced: settings.advanced, // Keep existing advanced settings
+          });
+          
+          setCafeActive(venue.is_active || false);
+        }
+      } catch (error) {
+        console.error('Error loading cafe settings:', error);
+        setSnackbar({ 
+          open: true, 
+          message: 'Failed to load cafe settings', 
+          severity: 'error' 
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCafeSettings();
+  }, [currentCafe?.id]);
+
   const handleSettingChange = (section: keyof CafeSettings, field: string, value: any) => {
     setSettings(prev => ({
       ...prev,
@@ -175,9 +237,53 @@ const CafeSettings: React.FC = () => {
     setHasChanges(true);
   };
 
-  const handleSave = () => {
-    setSnackbar({ open: true, message: 'Settings saved successfully', severity: 'success' });
-    setHasChanges(false);
+  const handleSave = async () => {
+    if (!currentCafe?.id) {
+      setSnackbar({ open: true, message: 'No cafe selected', severity: 'error' });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      
+      // Prepare venue update data
+      const updateData = {
+        name: settings.name,
+        description: settings.description,
+        location: {
+          address: settings.address,
+          city: currentCafe.location?.city || '',
+          state: currentCafe.location?.state || '',
+          country: currentCafe.location?.country || 'India',
+          postal_code: currentCafe.location?.postal_code || ''
+        },
+        phone: settings.phone,
+        email: settings.email,
+        website: settings.website
+      };
+
+      // Update venue
+      await venueService.updateVenue(currentCafe.id, updateData);
+
+      // Update operating hours if changed
+      const operatingHours = Object.entries(settings.operatingHours).map(([day, hours], index) => ({
+        day_of_week: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].indexOf(day),
+        is_open: !hours.closed,
+        open_time: hours.closed ? null : hours.open,
+        close_time: hours.closed ? null : hours.close,
+        is_24_hours: false
+      }));
+
+      await venueService.updateOperatingHours(currentCafe.id, operatingHours);
+
+      setSnackbar({ open: true, message: 'Settings saved successfully', severity: 'success' });
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setSnackbar({ open: true, message: 'Failed to save settings', severity: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -185,13 +291,36 @@ const CafeSettings: React.FC = () => {
     setSnackbar({ open: true, message: 'Settings reset to defaults', severity: 'success' });
   };
 
-  const handleToggleCafeStatus = () => {
-    setCafeActive(!cafeActive);
-    setSnackbar({ 
-      open: true, 
-      message: `Cafe ${!cafeActive ? 'activated' : 'deactivated'} successfully`, 
-      severity: 'success' 
-    });
+  const handleToggleCafeStatus = async () => {
+    if (!currentCafe?.id) {
+      setSnackbar({ open: true, message: 'No cafe selected', severity: 'error' });
+      return;
+    }
+
+    try {
+      const newStatus = !cafeActive;
+      
+      if (newStatus) {
+        await venueService.activateVenue(currentCafe.id);
+      } else {
+        // Deactivate by updating is_active to false
+        await venueService.updateVenue(currentCafe.id, { is_active: false });
+      }
+
+      setCafeActive(newStatus);
+      setSnackbar({ 
+        open: true, 
+        message: `Cafe ${newStatus ? 'activated' : 'deactivated'} successfully`, 
+        severity: 'success' 
+      });
+    } catch (error) {
+      console.error('Error toggling cafe status:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to update cafe status', 
+        severity: 'error' 
+      });
+    }
   };
 
   const colorOptions = [
@@ -201,6 +330,16 @@ const CafeSettings: React.FC = () => {
   const days = [
     'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
   ];
+
+  if (loading) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress size={60} />
+        </Box>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -260,8 +399,13 @@ const CafeSettings: React.FC = () => {
             <Button variant="outlined" onClick={handleReset}>
               Reset
             </Button>
-            <Button variant="contained" startIcon={<Save />} onClick={handleSave}>
-              Save Changes
+            <Button 
+              variant="contained" 
+              startIcon={saving ? <CircularProgress size={16} /> : <Save />} 
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
             </Button>
           </Box>
         </Paper>
@@ -372,6 +516,14 @@ const CafeSettings: React.FC = () => {
                     variant="outlined"
                     startIcon={<CloudUpload />}
                     fullWidth
+                    onClick={() => {
+                      // TODO: Implement logo upload
+                      setSnackbar({ 
+                        open: true, 
+                        message: 'Logo upload feature coming soon', 
+                        severity: 'info' 
+                      });
+                    }}
                   >
                     Upload Logo
                   </Button>

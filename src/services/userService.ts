@@ -256,7 +256,11 @@ class UserService {
 
       const response = await apiService.get<any>(`/users/statistics?${params.toString()}`);
       
-      return response.data || {
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      return {
         total_users: 0,
         active_users: 0,
         users_by_role: {},

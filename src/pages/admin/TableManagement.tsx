@@ -114,11 +114,18 @@ const TableManagement: React.FC = () => {
 
   const handleDeleteTable = async (tableId: string) => {
     try {
-      await tableService.deleteTable(tableId);
-      setTables(prev => prev.filter(table => table.id !== tableId));
-      setSnackbar({ open: true, message: 'Table deleted successfully', severity: 'success' });
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Failed to delete table', severity: 'error' });
+      const response = await tableService.deleteTable(tableId);
+      if (response.success) {
+        setTables(prev => prev.filter(table => table.id !== tableId));
+        setSnackbar({ open: true, message: 'Table deleted successfully', severity: 'success' });
+      }
+    } catch (error: any) {
+      console.error('Error deleting table:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to delete table', 
+        severity: 'error' 
+      });
     }
   };
 
@@ -133,12 +140,12 @@ const TableManagement: React.FC = () => {
           table_status: tableData.table_status || editingTable.table_status,
           is_active: tableData.is_active !== undefined ? tableData.is_active : editingTable.is_active,
         });
-        if (response.data) {
+        if (response.success && response.data) {
           setTables(prev => prev.map(table => 
             table.id === editingTable.id ? response.data! : table
           ));
+          setSnackbar({ open: true, message: 'Table updated successfully', severity: 'success' });
         }
-        setSnackbar({ open: true, message: 'Table updated successfully', severity: 'success' });
       } else {
         // Create new table
         const response = await tableService.createTable({
@@ -147,30 +154,47 @@ const TableManagement: React.FC = () => {
           location: tableData.location || '',
           venue_id: DEFAULTS.CAFE_ID,
         });
-        if (response.data) {
+        if (response.success && response.data) {
           setTables(prev => [...prev, response.data!]);
+          setSnackbar({ open: true, message: 'Table added successfully', severity: 'success' });
         }
-        setSnackbar({ open: true, message: 'Table added successfully', severity: 'success' });
       }
       setOpenTableDialog(false);
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Failed to save table', severity: 'error' });
+    } catch (error: any) {
+      console.error('Error saving table:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to save table', 
+        severity: 'error' 
+      });
     }
   };
 
   const handleToggleTableStatus = async (tableId: string) => {
     try {
-      const updatedTable = await tableService.toggleTableAvailability(tableId);
-      setTables(prev => prev.map(table => 
-        table.id === tableId ? updatedTable : table
-      ));
+      const table = tables.find(t => t.id === tableId);
+      if (!table) return;
+
+      const newStatus = table.table_status === 'available' ? 'occupied' : 'available';
+      const response = await tableService.updateTableStatus(tableId, newStatus);
+      
+      if (response.success) {
+        setTables(prev => prev.map(t => 
+          t.id === tableId ? { ...t, table_status: newStatus } : t
+        ));
+        setSnackbar({ 
+          open: true, 
+          message: `Table status updated to ${newStatus}`, 
+          severity: 'success' 
+        });
+      }
+    } catch (error: any) {
+      console.error('Error updating table status:', error);
       setSnackbar({ 
         open: true, 
-        message: `Table status updated to ${updatedTable.table_status}`, 
-        severity: 'success' 
+        message: error.message || 'Failed to update table status', 
+        severity: 'error' 
       });
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Failed to update table status', severity: 'error' });
     }
   };
 

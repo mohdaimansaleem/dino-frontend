@@ -109,7 +109,7 @@ class TableService {
    */
   async updateTableStatus(tableId: string, newStatus: TableStatus): Promise<ApiResponse<void>> {
     try {
-      return await apiService.put<void>(`/tables/${tableId}/status`, { new_status: newStatus });
+      return await apiService.put<void>(`/tables/${tableId}/status?new_status=${newStatus}`);
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update table status');
     }
@@ -485,7 +485,7 @@ class TableService {
    */
   async getAreas(venueId: string): Promise<any[]> {
     try {
-      const response = await apiService.get<any[]>(`/venues/${venueId}/areas`);
+      const response = await apiService.get<any[]>(`/tables/venues/${venueId}/areas`);
       return response.data || [];
     } catch (error) {
       return [];
@@ -497,7 +497,7 @@ class TableService {
    */
   async createArea(areaData: any): Promise<any> {
     try {
-      const response = await apiService.post<any>('/areas', areaData);
+      const response = await apiService.post<any>('/tables/areas', areaData);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to create area');
@@ -509,7 +509,7 @@ class TableService {
    */
   async updateArea(areaData: any): Promise<any> {
     try {
-      const response = await apiService.put<any>(`/areas/${areaData.id}`, areaData);
+      const response = await apiService.put<any>(`/tables/areas/${areaData.id}`, areaData);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update area');
