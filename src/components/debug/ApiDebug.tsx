@@ -3,6 +3,7 @@ import { Box, Typography, Card, CardContent, Button, Alert } from '@mui/material
 import { dashboardService } from '../../services/dashboardService';
 import { orderService } from '../../services/orderService';
 import { useAuth } from '../../contexts/AuthContext';
+import { getUserVenueId } from '../../utils/userUtils';
 
 const ApiDebug: React.FC = () => {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ const ApiDebug: React.FC = () => {
   };
 
   const testOrdersApi = async () => {
-    const venueId = user?.cafeId || user?.venue_id;
+    const venueId = getUserVenueId(user);
     if (!venueId) {
       setOrdersResult({ success: false, error: 'No venue ID available' });
       return;

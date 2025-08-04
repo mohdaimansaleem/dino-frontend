@@ -50,6 +50,7 @@ import { dashboardService } from '../../services/dashboardService';
 import { analyticsService } from '../../services/analyticsService';
 import { venueService } from '../../services/venueService';
 import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
+import { getUserFirstName } from '../../utils/userUtils';
 
 /**
  * AdminDashboard Component
@@ -431,7 +432,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
               Admin Dashboard
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Welcome back, {user?.firstName}! Here's your venue overview for today.
+              Welcome back, {getUserFirstName(user)}! Here's your venue overview for today.
             </Typography>
           </Box>
           
@@ -468,7 +469,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 Admin Dashboard
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Welcome back, {user?.firstName}! Here's your venue overview for today.
+                Welcome back, {getUserFirstName(user)}! Here's your venue overview for today.
               </Typography>
             </Box>
             <IconButton

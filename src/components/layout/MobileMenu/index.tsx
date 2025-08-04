@@ -24,6 +24,7 @@ import {
   Dashboard,
 } from '@mui/icons-material';
 import DinoLogo from '../../DinoLogo';
+import { getUserFirstName } from '../../../utils/userUtils';
 
 interface MobileMenuProps {
   open: boolean;
@@ -136,7 +137,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               </Avatar>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-                  {user.firstName || (user as any).first_name || user.email}
+                  {getUserFirstName(user) || user.email}
                 </Typography>
                 <Chip
                   label={user.role || 'User'}

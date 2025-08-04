@@ -10,7 +10,7 @@ import {
   ArcElement,
 } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
-import { config } from '../../config/env';
+import { getConfigValue } from '../../config/runtime';
 
 // Register Chart.js components
 ChartJS.register(
@@ -38,11 +38,11 @@ export const WeeklyRevenueChart: React.FC<BarChartProps> = ({ data, height = 300
 
   // Auto-refresh animation every configured interval
   useEffect(() => {
-    if (!config.charts.animationsEnabled) return;
+    if (!getConfigValue('CHART_ANIMATIONS_ENABLED')) return;
 
     const interval = setInterval(() => {
       setAnimationKey(prev => prev + 1);
-    }, config.charts.animationInterval);
+    }, getConfigValue('CHART_ANIMATION_INTERVAL'));
 
     return () => clearInterval(interval);
   }, []);
@@ -73,8 +73,8 @@ export const WeeklyRevenueChart: React.FC<BarChartProps> = ({ data, height = 300
     responsive: true,
     maintainAspectRatio: false,
     animation: {
-      duration: config.charts.animationDuration,
-      easing: config.charts.animationEasing as any,
+      duration: getConfigValue('CHART_ANIMATION_DURATION'),
+      easing: getConfigValue('CHART_ANIMATION_EASING') as any,
     },
     plugins: {
       legend: {
@@ -168,11 +168,11 @@ export const StatusPieChart: React.FC<PieChartProps> = ({ data, height = 250 }) 
   
   // Auto-refresh animation every configured interval
   useEffect(() => {
-    if (!config.charts.animationsEnabled) return;
+    if (!getConfigValue('CHART_ANIMATIONS_ENABLED')) return;
 
     const interval = setInterval(() => {
       setAnimationKey(prev => prev + 1);
-    }, config.charts.animationInterval);
+    }, getConfigValue('CHART_ANIMATION_INTERVAL'));
 
     return () => clearInterval(interval);
   }, []);
@@ -203,8 +203,8 @@ export const StatusPieChart: React.FC<PieChartProps> = ({ data, height = 250 }) 
     responsive: true,
     maintainAspectRatio: false,
     animation: {
-      duration: config.charts.animationDuration,
-      easing: config.charts.animationEasing as any,
+      duration: getConfigValue('CHART_ANIMATION_DURATION'),
+      easing: getConfigValue('CHART_ANIMATION_EASING') as any,
     },
     plugins: {
       legend: {
@@ -247,11 +247,11 @@ export const DonutChart: React.FC<PieChartProps> = ({ data, height = 250 }) => {
 
   // Auto-refresh animation every configured interval
   useEffect(() => {
-    if (!config.charts.animationsEnabled) return;
+    if (!getConfigValue('CHART_ANIMATIONS_ENABLED')) return;
 
     const interval = setInterval(() => {
       setAnimationKey(prev => prev + 1);
-    }, config.charts.animationInterval);
+    }, getConfigValue('CHART_ANIMATION_INTERVAL'));
 
     return () => clearInterval(interval);
   }, []);
@@ -283,8 +283,8 @@ export const DonutChart: React.FC<PieChartProps> = ({ data, height = 250 }) => {
     maintainAspectRatio: false,
     cutout: '60%', // This makes it a donut chart
     animation: {
-      duration: config.charts.animationDuration,
-      easing: config.charts.animationEasing as any,
+      duration: getConfigValue('CHART_ANIMATION_DURATION'),
+      easing: getConfigValue('CHART_ANIMATION_EASING') as any,
     },
     plugins: {
       legend: {
@@ -351,11 +351,11 @@ export const SimpleBarChart: React.FC<{ data: Array<{ name: string; value: numbe
 
   // Auto-refresh animation every configured interval
   useEffect(() => {
-    if (!config.charts.animationsEnabled) return;
+    if (!getConfigValue('CHART_ANIMATIONS_ENABLED')) return;
 
     const interval = setInterval(() => {
       setAnimationKey(prev => prev + 1);
-    }, config.charts.animationInterval);
+    }, getConfigValue('CHART_ANIMATION_INTERVAL'));
 
     return () => clearInterval(interval);
   }, []);
@@ -386,8 +386,8 @@ export const SimpleBarChart: React.FC<{ data: Array<{ name: string; value: numbe
     responsive: true,
     maintainAspectRatio: false,
     animation: {
-      duration: config.charts.animationDuration,
-      easing: config.charts.animationEasing as any,
+      duration: getConfigValue('CHART_ANIMATION_DURATION'),
+      easing: getConfigValue('CHART_ANIMATION_EASING') as any,
     },
     plugins: {
       legend: {

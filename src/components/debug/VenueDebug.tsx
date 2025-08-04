@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Paper, Chip, Button } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { getUserVenueId, getUserWorkspaceId } from '../../utils/userUtils';
 
 const VenueDebug: React.FC = () => {
   const { user } = useAuth();
@@ -62,9 +63,9 @@ const VenueDebug: React.FC = () => {
           <Typography variant="subtitle2" fontWeight="bold">User Data:</Typography>
           <Typography variant="body2">ID: {user?.id || 'N/A'}</Typography>
           <Typography variant="body2">Email: {user?.email || 'N/A'}</Typography>
-          <Typography variant="body2">Cafe ID: {user?.cafeId || 'N/A'}</Typography>
-          <Typography variant="body2">Venue ID: {user?.venue_id || 'N/A'}</Typography>
-          <Typography variant="body2">Workspace ID: {user?.workspaceId || user?.workspace_id || 'N/A'}</Typography>
+          <Typography variant="body2">Venue ID: {getUserVenueId(user) || 'N/A'}</Typography>
+          <Typography variant="body2">Venue ID (raw): {user?.venue_id || 'N/A'}</Typography>
+          <Typography variant="body2">Workspace ID: {getUserWorkspaceId(user) || 'N/A'}</Typography>
         </Box>
         
         <Box>
@@ -86,14 +87,14 @@ const VenueDebug: React.FC = () => {
       <Box sx={{ mt: 2 }}>
         <Typography variant="subtitle2" fontWeight="bold">Venue Resolution:</Typography>
         <Typography variant="body2">
-          Resolved Venue ID: {currentCafe?.id || user?.cafeId || user?.venue_id || 'NONE'}
+          Resolved Venue ID: {currentCafe?.id || getUserVenueId(user) || 'NONE'}
         </Typography>
-        <Typography variant="body2" color={currentCafe?.id || user?.cafeId || user?.venue_id ? 'success.main' : 'error.main'}>
-          Status: {currentCafe?.id || user?.cafeId || user?.venue_id ? '✅ Available' : '❌ Missing'}
+        <Typography variant="body2" color={currentCafe?.id || getUserVenueId(user) ? 'success.main' : 'error.main'}>
+          Status: {currentCafe?.id || getUserVenueId(user) ? '✅ Available' : '❌ Missing'}
         </Typography>
       </Box>
 
-      {(!currentCafe && (user?.cafeId || user?.venue_id)) && (
+      {(!currentCafe && getUserVenueId(user)) && (
         <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
           <Button 
             size="small" 

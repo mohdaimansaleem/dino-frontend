@@ -385,7 +385,7 @@ const UserPermissionsDashboard: React.FC = () => {
                   Your Current Permissions
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  {user?.firstName} {user?.lastName} • {user?.email}
+                  {user?.first_name || user?.firstName} {user?.last_name || user?.lastName} • {user?.email}
                 </Typography>
                 <Box sx={{ mt: 1 }}>
                   <Chip
@@ -415,8 +415,8 @@ const UserPermissionsDashboard: React.FC = () => {
               startIcon={<Visibility />}
               onClick={() => handleViewPermissions({
                 ...(currentUserAuth || {}),
-                firstName: user?.firstName,
-                lastName: user?.lastName,
+                firstName: user?.first_name || user?.firstName,
+                lastName: user?.last_name || user?.lastName,
                 email: user?.email,
                 isActive: true,
                 lastLogin: new Date(),

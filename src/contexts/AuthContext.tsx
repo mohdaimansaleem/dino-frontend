@@ -138,10 +138,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         cafeId: response.user.venue_id,
         venue_id: response.user.venue_id,
         isActive: response.user.is_active,
+        is_active: response.user.is_active,
         isVerified: true,
+        created_at: response.user.created_at,
         createdAt: new Date(response.user.created_at),
         updatedAt: new Date(response.user.updated_at || response.user.created_at)
-      } as UserProfile;
+      };
       
       setUser(localUser);
       // Store the converted user data
@@ -228,11 +230,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // Convert local user data to API format
       const apiUserData = {
-        first_name: userData.firstName,
-        last_name: userData.lastName,
+        first_name: userData.first_name || userData.firstName,
+        last_name: userData.last_name || userData.lastName,
         phone: userData.phone,
-        date_of_birth: userData.dateOfBirth?.toISOString().split('T')[0],
-        is_active: userData.isActive
+        date_of_birth: userData.date_of_birth || (userData.dateOfBirth?.toISOString().split('T')[0]),
+        is_active: userData.is_active ?? userData.isActive
       };
       
       const updatedUser = await authService.updateProfile(apiUserData);
@@ -253,10 +255,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         cafeId: updatedUser.venue_id,
         venue_id: updatedUser.venue_id,
         isActive: updatedUser.is_active,
+        is_active: updatedUser.is_active,
         isVerified: true,
+        created_at: updatedUser.created_at,
         createdAt: new Date(updatedUser.created_at),
         updatedAt: new Date(updatedUser.updated_at || updatedUser.created_at)
-      } as UserProfile;
+      };
       
       setUser(localUser);
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
@@ -285,10 +289,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         cafeId: currentUser.venue_id,
         venue_id: currentUser.venue_id,
         isActive: currentUser.is_active,
+        is_active: currentUser.is_active,
         isVerified: true,
+        created_at: currentUser.created_at,
         createdAt: new Date(currentUser.created_at),
         updatedAt: new Date(currentUser.updated_at || currentUser.created_at)
-      } as UserProfile;
+      };
       
       setUser(localUser);
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
@@ -340,8 +346,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return {
       id: user.id,
       email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      firstName: user.first_name || user.firstName,
+      lastName: user.last_name || user.lastName,
       role: role,
       permissions: role.permissions,
       isActive: true,

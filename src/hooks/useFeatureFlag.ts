@@ -2,12 +2,36 @@
  * Feature Flag Hook
  * 
  * This hook provides a convenient way to check feature flags throughout
- * the application and enables conditional rendering based on environment
+ * the application and enables conditional rendering based on runtime
  * configuration.
  */
 
 import { useMemo } from 'react';
-import { config, isFeatureEnabled } from '../config/env';
+import { getConfigValue, getRuntimeConfig } from '../config/runtime';
+
+// Feature flag mapping
+type FeatureFlagKey = 
+  | 'themeToggle'
+  | 'demoMode'
+  | 'analytics'
+  | 'qrCodes'
+  | 'notifications'
+  | 'i18n'
+  | 'animations'
+  | 'imageOptimization'
+  | 'serviceWorker';
+
+const FEATURE_FLAG_MAP: Record<FeatureFlagKey, string> = {
+  themeToggle: 'ENABLE_THEME_TOGGLE',
+  demoMode: 'ENABLE_DEMO_MODE',
+  analytics: 'ENABLE_ANALYTICS',
+  qrCodes: 'ENABLE_QR_CODES',
+  notifications: 'ENABLE_NOTIFICATIONS',
+  i18n: 'ENABLE_I18N',
+  animations: 'ENABLE_ANIMATIONS',
+  imageOptimization: 'ENABLE_IMAGE_OPTIMIZATION',
+  serviceWorker: 'ENABLE_SERVICE_WORKER'
+};
 
 /**
  * Hook to check if a specific feature is enabled
@@ -28,9 +52,10 @@ import { config, isFeatureEnabled } from '../config/env';
  * };
  * ```
  */
-export const useFeatureFlag = (featureName: keyof typeof isFeatureEnabled): boolean => {
+export const useFeatureFlag = (featureName: FeatureFlagKey): boolean => {
   return useMemo(() => {
-    return isFeatureEnabled[featureName]();
+    const configKey = FEATURE_FLAG_MAP[featureName];
+    return getConfigValue(configKey as any) as boolean;
   }, [featureName]);
 };
 
@@ -56,12 +81,13 @@ export const useFeatureFlag = (featureName: keyof typeof isFeatureEnabled): bool
  * ```
  */
 export const useFeatureFlags = (
-  featureNames: (keyof typeof isFeatureEnabled)[]
+  featureNames: FeatureFlagKey[]
 ): Record<string, boolean> => {
   return useMemo(() => {
     const flags: Record<string, boolean> = {};
     featureNames.forEach(featureName => {
-      flags[featureName] = isFeatureEnabled[featureName]();
+      const configKey = FEATURE_FLAG_MAP[featureName];
+      flags[featureName] = getConfigValue(configKey as any) as boolean;
     });
     return flags;
   }, [featureNames]);
@@ -92,14 +118,11 @@ export const useFeatureFlags = (
  */
 export const useAllFeatureFlags = (): Record<string, boolean> => {
   return useMemo(() => {
-    return {
-      themeToggle: isFeatureEnabled.themeToggle(),
-      demoMode: isFeatureEnabled.demoMode(),
-      analytics: isFeatureEnabled.analytics(),
-      qrCodes: isFeatureEnabled.qrCodes(),
-      notifications: isFeatureEnabled.notifications(),
-      i18n: isFeatureEnabled.i18n(),
-    };
+    const flags: Record<string, boolean> = {};
+    Object.entries(FEATURE_FLAG_MAP).forEach(([featureName, configKey]) => {
+      flags[featureName] = getConfigValue(configKey as any) as boolean;
+    });
+    return flags;
   }, []);
 };
 
@@ -113,15 +136,15 @@ export const useAllFeatureFlags = (): Record<string, boolean> => {
  * const ApiService = () => {
  *   const appConfig = useAppConfig();
  *   
- *   const apiUrl = appConfig.api.baseUrl;
- *   const timeout = appConfig.api.timeout;
+ *   const apiUrl = appConfig.API_BASE_URL;
+ *   const timeout = appConfig.API_TIMEOUT;
  *   
  *   // Use configuration values...
  * };
  * ```
  */
 export const useAppConfig = () => {
-  return useMemo(() => config, []);
+  return useMemo(() => getRuntimeConfig(), []);
 };
 
 /**
@@ -130,7 +153,7 @@ export const useAppConfig = () => {
  * @returns boolean indicating if the app is in development mode
  */
 export const useIsDevelopment = (): boolean => {
-  return useMemo(() => config.app.env === 'development', []);
+  return useMemo(() => getConfigValue('APP_ENV') === 'development', []);
 };
 
 /**
@@ -139,7 +162,16 @@ export const useIsDevelopment = (): boolean => {
  * @returns boolean indicating if the app is in production mode
  */
 export const useIsProduction = (): boolean => {
-  return useMemo(() => config.app.env === 'production', []);
+  return useMemo(() => getConfigValue('APP_ENV') === 'production', []);
+};
+
+/**
+ * Hook to check if debug mode is enabled
+ * 
+ * @returns boolean indicating if debug mode is enabled
+ */
+export const useIsDebugMode = (): boolean => {
+  return useMemo(() => getConfigValue('DEBUG_MODE') as boolean, []);
 };
 
 export default useFeatureFlag;

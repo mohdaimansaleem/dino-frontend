@@ -19,6 +19,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useVenueCheck } from '../../hooks/useVenueCheck';
+import { getUserFirstName, getUserLastName, getUserWorkspaceId } from '../../utils/userUtils';
 
 const UserDebugInfo: React.FC = () => {
   const [expanded, setExpanded] = useState(false);
@@ -59,7 +60,7 @@ const UserDebugInfo: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
                 <Chip label={`ID: ${user?.id || 'N/A'}`} size="small" />
                 <Chip label={`Email: ${user?.email || 'N/A'}`} size="small" />
-                <Chip label={`Name: ${user?.firstName} ${user?.lastName}`} size="small" />
+                <Chip label={`Name: ${getUserFirstName(user)} ${getUserLastName(user)}`} size="small" />
               </Box>
             </Box>
 
@@ -98,7 +99,7 @@ const UserDebugInfo: React.FC = () => {
                   color={hasVenueAssigned ? 'success' : 'error'}
                 />
                 <Chip 
-                  label={`Workspace ID: ${user?.workspaceId || user?.workspace_id || 'None'}`} 
+                  label={`Workspace ID: ${getUserWorkspaceId(user) || 'None'}`} 
                   size="small" 
                 />
                 <Chip 

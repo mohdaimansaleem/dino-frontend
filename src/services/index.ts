@@ -43,7 +43,6 @@ export { validationService } from './validationService';
 
 // Legacy services (for backward compatibility)
 export { analyticsService } from './analyticsService';
-export { enhancedApiService } from './enhancedApiService';
 export { notificationService } from './notificationService';
 export { permissionService } from './permissionService';
 export { promoService } from './promoService';

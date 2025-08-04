@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { lightTheme, darkTheme, ThemeMode } from '../theme/themeConfig';
+import { getConfigValue } from '../config/runtime';
 
 interface ThemeContextType {
   mode: ThemeMode;
@@ -18,7 +19,7 @@ interface ThemeProviderProps {
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const [mode, setMode] = useState<ThemeMode>(() => {
     // Only check for saved theme preference if theme toggle is enabled
-    if (process.env.REACT_APP_ENABLE_THEME_TOGGLE === 'true') {
+    if (getConfigValue('ENABLE_THEME_TOGGLE')) {
       const savedTheme = localStorage.getItem('dino_theme_mode') as ThemeMode;
       if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
         return savedTheme;
@@ -35,7 +36,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Only save theme preference if theme toggle is enabled
-    if (process.env.REACT_APP_ENABLE_THEME_TOGGLE === 'true') {
+    if (getConfigValue('ENABLE_THEME_TOGGLE')) {
       localStorage.setItem('dino_theme_mode', mode);
     }
     
@@ -52,7 +53,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Listen for system theme changes
   useEffect(() => {
     // Only listen for system theme changes if theme toggle is enabled
-    if (process.env.REACT_APP_ENABLE_THEME_TOGGLE === 'true') {
+    if (getConfigValue('ENABLE_THEME_TOGGLE')) {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = (e: MediaQueryListEvent) => {
         // Only auto-switch if user hasn't manually set a preference

@@ -28,6 +28,7 @@ import ThemeToggle from '../../ThemeToggle';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import MobileMenu from '../MobileMenu';
 import { NAVIGATION, COMPANY_INFO } from '../../../data/info';
+import { getUserFirstName } from '../../../utils/userUtils';
 
 interface AppHeaderProps {
   onSectionScroll?: (sectionId: string) => void;
@@ -182,7 +183,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
               transition: 'all 0.3s ease',
             }}
           >
-            {user.firstName || (user as any).first_name || user.email}
+            {getUserFirstName(user) || user.email}
           </Button>
           <Button
             color="inherit"

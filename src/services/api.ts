@@ -77,12 +77,11 @@ class ApiService {
             }
           } catch (refreshError) {
             this.processQueue(refreshError);
-            // Temporarily disable automatic logout to debug the issue
-            // this.clearTokens();
+            this.clearTokens();
             // Only redirect if we're not already on login page
-            // if (window.location.pathname !== '/login') {
-            //   //   window.location.href = '/login';
-            // }
+            if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
             return Promise.reject(refreshError);
           } finally {
             this.refreshing = false;
@@ -92,9 +91,11 @@ class ApiService {
         // Handle other error cases
         if (error.response?.status === 403) {
           // Forbidden - user doesn't have permission
-          } else if (error.response?.status >= 500) {
+          console.warn('Access denied:', error.response.data?.message || 'Insufficient permissions');
+        } else if (error.response?.status >= 500) {
           // Server error
-          }
+          console.error('Server error:', error.response.status, error.response.data?.message || 'Internal server error');
+        }
 
         return Promise.reject(error);
       }
@@ -119,22 +120,75 @@ class ApiService {
     localStorage.removeItem('dino_user');
   }
 
-  // Generic GET request
-  async get<T>(url: string, params?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  // Retry logic for failed requests
+  private async executeWithRetry<T>(
+    operation: () => Promise<ApiResponse<T>>,
+    retryCount: number = 0
+  ): Promise<ApiResponse<T>> {
     try {
+      return await operation();
+    } catch (error: any) {
+      const shouldRetry = this.shouldRetryRequest(error, retryCount);
+      
+      if (shouldRetry) {
+        const delay = this.calculateRetryDelay(retryCount);
+        await this.sleep(delay);
+        return this.executeWithRetry(operation, retryCount + 1);
+      }
+      
+      return this.handleError<T>(error);
+    }
+  }
+
+  // Determine if request should be retried
+  private shouldRetryRequest(error: any, retryCount: number): boolean {
+    if (retryCount >= API_CONFIG.RETRY_ATTEMPTS) {
+      return false;
+    }
+
+    // Don't retry authentication errors
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      return false;
+    }
+
+    // Don't retry client errors (4xx except 429)
+    if (error.response?.status >= 400 && error.response?.status < 500 && error.response?.status !== 429) {
+      return false;
+    }
+
+    // Retry network errors, timeouts, and server errors
+    return (
+      !error.response || // Network error
+      error.code === 'ECONNABORTED' || // Timeout
+      error.response.status >= 500 || // Server error
+      error.response.status === 429 // Rate limit
+    );
+  }
+
+  // Calculate exponential backoff delay
+  private calculateRetryDelay(retryCount: number): number {
+    return API_CONFIG.RETRY_DELAY * Math.pow(2, retryCount);
+  }
+
+  // Sleep utility
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Generic GET request with retry logic
+  async get<T>(url: string, params?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    return this.executeWithRetry(async () => {
       const response: AxiosResponse<ApiResponse<T>> = await this.api.get(url, { 
         params, 
         ...config 
       });
       return response.data;
-    } catch (error: any) {
-      return this.handleError<T>(error);
-    }
+    });
   }
 
-  // Generic POST request
+  // Generic POST request with retry logic
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    try {
+    return this.executeWithRetry(async () => {
       const response: AxiosResponse<any> = await this.api.post(url, data, config);
       // Handle different response formats from backend
       if (response.data && typeof response.data === 'object') {
@@ -151,39 +205,31 @@ class ApiService {
       }
       
       return response.data;
-    } catch (error: any) {
-      return this.handleError<T>(error);
-    }
+    });
   }
 
-  // Generic PUT request
+  // Generic PUT request with retry logic
   async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    try {
+    return this.executeWithRetry(async () => {
       const response: AxiosResponse<ApiResponse<T>> = await this.api.put(url, data, config);
       return response.data;
-    } catch (error: any) {
-      return this.handleError<T>(error);
-    }
+    });
   }
 
-  // Generic PATCH request
+  // Generic PATCH request with retry logic
   async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    try {
+    return this.executeWithRetry(async () => {
       const response: AxiosResponse<ApiResponse<T>> = await this.api.patch(url, data, config);
       return response.data;
-    } catch (error: any) {
-      return this.handleError<T>(error);
-    }
+    });
   }
 
-  // Generic DELETE request
+  // Generic DELETE request with retry logic
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    try {
+    return this.executeWithRetry(async () => {
       const response: AxiosResponse<ApiResponse<T>> = await this.api.delete(url, config);
       return response.data;
-    } catch (error: any) {
-      return this.handleError<T>(error);
-    }
+    });
   }
 
   // File upload with progress tracking
@@ -312,7 +358,7 @@ class ApiService {
     }
   }
 
-  // Error handler
+  // Error handler with improved error categorization
   private handleError<T>(error: any): ApiResponse<T> {
     const errorResponse: ApiResponse<T> = {
       success: false,
@@ -322,14 +368,69 @@ class ApiService {
 
     if (error.response) {
       // Server responded with error status
-      errorResponse.message = error.response.data?.detail || 
-                              error.response.data?.message || 
-                              `Server error: ${error.response.status}`;
-      errorResponse.error = error.response.data?.error || error.message;
+      const status = error.response.status;
+      const data = error.response.data;
+      
+      switch (status) {
+        case 400:
+          errorResponse.message = data?.detail || data?.message || 'Invalid request';
+          break;
+        case 401:
+          errorResponse.message = 'Authentication required';
+          break;
+        case 403:
+          errorResponse.message = 'Access denied - insufficient permissions';
+          break;
+        case 404:
+          errorResponse.message = 'Resource not found';
+          break;
+        case 409:
+          errorResponse.message = data?.detail || 'Conflict - resource already exists';
+          break;
+        case 422:
+          errorResponse.message = data?.detail || 'Validation error';
+          break;
+        case 429:
+          errorResponse.message = 'Too many requests - please try again later';
+          break;
+        case 500:
+          errorResponse.message = 'Internal server error';
+          break;
+        case 502:
+          errorResponse.message = 'Service temporarily unavailable';
+          break;
+        case 503:
+          errorResponse.message = 'Service unavailable';
+          break;
+        default:
+          errorResponse.message = data?.detail || data?.message || `Server error: ${status}`;
+      }
+      
+      errorResponse.error = data?.error || error.message;
     } else if (error.request) {
       // Request was made but no response received
-      errorResponse.message = 'Network error - please check your connection';
-      errorResponse.error = 'Network error';
+      if (error.code === 'ECONNABORTED') {
+        errorResponse.message = 'Request timeout - please try again';
+        errorResponse.error = 'Timeout error';
+      } else {
+        errorResponse.message = 'Network error - please check your connection';
+        errorResponse.error = 'Network error';
+      }
+    } else {
+      // Something else happened
+      errorResponse.message = error.message || 'An unexpected error occurred';
+      errorResponse.error = error.name || 'Unknown error';
+    }
+
+    // Log error for debugging (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API Error:', {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        message: errorResponse.message,
+        error: errorResponse.error
+      });
     }
 
     return errorResponse;

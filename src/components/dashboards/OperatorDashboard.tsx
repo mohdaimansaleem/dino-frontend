@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getUserFirstName } from '../../utils/userUtils';
 import {
   Box,
   Grid,
@@ -179,7 +180,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
           Operator Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Welcome back, {user?.firstName}! Manage orders and table status here.
+          Welcome back, {getUserFirstName(user)}! Manage orders and table status here.
         </Typography>
       </Box>
 

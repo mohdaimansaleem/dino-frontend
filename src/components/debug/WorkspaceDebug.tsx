@@ -4,6 +4,7 @@ import { authService } from '../../services/authService';
 import { userDataService } from '../../services/userDataService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
+import { getUserWorkspaceId, getUserVenueId } from '../../utils/userUtils';
 
 const WorkspaceDebug: React.FC = () => {
   const { user, isAuthenticated, login } = useAuth();
@@ -150,8 +151,8 @@ const WorkspaceDebug: React.FC = () => {
         <p><strong>User ID:</strong> {user?.id || 'N/A'}</p>
         <p><strong>User Email:</strong> {user?.email || 'N/A'}</p>
         <p><strong>User Role:</strong> {user?.role || 'N/A'}</p>
-        <p><strong>Workspace ID:</strong> {user?.workspaceId || 'N/A'}</p>
-        <p><strong>Venue ID:</strong> {user?.venue_id || user?.cafeId || 'N/A'}</p>
+        <p><strong>Workspace ID:</strong> {getUserWorkspaceId(user) || 'N/A'}</p>
+        <p><strong>Venue ID:</strong> {getUserVenueId(user) || 'N/A'}</p>
         <p><strong>Token:</strong> {localStorage.getItem('dino_token') ? 'Present' : 'Missing'}</p>
         <p><strong>UserData Loaded:</strong> {userData ? 'Yes' : 'No'}</p>
         {userData && (

@@ -31,6 +31,7 @@ import ThemeToggle from './ThemeToggle';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import AppHeader from './layout/AppHeader';
 import CafeStatusControl from './CafeStatusControl';
+import { getUserFirstName } from '../utils/userUtils';
 
 interface LayoutProps {
   children: ReactNode;
@@ -238,7 +239,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   },
                 }}
               >
-                {user.firstName || user.email}
+                {getUserFirstName(user) || user.email}
               </Button>
               <Button 
                 color="inherit" 

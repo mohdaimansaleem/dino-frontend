@@ -34,6 +34,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardService } from '../../services/dashboardService';
 import WorkspaceDebug from '../debug/WorkspaceDebug';
+import { getUserFirstName } from '../../utils/userUtils';
 
 interface SuperAdminDashboardProps {
   className?: string;
@@ -116,7 +117,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
           Super Admin Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Welcome back, {user?.firstName}! Here's your platform overview.
+          Welcome back, {getUserFirstName(user)}! Here's your platform overview.
         </Typography>
       </Box>
 

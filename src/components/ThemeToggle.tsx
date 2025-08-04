@@ -11,7 +11,7 @@ import {
   Brightness4,
 } from '@mui/icons-material';
 import { useTheme } from '../contexts/ThemeContext';
-import { isFeatureEnabled } from '../config/env';
+import { getConfigValue } from '../config/runtime';
 
 interface ThemeToggleProps {
   variant?: 'icon' | 'switch' | 'button';
@@ -27,7 +27,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({
   const { mode, toggleTheme } = useTheme();
 
   // Check if theme toggle feature is enabled
-  if (!isFeatureEnabled.themeToggle()) {
+  if (!getConfigValue('ENABLE_THEME_TOGGLE')) {
     return null;
   }
 

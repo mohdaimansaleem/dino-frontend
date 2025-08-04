@@ -35,7 +35,7 @@ set_env_vars() {
         --set-env-vars="REACT_APP_NAME=Dino" \
         --set-env-vars="REACT_APP_VERSION=1.0.0" \
         --set-env-vars="REACT_APP_DEBUG_MODE=false" \
-        --set-env-vars="REACT_APP_ENABLE_THEME_TOGGLE=true" \
+        --set-env-vars="REACT_APP_ENABLE_THEME_TOGGLE=false" \
         --set-env-vars="REACT_APP_ENABLE_DEMO_MODE=false" \
         --set-env-vars="REACT_APP_ENABLE_ANALYTICS=true" \
         --set-env-vars="REACT_APP_ENABLE_QR_CODES=true" \

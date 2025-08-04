@@ -47,14 +47,35 @@ export interface UserProfile {
   phone?: string;
   first_name: string;
   last_name: string;
+  // Legacy camelCase properties for compatibility
+  firstName?: string;
+  lastName?: string;
   role: UserRole;
   workspace_id?: string;
   venue_id?: string;
+  // Legacy camelCase properties for compatibility
+  workspaceId?: string;
+  cafeId?: string;
   is_active: boolean;
+  isActive?: boolean;
+  isVerified?: boolean;
   created_at: string;
   updated_at?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
   date_of_birth?: string;
+  dateOfBirth?: Date;
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
+  // Additional legacy properties
+  permissions?: any[];
+  name?: string;
+  profileImageUrl?: string;
+  addresses?: any[];
+  preferences?: any;
+  lastLogin?: Date;
+  loginCount?: number;
+  totalOrders?: number;
+  totalSpent?: number;
 }
 
 export interface UserRegistration {

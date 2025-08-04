@@ -1,68 +1,30 @@
 /**
  * API Configuration - Single Source of Truth
  * 
- * This file centralizes ALL API and WebSocket URLs.
- * Change URLs here ONCE and they apply everywhere.
+ * This file centralizes ALL API and WebSocket URLs using runtime configuration.
+ * Configuration is loaded from window.APP_CONFIG (runtime) or environment variables (build-time).
  */
 
-// =============================================================================
-// ENVIRONMENT VARIABLE HELPERS
-// =============================================================================
-
-const getEnvVar = (key: string, defaultValue: string = ''): string => {
-  return process.env[key] || defaultValue;
-};
+import { getRuntimeConfig, getConfigValue, isDevelopment, isProduction } from './runtime';
 
 // =============================================================================
-// SINGLE SOURCE OF TRUTH - CHANGE URLS HERE ONLY
+// RUNTIME CONFIGURATION INTEGRATION
 // =============================================================================
 
 /**
- * API URLs - Now using relative paths for nginx proxy
- * All API calls will go through nginx which will proxy to backend
- */
-const API_URL = '/api/v1';
-const WS_URL = '/ws';
-
-/**
- * Backend URLs (for environment configuration)
- * These are used by nginx or deployment scripts, not directly by frontend
- */
-const PRODUCTION_BACKEND_URL = 'https://dino-backend-api-867506203789.us-central1.run.app';
-const DEVELOPMENT_BACKEND_URL = 'http://localhost:8000';
-
-// =============================================================================
-// AUTOMATIC URL RESOLUTION
-// =============================================================================
-
-/**
- * Get the appropriate API base URL based on environment
- * Now returns relative URL for nginx proxy
+ * Get the appropriate API base URL based on runtime configuration
+ * Priority: Runtime Config > Environment Variables > Default
  */
 export const getApiBaseUrl = (): string => {
-  // Priority: Environment Variable > Relative URL Default
-  const envUrl = getEnvVar('REACT_APP_API_BASE_URL');
-  if (envUrl) {
-    return envUrl;
-  }
-  
-  // Use relative URL for nginx proxy
-  return API_URL;
+  return getConfigValue('API_BASE_URL');
 };
 
 /**
- * Get the appropriate WebSocket URL based on environment
- * Now returns relative URL for nginx proxy
+ * Get the appropriate WebSocket URL based on runtime configuration
+ * Priority: Runtime Config > Environment Variables > Default
  */
 export const getWebSocketUrl = (): string => {
-  // Priority: Environment Variable > Relative URL Default
-  const envWsUrl = getEnvVar('REACT_APP_WS_URL');
-  if (envWsUrl) {
-    return envWsUrl;
-  }
-  
-  // Use relative URL for nginx proxy
-  return WS_URL;
+  return getConfigValue('WS_URL');
 };
 
 /**
@@ -74,16 +36,10 @@ export const getBaseUrl = (): string => {
 
 /**
  * Get backend URL for deployment configuration
- * This is used by deployment scripts, not by frontend directly
+ * This is used by nginx proxy configuration
  */
 export const getBackendUrl = (): string => {
-  const envUrl = getEnvVar('REACT_APP_BACKEND_URL');
-  if (envUrl) {
-    return envUrl;
-  }
-  
-  // Default to production backend
-  return PRODUCTION_BACKEND_URL;
+  return getConfigValue('BACKEND_URL');
 };
 
 // =============================================================================
@@ -93,15 +49,17 @@ export const getBackendUrl = (): string => {
 /**
  * Complete API Configuration
  * All services should import and use this configuration
+ * Now uses runtime configuration for all values
  */
 export const API_CONFIG = {
-  // URLs
+  // URLs - from runtime config
   BASE_URL: getApiBaseUrl(),
   WS_URL: getWebSocketUrl(),
   BASE_DOMAIN: getBaseUrl(),
+  BACKEND_URL: getBackendUrl(),
   
-  // Timeouts
-  TIMEOUT: 30000, // 30 seconds
+  // Timeouts - from runtime config
+  TIMEOUT: getConfigValue('API_TIMEOUT'),
   WS_TIMEOUT: 5000, // 5 seconds for WebSocket connection
   
   // Retry configuration
@@ -123,6 +81,9 @@ export const API_CONFIG = {
   WS_RECONNECT_ATTEMPTS: 5,
   WS_RECONNECT_DELAY: 1000,
   WS_HEARTBEAT_INTERVAL: 30000, // 30 seconds
+  
+  // Rate limiting
+  RATE_LIMIT: getConfigValue('API_RATE_LIMIT'),
 } as const;
 
 // =============================================================================
@@ -130,26 +91,10 @@ export const API_CONFIG = {
 // =============================================================================
 
 /**
- * Check if we're in development mode
- */
-export const isDevelopment = (): boolean => {
-  return process.env.NODE_ENV === 'development' || 
-         process.env.REACT_APP_ENV === 'development';
-};
-
-/**
- * Check if we're in production mode
- */
-export const isProduction = (): boolean => {
-  return process.env.NODE_ENV === 'production' || 
-         process.env.REACT_APP_ENV === 'production';
-};
-
-/**
- * Get environment name
+ * Get environment name from runtime config
  */
 export const getEnvironment = (): string => {
-  return process.env.REACT_APP_ENV || process.env.NODE_ENV || 'development';
+  return getConfigValue('APP_ENV');
 };
 
 // =============================================================================
@@ -160,16 +105,18 @@ export const getEnvironment = (): string => {
  * Log current configuration (for debugging)
  */
 export const logApiConfig = (): void => {
-  if (isDevelopment()) {
+  const config = getRuntimeConfig();
+  
+  if (config.DEBUG_MODE || isDevelopment()) {
     console.group('🔧 API Configuration');
     console.log('Environment:', getEnvironment());
     console.log('API Base URL:', API_CONFIG.BASE_URL);
     console.log('WebSocket URL:', API_CONFIG.WS_URL);
     console.log('Base Domain:', API_CONFIG.BASE_DOMAIN);
-    console.log('Environment Variables:');
-    console.log('  REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL || 'not set');
-    console.log('  REACT_APP_WS_URL:', process.env.REACT_APP_WS_URL || 'not set');
-    console.log('  REACT_APP_ENV:', process.env.REACT_APP_ENV || 'not set');
+    console.log('Backend URL:', API_CONFIG.BACKEND_URL);
+    console.log('API Timeout:', API_CONFIG.TIMEOUT);
+    console.log('Rate Limit:', API_CONFIG.RATE_LIMIT);
+    console.log('Configuration Source:', typeof window !== 'undefined' && window.APP_CONFIG ? 'Runtime' : 'Build-time/Default');
     console.groupEnd();
   }
 };
@@ -198,13 +145,23 @@ export const validateApiConfig = (): { valid: boolean; errors: string[] } => {
     errors.push('WebSocket URL must start with ws://, wss://, or / (for relative URLs)');
   }
   
-  // Check for relative URLs (should be relative in production)
+  // Check backend URL
+  if (!API_CONFIG.BACKEND_URL) {
+    errors.push('Backend URL is not configured');
+  } else if (!API_CONFIG.BACKEND_URL.startsWith('http')) {
+    errors.push('Backend URL must start with http:// or https://');
+  }
+  
+  // Check for localhost in production
   if (isProduction()) {
     if (API_CONFIG.BASE_URL.startsWith('http') && API_CONFIG.BASE_URL.includes('localhost')) {
       errors.push('API URL should not use localhost in production');
     }
     if (API_CONFIG.WS_URL.startsWith('ws') && API_CONFIG.WS_URL.includes('localhost')) {
       errors.push('WebSocket URL should not use localhost in production');
+    }
+    if (API_CONFIG.BACKEND_URL.includes('localhost')) {
+      errors.push('Backend URL should not use localhost in production');
     }
   }
   
@@ -220,25 +177,15 @@ export const validateApiConfig = (): { valid: boolean; errors: string[] } => {
 
 export default API_CONFIG;
 
-// Log configuration in development
-if (isDevelopment()) {
-  logApiConfig();
-  
-  const validation = validateApiConfig();
-  if (!validation.valid) {
-    console.warn('⚠️ API Configuration Issues:', validation.errors);
-  }
+// Initialize and validate configuration
+if (typeof window !== 'undefined') {
+  // Delay initialization to ensure window.APP_CONFIG is loaded
+  setTimeout(() => {
+    logApiConfig();
+    
+    const validation = validateApiConfig();
+    if (!validation.valid) {
+      console.warn('⚠️ API Configuration Issues:', validation.errors);
+    }
+  }, 100);
 }
-
-// Always log in production for debugging
-console.group('🔧 API Configuration (Production Debug)');
-console.log('Environment:', getEnvironment());
-console.log('API Base URL:', API_CONFIG.BASE_URL);
-console.log('WebSocket URL:', API_CONFIG.WS_URL);
-console.log('Base Domain:', API_CONFIG.BASE_DOMAIN);
-console.log('Environment Variables:');
-console.log('  REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL || 'not set');
-console.log('  REACT_APP_WS_URL:', process.env.REACT_APP_WS_URL || 'not set');
-console.log('  REACT_APP_ENV:', process.env.REACT_APP_ENV || 'not set');
-console.log('  NODE_ENV:', process.env.NODE_ENV || 'not set');
-console.groupEnd();

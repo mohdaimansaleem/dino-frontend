@@ -1,93 +1,11 @@
-// Re-export API types for compatibility
-export type {
-  // Core API types
-  ApiResponse as ApiResponseType,
-  PaginatedResponse as PaginatedResponseType,
-  
-  // Authentication types
-  AuthToken as ApiAuthToken,
-  UserProfile as ApiUserProfile,
-  UserRegistration as ApiUserRegistration,
-  WorkspaceRegistration,
-  
-  // Workspace types
-  Workspace,
-  WorkspaceCreate,
-  WorkspaceUpdate,
-  WorkspaceStatistics,
-  
-  // Venue types
-  Venue,
-  VenueCreate,
-  VenueUpdate,
-  VenueAnalytics,
-  VenueStatus,
-  VenueLocation,
-  OperatingHours,
-  
-  // Menu types
-  MenuCategory as ApiMenuCategory,
-  MenuItem as ApiMenuItem,
-  MenuCategoryCreate as ApiMenuCategoryCreate,
-  MenuItemCreate as ApiMenuItemCreate,
-  MenuItemUpdate as ApiMenuItemUpdate,
-  
-  // Table types
-  Table as ApiTable,
-  TableCreate,
-  TableUpdate,
-  TableQRCode,
-  QRCodeVerification,
-  TableStatus,
-  
-  // Order types
-  Order as ApiOrder,
-  OrderCreate as ApiOrderCreate,
-  OrderUpdate as ApiOrderUpdate,
-  OrderItem as ApiOrderItem,
-  OrderItemCreate as ApiOrderItemCreate,
-  PublicOrderCreate,
-  CustomerCreate,
-  OrderValidation,
-  OrderReceipt,
-  OrderStatus as ApiOrderStatus,
-  PaymentStatus as ApiPaymentStatus,
-  PaymentMethod as ApiPaymentMethod,
-  OrderType,
-  
-  // Dashboard types
-  DashboardData,
-  SuperAdminDashboard,
-  AdminDashboard,
-  OperatorDashboard,
-  LiveOrderData,
-  VenueAnalyticsData,
-  
-  // User types
-  User as ApiUser,
-  UserCreate as ApiUserCreate,
-  UserUpdate as ApiUserUpdate,
-  UserRole as ApiUserRole,
-  
-  // Validation types
-  ValidationResponse,
-  WorkspaceValidation,
-  
-  // Filter types
-  PaginationParams as ApiPaginationParams,
-  VenueFilters as ApiVenueFilters,
-  MenuFilters as ApiMenuFilters,
-  OrderFilters,
-  TableFilters,
-  UserFilters,
-  
-  // Error types
-  ApiError,
-  ErrorCode
-} from './api';
+// Re-export all API types
+export * from './api';
 
-// Legacy User and Authentication Types (for backward compatibility)
-export interface UserProfile {
+// Main UserProfile type (from API)
+export type { UserProfile } from './api';
+
+// Legacy compatibility types - use API types instead
+export interface LegacyUserProfile {
   id: string;
   email: string;
   phone?: string;
@@ -110,9 +28,9 @@ export interface UserProfile {
   totalOrders?: number;
   totalSpent?: number;
   workspaceId?: string;
-  workspace_id?: string; // Add for compatibility
+  workspace_id?: string;
   cafeId?: string;
-  venue_id?: string; // Add for compatibility
+  venue_id?: string;
 }
 
 export interface UserAddress {
@@ -179,7 +97,7 @@ export type UserRole = 'customer' | 'admin' | 'cafe_owner' | 'staff' | 'superadm
 export type UserRoleName = UserRole;
 
 // Additional User Types
-export interface User extends UserProfile {}
+export interface User extends LegacyUserProfile {}
 
 export interface UserCreate extends UserRegistration {}
 
@@ -190,7 +108,7 @@ export interface AuthToken {
   refresh_token?: string;
   token_type: string;
   expires_in: number;
-  user: UserProfile;
+  user: LegacyUserProfile;
 }
 
 // Cafe Types
@@ -431,11 +349,11 @@ export type PaymentMethod =
 
 // Context Types
 export interface AuthContextType {
-  user: UserProfile | null;
+  user: LegacyUserProfile | null;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: UserRegistration) => Promise<void>;
   logout: () => void;
-  updateUser: (userData: Partial<UserProfile>) => Promise<void>;
+  updateUser: (userData: Partial<LegacyUserProfile>) => Promise<void>;
   refreshUser: () => Promise<void>;
   loading: boolean;
   isLoading: boolean;

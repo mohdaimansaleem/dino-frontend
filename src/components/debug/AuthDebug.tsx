@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Card, CardContent, Chip } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
+import { getUserWorkspaceId, getUserVenueId } from '../../utils/userUtils';
 
 const AuthDebug: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -30,8 +31,8 @@ const AuthDebug: React.FC = () => {
               id: user.id,
               email: user.email,
               role: user.role,
-              workspaceId: user.workspaceId,
-              cafeId: user.cafeId,
+              workspaceId: getUserWorkspaceId(user),
+              venueId: getUserVenueId(user),
               venue_id: user.venue_id
             }, null, 2) : 'No user data'}
           </Typography>

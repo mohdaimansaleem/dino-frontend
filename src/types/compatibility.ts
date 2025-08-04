@@ -6,6 +6,7 @@
  */
 
 import type {
+  UserProfile,
   UserProfile as ApiUserProfile,
   MenuItem as ApiMenuItem,
   MenuCategory as ApiMenuCategory,
@@ -38,26 +39,31 @@ import type {
 /**
  * Convert API User Profile to Legacy User Profile
  */
-export const convertApiUserToLegacy = (apiUser: ApiUserProfile): LegacyUserProfile => {
+export const convertApiUserToLegacy = (apiUser: ApiUserProfile): UserProfile => {
   return {
     id: apiUser.id,
     email: apiUser.email,
     phone: apiUser.phone,
     firstName: apiUser.first_name,
     lastName: apiUser.last_name,
-
+    first_name: apiUser.first_name,
+    last_name: apiUser.last_name,
     name: `${apiUser.first_name} ${apiUser.last_name}`.trim(),
     dateOfBirth: apiUser.date_of_birth ? new Date(apiUser.date_of_birth) : undefined,
+    date_of_birth: apiUser.date_of_birth,
     gender: apiUser.gender,
-    role: apiUser.role as LegacyUserRole,
+    role: apiUser.role as any,
     permissions: [], // Would need to be fetched separately
     profileImageUrl: undefined, // Not in API response
     isActive: apiUser.is_active,
+    is_active: apiUser.is_active,
     isVerified: true, // Assume verified if in system
     addresses: [], // Would need to be fetched separately
     preferences: undefined, // Would need to be fetched separately
     createdAt: new Date(apiUser.created_at),
+    created_at: apiUser.created_at,
     updatedAt: apiUser.updated_at ? new Date(apiUser.updated_at) : new Date(),
+    updated_at: apiUser.updated_at,
     lastLogin: undefined, // Not in API response
     loginCount: undefined, // Not in API response
     totalOrders: undefined, // Not in API response
@@ -72,20 +78,20 @@ export const convertApiUserToLegacy = (apiUser: ApiUserProfile): LegacyUserProfi
 /**
  * Convert Legacy User Profile to API User Profile
  */
-export const convertLegacyUserToApi = (legacyUser: LegacyUserProfile): Partial<ApiUserProfile> => {
+export const convertLegacyUserToApi = (legacyUser: UserProfile): Partial<ApiUserProfile> => {
   return {
     id: legacyUser.id,
     email: legacyUser.email,
     phone: legacyUser.phone,
-    first_name: legacyUser.firstName,
-    last_name: legacyUser.lastName,
+    first_name: legacyUser.first_name || legacyUser.firstName,
+    last_name: legacyUser.last_name || legacyUser.lastName,
     role: legacyUser.role as ApiUserRole,
-    workspace_id: legacyUser.workspaceId || legacyUser.workspace_id,
-    venue_id: legacyUser.cafeId || legacyUser.venue_id,
-    is_active: legacyUser.isActive,
-    created_at: legacyUser.createdAt.toISOString(),
-    updated_at: legacyUser.updatedAt?.toISOString(),
-    date_of_birth: legacyUser.dateOfBirth?.toISOString().split('T')[0],
+    workspace_id: legacyUser.workspace_id || legacyUser.workspaceId,
+    venue_id: legacyUser.venue_id || legacyUser.cafeId,
+    is_active: legacyUser.is_active ?? legacyUser.isActive,
+    created_at: legacyUser.created_at || legacyUser.createdAt?.toISOString(),
+    updated_at: legacyUser.updated_at || legacyUser.updatedAt?.toISOString(),
+    date_of_birth: legacyUser.date_of_birth || legacyUser.dateOfBirth?.toISOString().split('T')[0],
     gender: legacyUser.gender
   };
 };
@@ -276,11 +282,11 @@ export class UserAdapter {
   }
 
   get firstName(): string {
-    return isLegacyUser(this.user) ? this.user.firstName : this.user.first_name;
+    return this.user.firstName || this.user.first_name || '';
   }
 
   get lastName(): string {
-    return isLegacyUser(this.user) ? this.user.lastName : this.user.last_name;
+    return this.user.lastName || this.user.last_name || '';
   }
 
   get fullName(): string {
@@ -292,19 +298,15 @@ export class UserAdapter {
   }
 
   get isActive(): boolean {
-    return isLegacyUser(this.user) ? this.user.isActive : this.user.is_active;
+    return this.user.isActive ?? this.user.is_active ?? false;
   }
 
   get workspaceId(): string | undefined {
-    return isLegacyUser(this.user) 
-      ? (this.user.workspaceId || this.user.workspace_id)
-      : this.user.workspace_id;
+    return this.user.workspaceId || this.user.workspace_id;
   }
 
   get venueId(): string | undefined {
-    return isLegacyUser(this.user) 
-      ? (this.user.cafeId || this.user.venue_id)
-      : this.user.venue_id;
+    return this.user.cafeId || this.user.venue_id;
   }
 
   toLegacy(): LegacyUserProfile {
@@ -393,8 +395,8 @@ export const validateCompatibility = {
   user: (legacyUser: LegacyUserProfile, apiUser: ApiUserProfile): boolean => {
     return legacyUser.id === apiUser.id && 
            legacyUser.email === apiUser.email &&
-           legacyUser.firstName === apiUser.first_name &&
-           legacyUser.lastName === apiUser.last_name;
+           (legacyUser.firstName || legacyUser.first_name) === apiUser.first_name &&
+           (legacyUser.lastName || legacyUser.last_name) === apiUser.last_name;
   },
 
   menuItem: (legacyItem: LegacyMenuItem, apiItem: ApiMenuItem): boolean => {
