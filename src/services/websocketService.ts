@@ -3,6 +3,8 @@
  * Handles real-time communication with the backend
  */
 
+import { API_CONFIG, getWebSocketUrl } from '../config/api';
+
 interface WebSocketMessage {
   type: string;
   data?: any;
@@ -49,8 +51,7 @@ class WebSocketService {
     this.isConnecting = true;
     this.shouldReconnect = true;
 
-    const baseUrl = process.env.REACT_APP_WS_BASE_URL || 
-                   (process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000').replace('http', 'ws');
+    const baseUrl = API_CONFIG.BASE_DOMAIN;
     
     const wsUrl = `${baseUrl}/ws/venue/${venueId}?token=${token}`;
 
@@ -76,8 +77,7 @@ class WebSocketService {
     this.isConnecting = true;
     this.shouldReconnect = true;
 
-    const baseUrl = process.env.REACT_APP_WS_BASE_URL || 
-                   (process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000').replace('http', 'ws');
+    const baseUrl = API_CONFIG.BASE_DOMAIN;
     
     const wsUrl = `${baseUrl}/ws/user/${userId}?token=${token}`;
 

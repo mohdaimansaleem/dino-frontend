@@ -85,11 +85,12 @@ export const config = {
     i18n: getBooleanEnvVar('REACT_APP_ENABLE_I18N', false),
   },
 
-  // API Configuration
+  // API Configuration (imported from centralized config)
   api: {
-    baseUrl: getEnvVar('REACT_APP_API_BASE_URL', 'http://localhost:8000/api/v1'),
-    timeout: getNumberEnvVar('REACT_APP_API_TIMEOUT', 30000),
-    rateLimit: getNumberEnvVar('REACT_APP_API_RATE_LIMIT', 100),
+    baseUrl: (() => {
+      const { getApiBaseUrl } = require('./api');
+      return getApiBaseUrl();
+    })(),
   },
 
   // Authentication & Security

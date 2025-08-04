@@ -1,4 +1,5 @@
 import { AppNotification, NotificationTypeEnum } from '../types';
+import { API_CONFIG } from '../config/api';
 
 type NotificationCallback = (notification: AppNotification) => void;
 type ConnectionCallback = (connected: boolean) => void;
@@ -30,7 +31,7 @@ class NotificationService {
     }
 
     try {
-      const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
+      const wsUrl = API_CONFIG.WS_URL;
       this.ws = new WebSocket(`${wsUrl}?token=${token}`);
 
       this.ws.onopen = () => {

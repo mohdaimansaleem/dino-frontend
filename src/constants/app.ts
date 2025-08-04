@@ -16,12 +16,14 @@ export const STORAGE_KEYS = {
   PREFERENCES: 'dino_preferences',
 } as const;
 
-// API Configuration
+// API Configuration (imported from centralized config)
+import { API_CONFIG as CENTRALIZED_API_CONFIG } from '../config/api';
+
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1',
-  TIMEOUT: 10000, // 10 seconds
-  RETRY_ATTEMPTS: 3,
-  RETRY_DELAY: 1000, // 1 second
+  BASE_URL: CENTRALIZED_API_CONFIG.BASE_URL,
+  TIMEOUT: CENTRALIZED_API_CONFIG.TIMEOUT,
+  RETRY_ATTEMPTS: CENTRALIZED_API_CONFIG.RETRY_ATTEMPTS,
+  RETRY_DELAY: CENTRALIZED_API_CONFIG.RETRY_DELAY,
 } as const;
 
 // Route Paths

@@ -214,18 +214,21 @@ export const checkServiceHealth = async (): Promise<{
   return results;
 };
 
+// Import centralized API configuration
+import { API_CONFIG } from '../config/api';
+
 /**
  * Service Configuration
  * 
  * Provides configuration options for all services
  */
 export const serviceConfig = {
-  // API configuration
+  // API configuration (from centralized config)
   api: {
-    baseUrl: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1',
-    timeout: 30000,
-    retryAttempts: 3,
-    retryDelay: 1000
+    baseUrl: API_CONFIG.BASE_URL,
+    timeout: API_CONFIG.TIMEOUT,
+    retryAttempts: API_CONFIG.RETRY_ATTEMPTS,
+    retryDelay: API_CONFIG.RETRY_DELAY
   },
   
   // Authentication configuration

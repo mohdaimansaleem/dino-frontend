@@ -4,8 +4,40 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build',
-      '--build-arg', 'REACT_APP_API_BASE_URL=https://dino-backend-$PROJECT_ID.a.run.app/api/v1',
+      '--build-arg', 'REACT_APP_API_BASE_URL=https://dino-backend-api-867506203789.us-central1.run.app/api/v1',
+      '--build-arg', 'REACT_APP_WS_URL=wss://dino-backend-api-867506203789.us-central1.run.app/ws',
       '--build-arg', 'REACT_APP_ENV=production',
+      '--build-arg', 'REACT_APP_NAME=Dino',
+      '--build-arg', 'REACT_APP_VERSION=1.0.0',
+      '--build-arg', 'REACT_APP_DEBUG_MODE=false',
+      '--build-arg', 'REACT_APP_ENABLE_THEME_TOGGLE=true',
+      '--build-arg', 'REACT_APP_ENABLE_DEMO_MODE=false',
+      '--build-arg', 'REACT_APP_ENABLE_ANALYTICS=true',
+      '--build-arg', 'REACT_APP_ENABLE_QR_CODES=true',
+      '--build-arg', 'REACT_APP_ENABLE_NOTIFICATIONS=true',
+      '--build-arg', 'REACT_APP_API_TIMEOUT=30000',
+      '--build-arg', 'REACT_APP_JWT_EXPIRY_HOURS=24',
+      '--build-arg', 'REACT_APP_SESSION_TIMEOUT_MINUTES=60',
+      '--build-arg', 'REACT_APP_MIN_PASSWORD_LENGTH=8',
+      '--build-arg', 'REACT_APP_DEFAULT_THEME=light',
+      '--build-arg', 'REACT_APP_ENABLE_ANIMATIONS=true',
+      '--build-arg', 'REACT_APP_LOG_LEVEL=info',
+      '--build-arg', 'REACT_APP_ENABLE_CONSOLE_LOGGING=false',
+      # Additional feature flags
+      '--build-arg', 'REACT_APP_ENABLE_I18N=false',
+      '--build-arg', 'REACT_APP_API_RATE_LIMIT=100',
+      # Chart configuration
+      '--build-arg', 'REACT_APP_CHART_ANIMATION_INTERVAL=30000',
+      '--build-arg', 'REACT_APP_CHART_ANIMATION_DURATION=1000',
+      '--build-arg', 'REACT_APP_CHART_ANIMATION_EASING=easeInOutQuart',
+      '--build-arg', 'REACT_APP_CHART_ANIMATIONS_ENABLED=true',
+      '--build-arg', 'REACT_APP_CHART_AUTO_REFRESH_ENABLED=true',
+      # Performance settings
+      '--build-arg', 'REACT_APP_ENABLE_IMAGE_OPTIMIZATION=true',
+      '--build-arg', 'REACT_APP_ENABLE_SERVICE_WORKER=true',
+      # Development settings (disabled in production)
+      '--build-arg', 'REACT_APP_ENABLE_HOT_RELOAD=false',
+      '--build-arg', 'REACT_APP_GENERATE_SOURCEMAP=false',
       '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/dino-repo/dino-frontend:$BUILD_ID',
       '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/dino-repo/dino-frontend:latest',
       '.'

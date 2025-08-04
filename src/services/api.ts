@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { ApiResponse } from '../types';
+import { API_CONFIG } from '../config/api';
 
 class ApiService {
   private api: AxiosInstance;
@@ -11,11 +12,9 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1',
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      baseURL: API_CONFIG.BASE_URL,
+      timeout: API_CONFIG.TIMEOUT,
+      headers: API_CONFIG.DEFAULT_HEADERS,
     });
 
     this.setupInterceptors();
