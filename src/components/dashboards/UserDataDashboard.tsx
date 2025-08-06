@@ -25,7 +25,7 @@ import {
   Edit,
   Add,
   Dashboard as DashboardIcon,
-  BugReport,
+
   Restaurant,
   TableBar,
   Receipt,
@@ -33,7 +33,6 @@ import {
 } from '@mui/icons-material';
 import { useUserData } from '../../contexts/UserDataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import WorkspaceDebug from '../debug/WorkspaceDebug';
 
 interface UserDataDashboardProps {
   className?: string;
@@ -130,7 +129,6 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
           <Tab label="Tables" />
           <Tab label="Recent Orders" />
           {hasPermission('can_manage_users') && <Tab label="Users" />}
-          <Tab label="Debug" icon={<BugReport />} />
         </Tabs>
       </Box>
 
@@ -242,7 +240,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {recentOrders.slice(0, 5).map((order) => (
+                      {recentOrders.slice(0, 5).map((order: any) => (
                         <TableRow key={order.id}>
                           <TableCell>#{order.id.slice(-6)}</TableCell>
                           <TableCell>Table {order.table_number || 'N/A'}</TableCell>
@@ -323,7 +321,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {menuItems.slice(0, 10).map((item) => (
+                    {menuItems.slice(0, 10).map((item: any) => (
                       <TableRow key={item.id}>
                         <TableCell>{item.name}</TableCell>
                         <TableCell>{item.category}</TableCell>
@@ -415,7 +413,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {tables.map((table) => (
+                    {tables.map((table: any) => (
                       <TableRow key={table.id}>
                         <TableCell>{table.table_number}</TableCell>
                         <TableCell>{table.capacity} seats</TableCell>
@@ -492,7 +490,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {recentOrders.map((order) => (
+                    {recentOrders.map((order: any) => (
                       <TableRow key={order.id}>
                         <TableCell>#{order.id.slice(-6)}</TableCell>
                         <TableCell>{order.customer_name || 'Guest'}</TableCell>
@@ -572,7 +570,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {users.map((user) => (
+                    {users.map((user: any) => (
                       <TableRow key={user.id}>
                         <TableCell>{user.first_name} {user.last_name}</TableCell>
                         <TableCell>{user.email}</TableCell>
@@ -609,11 +607,6 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
             )}
           </CardContent>
         </Card>
-      )}
-
-      {/* Debug Tab */}
-      {currentTab === (hasPermission('can_manage_users') ? 5 : 4) && (
-        <WorkspaceDebug />
       )}
     </Box>
   );

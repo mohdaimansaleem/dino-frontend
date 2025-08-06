@@ -141,7 +141,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }
 
     // Determine venue ID
-    const targetVenueId = venueId || user.venue_id || user.cafeId;
+    const targetVenueId = venueId || user.venue_id || user.venueId;
     
     if (targetVenueId) {
       // Connect to venue WebSocket for venue-specific updates

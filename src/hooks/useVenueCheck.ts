@@ -1,4 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
+import { useUserData } from '../contexts/UserDataContext';
 
 interface VenueCheckResult {
   hasVenueAssigned: boolean;
@@ -8,13 +9,14 @@ interface VenueCheckResult {
 }
 
 export const useVenueCheck = (): VenueCheckResult => {
-  const { user, isSuperAdmin } = useAuth();
+  const { isSuperAdmin } = useAuth();
+  const { userData, hasVenue } = useUserData();
   
-  // Get venue ID from user data
-  const venueId = user?.venue_id || user?.cafeId || null;
+  // Get venue ID from user data context
+  const venueId = userData?.venue?.id || null;
   
-  // Check if user has venue assigned
-  const hasVenueAssigned = !!venueId;
+  // Check if user has venue assigned using the new structure
+  const hasVenueAssigned = hasVenue();
   
   // Super admins can bypass venue checks for most operations
   const canBypassVenueCheck = isSuperAdmin();

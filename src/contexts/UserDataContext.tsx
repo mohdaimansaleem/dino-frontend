@@ -13,12 +13,13 @@ interface UserDataContextType {
   refreshUserData: () => Promise<void>;
   
   // Convenience methods
-  hasPermission: (permission: keyof UserData['permissions']) => boolean;
+  hasPermission: (permission: string) => boolean;
   getUserRole: () => string;
   isSuperAdmin: () => boolean;
   isAdmin: () => boolean;
   isOperator: () => boolean;
   getVenueDisplayName: () => string;
+  hasVenue: () => boolean;
   getWorkspaceDisplayName: () => string;
   getUserDisplayName: () => string;
   getVenueStatsSummary: () => string;
@@ -27,12 +28,12 @@ interface UserDataContextType {
   getUser: () => UserData['user'] | null;
   getVenue: () => UserData['venue'] | null;
   getWorkspace: () => UserData['workspace'] | null;
-  getStatistics: () => UserData['statistics'] | null;
-  getMenuItems: () => UserData['menu_items'];
-  getTables: () => UserData['tables'];
-  getRecentOrders: () => UserData['recent_orders'];
-  getUsers: () => UserData['users'];
-  getPermissions: () => UserData['permissions'] | null;
+  getStatistics: () => any | null;
+  getMenuItems: () => any[];
+  getTables: () => any[];
+  getRecentOrders: () => any[];
+  getUsers: () => any[];
+  getPermissions: () => any | null;
 }
 
 const UserDataContext = createContext<UserDataContextType | undefined>(undefined);
@@ -46,39 +47,58 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
   
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   // Load user data when authenticated
-  const loadUserData = useCallback(async () => {
-    if (!isAuthenticated || !user) {
-      console.log('User not authenticated, skipping user data loading');
+  const loadUserData = useCallback(async (force: boolean = false) => {
+    if (!isAuthenticated) {
       setUserData(null);
+      setInitialized(true);
+      return;
+    }
+
+    // Check if we have a token
+    const token = localStorage.getItem('dino_token');
+    if (!token) {
+      setUserData(null);
+      setInitialized(true);
       return;
     }
 
     setLoading(true);
     try {
-      console.log('Loading user data...');
       const data = await userDataService.getUserData();
       setUserData(data);
-      console.log('User data loaded successfully');
+      setInitialized(true);
     } catch (error: any) {
       console.error('Error loading user data:', error);
       setUserData(null);
-      
-      // Don't throw error here, let components handle the null state
+      setInitialized(true);
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, initialized]);
 
   // Initialize user data when authentication changes
   useEffect(() => {
-    loadUserData();
-  }, [loadUserData]);
+    if (isAuthenticated && !initialized) {
+      loadUserData(true);
+    } else if (!isAuthenticated && initialized) {
+      setUserData(null);
+      setInitialized(false);
+    }
+  }, [isAuthenticated, user, initialized, loadUserData]);
+
+  // Additional effect to ensure data is loaded after login
+  useEffect(() => {
+    if (isAuthenticated && user && !userData && !loading) {
+      loadUserData(true);
+    }
+  }, [isAuthenticated, user, userData, loading, loadUserData]);
 
   // Refresh user data
   const refreshUserData = async () => {
-    await loadUserData();
+    await loadUserData(true);
   };
 
   // SECURITY FIX: Venue switching functionality removed
@@ -86,7 +106,7 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
   // Users should only access their assigned venue
 
   // Convenience methods
-  const hasPermission = (permission: keyof UserData['permissions']): boolean => {
+  const hasPermission = (permission: string): boolean => {
     return userDataService.hasPermission(userData, permission);
   };
 
@@ -110,6 +130,10 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
     return userDataService.getVenueDisplayName(userData);
   };
 
+  const hasVenue = (): boolean => {
+    return userData?.venue !== null && userData?.venue !== undefined;
+  };
+
   const getWorkspaceDisplayName = (): string => {
     return userDataService.getWorkspaceDisplayName(userData);
   };
@@ -126,12 +150,12 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
   const getUser = () => userData?.user || null;
   const getVenue = () => userData?.venue || null;
   const getWorkspace = () => userData?.workspace || null;
-  const getStatistics = () => userData?.statistics || null;
-  const getMenuItems = () => userData?.menu_items || [];
-  const getTables = () => userData?.tables || [];
-  const getRecentOrders = () => userData?.recent_orders || [];
-  const getUsers = () => userData?.users || [];
-  const getPermissions = () => userData?.permissions || null;
+  const getStatistics = () => null; // Simplified - no statistics in new structure
+  const getMenuItems = () => []; // Simplified - no menu items in new structure
+  const getTables = () => []; // Simplified - no tables in new structure
+  const getRecentOrders = () => []; // Simplified - no recent orders in new structure
+  const getUsers = () => []; // Simplified - no users in new structure
+  const getPermissions = () => null; // Simplified - no permissions in new structure
 
   const value: UserDataContextType = {
     userData,
@@ -146,6 +170,7 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
     getWorkspaceDisplayName,
     getUserDisplayName,
     getVenueStatsSummary,
+    hasVenue,
     getUser,
     getVenue,
     getWorkspace,

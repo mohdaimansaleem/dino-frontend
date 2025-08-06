@@ -72,8 +72,8 @@ export const LazyWorkspaceManagement = React.lazy(() =>
   }))
 );
 
-export const LazyCafeSettings = React.lazy(() => 
-  import('../pages/admin/CafeSettings').then(module => ({
+export const LazyVenueSettings = React.lazy(() => 
+  import('../pages/admin/VenueSettings').then(module => ({
     default: module.default
   }))
 );
@@ -131,7 +131,7 @@ export const MenuManagement = withLazyLoading(LazyMenuManagement, 'Loading Menu 
 export const TableManagement = withLazyLoading(LazyTableManagement, 'Loading Table Management...');
 export const UserManagement = withLazyLoading(LazyUserManagement, 'Loading User Management...');
 export const WorkspaceManagement = withLazyLoading(LazyWorkspaceManagement, 'Loading Workspace Management...');
-export const CafeSettings = withLazyLoading(LazyCafeSettings, 'Loading Cafe Settings...');
+export const VenueSettings = withLazyLoading(LazyVenueSettings, 'Loading Venue Settings...');
 export const UserPermissionsDashboard = withLazyLoading(LazyUserPermissionsDashboard, 'Loading Permissions Dashboard...');
 
 export const MenuPage = withLazyLoading(LazyMenuPage, 'Loading Menu...');

@@ -120,9 +120,9 @@ class WorkspaceService {
     }
   }
 
-  async getCafe(cafeId: string): Promise<Venue | null> {
+  async getVenue(venueId: string): Promise<Venue | null> {
     try {
-      const response = await apiService.get<Venue>(`/venues/${cafeId}`);
+      const response = await apiService.get<Venue>(`/venues/${venueId}`);
       if (response.success && response.data) {
         return response.data;
       }
@@ -145,7 +145,7 @@ class WorkspaceService {
     }
   }
 
-  async createCafe(cafeData: {
+  async createVenue(venueData: {
     name: string;
     description?: string;
     address: string;
@@ -153,45 +153,45 @@ class WorkspaceService {
     email: string;
     workspaceId: string;
   }): Promise<ApiResponse<Venue>> {
-    const venueData = {
-      name: cafeData.name,
-      description: cafeData.description,
+    const apiVenueData = {
+      name: venueData.name,
+      description: venueData.description,
       location: {
-        address: cafeData.address,
+        address: venueData.address,
         city: '',
         state: '',
         country: 'India',
         postal_code: ''
       },
-      phone: cafeData.phone,
-      email: cafeData.email,
-      workspace_id: cafeData.workspaceId
+      phone: venueData.phone,
+      email: venueData.email,
+      workspace_id: venueData.workspaceId
     };
-    return await apiService.post<Venue>('/venues', venueData);
+    return await apiService.post<Venue>('/venues', apiVenueData);
   }
 
-  async updateCafe(cafeId: string, cafeData: Partial<Venue>): Promise<ApiResponse<Venue>> {
-    return await apiService.put<Venue>(`/venues/${cafeId}`, cafeData);
+  async updateVenue(venueId: string, venueData: Partial<Venue>): Promise<ApiResponse<Venue>> {
+    return await apiService.put<Venue>(`/venues/${venueId}`, venueData);
   }
 
-  async deleteCafe(cafeId: string): Promise<ApiResponse<void>> {
-    return await apiService.delete<void>(`/venues/${cafeId}`);
+  async deleteVenue(venueId: string): Promise<ApiResponse<void>> {
+    return await apiService.delete<void>(`/venues/${venueId}`);
   }
 
-  async activateCafe(cafeId: string): Promise<ApiResponse<void>> {
-    return await apiService.post<void>(`/venues/${cafeId}/activate`);
+  async activateVenue(venueId: string): Promise<ApiResponse<void>> {
+    return await apiService.post<void>(`/venues/${venueId}/activate`);
   }
 
-  async deactivateCafe(cafeId: string): Promise<ApiResponse<void>> {
-    return await apiService.post<void>(`/venues/${cafeId}/deactivate`);
+  async deactivateVenue(venueId: string): Promise<ApiResponse<void>> {
+    return await apiService.post<void>(`/venues/${venueId}/deactivate`);
   }
 
-  async toggleCafeStatus(cafeId: string, isOpen: boolean): Promise<ApiResponse<void>> {
-    return await apiService.post<void>(`/venues/${cafeId}/toggle-status`, { is_open: isOpen });
+  async toggleVenueStatus(venueId: string, isOpen: boolean): Promise<ApiResponse<void>> {
+    return await apiService.post<void>(`/venues/${venueId}/toggle-status`, { is_open: isOpen });
   }
 
-  // Add missing getCafes method for backward compatibility
-  async getCafes(workspaceId: string): Promise<Venue[]> {
+  // Venue methods (primary interface)
+  async getVenues(workspaceId: string): Promise<Venue[]> {
     return this.getWorkspaceVenues(workspaceId);
   }
 
@@ -207,7 +207,7 @@ class WorkspaceService {
         name: 'basic',
         displayName: 'Basic',
         price: 999,
-        maxCafes: 1,
+        maxVenues: 1,
         maxUsers: 5,
         features: [
           'QR Code Ordering',
@@ -222,7 +222,7 @@ class WorkspaceService {
         name: 'premium',
         displayName: 'Premium',
         price: 2999,
-        maxCafes: 5,
+        maxVenues: 5,
         maxUsers: 25,
         features: [
           'Everything in Basic',
@@ -238,7 +238,7 @@ class WorkspaceService {
         name: 'enterprise',
         displayName: 'Enterprise',
         price: 9999,
-        maxCafes: -1, // Unlimited
+        maxVenues: -1, // Unlimited
         maxUsers: -1, // Unlimited
         features: [
           'Everything in Premium',
@@ -276,7 +276,7 @@ class WorkspaceService {
   async inviteUser(workspaceId: string, userData: {
     email: string;
     role: string;
-    cafeId?: string;
+    venueId?: string;
   }): Promise<ApiResponse<void>> {
     return await apiService.post<void>(`/workspaces/${workspaceId}/invite`, userData);
   }
@@ -318,24 +318,26 @@ class WorkspaceService {
     return { isValid: true };
   }
 
-  validateCafeData(cafeData: any): { isValid: boolean; errors: string[] } {
+  validateVenueData(venueData: any): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    if (!cafeData.name || cafeData.name.trim().length < 2) {
-      errors.push('Cafe name must be at least 2 characters long');
+    if (!venueData.name || venueData.name.trim().length < 2) {
+      errors.push('Venue name must be at least 2 characters long');
     }
-    if (!cafeData.address || cafeData.address.trim().length < 5) {
+    if (!venueData.address || venueData.address.trim().length < 5) {
       errors.push('Address must be at least 5 characters long');
     }
-    if (!cafeData.phone || !/^[+]?[\d\s\-()]{10,}$/.test(cafeData.phone)) {
+    if (!venueData.phone || !/^[+]?[\d\s\-()]{10,}$/.test(venueData.phone)) {
       errors.push('Please enter a valid phone number');
     }
-    if (!cafeData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cafeData.email)) {
+    if (!venueData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venueData.email)) {
       errors.push('Please enter a valid email address');
     }
 
     return { isValid: errors.length === 0, errors };
   }
+
+
 
   // Debug methods
   async debugWorkspaces(): Promise<any> {

@@ -1,5 +1,11 @@
 import { AuthToken, UserProfile, UserRegistration, WorkspaceRegistration, ApiResponse } from '../types/api';
 import { apiService } from './api';
+import { 
+  loginWithHashedPassword, 
+  isPasswordHashingSupported,
+  changePasswordWithHashing,
+  registerWithHashedPassword
+} from '../utils/passwordHashing';
 
 class AuthService {
   private readonly TOKEN_KEY = 'dino_token';
@@ -8,26 +14,20 @@ class AuthService {
 
   async login(email: string, password: string, rememberMe: boolean = false): Promise<AuthToken> {
     try {
-      const response = await apiService.post<AuthToken>('/auth/login', {
-        email,
-        password,
-        remember_me: rememberMe
-      });
-      
-      // Handle direct AuthToken response from backend
-      let authToken: AuthToken;
-      if (response.success && response.data) {
-        authToken = response.data;
-      } else if (response && 'access_token' in response) {
-        // Direct response from backend without wrapper
-        authToken = response as any as AuthToken;
-      } else {
-        throw new Error(response.message || 'Login failed');
+      // MANDATORY: Check if password hashing is supported
+      if (!isPasswordHashingSupported()) {
+        throw new Error('Password hashing is not supported in this browser. Please use a modern browser with crypto.subtle support.');
       }
+
+      console.log("🔒 MANDATORY client-side password hashing for login");
+      
+      // ALWAYS hash password - NO FALLBACKS
+      const authToken = await loginWithHashedPassword(email, password);
       
       this.setTokens(authToken);
       return authToken;
     } catch (error: any) {
+      console.error('❌ Login failed:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Login failed');
     }
   }
@@ -48,14 +48,22 @@ class AuthService {
 
   async registerWorkspace(workspaceData: WorkspaceRegistration): Promise<ApiResponse<any>> {
     try {
-      const response = await apiService.post<any>('/auth/register', workspaceData);
-      
-      if (response.success && response.data) {
-        return response;
+      // MANDATORY: Check if password hashing is supported
+      if (!isPasswordHashingSupported()) {
+        throw new Error('Password hashing is not supported in this browser. Please use a modern browser with crypto.subtle support.');
       }
+
+      console.log("🔒 MANDATORY client-side password hashing for registration");
       
-      throw new Error(response.message || 'Workspace registration failed');
+      // ALWAYS hash password - NO FALLBACKS
+      const hashedResponse = await registerWithHashedPassword(workspaceData);
+      return {
+        success: true,
+        data: hashedResponse,
+        message: 'Registration successful'
+      };
     } catch (error: any) {
+      console.error('❌ Registration failed:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Workspace registration failed');
     }
   }
@@ -158,15 +166,22 @@ class AuthService {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     try {
-      const response = await apiService.post('/auth/change-password', {
-        current_password: currentPassword,
-        new_password: newPassword
-      });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to change password');
+      // MANDATORY: Check if password hashing is supported
+      if (!isPasswordHashingSupported()) {
+        throw new Error('Password hashing is not supported in this browser. Please use a modern browser with crypto.subtle support.');
       }
+
+      console.log("🔒 MANDATORY client-side password hashing for password change");
+      
+      const token = this.getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // ALWAYS hash passwords - NO FALLBACKS
+      await changePasswordWithHashing(currentPassword, newPassword, token);
     } catch (error: any) {
+      console.error('❌ Password change failed:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to change password');
     }
   }

@@ -65,7 +65,7 @@ import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
 
 const UserManagement: React.FC = () => {
   const { user: currentUser, hasPermission, getUserWithRole, isSuperAdmin, isAdmin } = useAuth();
-  const { currentWorkspace, currentCafe, cafes } = useWorkspace();
+  const { currentWorkspace, currentVenue, venues } = useWorkspace();
   const { 
     userData, 
     hasPermission: hasUserDataPermission, 
@@ -99,7 +99,7 @@ const UserManagement: React.FC = () => {
 
   useEffect(() => {
     loadUsers();
-  }, [currentWorkspace, currentCafe]);
+  }, [currentWorkspace, currentVenue]);
 
   const loadUsers = async () => {
     // Try to use userData first
@@ -122,7 +122,7 @@ const UserManagement: React.FC = () => {
     try {
       const filters = {
         workspace_id: currentWorkspace.id,
-        venue_id: currentCafe?.id,
+        venue_id: currentVenue?.id,
       };
       
       const usersData = await userService.getUsers(filters);
@@ -156,7 +156,7 @@ const UserManagement: React.FC = () => {
         phone: '',
         role_name: ROLES.OPERATOR as string,
         workspace_id: getWorkspace()?.id || currentWorkspace?.id || '',
-        venue_id: getVenue()?.id || currentCafe?.id || '',
+        venue_id: getVenue()?.id || currentVenue?.id || '',
         is_active: true,
       });
     }
@@ -647,19 +647,19 @@ const UserManagement: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            {cafes.length > 1 && (
+            {venues.length > 1 && (
               <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Cafe</InputLabel>
+                  <InputLabel>Venue</InputLabel>
                   <Select
                     value={formData.venue_id}
                     onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
-                    label="Cafe"
+                    label="Venue"
                   >
-                    <MenuItem value="">All Cafes</MenuItem>
-                    {cafes.map((cafe) => (
-                      <MenuItem key={cafe.id} value={cafe.id}>
-                        {cafe.name}
+                    <MenuItem value="">All Venues</MenuItem>
+                    {venues.map((venue) => (
+                      <MenuItem key={venue.id} value={venue.id}>
+                        {venue.name}
                       </MenuItem>
                     ))}
                   </Select>
