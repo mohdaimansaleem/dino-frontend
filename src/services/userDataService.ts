@@ -1,5 +1,6 @@
 import { apiService } from './api';
 import { ApiResponse } from '../types/api';
+import { ROLE_NAMES, isAdminLevel } from '../constants/roles';
 
 export interface UserData {
   user: {
@@ -230,7 +231,7 @@ class UserDataService {
    * Check if user is superadmin
    */
   isSuperAdmin(userData: UserData | null): boolean {
-    return this.getUserRole(userData) === 'superadmin';
+    return this.getUserRole(userData) === ROLE_NAMES.SUPERADMIN;
   }
 
   /**
@@ -238,14 +239,14 @@ class UserDataService {
    */
   isAdmin(userData: UserData | null): boolean {
     const role = this.getUserRole(userData);
-    return role === 'admin' || role === 'superadmin';
+    return isAdminLevel(role);
   }
 
   /**
    * Check if user is operator
    */
   isOperator(userData: UserData | null): boolean {
-    return this.getUserRole(userData) === 'operator';
+    return this.getUserRole(userData) === ROLE_NAMES.OPERATOR;
   }
 
   /**

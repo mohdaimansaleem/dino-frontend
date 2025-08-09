@@ -18,10 +18,7 @@ import {
   Alert,
   CircularProgress,
   LinearProgress,
-  Switch,
-  FormControlLabel,
-  Divider,
-  Avatar,
+
   Snackbar,
   useTheme,
   useMediaQuery,
@@ -38,8 +35,7 @@ import {
   Today,
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
-  CheckCircle,
-  Cancel,
+
   Settings,
   Refresh,
 } from '@mui/icons-material';
@@ -118,10 +114,10 @@ interface AdminDashboardResponse {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const { user, hasPermission, hasBackendPermission } = useAuth();
-  const { userData, loading: userDataLoading } = useUserData();
+  const { userData } = useUserData();
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const currentVenue = userData?.venue;
   const [loading, setLoading] = useState(false);
@@ -172,7 +168,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     } finally {
       setLoading(false);
     }
-  }, [currentVenue?.id]);
+  }, []);
 
   const loadChartData = useCallback(async () => {
     if (!currentVenue?.id) return;
@@ -234,7 +230,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     } finally {
       setChartLoading(false);
     }
-  }, [currentVenue?.id]);
+  }, []);
 
 
 
@@ -271,7 +267,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     } catch (error) {
       console.error('Error loading venue status:', error);
     }
-  }, [currentVenue?.id]);
+  }, []);
 
   useEffect(() => {
     if (currentVenue?.id) {
@@ -292,65 +288,65 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     };
   }, [currentVenue?.id, user, loadDashboardData, loadVenueStatus, loadChartData]);
 
-  const handleToggleVenueActive = async () => {
-    if (!currentVenue?.id || statusLoading) return;
+  // const handleToggleVenueActive = async () => {
+  //   if (!currentVenue?.id || statusLoading) return;
 
-    try {
-      setStatusLoading(true);
-      const newStatus = !venueActive;
+  //   try {
+  //     setStatusLoading(true);
+  //     const newStatus = !venueActive;
       
-      if (newStatus) {
-        await venueService.activateVenue(currentVenue.id);
-      } else {
-        await venueService.updateVenue(currentVenue.id, { is_active: false });
-      }
+  //     if (newStatus) {
+  //       await venueService.activateVenue(currentVenue.id);
+  //     } else {
+  //       await venueService.updateVenue(currentVenue.id, { is_active: false });
+  //     }
 
-      setVenueActive(newStatus);
-      setSnackbar({ 
-        open: true, 
-        message: `Venue ${newStatus ? 'activated' : 'deactivated'} successfully`, 
-        severity: 'success' 
-      });
-    } catch (error) {
-      console.error('Error toggling venue status:', error);
-      setSnackbar({ 
-        open: true, 
-        message: 'Failed to update venue status', 
-        severity: 'error' 
-      });
-    } finally {
-      setStatusLoading(false);
-    }
-  };
+  //     setVenueActive(newStatus);
+  //     setSnackbar({ 
+  //       open: true, 
+  //       message: `Venue ${newStatus ? 'activated' : 'deactivated'} successfully`, 
+  //       severity: 'success' 
+  //     });
+  //   } catch (error) {
+  //     console.error('Error toggling venue status:', error);
+  //     setSnackbar({ 
+  //       open: true, 
+  //       message: 'Failed to update venue status', 
+  //       severity: 'error' 
+  //     });
+  //   } finally {
+  //     setStatusLoading(false);
+  //   }
+  // };
 
-  const handleToggleVenueOpen = async () => {
-    if (!currentVenue?.id || statusLoading) return;
+  // const handleToggleVenueOpen = async () => {
+  //   if (!currentVenue?.id || statusLoading) return;
 
-    try {
-      setStatusLoading(true);
-      const newStatus = !venueOpen;
+  //   try {
+  //     setStatusLoading(true);
+  //     const newStatus = !venueOpen;
       
-      await venueService.updateVenue(currentVenue.id, { 
-        status: newStatus ? 'active' : 'closed' 
-      });
+  //     await venueService.updateVenue(currentVenue.id, { 
+  //       status: newStatus ? 'active' : 'closed' 
+  //     });
 
-      setVenueOpen(newStatus);
-      setSnackbar({ 
-        open: true, 
-        message: `Venue ${newStatus ? 'opened' : 'closed'} for orders`, 
-        severity: 'success' 
-      });
-    } catch (error) {
-      console.error('Error toggling venue open status:', error);
-      setSnackbar({ 
-        open: true, 
-        message: 'Failed to update venue open status', 
-        severity: 'error' 
-      });
-    } finally {
-      setStatusLoading(false);
-    }
-  };
+  //     setVenueOpen(newStatus);
+  //     setSnackbar({ 
+  //       open: true, 
+  //       message: `Venue ${newStatus ? 'opened' : 'closed'} for orders`, 
+  //       severity: 'success' 
+  //     });
+  //   } catch (error) {
+  //     console.error('Error toggling venue open status:', error);
+  //     setSnackbar({ 
+  //       open: true, 
+  //       message: 'Failed to update venue open status', 
+  //       severity: 'error' 
+  //     });
+  //   } finally {
+  //     setStatusLoading(false);
+  //   }
+  // };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -371,11 +367,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
            hasBackendPermission('venue.manage');
   };
 
-  const canViewDashboard = () => {
-    return hasPermission(PERMISSIONS.DASHBOARD_VIEW) || 
-           hasBackendPermission('dashboard.read') ||
-           hasBackendPermission('dashboard.view');
-  };
+  // const canViewDashboard = () => {
+  //   return hasPermission(PERMISSIONS.DASHBOARD_VIEW) || 
+  //          hasBackendPermission('dashboard.read') ||
+  //          hasBackendPermission('dashboard.view');
+  // };
 
   const canManageOrders = () => {
     return hasPermission(PERMISSIONS.ORDERS_VIEW) || 

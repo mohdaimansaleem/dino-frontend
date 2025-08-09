@@ -125,7 +125,7 @@ const HomePage: React.FC = () => {
   const benefits = BENEFITS;
 
   return (
-    <Box>
+    <Box className="page-content-with-navbar">
 
       {/* Hero Section */}
       <Box

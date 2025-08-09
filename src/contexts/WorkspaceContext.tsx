@@ -206,7 +206,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       } finally {
       setLoading(false);
     }
-  }, [user, loadVenuesForWorkspace]);
+  }, [user, loadVenuesForWorkspace, isAuthenticated]);
 
   // Initialize workspace data when user is authenticated
   useEffect(() => {

@@ -12,7 +12,6 @@ import { getConfigValue, getRuntimeConfig } from '../config/runtime';
 // Feature flag mapping
 type FeatureFlagKey = 
   | 'themeToggle'
-  | 'demoMode'
   | 'analytics'
   | 'qrCodes'
   | 'notifications'
@@ -23,7 +22,6 @@ type FeatureFlagKey =
 
 const FEATURE_FLAG_MAP: Record<FeatureFlagKey, string> = {
   themeToggle: 'ENABLE_THEME_TOGGLE',
-  demoMode: 'ENABLE_DEMO_MODE',
   analytics: 'ENABLE_ANALYTICS',
   qrCodes: 'ENABLE_QR_CODES',
   notifications: 'ENABLE_NOTIFICATIONS',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -86,7 +86,7 @@ interface CategoryType {
 }
 
 const MenuManagement: React.FC = () => {
-  const { getVenue, getMenuItems, getVenueDisplayName } = useUserData();
+  const { getVenue, getVenueDisplayName, userData, loading: userDataLoading } = useUserData();
   const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
   const [categories, setCategories] = useState<CategoryType[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -101,85 +101,106 @@ const MenuManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load menu data from API
+  // Simple approach: Load data on mount and when venue becomes available
   useEffect(() => {
     const loadMenuData = async () => {
+      console.log('=== MenuManagement useEffect triggered ===');
+      console.log('userDataLoading:', userDataLoading);
+      console.log('userData:', userData);
+      
+      // Don't proceed if UserDataContext is still loading
+      if (userDataLoading) {
+        console.log('UserDataContext still loading, skipping...');
+        return;
+      }
+
       const venue = getVenue();
+      console.log('getVenue() result:', venue);
       
       if (!venue?.id) {
+        console.log('No venue ID, setting error state');
         setError('No venue assigned to your account. Please contact support.');
         setLoading(false);
         return;
       }
 
+      console.log('Venue ID found:', venue.id, 'Starting API calls...');
+      
       try {
         setLoading(true);
         setError(null);
 
-        // Try to use menu items from user data first
-        const userDataMenuItems = getMenuItems();
-        if (userDataMenuItems && userDataMenuItems.length > 0) {
-          // Map user data menu items to component format
-          setMenuItems(userDataMenuItems.map((item: any) => ({
-            ...item,
-            price: item.base_price || item.price,
-            category: item.category_id || item.category,
-            isVeg: item.is_vegetarian || item.isVeg || false,
-            available: item.is_available !== undefined ? item.is_available : item.available,
-            isAvailable: item.is_available !== undefined ? item.is_available : item.available,
-            preparationTime: item.preparation_time_minutes || item.preparationTime || 15
-          } as unknown as MenuItemType)));
-        }
+        // Make API calls
+        console.log('Calling menuService.getMenuCategories...');
+        const categoriesPromise = menuService.getMenuCategories({ venue_id: venue.id });
+        
+        console.log('Calling menuService.getMenuItems...');
+        const menuItemsPromise = menuService.getMenuItems({ venue_id: venue.id });
 
-        // Load categories and menu items from API
         const [categoriesData, menuItemsData] = await Promise.all([
-          menuService.getMenuCategories({ venue_id: venue.id }),
-          userDataMenuItems && userDataMenuItems.length > 0 ? 
-            Promise.resolve({ data: userDataMenuItems }) : 
-            menuService.getMenuItems({ venue_id: venue.id })
+          categoriesPromise,
+          menuItemsPromise
         ]);
 
-        // Map API data to component types
-        setCategories(categoriesData.data.map((cat: any) => ({ 
-          ...cat, 
+        console.log('Raw API responses:');
+        console.log('categoriesData:', categoriesData);
+        console.log('menuItemsData:', menuItemsData);
+
+        // Process categories
+        const processedCategories = (categoriesData.data || []).map((cat: any) => ({
+          ...cat,
           active: true,
           order: 0,
           venueId: cat.venue_id
-        } as unknown as CategoryType)));
+        }));
+
+        // Process menu items
+        const processedMenuItems = (menuItemsData.data || []).map((item: any) => ({
+          ...item,
+          price: item.base_price,
+          category: item.category_id,
+          isVeg: item.is_vegetarian || false,
+          available: item.is_available,
+          isAvailable: item.is_available,
+          preparationTime: item.preparation_time_minutes || 15
+        }));
+
+        console.log('Processed data:');
+        console.log('processedCategories:', processedCategories);
+        console.log('processedMenuItems:', processedMenuItems);
+
+        // Update state
+        console.log('Updating state...');
+        setCategories(processedCategories);
+        setMenuItems(processedMenuItems);
         
-        if (!userDataMenuItems || userDataMenuItems.length === 0) {
-          setMenuItems(menuItemsData.data.map((item: any) => ({
-            ...item,
-            price: item.base_price,
-            category: item.category_id,
-            isVeg: item.is_vegetarian || false,
-            available: item.is_available,
-            isAvailable: item.is_available,
-            preparationTime: item.preparation_time_minutes || 15
-          } as unknown as MenuItemType)));
-        }
+        console.log('State updated! Categories:', processedCategories.length, 'Items:', processedMenuItems.length);
+        
       } catch (error) {
-        console.warn('Failed to load menu data:', error);
-        // Don't set error state - let the component show empty state gracefully
+        console.error('API Error:', error);
         setMenuItems([]);
         setCategories([]);
-        // Only show snackbar for actual API errors, not empty data
-        if (error && typeof error === 'object' && 'message' in error && 
-            typeof (error as any).message === 'string' &&
-            !(error as any).message.includes('No menu items found')) {
-          setSnackbar({ 
-            open: true, 
-            message: 'Unable to load menu data. You can still add new items.', 
-            severity: 'warning' 
-          });
-        }
+        setSnackbar({
+          open: true,
+          message: 'Failed to load menu data. Please try refreshing.',
+          severity: 'error'
+        });
       } finally {
+        console.log('Setting loading to false');
         setLoading(false);
       }
     };
 
-    loadMenuData();
-  }, [getVenue]);
+    // Add a small delay to ensure everything is ready
+    const timeoutId = setTimeout(loadMenuData, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [userDataLoading, userData]);
+
+  // Debug effect to track state changes
+  useEffect(() => {
+    console.log('State changed - Categories:', categories.length, 'MenuItems:', menuItems.length);
+  }, [categories, menuItems]);
 
   const handleAddItem = () => {
     setEditingItem(null);
@@ -373,7 +394,10 @@ const MenuManagement: React.FC = () => {
     }
   };
 
-  const filteredItems = menuItems.filter(item => {
+
+
+  // Filter menu items based on current filters
+  const filteredItems = menuItems.filter((item: MenuItemType) => {
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -386,6 +410,42 @@ const MenuManagement: React.FC = () => {
     
     return matchesCategory && matchesSearch && matchesVeg && matchesAvailability;
   });
+
+  // Debug filtering
+  console.log('Filtering debug:');
+  console.log('- Total menuItems:', menuItems.length);
+  console.log('- selectedCategory:', selectedCategory);
+  console.log('- searchTerm:', searchTerm);
+  console.log('- vegFilter:', vegFilter);
+  console.log('- availabilityFilter:', availabilityFilter);
+  console.log('- filteredItems:', filteredItems.length);
+  if (menuItems.length > 0 && filteredItems.length === 0) {
+    console.log('Items being filtered out:');
+    menuItems.forEach((item: MenuItemType, index: number) => {
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           item.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesVeg = vegFilter === 'all' || 
+                        (vegFilter === 'veg' && item.isVeg) || 
+                        (vegFilter === 'non-veg' && !item.isVeg);
+      const matchesAvailability = availabilityFilter === 'all' ||
+                                 (availabilityFilter === 'available' && (item.available ?? item.isAvailable)) ||
+                                 (availabilityFilter === 'unavailable' && !(item.available ?? item.isAvailable));
+      
+      console.log(`Item ${index}:`, {
+        name: item.name,
+        category: item.category,
+        isVeg: item.isVeg,
+        available: item.available,
+        isAvailable: item.isAvailable,
+        matchesCategory,
+        matchesSearch,
+        matchesVeg,
+        matchesAvailability,
+        passes: matchesCategory && matchesSearch && matchesVeg && matchesAvailability
+      });
+    });
+  }
 
   const getCategoryName = (categoryId: string) => {
     return categories.find(cat => cat.id === categoryId)?.name || 'Unknown';
@@ -435,6 +495,8 @@ const MenuManagement: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
+
+
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
@@ -838,10 +900,34 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
               fullWidth
               label="Price (₹)"
               type="number"
-              value={formData.price || 0}
-              onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+              value={formData.price === 0 ? '' : formData.price || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+              onFocus={(e) => {
+                if (e.target.value === '0') {
+                  e.target.select(); // Select all text so typing replaces it
+                }
+              }}
+              placeholder="0"
               InputProps={{
                 startAdornment: '₹',
+              }}
+              inputProps={{
+                min: 0,
+                step: 0.01,
+                onWheel: (e: any) => e.preventDefault(),
+                style: { MozAppearance: 'textfield' } // Remove spinner arrows in Firefox
+              }}
+              sx={{
+                '& input[type=number]': {
+                  '&::-webkit-outer-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                  '&::-webkit-inner-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                },
               }}
             />
           </Grid>
@@ -850,8 +936,32 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
               fullWidth
               label="Preparation Time (minutes)"
               type="number"
-              value={formData.preparationTime || 0}
-              onChange={(e) => setFormData(prev => ({ ...prev, preparationTime: parseInt(e.target.value) }))}
+              value={formData.preparationTime === 0 ? '' : formData.preparationTime || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, preparationTime: parseInt(e.target.value) || 0 }))}
+              onFocus={(e) => {
+                if (e.target.value === '0') {
+                  e.target.select(); // Select all text so typing replaces it
+                }
+              }}
+              placeholder="0"
+              inputProps={{
+                min: 0,
+                step: 1,
+                onWheel: (e: any) => e.preventDefault(),
+                style: { MozAppearance: 'textfield' } // Remove spinner arrows in Firefox
+              }}
+              sx={{
+                '& input[type=number]': {
+                  '&::-webkit-outer-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                  '&::-webkit-inner-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                },
+              }}
             />
           </Grid>
           <Grid item xs={12} md={4}>
@@ -859,8 +969,32 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
               fullWidth
               label="Calories (optional)"
               type="number"
-              value={formData.calories || ''}
+              value={formData.calories === 0 ? '' : formData.calories || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, calories: e.target.value ? parseInt(e.target.value) : undefined }))}
+              onFocus={(e) => {
+                if (e.target.value === '0') {
+                  e.target.select(); // Select all text so typing replaces it
+                }
+              }}
+              placeholder="Enter calories"
+              inputProps={{
+                min: 0,
+                step: 1,
+                onWheel: (e: any) => e.preventDefault(),
+                style: { MozAppearance: 'textfield' } // Remove spinner arrows in Firefox
+              }}
+              sx={{
+                '& input[type=number]': {
+                  '&::-webkit-outer-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                  '&::-webkit-inner-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                },
+              }}
             />
           </Grid>
           <Grid item xs={12} md={6}>

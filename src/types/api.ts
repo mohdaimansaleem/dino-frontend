@@ -344,7 +344,7 @@ export interface MenuItemUpdate {
 
 export interface Table {
   id: string;
-  table_number: number;
+  table_number: string;
   capacity: number;
   location?: string;
   venue_id: string;
@@ -358,14 +358,14 @@ export interface Table {
 export type TableStatus = 'available' | 'booked' | 'occupied' | 'maintenance' | 'out_of_service';
 
 export interface TableCreate {
-  table_number: number;
+  table_number: string;
   capacity: number;
   location?: string;
   venue_id: string;
 }
 
 export interface TableUpdate {
-  table_number?: number;
+  table_number?: string;
   capacity?: number;
   location?: string;
   table_status?: TableStatus;
@@ -377,13 +377,13 @@ export interface TableQRCode {
   qr_code: string;
   qr_code_url?: string;
   venue_id: string;
-  table_number: number;
+  table_number: string;
 }
 
 export interface QRCodeVerification {
   table_id: string;
   venue_id: string;
-  table_number: number;
+  table_number: string;
   is_valid: boolean;
 }
 
@@ -496,7 +496,7 @@ export interface OrderReceipt {
   total_amount: number;
   payment_status: PaymentStatus;
   order_date: string;
-  table_number?: number;
+  table_number?: string;
 }
 
 // =============================================================================

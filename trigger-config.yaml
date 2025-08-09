@@ -1,0 +1,18 @@
+# Cloud Build Trigger Configuration for GitHub
+# Use this to create or update your trigger
+
+name: dino-frontend-github-trigger
+description: "Auto-deploy Dino Frontend from GitHub"
+
+github:
+  owner: YOUR_GITHUB_USERNAME  # Replace with your GitHub username
+  name: YOUR_REPO_NAME         # Replace with your repository name
+  push:
+    branch: ^main$             # Trigger on pushes to main branch
+
+filename: cloudbuild.yaml      # This should be just "cloudbuild.yaml", not a full path
+
+# Optional: Add substitutions if needed
+substitutions:
+  _REGION: us-central1
+  _SERVICE_NAME: dino-frontend

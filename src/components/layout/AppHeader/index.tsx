@@ -8,8 +8,7 @@ import {
   Container,
   IconButton,
   useScrollTrigger,
-  Slide,
-
+  Avatar,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -29,6 +28,7 @@ import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import MobileMenu from '../MobileMenu';
 import { NAVIGATION, COMPANY_INFO } from '../../../data/info';
 import { getUserFirstName } from '../../../utils/userUtils';
+import { ROLE_NAMES, isAdminLevel } from '../../../constants/roles';
 
 interface AppHeaderProps {
   onSectionScroll?: (sectionId: string) => void;
@@ -42,9 +42,35 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
+  const [dinoAvatar, setDinoAvatar] = useState<string>('');
   
   // Feature flags
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
+
+  // Load dinosaur avatar from localStorage
+  useEffect(() => {
+    const savedAvatar = localStorage.getItem('dinoAvatar');
+    if (savedAvatar) {
+      setDinoAvatar(savedAvatar);
+    }
+    
+    // Listen for avatar updates
+    const handleStorageChange = () => {
+      const newAvatar = localStorage.getItem('dinoAvatar');
+      if (newAvatar) {
+        setDinoAvatar(newAvatar);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    // Also listen for custom events from the profile page
+    window.addEventListener('dinoAvatarUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('dinoAvatarUpdated', handleStorageChange);
+    };
+  }, []);
 
   // Scroll trigger for navbar background
   const trigger = useScrollTrigger({
@@ -167,8 +193,24 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
           <NotificationCenter />
           <Button
             color="inherit"
-            onClick={() => navigate(user.role === 'admin' ? '/admin' : '/profile')}
-            startIcon={<AccountCircle />}
+            onClick={() => navigate(isAdminLevel(user.role) ? '/admin' : '/profile')}
+            startIcon={
+              dinoAvatar ? (
+                <Avatar 
+                  src={dinoAvatar} 
+                  sx={{ 
+                    width: 24, 
+                    height: 24,
+                    border: '1px solid',
+                    borderColor: 'primary.main'
+                  }}
+                >
+                  🦕
+                </Avatar>
+              ) : (
+                <AccountCircle />
+              )
+            }
             sx={{
               color: 'text.primary',
               textTransform: 'none',
@@ -275,7 +317,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
           borderBottom: trigger || isAdminRoute ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
           color: 'text.primary',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          zIndex: 1300,
+          zIndex: 1200,
           top: 0,
           left: 0,
           right: 0,
@@ -298,7 +340,15 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                   },
                   transition: 'opacity 0.3s ease',
                 }}
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  if (user) {
+                    // Redirect all logged-in users to dashboard page
+                    navigate('/admin');
+                  } else {
+                    // Redirect non-logged-in users to home page
+                    navigate('/');
+                  }
+                }}
               >
                 <DinoLogo size={isMobile ? 35 : 45} animated={true} />
                 <Box sx={{ minWidth: 0, flex: 1 }}>

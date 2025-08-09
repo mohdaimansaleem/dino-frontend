@@ -76,7 +76,7 @@ const CustomerNavbar: React.FC<CustomerNavbarProps> = ({
 
   return (
     <AppBar 
-      position="sticky" 
+      position="fixed" 
       elevation={1}
       sx={{ 
         backgroundColor: 'white',
@@ -84,6 +84,9 @@ const CustomerNavbar: React.FC<CustomerNavbarProps> = ({
         borderBottom: '1px solid #E0E0E0',
         borderRadius: 0,
         zIndex: 1100,
+        top: 0,
+        left: 0,
+        right: 0,
       }}
     >
       <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 } }}>

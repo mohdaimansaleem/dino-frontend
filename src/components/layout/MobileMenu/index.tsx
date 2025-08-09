@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Drawer,
   List,
@@ -25,6 +25,7 @@ import {
 } from '@mui/icons-material';
 import DinoLogo from '../../DinoLogo';
 import { getUserFirstName } from '../../../utils/userUtils';
+import { ROLE_NAMES, isAdminLevel } from '../../../constants/roles';
 
 interface MobileMenuProps {
   open: boolean;
@@ -53,6 +54,32 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   onNavigate,
   isHomePage,
 }) => {
+  const [dinoAvatar, setDinoAvatar] = useState<string>('');
+
+  // Load dinosaur avatar from localStorage
+  useEffect(() => {
+    const savedAvatar = localStorage.getItem('dinoAvatar');
+    if (savedAvatar) {
+      setDinoAvatar(savedAvatar);
+    }
+    
+    // Listen for avatar updates
+    const handleStorageChange = () => {
+      const newAvatar = localStorage.getItem('dinoAvatar');
+      if (newAvatar) {
+        setDinoAvatar(newAvatar);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('dinoAvatarUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('dinoAvatarUpdated', handleStorageChange);
+    };
+  }, []);
+
   const handleSectionClick = (sectionId: string) => {
     onSectionClick(sectionId);
     onClose();
@@ -69,12 +96,23 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
       open={open}
       onClose={onClose}
       sx={{
+        zIndex: 1300,
         '& .MuiDrawer-paper': {
-          width: 320,
+          width: { xs: '100vw', sm: 320 },
+          maxWidth: 320,
           backgroundColor: 'background.paper',
           backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.9) 100%)',
           backdropFilter: 'blur(20px)',
           borderLeft: '1px solid rgba(0, 0, 0, 0.08)',
+          marginTop: { xs: '56px', sm: '64px', md: '70px' },
+          height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)', md: 'calc(100vh - 70px)' },
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
+        },
+        '& .MuiBackdrop-root': {
+          marginTop: { xs: '56px', sm: '64px', md: '70px' },
         },
       }}
     >
@@ -127,13 +165,16 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
               <Avatar
+                src={dinoAvatar || undefined}
                 sx={{
-                  backgroundColor: 'primary.main',
+                  backgroundColor: dinoAvatar ? 'transparent' : 'primary.main',
                   width: 40,
                   height: 40,
+                  border: dinoAvatar ? '2px solid' : 'none',
+                  borderColor: 'primary.main',
                 }}
               >
-                <AccountCircle />
+                {dinoAvatar ? '🦕' : <AccountCircle />}
               </Avatar>
               <Box sx={{ flex: 1 }}>
                 <Typography variant="subtitle1" fontWeight={600} color="text.primary">
@@ -153,7 +194,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 size="small"
                 variant="outlined"
                 startIcon={<Dashboard />}
-                onClick={() => handleNavigate(user.role === 'admin' ? '/admin' : '/profile')}
+                onClick={() => handleNavigate(isAdminLevel(user.role) ? '/admin' : '/profile')}
                 sx={{ flex: 1, textTransform: 'none' }}
               >
                 Dashboard

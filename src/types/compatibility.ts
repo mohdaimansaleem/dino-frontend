@@ -192,7 +192,7 @@ export const convertApiOrderItemToLegacy = (apiItem: ApiOrderItem): LegacyOrderI
 export const convertApiTableToLegacy = (apiTable: ApiTable): LegacyTable => {
   return {
     id: apiTable.id,
-    tableNumber: apiTable.table_number,
+    tableNumber: parseInt(apiTable.table_number) || 0,
     qrCode: apiTable.qr_code,
     qrCodeUrl: '', // Would need to be generated
     venueId: apiTable.venue_id,

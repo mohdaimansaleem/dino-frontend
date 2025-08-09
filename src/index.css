@@ -704,6 +704,69 @@ select:focus-visible {
   }
 }
 
+/* Fix mobile navigation overlapping issues */
+@media (max-width: 899px) {
+  /* Ensure proper spacing for fixed headers */
+  .page-content-with-navbar {
+    padding-top: 56px !important;
+    min-height: calc(100vh - 56px) !important;
+  }
+  
+  .page-content-with-customer-navbar {
+    padding-top: 0px !important; /* Remove padding since we handle it in component */
+    min-height: 100vh !important;
+  }
+  
+  /* Fix mobile drawer positioning */
+  .MuiDrawer-root {
+    z-index: 1300 !important;
+  }
+  
+  .MuiDrawer-paper {
+    margin-top: 56px !important;
+    height: calc(100vh - 56px) !important;
+  }
+  
+  /* Prevent content from going under fixed headers */
+  .MuiContainer-root.main-content {
+    padding-top: 16px !important;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .page-content-with-navbar {
+    padding-top: 64px !important;
+    min-height: calc(100vh - 64px) !important;
+  }
+  
+  .page-content-with-customer-navbar {
+    padding-top: 0px !important; /* Remove padding since we handle it in component */
+    min-height: 100vh !important;
+  }
+  
+  .MuiDrawer-paper {
+    margin-top: 64px !important;
+    height: calc(100vh - 64px) !important;
+  }
+}
+
+@media (min-width: 900px) {
+  .page-content-with-navbar {
+    padding-top: 70px !important;
+    min-height: calc(100vh - 70px) !important;
+  }
+  
+  .page-content-with-customer-navbar {
+    padding-top: 0px !important; /* Remove padding since we handle it in component */
+    min-height: 100vh !important;
+  }
+  
+  .MuiDrawer-paper {
+    margin-top: 70px !important;
+    height: calc(100vh - 70px) !important;
+  }
+}
+
 /* Prevent horizontal scroll on mobile */
 html, body {
   overflow-x: hidden;

@@ -7,6 +7,7 @@ import { userCache, CacheKeys, cacheUtils } from '../services/cacheService';
 import { preloadCriticalComponents } from '../components/LazyComponents';
 import { STORAGE_KEYS } from '../constants/storage';
 import { ROLE_NAMES } from '../constants/roles';
+import { tokenRefreshScheduler } from '../utils/tokenRefreshScheduler';
 // Password hashing is now handled by authService
 
 interface AuthContextType {
@@ -173,6 +174,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUserPermissions(basicPermissions);
       }
 
+      // Start token refresh scheduler
+      tokenRefreshScheduler.start();
+      
       // Preload critical components and data
       setTimeout(() => {
         preloadCriticalComponents();
@@ -214,7 +218,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         gender: userData.gender
       };
       
-      const response = await authService.register(apiUserData);
+      await authService.register(apiUserData);
       
       // Registration doesn't return tokens, just success
       // User needs to login after registration
@@ -227,10 +231,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = (): void => {
-    // This will show us where logout is being called from
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.USER);
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    // Stop token refresh scheduler
+    tokenRefreshScheduler.stop();
+    
+    // Clear all authentication data
+    authService.logout(); // This clears tokens including expiry
     localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
     setUser(null);
     setUserPermissions(null);

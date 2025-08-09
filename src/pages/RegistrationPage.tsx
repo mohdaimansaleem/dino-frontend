@@ -40,11 +40,7 @@ import {
   LocationOn,
   Email,
   Phone,
-  Edit,
   Verified,
-  Info,
-  Star,
-  TrendingUp,
   Security,
   AccountCircle,
   Place,
@@ -230,7 +226,7 @@ const RegistrationPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  // const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);

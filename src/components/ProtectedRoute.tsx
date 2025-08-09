@@ -3,12 +3,13 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
 import { Lock, ArrowBack } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { ROLE_NAMES, isAdminLevel } from '../constants/roles';
 
 interface ProtectedRouteProps {
   children: ReactNode;
   adminOnly?: boolean;
   cafeOwnerOnly?: boolean;
-  requiredRole?: 'admin' | 'customer' | 'cafe_owner' | 'staff';
+  requiredRole?: string;
   redirectTo?: string;
 }
 
@@ -58,13 +59,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   let hasAccess = true;
   let accessMessage = '';
 
-  if (adminOnly && (user.role as string) !== 'admin') {
+  if (adminOnly && !isAdminLevel(user.role)) {
     hasAccess = false;
     accessMessage = 'Admin access required.';
-  } else if (cafeOwnerOnly && !['admin', 'cafe_owner'].includes(user.role as string)) {
+  } else if (cafeOwnerOnly && !isAdminLevel(user.role) && (user.role as string) !== 'cafe_owner') {
     hasAccess = false;
     accessMessage = 'Cafe owner access required.';
-  } else if (requiredRole && (user.role as string) !== requiredRole && (user.role as string) !== 'admin') {
+  } else if (requiredRole && user.role !== requiredRole && !isAdminLevel(user.role)) {
     hasAccess = false;
     accessMessage = `${requiredRole.charAt(0).toUpperCase() + requiredRole.slice(1)} access required.`;
   }

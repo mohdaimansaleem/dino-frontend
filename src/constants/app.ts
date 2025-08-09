@@ -60,7 +60,6 @@ export const DEFAULTS = {
 
 // Feature Flags
 export const FEATURES = {
-  DEMO_MODE: false, // Disabled for production
   QR_CODE_GENERATION: true,
   REAL_TIME_UPDATES: true,
   ANALYTICS: true,

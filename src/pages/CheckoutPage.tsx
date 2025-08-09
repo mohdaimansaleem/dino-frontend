@@ -5,7 +5,6 @@ import {
   Typography,
   List,
   ListItem,
-  ListItemAvatar,
   Avatar,
   IconButton,
   Button,
@@ -19,17 +18,16 @@ import {
   CircularProgress,
   Chip,
   FormControl,
-  FormLabel,
   RadioGroup,
   FormControlLabel,
   Radio,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
   Divider,
   useTheme,
   useMediaQuery,
+  Card,
+  CardContent,
+  LinearProgress,
+  Collapse,
 } from '@mui/material';
 import {
   Add,
@@ -47,6 +45,9 @@ import {
   Schedule,
   Restaurant,
   Receipt,
+  ArrowBack,
+  ArrowForward,
+  Check,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
@@ -74,7 +75,8 @@ const CheckoutPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-  const { cafeId, tableId } = useParams<{ cafeId: string; tableId: string }>();
+  const { cafeId, tableId, venueId } = useParams<{ cafeId?: string; tableId: string; venueId?: string }>();
+  const actualCafeId = cafeId || venueId; // Handle both URL patterns
   const { items, updateQuantity, removeItem, clearCart, getTotalAmount, getTotalItems } = useCart();
   
   const [activeStep, setActiveStep] = useState(0);
@@ -98,13 +100,14 @@ const CheckoutPage: React.FC = () => {
   // Load available promo codes
   useEffect(() => {
     const loadAvailablePromos = async () => {
-      if (!cafeId) return;
+      if (!actualCafeId) return;
       
       try {
-        const promoCodes = await promoService.getActivePromoCodes(cafeId);
+        const promoCodes = await promoService.getActivePromoCodes(actualCafeId);
         setAvailablePromos(promoCodes.map(promo => promo.code));
       } catch (error) {
-        }
+        // Silently handle error
+      }
     };
 
     loadAvailablePromos();
@@ -132,6 +135,13 @@ const CheckoutPage: React.FC = () => {
     },
   ];
 
+  // Step configuration
+  const steps = [
+    { label: 'Review Order', icon: <ShoppingCart /> },
+    { label: 'Customer Info', icon: <Person /> },
+    { label: 'Payment', icon: <CreditCard /> },
+  ];
+
   // Bill calculations
   const subtotal = getTotalAmount();
   const deliveryFee = subtotal >= 25 ? 0 : 2.99;
@@ -139,8 +149,6 @@ const CheckoutPage: React.FC = () => {
   const tax = subtotal * taxRate;
   const promoDiscount = appliedPromo ? appliedPromo.discount_amount : 0;
   const total = subtotal + deliveryFee + tax - promoDiscount;
-
-
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -159,7 +167,7 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handleApplyPromo = async () => {
-    if (!promoCode.trim() || !cafeId) {
+    if (!promoCode.trim() || !actualCafeId) {
       alert('Please enter a valid promo code');
       return;
     }
@@ -167,7 +175,7 @@ const CheckoutPage: React.FC = () => {
     setPromoLoading(true);
     try {
       const orderData = {
-        venue_id: cafeId,
+        venue_id: actualCafeId,
         items: items.map(item => ({
           menu_item_id: item.menuItem.id,
           quantity: item.quantity,
@@ -205,8 +213,9 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!cafeId || !tableId) {
-      alert('Missing venue or table information');
+    console.log('Debug - actualCafeId:', actualCafeId, 'tableId:', tableId);
+    if (!actualCafeId || !tableId) {
+      alert(`Missing venue or table information. CafeId: ${actualCafeId}, TableId: ${tableId}`);
       return;
     }
 
@@ -214,7 +223,7 @@ const CheckoutPage: React.FC = () => {
     
     try {
       const orderData = {
-        venue_id: cafeId,
+        venue_id: actualCafeId,
         table_id: tableId,
         customer: {
           name: customerInfo.name,
@@ -258,16 +267,110 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
+  // Custom Step Progress Component
+  const StepProgress = () => (
+    <Box sx={{ 
+      mb: { xs: 2, sm: 3 },
+      px: { xs: 1, sm: 0 }
+    }}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        mb: 1
+      }}>
+        {steps.map((step, index) => (
+          <React.Fragment key={index}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              flex: 1
+            }}>
+              <Box
+                sx={{
+                  width: { xs: 32, sm: 40 },
+                  height: { xs: 32, sm: 40 },
+                  borderRadius: '50%',
+                  backgroundColor: index <= activeStep ? '#1976D2' : '#E0E0E0',
+                  color: index <= activeStep ? 'white' : '#9E9E9E',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  transition: 'all 0.3s ease',
+                  mb: 1
+                }}
+              >
+                {index < activeStep ? <Check sx={{ fontSize: { xs: 16, sm: 20 } }} /> : index + 1}
+              </Box>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  fontSize: { xs: '0.6rem', sm: '0.75rem' },
+                  textAlign: 'center',
+                  color: index <= activeStep ? 'primary.main' : 'text.secondary',
+                  fontWeight: index === activeStep ? 600 : 400,
+                  lineHeight: 1.2,
+                  maxWidth: { xs: 60, sm: 80 }
+                }}
+              >
+                {step.label}
+              </Typography>
+            </Box>
+            {index < steps.length - 1 && (
+              <Box
+                sx={{
+                  flex: 1,
+                  height: 2,
+                  backgroundColor: index < activeStep ? '#1976D2' : '#E0E0E0',
+                  mx: { xs: 0.5, sm: 1 },
+                  transition: 'all 0.3s ease',
+                  mb: 3
+                }}
+              />
+            )}
+          </React.Fragment>
+        ))}
+      </Box>
+      <LinearProgress 
+        variant="determinate" 
+        value={(activeStep / (steps.length - 1)) * 100}
+        sx={{ 
+          height: 4, 
+          borderRadius: 2,
+          backgroundColor: '#E0E0E0',
+          '& .MuiLinearProgress-bar': {
+            borderRadius: 2,
+            backgroundColor: '#1976D2'
+          }
+        }}
+      />
+    </Box>
+  );
+
   if (items.length === 0 && !orderPlaced) {
     return (
-      <Box sx={{ minHeight: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#F8F9FA', 
+        display: 'flex', 
+        flexDirection: 'column',
+        pt: { xs: '56px', sm: '64px' },
+      }}>
         <CustomerNavbar 
           restaurantName="Dino Cafe"
           tableId={tableId}
           showBackButton={true}
           showCart={false}
         />
-        <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 }, px: { xs: 2, sm: 3 }, flex: 1, display: 'flex', alignItems: 'center' }}>
+        <Container maxWidth="md" sx={{ 
+          py: { xs: 2, md: 4 }, 
+          px: { xs: 1.5, sm: 2 }, 
+          flex: 1, 
+          display: 'flex', 
+          alignItems: 'center' 
+        }}>
           <Paper sx={{ 
             p: { xs: 3, sm: 4 }, 
             textAlign: 'center', 
@@ -299,7 +402,7 @@ const CheckoutPage: React.FC = () => {
             </Typography>
             <Button
               variant="contained"
-              onClick={() => navigate(`/menu/${cafeId}/${tableId}`)}
+              onClick={() => navigate(`/menu/${actualCafeId}/${tableId}`)}
               sx={{
                 px: { xs: 3, sm: 4 },
                 py: { xs: 1, sm: 1.5 },
@@ -318,7 +421,13 @@ const CheckoutPage: React.FC = () => {
 
   if (orderPlaced) {
     return (
-      <Box sx={{ minHeight: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ 
+        minHeight: '100vh', 
+        backgroundColor: '#F8F9FA', 
+        display: 'flex', 
+        flexDirection: 'column',
+        pt: { xs: '56px', sm: '64px' },
+      }}>
         <CustomerNavbar 
           restaurantName="Dino Cafe"
           tableId={tableId}
@@ -327,7 +436,7 @@ const CheckoutPage: React.FC = () => {
         />
         <Container maxWidth="md" sx={{ 
           py: { xs: 2, md: 4 }, 
-          px: { xs: 2, sm: 3 },
+          px: { xs: 1.5, sm: 2 },
           flex: 1, 
           display: 'flex', 
           alignItems: 'center' 
@@ -432,7 +541,7 @@ const CheckoutPage: React.FC = () => {
               </Button>
               <Button
                 variant="outlined"
-                onClick={() => navigate(`/menu/${cafeId}/${tableId}`)}
+                onClick={() => navigate(`/menu/${actualCafeId}/${tableId}`)}
                 startIcon={<Restaurant />}
                 sx={{
                   px: { xs: 3, sm: 4 },
@@ -453,7 +562,13 @@ const CheckoutPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#F8F9FA', 
+      display: 'flex', 
+      flexDirection: 'column',
+      pt: { xs: '56px', sm: '64px' },
+    }}>
       {/* Customer Navbar */}
       <CustomerNavbar 
         restaurantName="Dino Cafe"
@@ -463,38 +578,34 @@ const CheckoutPage: React.FC = () => {
       />
 
       <Container maxWidth="lg" sx={{ 
-        py: { xs: 2, md: 4 }, 
-        px: { xs: 2, sm: 3 },
+        py: { xs: 1.5, md: 3 }, 
+        px: { xs: 1.5, sm: 2 },
         flex: 1 
       }}>
+        {/* Custom Step Progress */}
+        <StepProgress />
 
-      <Grid container spacing={{ xs: 2, md: 4 }}>
-        {/* Left Column - Order Steps */}
-        <Grid item xs={12} md={8}>
-          <Paper sx={{ 
-            p: { xs: 2, sm: 3 },
-            borderRadius: 2,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-          }}>
-            <Stepper 
-              activeStep={activeStep} 
-              orientation={isMobile ? "horizontal" : "vertical"}
-              sx={{
-                '& .MuiStepLabel-label': {
-                  fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                }
-              }}
-            >
-              {/* Step 1: Review Order */}
-              <Step>
-                <StepLabel>Review Your Order</StepLabel>
-                <StepContent>
+        <Grid container spacing={{ xs: 2, md: 3 }}>
+          {/* Main Content */}
+          <Grid item xs={12} md={8}>
+            <Paper sx={{ 
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              overflow: 'hidden'
+            }}>
+              {/* Step 0: Review Order */}
+              <Collapse in={activeStep === 0}>
+                <Box sx={{ p: { xs: 2, sm: 3 } }}>
                   <Typography 
-                    variant="h6" 
+                    variant="h5" 
                     gutterBottom
-                    sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+                    sx={{ 
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                      fontWeight: 600,
+                      mb: 3
+                    }}
                   >
-                    Order Items ({getTotalItems()} items)
+                    Review Your Order ({items.length} items)
                   </Typography>
                   
                   <List sx={{ px: 0 }}>
@@ -503,233 +614,207 @@ const CheckoutPage: React.FC = () => {
                         key={item.menuItem.id} 
                         sx={{ 
                           px: 0, 
-                          py: { xs: 1.5, sm: 2 }, 
-                          flexDirection: 'column', 
-                          alignItems: 'stretch',
-                          borderBottom: '1px solid #f0f0f0',
-                          '&:last-child': { borderBottom: 'none' }
+                          py: 0, 
+                          border: '1px solid #E0E0E0',
+                          borderRight: `4px solid ${item.menuItem.isVeg ? '#4CAF50' : '#F44336'}`,
+                          borderRadius: 2,
+                          mb: 2,
+                          backgroundColor: 'white',
+                          '&:hover': {
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+                            borderColor: '#1976D2',
+                            borderRightColor: item.menuItem.isVeg ? '#4CAF50' : '#F44336'
+                          },
+                          transition: 'all 0.2s ease'
                         }}
                       >
                         <Box sx={{ 
                           display: 'flex', 
-                          width: '100%', 
-                          alignItems: 'flex-start', 
+                          alignItems: 'center',
                           gap: { xs: 1.5, sm: 2 },
-                          flexDirection: { xs: 'column', sm: 'row' }
+                          width: '100%',
+                          p: { xs: 1.5, sm: 2 }
                         }}>
-                          <ListItemAvatar sx={{ 
-                            minWidth: 'auto',
-                            alignSelf: { xs: 'center', sm: 'flex-start' }
-                          }}>
-                            <Avatar
-                              src={item.menuItem.image}
-                              sx={{ 
-                                width: { xs: 80, sm: 70 }, 
-                                height: { xs: 80, sm: 70 },
-                                borderRadius: 2
-                              }}
-                            >
-                              <Restaurant />
-                            </Avatar>
-                          </ListItemAvatar>
+                          {/* Item Image */}
+                          <Avatar
+                            src={item.menuItem.image}
+                            sx={{ 
+                              width: { xs: 50, sm: 56 }, 
+                              height: { xs: 50, sm: 56 },
+                              borderRadius: 1.5,
+                              flexShrink: 0,
+                              border: '1px solid #e0e0e0'
+                            }}
+                          >
+                            <Restaurant sx={{ fontSize: { xs: 20, sm: 24 } }} />
+                          </Avatar>
+                          
+                          {/* Item Details */}
                           <Box sx={{ 
                             flex: 1, 
                             minWidth: 0,
-                            textAlign: { xs: 'center', sm: 'left' }
+                            mr: { xs: 1, sm: 2 }
                           }}>
-                            <Box sx={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: 1, 
-                              mb: 1,
-                              justifyContent: { xs: 'center', sm: 'flex-start' },
-                              flexWrap: 'wrap'
-                            }}>
+                            <Typography 
+                              variant="subtitle1" 
+                              fontWeight="600"
+                              sx={{ 
+                                fontSize: { xs: '0.9rem', sm: '1rem' },
+                                lineHeight: 1.3,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                color: '#333',
+                                mb: 0.5
+                              }}
+                            >
+                              {item.menuItem.name}
+                            </Typography>
+                            
+                            <Typography 
+                              variant="body2" 
+                              color="text.secondary"
+                              sx={{ 
+                                fontSize: { xs: '0.8rem', sm: '0.85rem' },
+                                mb: item.specialInstructions ? 0.5 : 0
+                              }}
+                            >
+                              {formatPrice(item.menuItem.price)} each
+                            </Typography>
+                            
+                            {item.specialInstructions && (
                               <Typography 
-                                variant="subtitle1" 
-                                fontWeight="600"
+                                variant="caption" 
+                                color="text.secondary" 
                                 sx={{ 
-                                  fontSize: { xs: '0.875rem', sm: '1.1rem' },
-                                  lineHeight: 1.2,
-                                  wordBreak: 'break-word'
+                                  fontStyle: 'italic',
+                                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                  display: 'block',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  backgroundColor: '#f8f9fa',
+                                  px: 0.75,
+                                  py: 0.25,
+                                  borderRadius: 0.5,
+                                  border: '1px solid #e9ecef',
+                                  mt: 0.25
                                 }}
                               >
-                                {item.menuItem.name}
+                                {item.specialInstructions}
                               </Typography>
-                              {item.menuItem.isVeg ? (
-                                <Box
-                                  sx={{
-                                    width: 12,
-                                    height: 12,
-                                    border: '2px solid #388E3C',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: 4,
-                                      height: 4,
-                                      backgroundColor: '#388E3C',
-                                      borderRadius: '50%',
-                                    }}
-                                  />
-                                </Box>
-                              ) : (
-                                <Box
-                                  sx={{
-                                    width: 12,
-                                    height: 12,
-                                    border: '2px solid #D32F2F',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: 4,
-                                      height: 4,
-                                      backgroundColor: '#D32F2F',
-                                      borderRadius: '50%',
-                                    }}
-                                  />
-                                </Box>
-                              )}
-                            </Box>
-                            
-                            <Box sx={{ mb: 1 }}>
-                              <Typography 
-                                variant="body2" 
-                                color="text.secondary"
-                                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                              >
-                                {formatPrice(item.menuItem.price)} per item
-                              </Typography>
-                              {item.specialInstructions && (
-                                <Typography 
-                                  variant="body2" 
-                                  color="text.secondary" 
-                                  sx={{ 
-                                    fontStyle: 'italic',
-                                    fontSize: { xs: '0.7rem', sm: '0.8rem' },
-                                    wordBreak: 'break-word',
-                                    mt: 0.5
-                                  }}
-                                >
-                                  Note: {item.specialInstructions}
-                                </Typography>
-                              )}
-                            </Box>
+                            )}
                           </Box>
-                        </Box>
-                        
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between',
-                          mt: { xs: 1.5, sm: 2 },
-                          pt: { xs: 1.5, sm: 2 },
-                          borderTop: '1px solid #E0E0E0',
-                          width: '100%',
-                          flexDirection: { xs: 'column', sm: 'row' },
-                          gap: { xs: 2, sm: 0 }
-                        }}>
+                          
+                          {/* Controls & Price Column */}
                           <Box sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: { xs: 1.5, sm: 2 },
-                            order: { xs: 2, sm: 1 }
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            flexShrink: 0,
+                            minWidth: { xs: 80, sm: 90 }
                           }}>
+                            {/* Price */}
+                            <Typography 
+                              variant="h6" 
+                              fontWeight="bold" 
+                              sx={{ 
+                                color: '#1976D2',
+                                fontSize: { xs: '1rem', sm: '1.1rem' },
+                                lineHeight: 1,
+                                textAlign: 'center'
+                              }}
+                            >
+                              {formatPrice(item.menuItem.price * item.quantity)}
+                            </Typography>
+                            
+                            {/* Quantity Controls */}
                             <Box
                               sx={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                border: '1px solid',
-                                borderColor: 'divider',
+                                border: '1px solid #E0E0E0',
                                 borderRadius: 1,
+                                backgroundColor: 'white',
+                                height: 32
                               }}
                             >
                               <IconButton
                                 size="small"
                                 onClick={() => handleQuantityChange(item.menuItem.id, item.quantity - 1)}
-                                sx={{ p: { xs: 0.75, sm: 1 } }}
+                                sx={{ 
+                                  p: 0.25,
+                                  minWidth: 24,
+                                  height: 24,
+                                  borderRadius: 0.5,
+                                  '&:hover': {
+                                    backgroundColor: '#F5F5F5'
+                                  }
+                                }}
                               >
-                                <Remove sx={{ fontSize: { xs: 16, sm: 18 } }} />
+                                <Remove sx={{ fontSize: 14 }} />
                               </IconButton>
                               <Typography sx={{ 
-                                mx: { xs: 1.5, sm: 2 }, 
-                                minWidth: 20, 
+                                mx: 1,
                                 textAlign: 'center',
-                                fontSize: { xs: '0.875rem', sm: '1rem' },
-                                fontWeight: '600'
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                color: '#1976D2',
+                                minWidth: 16
                               }}>
                                 {item.quantity}
                               </Typography>
                               <IconButton
                                 size="small"
                                 onClick={() => handleQuantityChange(item.menuItem.id, item.quantity + 1)}
-                                sx={{ p: { xs: 0.75, sm: 1 } }}
+                                sx={{ 
+                                  p: 0.25,
+                                  minWidth: 24,
+                                  height: 24,
+                                  borderRadius: 0.5,
+                                  '&:hover': {
+                                    backgroundColor: '#F5F5F5'
+                                  }
+                                }}
                               >
-                                <Add sx={{ fontSize: { xs: 16, sm: 18 } }} />
+                                <Add sx={{ fontSize: 14 }} />
                               </IconButton>
                             </Box>
-                            
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => removeItem(item.menuItem.id)}
-                              sx={{ p: { xs: 0.75, sm: 1 } }}
-                            >
-                              <Delete sx={{ fontSize: { xs: 16, sm: 18 } }} />
-                            </IconButton>
                           </Box>
-                          
-                          <Typography 
-                            variant="h6" 
-                            fontWeight="bold" 
-                            sx={{ 
-                              color: '#1976D2',
-                              fontSize: { xs: '1rem', sm: '1.1rem' },
-                              order: { xs: 1, sm: 2 }
-                            }}
-                          >
-                            {formatPrice(item.menuItem.price * item.quantity)}
-                          </Typography>
                         </Box>
                       </ListItem>
                     ))}
                   </List>
 
                   <Box sx={{ 
-                    mt: 2,
+                    mt: 3,
                     display: 'flex',
                     flexDirection: { xs: 'column', sm: 'row' },
-                    gap: { xs: 1, sm: 1 }
+                    gap: 2
                   }}>
                     <Button
                       variant="contained"
                       onClick={handleNext}
                       disabled={!isStepValid(0)}
+                      endIcon={<ArrowForward />}
                       sx={{
-                        px: { xs: 3, sm: 4 },
-                        py: { xs: 1, sm: 1.5 },
-                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        px: 4,
+                        py: 1.5,
+                        fontSize: '1rem',
                         borderRadius: 2,
                         width: { xs: '100%', sm: 'auto' }
                       }}
                     >
-                      Continue
+                      Continue to Customer Info
                     </Button>
                     <Button
-                      onClick={() => navigate(`/menu/${cafeId}/${tableId}`)}
+                      variant="outlined"
+                      onClick={() => navigate(`/menu/${actualCafeId}/${tableId}`)}
                       sx={{
-                        px: { xs: 3, sm: 4 },
-                        py: { xs: 1, sm: 1.5 },
-                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        px: 4,
+                        py: 1.5,
+                        fontSize: '1rem',
                         borderRadius: 2,
                         width: { xs: '100%', sm: 'auto' }
                       }}
@@ -737,29 +822,40 @@ const CheckoutPage: React.FC = () => {
                       Add More Items
                     </Button>
                   </Box>
-                </StepContent>
-              </Step>
+                </Box>
+              </Collapse>
 
-              {/* Step 2: Customer Information */}
-              <Step>
-                <StepLabel>Customer Information</StepLabel>
-                <StepContent>
-                  <Grid container spacing={{ xs: 2, sm: 2 }}>
+              {/* Step 1: Customer Information */}
+              <Collapse in={activeStep === 1}>
+                <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Typography 
+                    variant="h5" 
+                    gutterBottom
+                    sx={{ 
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                      fontWeight: 600,
+                      mb: 3
+                    }}
+                  >
+                    Customer Information
+                  </Typography>
+                  
+                  <Grid container spacing={3}>
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        size={isSmallScreen ? "small" : "medium"}
                         label="Full Name"
                         name="name"
                         value={customerInfo.name}
                         onChange={handleInputChange}
                         required
+                        variant="outlined"
                         InputProps={{
-                          startAdornment: <Person sx={{ mr: 1, color: 'text.secondary' }} />,
+                          startAdornment: <Person sx={{ mr: 1, color: 'text.secondary' }} />
                         }}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
+                            borderRadius: 2
                           }
                         }}
                       />
@@ -767,18 +863,18 @@ const CheckoutPage: React.FC = () => {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        size={isSmallScreen ? "small" : "medium"}
                         label="Phone Number"
                         name="phone"
                         value={customerInfo.phone}
                         onChange={handleInputChange}
                         required
+                        variant="outlined"
                         InputProps={{
-                          startAdornment: <Phone sx={{ mr: 1, color: 'text.secondary' }} />,
+                          startAdornment: <Phone sx={{ mr: 1, color: 'text.secondary' }} />
                         }}
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
+                            borderRadius: 2
                           }
                         }}
                       />
@@ -786,15 +882,15 @@ const CheckoutPage: React.FC = () => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        size={isSmallScreen ? "small" : "medium"}
                         label="Email (Optional)"
                         name="email"
                         type="email"
                         value={customerInfo.email}
                         onChange={handleInputChange}
+                        variant="outlined"
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
+                            borderRadius: 2
                           }
                         }}
                       />
@@ -802,17 +898,17 @@ const CheckoutPage: React.FC = () => {
                     <Grid item xs={12}>
                       <TextField
                         fullWidth
-                        size={isSmallScreen ? "small" : "medium"}
                         label="Special Instructions (Optional)"
                         name="specialInstructions"
-                        multiline
-                        rows={isSmallScreen ? 2 : 3}
                         value={customerInfo.specialInstructions}
                         onChange={handleInputChange}
+                        multiline
+                        rows={3}
+                        variant="outlined"
                         placeholder="Any special requests for your order..."
                         sx={{
                           '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
+                            borderRadius: 2
                           }
                         }}
                       />
@@ -820,460 +916,372 @@ const CheckoutPage: React.FC = () => {
                   </Grid>
 
                   <Box sx={{ 
-                    mt: 2,
+                    mt: 4,
                     display: 'flex',
                     flexDirection: { xs: 'column', sm: 'row' },
-                    gap: { xs: 1, sm: 1 }
+                    gap: 2,
+                    justifyContent: 'space-between'
                   }}>
+                    <Button
+                      variant="outlined"
+                      onClick={handleBack}
+                      startIcon={<ArrowBack />}
+                      sx={{
+                        px: 4,
+                        py: 1.5,
+                        fontSize: '1rem',
+                        borderRadius: 2,
+                        width: { xs: '100%', sm: 'auto' }
+                      }}
+                    >
+                      Back to Order
+                    </Button>
                     <Button
                       variant="contained"
                       onClick={handleNext}
                       disabled={!isStepValid(1)}
+                      endIcon={<ArrowForward />}
                       sx={{
-                        px: { xs: 3, sm: 4 },
-                        py: { xs: 1, sm: 1.5 },
-                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        px: 4,
+                        py: 1.5,
+                        fontSize: '1rem',
                         borderRadius: 2,
                         width: { xs: '100%', sm: 'auto' }
                       }}
                     >
-                      Continue
-                    </Button>
-                    <Button 
-                      onClick={handleBack}
-                      sx={{
-                        px: { xs: 3, sm: 4 },
-                        py: { xs: 1, sm: 1.5 },
-                        fontSize: { xs: '0.875rem', sm: '1rem' },
-                        borderRadius: 2,
-                        width: { xs: '100%', sm: 'auto' }
-                      }}
-                    >
-                      Back
+                      Continue to Payment
                     </Button>
                   </Box>
-                </StepContent>
-              </Step>
+                </Box>
+              </Collapse>
 
-              {/* Step 3: Payment */}
-              <Step>
-                <StepLabel>Payment Method</StepLabel>
-                <StepContent>
+              {/* Step 2: Payment Method */}
+              <Collapse in={activeStep === 2}>
+                <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                  <Typography 
+                    variant="h5" 
+                    gutterBottom
+                    sx={{ 
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                      fontWeight: 600,
+                      mb: 3
+                    }}
+                  >
+                    Payment Method
+                  </Typography>
+                  
                   <FormControl component="fieldset" sx={{ width: '100%' }}>
-                    <FormLabel 
-                      component="legend"
-                      sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
-                    >
-                      Choose Payment Method
-                    </FormLabel>
                     <RadioGroup
                       value={selectedPaymentMethod}
                       onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-                      sx={{ mt: 1 }}
                     >
                       {paymentMethods.map((method) => (
-                        <FormControlLabel
+                        <Card 
                           key={method.id}
-                          value={method.id}
-                          control={<Radio />}
-                          label={
-                            <Box sx={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: { xs: 1, sm: 1.5 },
-                              py: 1
-                            }}>
-                              <Box sx={{ fontSize: { xs: '1.2rem', sm: '1.5rem' } }}>
-                                {method.icon}
-                              </Box>
-                              <Box>
-                                <Typography 
-                                  variant="body1"
-                                  sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
-                                >
-                                  {method.name}
-                                </Typography>
-                                <Typography 
-                                  variant="body2" 
-                                  color="text.secondary"
-                                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                                >
-                                  {method.description}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          }
-                          sx={{
-                            '& .MuiFormControlLabel-label': {
-                              width: '100%'
+                          sx={{ 
+                            mb: 2,
+                            border: selectedPaymentMethod === method.id ? '2px solid #1976D2' : '1px solid #E0E0E0',
+                            borderRadius: 2,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              borderColor: '#1976D2',
+                              boxShadow: '0 2px 8px rgba(25, 118, 210, 0.15)'
                             }
                           }}
-                        />
+                          onClick={() => setSelectedPaymentMethod(method.id)}
+                        >
+                          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                            <FormControlLabel
+                              value={method.id}
+                              control={<Radio />}
+                              label={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                                  <Box sx={{ color: 'primary.main' }}>
+                                    {method.icon}
+                                  </Box>
+                                  <Box sx={{ flex: 1 }}>
+                                    <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                                      {method.name}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                      {method.description}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              }
+                              sx={{ 
+                                margin: 0,
+                                width: '100%',
+                                '& .MuiFormControlLabel-label': {
+                                  width: '100%'
+                                }
+                              }}
+                            />
+                          </CardContent>
+                        </Card>
                       ))}
                     </RadioGroup>
                   </FormControl>
 
                   <Box sx={{ 
-                    mt: 3,
+                    mt: 4,
                     display: 'flex',
                     flexDirection: { xs: 'column', sm: 'row' },
-                    gap: { xs: 1, sm: 1 }
+                    gap: 2,
+                    justifyContent: 'space-between'
                   }}>
+                    <Button
+                      variant="outlined"
+                      onClick={handleBack}
+                      startIcon={<ArrowBack />}
+                      sx={{
+                        px: 4,
+                        py: 1.5,
+                        fontSize: '1rem',
+                        borderRadius: 2,
+                        width: { xs: '100%', sm: 'auto' }
+                      }}
+                    >
+                      Back to Info
+                    </Button>
                     <Button
                       variant="contained"
                       onClick={handlePlaceOrder}
-                      disabled={!isStepValid(2) || loading}
+                      disabled={loading || !isStepValid(2)}
                       startIcon={loading ? <CircularProgress size={20} /> : <Receipt />}
                       sx={{
-                        px: { xs: 3, sm: 4 },
-                        py: { xs: 1.5, sm: 1.5 },
-                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        px: 4,
+                        py: 1.5,
+                        fontSize: '1rem',
                         borderRadius: 2,
                         width: { xs: '100%', sm: 'auto' }
                       }}
                     >
-                      {loading ? 'Placing Order...' : `Place Order - ${formatPrice(total)}`}
-                    </Button>
-                    <Button 
-                      onClick={handleBack} 
-                      disabled={loading}
-                      sx={{
-                        px: { xs: 3, sm: 4 },
-                        py: { xs: 1.5, sm: 1.5 },
-                        fontSize: { xs: '0.875rem', sm: '1rem' },
-                        borderRadius: 2,
-                        width: { xs: '100%', sm: 'auto' }
-                      }}
-                    >
-                      Back
+                      {loading ? 'Placing Order...' : 'Place Order'}
                     </Button>
                   </Box>
-                </StepContent>
-              </Step>
-            </Stepper>
-          </Paper>
-        </Grid>
+                </Box>
+              </Collapse>
+            </Paper>
+          </Grid>
 
-        {/* Right Column - Bill Summary */}
-        <Grid item xs={12} md={4}>
-          <Paper sx={{ 
-            p: { xs: 2, sm: 3 }, 
-            position: { xs: 'static', md: 'sticky' }, 
-            top: 20,
-            borderRadius: 2,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            mt: { xs: 2, md: 0 }
-          }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              mb: 2,
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: { xs: 1, sm: 0 }
+          {/* Order Summary Sidebar */}
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ 
+              p: { xs: 2, sm: 3 },
+              borderRadius: 2,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              position: 'sticky',
+              top: 20
             }}>
               <Typography 
                 variant="h6" 
-                fontWeight="bold"
-                sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-              >
-                Bill Summary
-              </Typography>
-              <Button
-                variant="text"
-                size="small"
-                onClick={() => navigate(`/menu/${cafeId}/${tableId}`)}
-                sx={{ 
-                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                  px: { xs: 2, sm: 1 },
-                  py: { xs: 0.5, sm: 0.25 }
-                }}
-              >
-                Add More Items
-              </Button>
-            </Box>
-
-            {/* Item Breakdown */}
-            <Box sx={{ mb: 2 }}>
-              <Typography 
-                variant="subtitle2" 
-                fontWeight="600" 
-                sx={{ 
-                  mb: 1,
-                  fontSize: { xs: '0.875rem', sm: '1rem' }
-                }}
-              >
-                Order Details
-              </Typography>
-              {items.map((item) => (
-                <Box 
-                  key={item.menuItem.id} 
-                  sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    mb: 0.5, 
-                    gap: 1,
-                    py: 0.25
-                  }}
-                >
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        fontSize: { xs: '0.7rem', sm: '0.875rem' },
-                        wordBreak: 'break-word',
-                        lineHeight: 1.3
-                      }}
-                    >
-                      {item.menuItem.name} × {item.quantity}
-                    </Typography>
-                  </Box>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontSize: { xs: '0.7rem', sm: '0.875rem' },
-                      flexShrink: 0,
-                      fontWeight: 500
-                    }}
-                  >
-                    {formatPrice(item.menuItem.price * item.quantity)}
-                  </Typography>
-                </Box>
-              ))}
-              
-              <Divider sx={{ my: 1 }} />
-              
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography 
-                  variant="body2" 
-                  fontWeight="600"
-                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                >
-                  Subtotal ({getTotalItems()} items)
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  fontWeight="600"
-                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                >
-                  {formatPrice(subtotal)}
-                </Typography>
-              </Box>
-              
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography 
-                  variant="body2"
-                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                >
-                  Delivery Fee
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  color={deliveryFee === 0 ? 'success.main' : 'text.primary'}
-                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                >
-                  {deliveryFee === 0 ? 'FREE' : formatPrice(deliveryFee)}
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography 
-                  variant="body2"
-                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                >
-                  Taxes & Fees
-                </Typography>
-                <Typography 
-                  variant="body2"
-                  sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                >
-                  {formatPrice(tax)}
-                </Typography>
-              </Box>
-
-              {appliedPromo && (
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography 
-                    variant="body2" 
-                    color="success.main"
-                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                  >
-                    Promo ({appliedPromo.promo_code?.code})
-                  </Typography>
-                  <Typography 
-                    variant="body2" 
-                    color="success.main"
-                    sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                  >
-                    -{formatPrice(promoDiscount)}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-              <Typography 
-                variant="h6" 
-                fontWeight="bold"
-                sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-              >
-                Total Amount
-              </Typography>
-              <Typography 
-                variant="h6" 
-                fontWeight="bold"
-                sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-              >
-                {formatPrice(total)}
-              </Typography>
-            </Box>
-
-            {/* Promo Code Section */}
-            <Box sx={{ mb: 3 }}>
-              {appliedPromo ? (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                  <Chip
-                    label={`${appliedPromo.promo_code?.code} - ${promoService.formatDiscount(appliedPromo.promo_code!)}`}
-                    color="success"
-                    onDelete={handleRemovePromo}
-                    sx={{
-                      fontSize: { xs: '0.7rem', sm: '0.875rem' },
-                      height: { xs: 28, sm: 32 }
-                    }}
-                  />
-                </Box>
-              ) : (
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  startIcon={<LocalOffer />}
-                  onClick={() => setShowPromoDialog(true)}
-                  sx={{
-                    py: { xs: 1, sm: 1.5 },
-                    fontSize: { xs: '0.875rem', sm: '1rem' },
-                    borderRadius: 2
-                  }}
-                >
-                  Apply Promo Code
-                </Button>
-              )}
-            </Box>
-
-            {/* Order Info */}
-            <Box sx={{ 
-              p: { xs: 1.5, sm: 2 }, 
-              backgroundColor: 'grey.50', 
-              borderRadius: 2 
-            }}>
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
                 gutterBottom
                 sx={{ 
-                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  display: 'flex',
-                  alignItems: 'center'
+                  fontSize: { xs: '1.1rem', sm: '1.25rem' },
+                  fontWeight: 600,
+                  mb: 2
                 }}
               >
-                <LocationOn sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5 }} />
-                Table {tableId}
+                Order Summary
               </Typography>
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-                sx={{ 
-                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  display: 'flex',
-                  alignItems: 'center'
-                }}
-              >
-                <Schedule sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5 }} />
-                Estimated time: 25-30 mins
-              </Typography>
-            </Box>
-          </Paper>
+              
+              <Divider sx={{ mb: 2 }} />
+              
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Subtotal ({getTotalItems()} items)</Typography>
+                  <Typography variant="body2">{formatPrice(subtotal)}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Delivery Fee</Typography>
+                  <Typography variant="body2" color={deliveryFee === 0 ? 'success.main' : 'text.primary'}>
+                    {deliveryFee === 0 ? 'FREE' : formatPrice(deliveryFee)}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Tax (8%)</Typography>
+                  <Typography variant="body2">{formatPrice(tax)}</Typography>
+                </Box>
+                {appliedPromo && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'success.main' }}>
+                      {`Promo (${appliedPromo.promo_code})`}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'success.main' }}>
+                      {`-${formatPrice(promoDiscount)}`}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+              
+              <Divider sx={{ mb: 2 }} />
+              
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+                <Typography variant="h6" fontWeight="bold">
+                  Total
+                </Typography>
+                <Typography variant="h6" fontWeight="bold" color="primary.main">
+                  {formatPrice(total)}
+                </Typography>
+              </Box>
+
+              {/* Promo Code Section */}
+              <Box sx={{ mb: 3 }}>
+                {appliedPromo ? (
+                  <Box sx={{ 
+                    p: 2, 
+                    backgroundColor: 'success.light', 
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <LocalOffer sx={{ color: 'success.main', fontSize: 20 }} />
+                      <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 600 }}>
+                        {`${appliedPromo.promo_code} Applied!`}
+                      </Typography>
+                    </Box>
+                    <IconButton 
+                      size="small" 
+                      onClick={handleRemovePromo}
+                      sx={{ color: 'success.main' }}
+                    >
+                      <Delete sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Box>
+                ) : (
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={() => setShowPromoDialog(true)}
+                    startIcon={<LocalOffer />}
+                    sx={{
+                      py: 1.5,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontSize: '0.95rem'
+                    }}
+                  >
+                    Apply Promo Code
+                  </Button>
+                )}
+              </Box>
+
+              {/* Delivery Info */}
+              <Box sx={{ 
+                p: 2, 
+                backgroundColor: 'grey.50', 
+                borderRadius: 2,
+                mb: 2
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <LocationOn sx={{ fontSize: 16, color: 'text.secondary' }} />
+                  <Typography variant="body2" fontWeight="600">
+                    Table {tableId}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Schedule sx={{ fontSize: 16, color: 'text.secondary' }} />
+                  <Typography variant="body2" color="text.secondary">
+                    Estimated: 25-30 minutes
+                  </Typography>
+                </Box>
+              </Box>
+
+              {subtotal < 25 && (
+                <Box sx={{ 
+                  p: 2, 
+                  backgroundColor: 'warning.light', 
+                  borderRadius: 2,
+                  mb: 2
+                }}>
+                  <Typography variant="body2" color="warning.dark">
+                    Add {formatPrice(25 - subtotal)} more for free delivery!
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          </Grid>
         </Grid>
-      </Grid>
+      </Container>
 
       {/* Promo Code Dialog */}
       <Dialog 
         open={showPromoDialog} 
         onClose={() => setShowPromoDialog(false)}
-        fullWidth
         maxWidth="sm"
+        fullWidth
         PaperProps={{
-          sx: {
-            borderRadius: 2,
-            mx: { xs: 2, sm: 3 }
-          }
+          sx: { borderRadius: 2 }
         }}
       >
-        <DialogTitle sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-          Apply Promo Code
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="h6" fontWeight="600">
+            Apply Promo Code
+          </Typography>
         </DialogTitle>
         <DialogContent>
           <TextField
-            autoFocus
-            margin="dense"
-            label="Enter promo code"
             fullWidth
-            size={isSmallScreen ? "small" : "medium"}
-            variant="outlined"
+            label="Enter promo code"
             value={promoCode}
-            onChange={(e) => setPromoCode(e.target.value)}
-            placeholder="e.g., SAVE10"
-            sx={{
+            onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+            variant="outlined"
+            sx={{ 
+              mt: 1,
               '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
+                borderRadius: 2
+              }
+            }}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleApplyPromo();
               }
             }}
           />
+          
           {availablePromos.length > 0 && (
-            <Typography 
-              variant="body2" 
-              color="text.secondary" 
-              sx={{ 
-                mt: 2,
-                fontSize: { xs: '0.75rem', sm: '0.875rem' }
-              }}
-            >
-              Available codes: {availablePromos.join(', ')}
-            </Typography>
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="subtitle2" gutterBottom color="text.secondary">
+                Available Promo Codes:
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {availablePromos.map((code) => (
+                  <Chip
+                    key={code}
+                    label={code}
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setPromoCode(code)}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                ))}
+              </Box>
+            </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ 
-          p: { xs: 2, sm: 3 },
-          gap: { xs: 1, sm: 1 }
-        }}>
+        <DialogActions sx={{ p: 3, pt: 1 }}>
           <Button 
             onClick={() => setShowPromoDialog(false)}
-            sx={{
-              px: { xs: 2, sm: 3 },
-              py: { xs: 0.75, sm: 1 },
-              fontSize: { xs: '0.875rem', sm: '1rem' }
-            }}
+            sx={{ borderRadius: 2 }}
           >
             Cancel
           </Button>
           <Button 
-            onClick={handleApplyPromo} 
+            onClick={handleApplyPromo}
             variant="contained"
-            disabled={promoLoading || !promoCode.trim()}
-            sx={{
-              px: { xs: 2, sm: 3 },
-              py: { xs: 0.75, sm: 1 },
-              fontSize: { xs: '0.875rem', sm: '1rem' }
-            }}
+            disabled={!promoCode.trim() || promoLoading}
+            startIcon={promoLoading ? <CircularProgress size={16} /> : null}
+            sx={{ borderRadius: 2 }}
           >
             {promoLoading ? 'Validating...' : 'Apply'}
           </Button>
         </DialogActions>
       </Dialog>
-      </Container>
 
-      {/* Footer */}
       <Footer />
     </Box>
   );

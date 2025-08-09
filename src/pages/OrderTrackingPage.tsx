@@ -60,8 +60,8 @@ const defaultOrder: OrderTracking = {
 const OrderTrackingPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<OrderTracking>(defaultOrder);
   const [loading, setLoading] = useState(true);

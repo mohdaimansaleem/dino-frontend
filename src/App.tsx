@@ -46,17 +46,34 @@ import UserProfile from './components/UserProfile';
 import PermissionSync from './components/PermissionSync';
 import { PERMISSIONS } from './types/auth';
 import AppInitializer from './components/AppInitializer';
-import PasswordHashingTest from './components/PasswordHashingTest';
+import { logger } from './utils/logger';
+import { config, isDevelopment } from './config/environment';
+import { StorageCleanup } from './utils/storageCleanup';
+import { tokenRefreshScheduler } from './utils/tokenRefreshScheduler';
 
 function App() {
-  // Validate password hashing setup on app startup
+  // Validate password hashing setup and cleanup storage on app startup
   useEffect(() => {
     try {
+      // Clean up demo and legacy data from localStorage
+      StorageCleanup.performCompleteCleanup();
+      logger.info('Storage cleanup completed successfully');
+      
+      // Validate password hashing setup
       validatePasswordHashingSetup();
+      logger.info('Password hashing setup validated successfully');
+      
+      // Start token refresh scheduler if authenticated
+      if (typeof window !== 'undefined') {
+        tokenRefreshScheduler.start();
+        logger.info('Token refresh scheduler initialized');
+      }
     } catch (error) {
-      console.error('❌ CRITICAL: Password hashing setup failed:', error);
-      // You could show a user-friendly error message here
-      alert('Application security setup failed. Please contact support.');
+      logger.error('CRITICAL: App initialization failed:', error);
+      // In production, show a user-friendly error message
+      if (config.APP_ENV === 'production') {
+        alert('Application initialization failed. Please contact support.');
+      }
     }
   }, []);
 
@@ -86,8 +103,10 @@ function App() {
                 <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
                 <Route path="/order/:orderId" element={<OrderTrackingPage />} />
                 
-                {/* Development/Testing Routes */}
-                <Route path="/test-password-hashing" element={<PasswordHashingTest />} />
+                {/* Development/Testing Routes - Only available in development */}
+                {isDevelopment() && (
+                  <Route path="/test-password-hashing" element={<div>Test route only available in development</div>} />
+                )}
                 
                 {/* Protected User Routes */}
                 <Route path="/profile" element={

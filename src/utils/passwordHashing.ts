@@ -128,10 +128,13 @@ export async function loginWithHashedPassword(email: string, password: string): 
     const data = await response.json();
     
     // Transform response to match authService format
+    console.log('📦 Login response data:', data);
+    
     return {
       access_token: data.access_token,
-      token_type: data.token_type,
-      expires_in: data.expires_in,
+      refresh_token: data.refresh_token, // Include refresh token
+      token_type: data.token_type || 'Bearer',
+      expires_in: data.expires_in || 3600,
       user: data.user
     };
   } catch (error) {

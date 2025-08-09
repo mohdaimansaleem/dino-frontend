@@ -61,4 +61,9 @@ export const canManageRole = (userRole: string, targetRole: string): boolean => 
   return isHigherRole(userRole, targetRole);
 };
 
+// Helper function to check if user has admin-level access (admin or superadmin)
+export const isAdminLevel = (userRole: string): boolean => {
+  return userRole === ROLE_NAMES.ADMIN || userRole === ROLE_NAMES.SUPERADMIN;
+};
+
 export type RoleName = typeof ROLE_NAMES[keyof typeof ROLE_NAMES];

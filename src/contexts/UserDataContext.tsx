@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { userDataService, UserData, VenueData } from '../services/userDataService';
+import { userDataService, UserData } from '../services/userDataService';
 import { useAuth } from './AuthContext';
 
 interface UserDataContextType {
@@ -77,7 +77,7 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, initialized]);
+  }, [isAuthenticated, initialized]);
 
   // Initialize user data when authentication changes
   useEffect(() => {

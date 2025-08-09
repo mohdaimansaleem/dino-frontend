@@ -6,6 +6,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { API_CONFIG } from '../config/api';
 import { authService } from './authService';
+import { logger } from '../utils/logger';
 
 // Data transformation utilities
 class DataTransformer {
@@ -103,7 +104,17 @@ class ApiService {
   private setupInterceptors(): void {
     // Request interceptor
     this.axiosInstance.interceptors.request.use(
-      (config) => {
+      async (config) => {
+        // Check if token needs refresh before making request
+        if (authService.shouldRefreshToken()) {
+          console.log('🔄 Token needs refresh, attempting before request...');
+          try {
+            await authService.refreshToken();
+          } catch (error) {
+            console.error('Pre-request token refresh failed:', error);
+          }
+        }
+        
         // Add authentication token
         const token = authService.getToken();
         if (token) {
@@ -115,18 +126,16 @@ class ApiService {
           config.data = DataTransformer.toSnakeCase(config.data);
         }
 
-        // Log request in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-            data: config.data,
-            params: config.params
-          });
-        }
+        // Log request
+        logger.apiRequest(config.method || 'GET', config.url || '', {
+          data: config.data,
+          params: config.params
+        });
 
         return config;
       },
       (error) => {
-        console.error('Request interceptor error:', error);
+        logger.error('Request interceptor error:', error);
         return Promise.reject(error);
       }
     );
@@ -139,13 +148,13 @@ class ApiService {
           response.data = DataTransformer.toCamelCase(response.data);
         }
 
-        // Log response in development
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
-            status: response.status,
-            data: response.data
-          });
-        }
+        // Log response
+        logger.apiResponse(
+          response.config.method || 'GET',
+          response.config.url || '',
+          response.status,
+          response.data
+        );
 
         return response;
       },
@@ -158,26 +167,38 @@ class ApiService {
 
           try {
             const newToken = await authService.refreshToken();
-            if (newToken) {
+            if (newToken && newToken.access_token) {
+              // Update the authorization header with new token
               originalRequest.headers.Authorization = `Bearer ${newToken.access_token}`;
+              // Also update the default headers for future requests
+              this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newToken.access_token}`;
+              // Retry the original request
               return this.axiosInstance(originalRequest);
+            } else {
+              // No valid token received, logout
+              authService.logout();
+              window.location.href = '/login';
+              return Promise.reject(new Error('Token refresh failed'));
             }
           } catch (refreshError) {
             // Refresh failed, redirect to login
+            console.error('Token refresh failed:', refreshError);
             authService.logout();
             window.location.href = '/login';
             return Promise.reject(refreshError);
           }
         }
 
-        // Log error in development
-        if (process.env.NODE_ENV === 'development') {
-          console.error(`❌ API Error: ${error.config?.method?.toUpperCase()} ${error.config?.url}`, {
+        // Log error
+        logger.apiError(
+          error.config?.method || 'UNKNOWN',
+          error.config?.url || '',
+          {
             status: error.response?.status,
             data: error.response?.data,
             message: error.message
-          });
-        }
+          }
+        );
 
         return Promise.reject(error);
       }
@@ -402,7 +423,7 @@ class ApiService {
       const response = await this.get('/health');
       return response.success;
     } catch (error) {
-      console.warn('Health check failed:', error);
+      logger.warn('Health check failed:', error);
       return false;
     }
   }
