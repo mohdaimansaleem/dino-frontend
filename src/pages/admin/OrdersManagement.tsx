@@ -48,9 +48,6 @@ import {
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
-import AuthDebug from '../../components/debug/AuthDebug';
-import ApiDebug from '../../components/debug/ApiDebug';
-import VenueDebug from '../../components/debug/VenueDebug';
 import { PERMISSIONS } from '../../types/auth';
 import { orderService, Order, OrderStatus, PaymentStatus, PaymentMethod } from '../../services/orderService';
 import {
@@ -61,7 +58,6 @@ import {
   PAGE_TITLES,
   PLACEHOLDERS,
 } from '../../constants';
-
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -488,11 +484,6 @@ const OrdersManagement: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Debug Info */}
-      <AuthDebug />
-      <ApiDebug />
-      <VenueDebug />
-      
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>

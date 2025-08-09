@@ -116,8 +116,14 @@ class VenueService {
   async getVenue(venueId: string): Promise<Venue | null> {
     try {
       const response = await apiService.get<Venue>(`/venues/${venueId}`);
-      return response.data || null;
+      
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      return null;
     } catch (error) {
+      console.error('Error fetching venue:', error);
       return null;
     }
   }
@@ -138,8 +144,10 @@ class VenueService {
    */
   async updateVenue(venueId: string, venueData: VenueUpdate): Promise<ApiResponse<Venue>> {
     try {
-      return await apiService.put<Venue>(`/venues/${venueId}`, venueData);
+      const response = await apiService.put<Venue>(`/venues/${venueId}`, venueData);
+      return response;
     } catch (error: any) {
+      console.error('Error updating venue:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update venue');
     }
   }
@@ -330,7 +338,7 @@ class VenueService {
       fusion: 'Fusion',
       continental: 'Continental',
       fast_food: 'Fast Food',
-      cafe: 'Cafe',
+      venue: 'Venue',
       bakery: 'Bakery',
       desserts: 'Desserts',
       beverages: 'Beverages'
@@ -481,14 +489,6 @@ class VenueService {
     if ('email' in venueData && venueData.email) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(venueData.email)) {
         errors.push('Please enter a valid email address');
-      }
-    }
-
-    if ('website' in venueData && venueData.website) {
-      try {
-        new URL(venueData.website);
-      } catch {
-        errors.push('Please enter a valid website URL');
       }
     }
 

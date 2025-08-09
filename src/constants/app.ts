@@ -38,15 +38,15 @@ export const ROUTES = {
   ADMIN_MENU: '/admin/menu',
   ADMIN_TABLES: '/admin/tables',
   ADMIN_SETTINGS: '/admin/settings',
-  MENU: '/menu/:cafeId/:tableId',
-  CHECKOUT: '/checkout/:cafeId/:tableId',
+  MENU: '/menu/:venueId/:tableId',
+  CHECKOUT: '/checkout/:venueId/:tableId',
   ORDER_TRACKING: '/order-tracking/:orderId',
 } as const;
 
 // Default Values
 export const DEFAULTS = {
-  CAFE_ID: 'dino-cafe-1',
-  CAFE_NAME: 'Dino Cafe',
+  VENUE_ID: 'dino-venue-1',
+  VENUE_NAME: 'Dino Venue',
   TABLE_ID: 'dt-001',
   CURRENCY: 'INR',
   LANGUAGE: 'en',
@@ -60,7 +60,6 @@ export const DEFAULTS = {
 
 // Feature Flags
 export const FEATURES = {
-  DEMO_MODE: false, // Disabled for production
   QR_CODE_GENERATION: true,
   REAL_TIME_UPDATES: true,
   ANALYTICS: true,

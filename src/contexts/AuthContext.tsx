@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { UserProfile, UserRegistration } from '../types';
+import { UserProfile, UserRegistration } from '../types/api';
 import { User as AuthUser, ROLES, PermissionName, RoleName } from '../types/auth';
 import { authService } from '../services/authService';
 import PermissionService from '../services/permissionService';
@@ -7,6 +7,8 @@ import { userCache, CacheKeys, cacheUtils } from '../services/cacheService';
 import { preloadCriticalComponents } from '../components/LazyComponents';
 import { STORAGE_KEYS } from '../constants/storage';
 import { ROLE_NAMES } from '../constants/roles';
+import { tokenRefreshScheduler } from '../utils/tokenRefreshScheduler';
+// Password hashing is now handled by authService
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -117,39 +119,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
+      
+      // authService now handles client-side hashing automatically
       const response = await authService.login(email, password);
       
       // Store token
       localStorage.setItem(STORAGE_KEYS.TOKEN, response.access_token);
       
-      // Convert API user to local user format
+      // Enhanced user data mapping with proper fallbacks
       const localUser: UserProfile = {
         id: response.user.id,
         email: response.user.email,
-        firstName: response.user.first_name,
-        lastName: response.user.last_name,
-        first_name: response.user.first_name,
-        last_name: response.user.last_name,
+        first_name: response.user.first_name || response.user.firstName || '',
+        last_name: response.user.last_name || response.user.lastName || '',
+        firstName: response.user.first_name || response.user.firstName,
+        lastName: response.user.last_name || response.user.lastName,
         phone: response.user.phone,
-        role: response.user.role as any,
-        permissions: [],
-        workspaceId: response.user.workspace_id,
-        workspace_id: response.user.workspace_id,
-        cafeId: response.user.venue_id,
-        venue_id: response.user.venue_id,
-        isActive: response.user.is_active,
-        is_active: response.user.is_active,
+        role: response.user.role,
+        workspace_id: response.user.workspace_id || response.user.workspaceId,
+        workspaceId: response.user.workspace_id || response.user.workspaceId,
+        venue_id: response.user.venue_id || response.user.venueId,
+        venueId: response.user.venue_id || response.user.venueId,
+        is_active: response.user.is_active !== undefined ? response.user.is_active : (response.user.isActive ?? true),
+        isActive: response.user.is_active !== undefined ? response.user.is_active : (response.user.isActive ?? true),
         isVerified: true,
         created_at: response.user.created_at,
         createdAt: new Date(response.user.created_at),
-        updatedAt: new Date(response.user.updated_at || response.user.created_at)
+        updatedAt: new Date(response.user.updated_at || response.user.created_at),
+        permissions: []
       };
       
       setUser(localUser);
       // Store the converted user data
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
       
-      // Fetch and store user permissions with caching
+      // Fetch and store user permissions with enhanced error handling
       try {
         const permissionsData = await userCache.getOrSet(
           CacheKeys.userPermissions(localUser.id),
@@ -158,16 +162,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         );
         setUserPermissions(permissionsData);
         localStorage.setItem(STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissionsData));
-      } catch (error) {
+      } catch (permError) {
+        console.warn('Failed to fetch user permissions:', permError);
         // Continue with login even if permissions fetch fails
+        // Set basic permissions based on role
+        const basicPermissions = {
+          role: { name: response.user.role },
+          permissions: [],
+          capabilities: {}
+        };
+        setUserPermissions(basicPermissions);
       }
 
+      // Start token refresh scheduler
+      tokenRefreshScheduler.start();
+      
       // Preload critical components and data
       setTimeout(() => {
         preloadCriticalComponents();
-        cacheUtils.preloadCriticalData(localUser.id, localUser.venue_id || localUser.cafeId);
+        cacheUtils.preloadCriticalData(localUser.id, localUser.venue_id || localUser.venueId);
       }, 100);
-    } catch (error) {
+    } catch (error: any) {
+      // Enhanced error handling
+      console.error('Login error:', error);
+      
+      // Clear any partial authentication state
+      localStorage.removeItem(STORAGE_KEYS.TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.USER);
+      localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
+      setUser(null);
+      setUserPermissions(null);
+      
       throw error;
     } finally {
       setLoading(false);
@@ -182,18 +207,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const apiUserData = {
         email: userData.email,
         phone: userData.phone,
-        first_name: userData.firstName,
-        last_name: userData.lastName,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
         password: userData.password,
-        confirm_password: userData.confirmPassword,
-        role_id: userData.role,
-        workspace_id: (userData as any).workspaceId || '',
-        venue_id: (userData as any).cafeId,
-        date_of_birth: userData.dateOfBirth?.toISOString().split('T')[0],
+        confirm_password: userData.confirm_password,
+        role_id: userData.role_id,
+        workspace_id: userData.workspace_id,
+        venue_id: userData.venue_id,
+        date_of_birth: userData.date_of_birth,
         gender: userData.gender
       };
       
-      const response = await authService.register(apiUserData);
+      await authService.register(apiUserData);
       
       // Registration doesn't return tokens, just success
       // User needs to login after registration
@@ -206,10 +231,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = (): void => {
-    // This will show us where logout is being called from
-    localStorage.removeItem(STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(STORAGE_KEYS.USER);
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    // Stop token refresh scheduler
+    tokenRefreshScheduler.stop();
+    
+    // Clear all authentication data
+    authService.logout(); // This clears tokens including expiry
     localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
     setUser(null);
     setUserPermissions(null);
@@ -243,23 +269,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const localUser: UserProfile = {
         id: updatedUser.id,
         email: updatedUser.email,
-        firstName: updatedUser.first_name,
-        lastName: updatedUser.last_name,
         first_name: updatedUser.first_name,
         last_name: updatedUser.last_name,
+        firstName: updatedUser.first_name,
+        lastName: updatedUser.last_name,
         phone: updatedUser.phone,
-        role: updatedUser.role as any,
-        permissions: [],
-        workspaceId: updatedUser.workspace_id,
+        role: updatedUser.role,
         workspace_id: updatedUser.workspace_id,
-        cafeId: updatedUser.venue_id,
+        workspaceId: updatedUser.workspace_id,
         venue_id: updatedUser.venue_id,
-        isActive: updatedUser.is_active,
+        venueId: updatedUser.venue_id,
         is_active: updatedUser.is_active,
+        isActive: updatedUser.is_active,
         isVerified: true,
         created_at: updatedUser.created_at,
         createdAt: new Date(updatedUser.created_at),
-        updatedAt: new Date(updatedUser.updated_at || updatedUser.created_at)
+        updatedAt: new Date(updatedUser.updated_at || updatedUser.created_at),
+        permissions: []
       };
       
       setUser(localUser);
@@ -277,23 +303,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const localUser: UserProfile = {
         id: currentUser.id,
         email: currentUser.email,
-        firstName: currentUser.first_name,
-        lastName: currentUser.last_name,
         first_name: currentUser.first_name,
         last_name: currentUser.last_name,
+        firstName: currentUser.first_name,
+        lastName: currentUser.last_name,
         phone: currentUser.phone,
-        role: currentUser.role as any,
-        permissions: [],
-        workspaceId: currentUser.workspace_id,
+        role: currentUser.role,
         workspace_id: currentUser.workspace_id,
-        cafeId: currentUser.venue_id,
+        workspaceId: currentUser.workspace_id,
         venue_id: currentUser.venue_id,
-        isActive: currentUser.is_active,
+        venueId: currentUser.venue_id,
         is_active: currentUser.is_active,
+        isActive: currentUser.is_active,
         isVerified: true,
         created_at: currentUser.created_at,
         createdAt: new Date(currentUser.created_at),
-        updatedAt: new Date(currentUser.updated_at || currentUser.created_at)
+        updatedAt: new Date(currentUser.updated_at || currentUser.created_at),
+        permissions: []
       };
       
       setUser(localUser);

@@ -6,7 +6,7 @@ export interface User {
   role: UserRole;
   permissions: Permission[];
   workspaceId?: string;
-  cafeId?: string;
+  venueId?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -109,7 +109,7 @@ export type SuperAdminRole = typeof ROLES.SUPERADMIN;
 export type AdminRole = typeof ROLES.ADMIN;
 export type OperatorRole = typeof ROLES.OPERATOR;
 
-// Workspace and Cafe interfaces
+// Workspace and Venue interfaces
 export interface Workspace {
   id: string;
   name: string;
@@ -121,7 +121,7 @@ export interface Workspace {
   updatedAt: string;
 }
 
-export interface Cafe {
+export interface Venue {
   id: string;
   name: string;
   description?: string;
@@ -134,7 +134,7 @@ export interface Cafe {
   isActive: boolean;
   isOpen: boolean;
   openingHours?: OpeningHours;
-  settings: CafeSettings;
+  settings: VenueSettings;
   createdAt: string;
   updatedAt: string;
 }
@@ -147,7 +147,7 @@ export interface OpeningHours {
   };
 }
 
-export interface CafeSettings {
+export interface VenueSettings {
   currency: string;
   timezone: string;
   orderTimeout: number;
@@ -161,6 +161,6 @@ export interface PricingPlan {
   displayName: string;
   price: number;
   features: string[];
-  maxCafes: number;
+  maxVenues: number;
   maxUsers: number;
 }

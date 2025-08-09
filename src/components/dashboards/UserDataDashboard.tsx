@@ -25,7 +25,7 @@ import {
   Edit,
   Add,
   Dashboard as DashboardIcon,
-  BugReport,
+
   Restaurant,
   TableBar,
   Receipt,
@@ -33,7 +33,7 @@ import {
 } from '@mui/icons-material';
 import { useUserData } from '../../contexts/UserDataContext';
 import { useAuth } from '../../contexts/AuthContext';
-import WorkspaceDebug from '../debug/WorkspaceDebug';
+import { ROLE_NAMES, getRoleDisplayName, isAdminLevel } from '../../constants/roles';
 
 interface UserDataDashboardProps {
   className?: string;
@@ -88,8 +88,8 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
   }
 
   const statistics = getStatistics();
-  const menuItems = getMenuItems();
-  const tables = getTables();
+  const menuItems = []; // Menu items are managed by MenuManagement component directly
+  const tables = []; // Tables are managed by TableManagement component directly
   const recentOrders = getRecentOrders();
   const users = getUsers();
 
@@ -101,7 +101,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
           <Box>
             <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <DashboardIcon color="primary" />
-              {getUserRole() === 'superadmin' ? 'Super Admin' : getUserRole() === 'admin' ? 'Admin' : 'Operator'} Dashboard
+              {getRoleDisplayName(getUserRole())} Dashboard
             </Typography>
             <Typography variant="body1" color="text.secondary">
               Welcome back, {getUserDisplayName()}! Managing {getVenueDisplayName()}
@@ -130,7 +130,6 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
           <Tab label="Tables" />
           <Tab label="Recent Orders" />
           {hasPermission('can_manage_users') && <Tab label="Users" />}
-          <Tab label="Debug" icon={<BugReport />} />
         </Tabs>
       </Box>
 
@@ -242,7 +241,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {recentOrders.slice(0, 5).map((order) => (
+                      {recentOrders.slice(0, 5).map((order: any) => (
                         <TableRow key={order.id}>
                           <TableCell>#{order.id.slice(-6)}</TableCell>
                           <TableCell>Table {order.table_number || 'N/A'}</TableCell>
@@ -292,79 +291,28 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
               )}
             </Box>
             
-            {menuItems.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 6 }}>
-                <Restaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No Menu Items Found
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  {hasPermission('can_manage_menu') 
-                    ? "Get started by adding your first menu item to showcase your delicious offerings."
-                    : "Menu items will appear here once they are added by the restaurant manager."
-                  }
-                </Typography>
-                {hasPermission('can_manage_menu') && (
-                  <Button variant="contained" startIcon={<Add />} size="large">
-                    Add Your First Menu Item
-                  </Button>
-                )}
-              </Box>
-            ) : (
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Category</TableCell>
-                      <TableCell>Price</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {menuItems.slice(0, 10).map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>₹{item.price}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={item.is_available ? 'Available' : 'Unavailable'}
-                            color={item.is_available ? 'success' : 'error'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {hasPermission('can_manage_menu') && (
-                            <>
-                              <IconButton size="small">
-                                <Visibility />
-                              </IconButton>
-                              <IconButton size="small">
-                                <Edit />
-                              </IconButton>
-                            </>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {menuItems.length > 10 && (
-                      <TableRow>
-                        <TableCell colSpan={5} sx={{ textAlign: 'center', py: 2 }}>
-                          <Typography variant="body2" color="text.secondary">
-                            Showing 10 of {menuItems.length} menu items
-                          </Typography>
-                          <Button size="small" sx={{ mt: 1 }}>
-                            View All Menu Items
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Restaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Menu Management
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {hasPermission('can_manage_menu') 
+                  ? "Use the dedicated Menu Management page to create and manage your restaurant's menu items, categories, and pricing."
+                  : "Menu items are managed by the restaurant manager through the Menu Management section."
+                }
+              </Typography>
+              {hasPermission('can_manage_menu') && (
+                <Button 
+                  variant="contained" 
+                  startIcon={<Restaurant />} 
+                  size="large"
+                  onClick={() => window.location.href = '/admin/menu'}
+                >
+                  Go to Menu Management
+                </Button>
+              )}
+            </Box>
           </CardContent>
         </Card>
       )}
@@ -384,73 +332,29 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
               )}
             </Box>
             
-            {tables.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 6 }}>
-                <TableBar sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No Tables Found
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  {hasPermission('can_manage_tables') 
-                    ? "Set up your dining area by adding tables for customers to book and dine."
-                    : "Tables will appear here once they are configured by the restaurant manager."
-                  }
-                </Typography>
-                {hasPermission('can_manage_tables') && (
-                  <Button variant="contained" startIcon={<Add />} size="large">
-                    Add Your First Table
-                  </Button>
-                )}
-              </Box>
-            ) : (
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Table Number</TableCell>
-                      <TableCell>Capacity</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>QR Code</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {tables.map((table) => (
-                      <TableRow key={table.id}>
-                        <TableCell>{table.table_number}</TableCell>
-                        <TableCell>{table.capacity} seats</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={table.is_active ? 'Active' : 'Inactive'}
-                            color={table.is_active ? 'success' : 'error'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {table.qr_code ? (
-                            <Chip label="Generated" color="success" size="small" />
-                          ) : (
-                            <Chip label="Not Generated" color="warning" size="small" />
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {hasPermission('can_manage_tables') && (
-                            <>
-                              <IconButton size="small">
-                                <Visibility />
-                              </IconButton>
-                              <IconButton size="small">
-                                <Edit />
-                              </IconButton>
-                            </>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <TableBar sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Table Management
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {hasPermission('can_manage_tables') 
+                  ? "Use the dedicated Table Management page to set up and manage your dining area, add tables, and generate QR codes."
+                  : "Tables are managed by the restaurant manager through the Table Management section."
+                }
+              </Typography>
+              {hasPermission('can_manage_tables') && (
+                <Button 
+                  variant="contained" 
+                  startIcon={<TableBar />} 
+                  size="large"
+                  onClick={() => window.location.href = '/admin/tables'}
+                >
+                  Go to Table Management
+                </Button>
+              )}
+            </Box>
+
           </CardContent>
         </Card>
       )}
@@ -492,7 +396,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {recentOrders.map((order) => (
+                    {recentOrders.map((order: any) => (
                       <TableRow key={order.id}>
                         <TableCell>#{order.id.slice(-6)}</TableCell>
                         <TableCell>{order.customer_name || 'Guest'}</TableCell>
@@ -572,7 +476,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {users.map((user) => (
+                    {users.map((user: any) => (
                       <TableRow key={user.id}>
                         <TableCell>{user.first_name} {user.last_name}</TableCell>
                         <TableCell>{user.email}</TableCell>
@@ -580,8 +484,8 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
                           <Chip
                             label={user.role}
                             color={
-                              user.role === 'superadmin' ? 'error' :
-                              user.role === 'admin' ? 'primary' : 'secondary'
+                              user.role === ROLE_NAMES.SUPERADMIN ? 'error' :
+                              isAdminLevel(user.role) ? 'primary' : 'secondary'
                             }
                             size="small"
                           />
@@ -609,11 +513,6 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
             )}
           </CardContent>
         </Card>
-      )}
-
-      {/* Debug Tab */}
-      {currentTab === (hasPermission('can_manage_users') ? 5 : 4) && (
-        <WorkspaceDebug />
       )}
     </Box>
   );

@@ -35,13 +35,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { useUserData } from '../contexts/UserDataContext';
 import { PERMISSIONS } from '../types/auth';
 
-interface CafeStatusManagerProps {
-  cafe?: any;
-  onStatusChange?: (cafeId: string, isOpen: boolean, isActive: boolean) => void;
+interface VenueStatusManagerProps {
+  venue?: any;
+  onStatusChange?: (venueId: string, isOpen: boolean, isActive: boolean) => void;
 }
 
-const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({ 
-  cafe, 
+const VenueStatusManager: React.FC<VenueStatusManagerProps> = ({ 
+  venue, 
   onStatusChange 
 }) => {
   const { hasPermission } = useAuth();
@@ -52,20 +52,20 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const venue = getVenue();
-  const targetCafe = cafe || (venue ? {
-    id: venue.id,
-    name: venue.name,
-    isOpen: venue.is_open,
-    isActive: venue.is_active,
-    lastStatusChange: venue.updated_at,
+  const venueData = getVenue();
+  const targetVenue = venue || (venueData ? {
+    id: venueData.id,
+    name: venueData.name,
+    isOpen: venueData.is_open || false,
+    isActive: venueData.is_active,
+    lastStatusChange: venueData.updated_at,
     operatingHours: 'Not set'
   } : null);
   
   const canManageStatus = hasPermission(PERMISSIONS.VENUE_ACTIVATE) || 
                          hasPermission(PERMISSIONS.VENUE_DEACTIVATE);
 
-  if (!targetCafe) {
+  if (!targetVenue) {
     return (
       <Alert severity="info">
         No venue data available. Please ensure you have a venue assigned to your account.
@@ -87,15 +87,15 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
     try {
       // TODO: Implement venue status update API calls
       // This would use venueService to update venue status
-      console.log(`Updating ${statusType} status for venue ${targetCafe.id}`);
+      console.log(`Updating ${statusType} status for venue ${targetVenue.id}`);
       
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       onStatusChange?.(
-        targetCafe.id, 
-        statusType === 'open' ? !targetCafe.isOpen : targetCafe.isOpen,
-        statusType === 'active' ? !targetCafe.isActive : targetCafe.isActive
+        targetVenue.id, 
+        statusType === 'open' ? !targetVenue.isOpen : targetVenue.isOpen,
+        statusType === 'active' ? !targetVenue.isActive : targetVenue.isActive
       );
       
       // Refresh user data to get updated venue status
@@ -146,18 +146,18 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
               </Avatar>
               <Box>
                 <Typography variant="h6" fontWeight="600">
-                  {targetCafe.name}
+                  {targetVenue.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Cafe Status Management
+                  Venue Status Management
                 </Typography>
               </Box>
             </Box>
             
             <Chip
-              icon={getStatusIcon(targetCafe.isOpen, targetCafe.isActive)}
-              label={getStatusText(targetCafe.isOpen, targetCafe.isActive)}
-              color={getStatusColor(targetCafe.isOpen, targetCafe.isActive)}
+              icon={getStatusIcon(targetVenue.isOpen, targetVenue.isActive)}
+              label={getStatusText(targetVenue.isOpen, targetVenue.isActive)}
+              color={getStatusColor(targetVenue.isOpen, targetVenue.isActive)}
               sx={{ fontWeight: 600 }}
             />
           </Box>
@@ -183,19 +183,19 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={targetCafe.isOpen}
+                      checked={targetVenue.isOpen}
                       onChange={(e) => handleStatusToggle('open', e.target.checked)}
-                      disabled={!canManageStatus || !targetCafe.isActive}
+                      disabled={!canManageStatus || !targetVenue.isActive}
                       color="success"
                     />
                   }
                   label={
                     <Box>
                       <Typography variant="body2" fontWeight="500">
-                        {targetCafe.isOpen ? 'Open for Orders' : 'Closed for Orders'}
+                        {targetVenue.isOpen ? 'Open for Orders' : 'Closed for Orders'}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {targetCafe.isOpen ? 
+                        {targetVenue.isOpen ? 
                           'Customers can place orders' : 
                           'Orders are temporarily disabled'
                         }
@@ -213,10 +213,10 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Settings sx={{ mr: 1, color: 'secondary.main' }} />
                     <Typography variant="subtitle1" fontWeight="600">
-                      Cafe Status
+                      Venue Status
                     </Typography>
                   </Box>
-                  <Tooltip title="Controls overall cafe availability">
+                  <Tooltip title="Controls overall venue availability">
                     <IconButton size="small">
                       <Info fontSize="small" />
                     </IconButton>
@@ -226,7 +226,7 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={targetCafe.isActive}
+                      checked={targetVenue.isActive}
                       onChange={(e) => handleStatusToggle('active', e.target.checked)}
                       disabled={!canManageStatus}
                       color="primary"
@@ -235,12 +235,12 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
                   label={
                     <Box>
                       <Typography variant="body2" fontWeight="500">
-                        {targetCafe.isActive ? 'Active Cafe' : 'Inactive Cafe'}
+                        {targetVenue.isActive ? 'Active Venue' : 'Inactive Venue'}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {targetCafe.isActive ? 
-                          'Cafe is operational' : 
-                          'Cafe is temporarily disabled'
+                        {targetVenue.isActive ? 
+                          'Venue is operational' : 
+                          'Venue is temporarily disabled'
                         }
                       </Typography>
                     </Box>
@@ -262,7 +262,7 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
                     Last Status Change
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {targetCafe.lastStatusChange ? new Date(targetCafe.lastStatusChange).toLocaleString() : 'Not available'}
+                    {targetVenue.lastStatusChange ? new Date(targetVenue.lastStatusChange).toLocaleString() : 'Not available'}
                   </Typography>
                 </Box>
               </Box>
@@ -275,7 +275,7 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
                     Operating Hours
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {targetCafe.operatingHours || 'Not set'}
+                    {targetVenue.operatingHours || 'Not set'}
                   </Typography>
                 </Box>
               </Box>
@@ -284,7 +284,7 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
 
           {!canManageStatus && (
             <Alert severity="warning" sx={{ mt: 2 }}>
-              You don't have permission to change cafe status. Contact your administrator.
+              You don't have permission to change venue status. Contact your administrator.
             </Alert>
           )}
         </CardContent>
@@ -298,20 +298,20 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
         <DialogContent>
           <Alert severity="info" sx={{ mb: 3 }}>
             You are about to {statusType === 'open' ? 
-              (targetCafe.isOpen ? 'close' : 'open') : 
-              (targetCafe.isActive ? 'deactivate' : 'activate')
-            } the cafe "{targetCafe.name}".
+              (targetVenue.isOpen ? 'close' : 'open') : 
+              (targetVenue.isActive ? 'deactivate' : 'activate')
+            } the venue "{targetVenue.name}".
           </Alert>
 
           <Typography variant="body2" color="text.secondary" gutterBottom>
             {statusType === 'open' ? (
-              targetCafe.isOpen ? 
-                'Closing the cafe will prevent customers from placing new orders. Existing orders will continue to be processed.' :
-                'Opening the cafe will allow customers to place orders again.'
+              targetVenue.isOpen ? 
+                'Closing the venue will prevent customers from placing new orders. Existing orders will continue to be processed.' :
+                'Opening the venue will allow customers to place orders again.'
             ) : (
-              targetCafe.isActive ?
-                'Deactivating the cafe will make it completely unavailable to customers and staff.' :
-                'Activating the cafe will make it available for operations.'
+              targetVenue.isActive ?
+                'Deactivating the venue will make it completely unavailable to customers and staff.' :
+                'Activating the venue will make it available for operations.'
             )}
           </Typography>
 
@@ -334,7 +334,7 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
             onClick={confirmStatusChange} 
             variant="contained"
             disabled={loading}
-            color={statusType === 'active' && targetCafe.isActive ? 'error' : 'primary'}
+            color={statusType === 'active' && targetVenue.isActive ? 'error' : 'primary'}
           >
             {loading ? 'Updating...' : 'Confirm'}
           </Button>
@@ -344,4 +344,4 @@ const CafeStatusManager: React.FC<CafeStatusManagerProps> = ({
   );
 };
 
-export default CafeStatusManager;
+export default VenueStatusManager;

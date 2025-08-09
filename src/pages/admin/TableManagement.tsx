@@ -59,7 +59,7 @@ interface TableArea {
 }
 
 const TableManagement: React.FC = () => {
-  const { getVenue, getTables, getVenueDisplayName } = useUserData();
+  const { getVenue, getVenueDisplayName, userData, loading: userDataLoading } = useUserData();
   const [tables, setTables] = useState<Table[]>([]);
   const [areas, setAreas] = useState<TableArea[]>([]);
   const [selectedArea, setSelectedArea] = useState<string>('all');
@@ -76,6 +76,12 @@ const TableManagement: React.FC = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      // Wait for UserDataContext to finish loading
+      if (userDataLoading) {
+        console.log('UserDataContext still loading, waiting...');
+        return;
+      }
+
       const venue = getVenue();
       
       if (!venue?.id) {
@@ -88,24 +94,19 @@ const TableManagement: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Try to use tables from user data first
-        const userDataTables = getTables();
-        if (userDataTables && userDataTables.length > 0) {
-          setTables(userDataTables);
-        }
+        console.log('Loading table data for venue:', venue.id);
 
-        // Load areas and tables from API
+        // Load areas and tables from API directly
         const [areasData, tablesData] = await Promise.all([
           tableService.getAreas(venue.id),
-          userDataTables && userDataTables.length > 0 ? 
-            Promise.resolve({ data: userDataTables }) : 
-            tableService.getTables({ venue_id: venue.id })
+          tableService.getTables({ venue_id: venue.id })
         ]);
 
+        console.log('Areas loaded:', areasData?.length || 0);
+        console.log('Tables loaded:', tablesData.data?.length || 0);
+
         setAreas(areasData);
-        if (!userDataTables || userDataTables.length === 0) {
-          setTables(tablesData.data || []);
-        }
+        setTables(tablesData.data || []);
       } catch (error) {
         setError('Failed to load table data. Please try again.');
         setSnackbar({ 
@@ -119,7 +120,7 @@ const TableManagement: React.FC = () => {
     };
 
     loadData();
-  }, [getVenue]);
+  }, [userDataLoading, getVenue]);
 
   const handleAddTable = () => {
     setEditingTable(null);
@@ -153,7 +154,7 @@ const TableManagement: React.FC = () => {
       if (editingTable) {
         // Update existing table
         const response = await tableService.updateTable(editingTable.id, {
-          table_number: parseInt(tableData.table_number || editingTable.table_number.toString()),
+          table_number: tableData.table_number || editingTable.table_number,
           capacity: tableData.capacity || editingTable.capacity,
           location: tableData.location || editingTable.location,
           table_status: tableData.table_status || editingTable.table_status,
@@ -172,12 +173,28 @@ const TableManagement: React.FC = () => {
           throw new Error('No venue available');
         }
         
-        const response = await tableService.createTable({
-          table_number: parseInt(tableData.table_number || '1'),
-          capacity: tableData.capacity || 2,
+        const createData = {
+          table_number: tableData.table_number || '1',
+          capacity: typeof tableData.capacity === 'number' ? tableData.capacity : parseInt(tableData.capacity) || 2,
           location: tableData.location || '',
           venue_id: venue.id,
-        });
+        };
+        
+        // Validate required fields
+        if (!createData.table_number || createData.table_number.trim() === '') {
+          throw new Error('Table number is required');
+        }
+        if (!createData.capacity || createData.capacity < 1) {
+          throw new Error('Table capacity is required and must be at least 1');
+        }
+        if (!createData.venue_id) {
+          throw new Error('Venue ID is required');
+        }
+        
+        console.log('Creating table with data:', createData);
+        console.log('Original form data:', tableData);
+        
+        const response = await tableService.createTable(createData);
         if (response.success && response.data) {
           setTables(prev => [...prev, response.data!]);
           setSnackbar({ open: true, message: 'Table added successfully', severity: 'success' });
@@ -608,6 +625,7 @@ const TableManagement: React.FC = () => {
         onSave={handleSaveTable}
         table={editingTable}
         areas={areas}
+        tables={tables}
       />
 
       <AreaDialog
@@ -634,9 +652,9 @@ const TableManagement: React.FC = () => {
           setSelectedTableForQR(null);
         }}
         tableId={selectedTableForQR?.id}
-        cafeId={getVenue()?.id || ''}
-        cafeName={getVenueDisplayName()}
-        tableNumber={selectedTableForQR?.table_number.toString()}
+        venueId={getVenue()?.id || ''}
+        venueName={getVenueDisplayName()}
+        tableNumber={selectedTableForQR?.table_number}
       />
 
       <QRCodeManager
@@ -644,12 +662,13 @@ const TableManagement: React.FC = () => {
         onClose={() => setOpenQRManager(false)}
         tables={tables.map(table => ({
           id: table.id,
-          number: table.table_number.toString(),
-          cafeId: getVenue()?.id || '',
+          number: table.table_number,
+          venueId: getVenue()?.id || '',
+          venueName: getVenue()?.name || '',
           cafeName: getVenueDisplayName()
         }))}
-        cafeId={getVenue()?.id || ''}
-        cafeName={getVenueDisplayName()}
+        venueId={getVenue()?.id || ''}
+        venueName={getVenueDisplayName()}
       />
     </Container>
   );
@@ -661,11 +680,12 @@ interface TableDialogProps {
   onSave: (table: any) => void;
   table: Table | null;
   areas: TableArea[];
+  tables: Table[];
 }
 
-const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table, areas }) => {
+const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table, areas, tables }) => {
   const [formData, setFormData] = useState<any>({
-    table_number: '',
+    table_number: '1',
     capacity: 2,
     location: '',
     table_status: 'available',
@@ -675,24 +695,53 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
   useEffect(() => {
     if (table) {
       setFormData({
-        table_number: table.table_number.toString(),
+        table_number: table.table_number,
         capacity: table.capacity,
         location: table.location || '',
         table_status: table.table_status,
         is_active: table.is_active,
       });
     } else {
+      // Suggest next available table number
+      const usedNumbers = tables.map(t => parseInt(t.table_number) || 0).sort((a, b) => a - b);
+      let nextNumber = 1;
+      for (let i = 1; i <= usedNumbers.length + 1; i++) {
+        if (!usedNumbers.includes(i)) {
+          nextNumber = i;
+          break;
+        }
+      }
+      
       setFormData({
-        table_number: '',
+        table_number: nextNumber.toString(),
         capacity: 2,
         location: '',
         table_status: 'available',
         is_active: true,
       });
     }
-  }, [table, open]);
+  }, [table, open, tables]);
 
   const handleSave = () => {
+    // Validate form data before saving
+    if (!formData.table_number || formData.table_number.trim() === '') {
+      alert('Please enter a valid table number');
+      return;
+    }
+    if (!formData.capacity || formData.capacity < 1) {
+      alert('Please enter a valid capacity');
+      return;
+    }
+    
+    // Check for duplicate table numbers (only for new tables)
+    if (!table) {
+      const isDuplicate = tables.some((t: Table) => t.table_number === formData.table_number.trim() && t.is_active);
+      if (isDuplicate) {
+        alert(`Table number ${formData.table_number} already exists. Please choose a different number.`);
+        return;
+      }
+    }
+    
     onSave(formData);
   };
 
@@ -707,8 +756,11 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
             <TextField
               fullWidth
               label="Table Number"
-              value={formData.table_number || ''}
+              type="text"
+              value={formData.table_number || '1'}
               onChange={(e) => setFormData((prev: any) => ({ ...prev, table_number: e.target.value }))}
+              helperText={!table ? `Next available: ${formData.table_number}` : ''}
+              error={!table && tables.some(t => t.table_number === formData.table_number.trim() && t.is_active)}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -733,7 +785,25 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
               label="Capacity"
               type="number"
               value={formData.capacity || 2}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, capacity: parseInt(e.target.value) }))}
+              onChange={(e) => setFormData((prev: any) => ({ ...prev, capacity: parseInt(e.target.value) || 2 }))}
+              inputProps={{
+                min: 1,
+                step: 1,
+                onWheel: (e: any) => e.preventDefault(),
+                style: { MozAppearance: 'textfield' }
+              }}
+              sx={{
+                '& input[type=number]': {
+                  '&::-webkit-outer-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                  '&::-webkit-inner-spin-button': {
+                    '-webkit-appearance': 'none',
+                    margin: 0,
+                  },
+                },
+              }}
             />
           </Grid>
           <Grid item xs={12} md={4}>
@@ -756,8 +826,8 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.active || false}
-                  onChange={(e) => setFormData((prev: any) => ({ ...prev, active: e.target.checked }))}
+                  checked={formData.is_active !== undefined ? formData.is_active : true}
+                  onChange={(e) => setFormData((prev: any) => ({ ...prev, is_active: e.target.checked }))}
                 />
               }
               label="Active"
@@ -861,7 +931,7 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area }) 
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.active || false}
+                  checked={formData.active !== undefined ? formData.active : true}
                   onChange={(e) => setFormData((prev: any) => ({ ...prev, active: e.target.checked }))}
                 />
               }

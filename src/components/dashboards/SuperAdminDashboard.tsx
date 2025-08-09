@@ -29,11 +29,9 @@ import {
   Edit,
   Add,
   Dashboard as DashboardIcon,
-  BugReport,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardService } from '../../services/dashboardService';
-import WorkspaceDebug from '../debug/WorkspaceDebug';
 import { getUserFirstName } from '../../utils/userUtils';
 
 interface SuperAdminDashboardProps {
@@ -125,7 +123,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)}>
           <Tab label="Dashboard" />
-          <Tab label="Debug" icon={<BugReport />} />
         </Tabs>
       </Box>
 
@@ -327,11 +324,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
         </CardContent>
       </Card>
         </>
-      )}
-
-      {/* Debug Tab */}
-      {currentTab === 1 && (
-        <WorkspaceDebug />
       )}
     </Box>
   );

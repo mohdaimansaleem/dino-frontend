@@ -3,20 +3,23 @@ import { apiService } from './api';
 export interface QRCodeData {
   id: string;
   tableId: string;
-  cafeId: string;
-  cafeName: string;
+  venueId: string;
+  venueName: string;
   tableNumber: string;
   qrCodeUrl: string;
   qrCodeBase64: string; // Made required since we always generate it
   menuUrl: string;
   createdAt: string;
   updatedAt: string;
+  // Legacy compatibility
+  cafeId?: string;
+  cafeName?: string;
 }
 
 export interface QRGenerationRequest {
-  cafeId: string;
+  venueId: string;
   tableId: string;
-  cafeName: string;
+  venueName: string;
   tableNumber: string;
   customization?: {
     logoUrl?: string;
@@ -24,6 +27,9 @@ export interface QRGenerationRequest {
     secondaryColor?: string;
     template?: 'classic' | 'modern' | 'elegant' | 'minimal';
   };
+  // Legacy compatibility
+  cafeId?: string;
+  cafeName?: string;
 }
 
 class QRService {
@@ -57,10 +63,10 @@ class QRService {
     }
   }
 
-  // Get all QR codes for a cafe
-  async getCafeQRCodes(cafeId: string): Promise<QRCodeData[]> {
+  // Get all QR codes for a venue
+  async getVenueQRCodes(venueId: string): Promise<QRCodeData[]> {
     try {
-      const response = await apiService.get<QRCodeData[]>(`/qr/cafe/${cafeId}`);
+      const response = await apiService.get<QRCodeData[]>(`/qr/venue/${venueId}`);
       
       if (response.success && response.data) {
         return response.data;
@@ -70,6 +76,11 @@ class QRService {
     } catch (error: any) {
       return [];
     }
+  }
+
+  // Legacy method for backward compatibility
+  async getCafeQRCodes(cafeId: string): Promise<QRCodeData[]> {
+    return this.getVenueQRCodes(cafeId);
   }
 
   // Regenerate QR code
@@ -148,9 +159,14 @@ class QRService {
 
 
   // Utility function to create menu URL
-  createMenuUrl(cafeId: string, tableId: string): string {
+  createMenuUrl(venueId: string, tableId: string): string {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/menu/${cafeId}/${tableId}`;
+    return `${baseUrl}/menu/${venueId}/${tableId}`;
+  }
+
+  // Legacy method for backward compatibility
+  createCafeMenuUrl(cafeId: string, tableId: string): string {
+    return this.createMenuUrl(cafeId, tableId);
   }
 
   // Validate QR code URL
@@ -159,7 +175,7 @@ class QRService {
       const urlObj = new URL(url);
       const pathParts = urlObj.pathname.split('/').filter(part => part);
       
-      // Should match pattern: /menu/{cafeId}/{tableId}
+      // Should match pattern: /menu/{venueId}/{tableId}
       return pathParts.length === 3 && pathParts[0] === 'menu';
     } catch {
       return false;

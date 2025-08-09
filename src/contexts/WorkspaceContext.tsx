@@ -1,28 +1,29 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { Workspace, Cafe, PricingPlan } from '../types/auth';
+import { Workspace, PricingPlan } from '../types/auth';
+import { Venue } from '../types/api';
 import { workspaceService } from '../services/workspaceService';
 import { useAuth } from './AuthContext';
 
 interface WorkspaceContextType {
-  // Current workspace and cafe
+  // Current workspace and venue
   currentWorkspace: Workspace | null;
-  currentCafe: Cafe | null;
+  currentVenue: Venue | null;
   
-  // Available workspaces and cafes
+  // Available workspaces and venues
   workspaces: Workspace[];
-  cafes: Cafe[];
+  venues: Venue[];
   pricingPlans: PricingPlan[];
   
   // Loading states
   loading: boolean;
   workspacesLoading: boolean;
-  cafesLoading: boolean;
+  venuesLoading: boolean;
   
   // Actions
   switchWorkspace: (workspaceId: string) => Promise<void>;
-  switchCafe: (cafeId: string) => Promise<void>;
+  switchVenue: (venueId: string) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
-  refreshCafes: () => Promise<void>;
+  refreshVenues: () => Promise<void>;
   initializeVenueFromUser: () => Promise<void>;
   
   // Workspace management
@@ -30,13 +31,13 @@ interface WorkspaceContextType {
   updateWorkspace: (workspaceId: string, workspaceData: any) => Promise<void>;
   deleteWorkspace: (workspaceId: string) => Promise<void>;
   
-  // Cafe management
-  createCafe: (cafeData: any) => Promise<void>;
-  updateCafe: (cafeId: string, cafeData: any) => Promise<void>;
-  deleteCafe: (cafeId: string) => Promise<void>;
-  activateCafe: (cafeId: string) => Promise<void>;
-  deactivateCafe: (cafeId: string) => Promise<void>;
-  toggleCafeStatus: (cafeId: string, isOpen: boolean) => Promise<void>;
+  // Venue management
+  createVenue: (venueData: any) => Promise<void>;
+  updateVenue: (venueId: string, venueData: any) => Promise<void>;
+  deleteVenue: (venueId: string) => Promise<void>;
+  activateVenue: (venueId: string) => Promise<void>;
+  deactivateVenue: (venueId: string) => Promise<void>;
+  toggleVenueStatus: (venueId: string, isOpen: boolean) => Promise<void>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -49,48 +50,56 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   const { user, isAuthenticated } = useAuth();
   
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
-  const [currentCafe, setCurrentCafe] = useState<Cafe | null>(null);
+  const [currentVenue, setCurrentVenue] = useState<Venue | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [cafes, setCafes] = useState<Cafe[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
   
   const [loading, setLoading] = useState(false);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
-  const [cafesLoading, setCafesLoading] = useState(false);
+  const [venuesLoading, setVenuesLoading] = useState(false);
 
-  const loadCafesForWorkspace = useCallback(async (workspaceId: string) => {
-    setCafesLoading(true);
+  const loadVenuesForWorkspace = useCallback(async (workspaceId: string) => {
+    setVenuesLoading(true);
     try {
-      const venueList = await workspaceService.getCafes(workspaceId);
-      // Convert venues to cafes
-      const cafeList = venueList.map((venue: any) => ({
-        id: venue.id,
-        name: venue.name,
-        description: venue.description || '',
-        address: venue.location?.address || '',
-        phone: venue.phone || '',
-        email: venue.email || '',
-        ownerId: (venue as any).owner_id || '',
-        workspaceId: venue.workspace_id,
-        logo: '',
-        isActive: venue.is_active,
-        isOpen: venue.is_active,
-        settings: {},
-        createdAt: new Date(venue.created_at),
-        updatedAt: new Date(venue.updated_at || venue.created_at)
-      })) as any[];
-      setCafes(cafeList);
+      const venueList = await workspaceService.getVenues(workspaceId);
       
-      // If no current cafe is set, set the first active cafe
-      if (!currentCafe && cafeList.length > 0) {
-        const activeCafe = cafeList.find((cafe: any) => cafe.isActive) || cafeList[0];
-        setCurrentCafe(activeCafe);
+      // Convert API venues to internal format with proper mapping
+      const venues = venueList.map((venue: any) => {
+        const mappedVenue = {
+          id: venue.id,
+          name: venue.name,
+          description: venue.description || '',
+          address: venue.location?.address || '',
+          phone: venue.phone || '',
+          email: venue.email || '',
+          ownerId: venue.owner_id || '',
+          workspaceId: venue.workspace_id,
+          logo: '',
+          isActive: venue.is_active !== undefined ? venue.is_active : true,
+          isOpen: venue.is_open !== undefined ? venue.is_open : venue.is_active,
+          settings: {},
+          createdAt: new Date(venue.created_at),
+          updatedAt: new Date(venue.updated_at || venue.created_at),
+          // Store original API data for reference
+          _apiData: venue
+        };
+        return mappedVenue;
+      }) as any[];
+      
+      setVenues(venues);
+      
+      // If no current venue is set, set the first active venue
+      if (!currentVenue && venues.length > 0) {
+        const activeVenue = venues.find((venue: any) => venue.isActive) || venues[0];
+        setCurrentVenue(activeVenue);
       }
     } catch (error) {
-      } finally {
-      setCafesLoading(false);
+      console.error('Error loading venues for workspace:', error);
+    } finally {
+      setVenuesLoading(false);
     }
-  }, [currentCafe]);
+  }, [currentVenue]);
 
   const initializeWorkspaceData = useCallback(async () => {
     setLoading(true);
@@ -101,15 +110,12 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
 
       // Check if user is authenticated before loading workspaces
       if (!isAuthenticated || !user) {
-        console.log('User not authenticated, skipping workspace loading');
-        setLoading(false);
+  setLoading(false);
         return;
       }
 
       // Skip loading workspaces from API - use user data instead
-      console.log('Skipping workspace API call - using user data instead');
-
-      // Set current workspace from user data (no API call needed)
+// Set current workspace from user data (no API call needed)
       if (user?.workspace_id) {
         const localWorkspace = {
           id: user.workspace_id,
@@ -117,22 +123,27 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
           description: '',
           ownerId: user.id,
           isActive: true,
-          pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxCafes: 1, maxUsers: 5 },
+          pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxVenues: 1, maxUsers: 5 },
           createdAt: new Date(),
           updatedAt: new Date()
         };
         setCurrentWorkspace(localWorkspace as any);
-        await loadCafesForWorkspace(user.workspace_id);
+        await loadVenuesForWorkspace(user.workspace_id);
       }
 
-      // Set current cafe from user data or first available
-      const venueId = user?.cafeId || user?.venue_id;
+      // Set current venue from user data or first available
+      const venueId = user?.venueId || user?.venue_id;
+      console.log('User venue ID:', venueId);
+      
       if (venueId) {
         try {
-          const venue = await workspaceService.getCafe(venueId);
+          console.log('Fetching venue details for ID:', venueId);
+          const venue = await workspaceService.getVenue(venueId);
+          console.log('Fetched venue from API:', venue);
+          
           if (venue) {
-            // Convert Venue to Cafe format
-            const cafe = {
+            // Convert API venue to internal format with proper mapping
+            const venueData = {
               id: venue.id,
               name: venue.name,
               description: venue.description || '',
@@ -142,21 +153,26 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
               ownerId: user.id,
               workspaceId: venue.workspace_id,
               logo: '',
-              isActive: venue.is_active,
-              isOpen: venue.is_active,
+              isActive: venue.is_active !== undefined ? venue.is_active : true,
+              isOpen: venue.is_open !== undefined ? venue.is_open : venue.is_active,
               settings: {},
               createdAt: new Date(venue.created_at),
-              updatedAt: new Date(venue.updated_at || venue.created_at)
+              updatedAt: new Date(venue.updated_at || venue.created_at),
+              // Store original API data for reference
+              _apiData: venue
             };
-            setCurrentCafe(cafe as any);
+            console.log('Setting current venue from user data:', venueData);
+            setCurrentVenue(venueData as any);
           } else {
-            // Try to get all venues as fallback
+      // Try to get all venues as fallback
             try {
               const allVenues = await workspaceService.getAllVenues();
+              console.log('All venues fallback:', allVenues);
+              
               if (allVenues.length > 0) {
                 // Find venue by ID or use first available
                 const foundVenue = allVenues.find(v => v.id === venueId) || allVenues[0];
-                const cafe = {
+                const venueData = {
                   id: foundVenue.id,
                   name: foundVenue.name,
                   description: foundVenue.description || '',
@@ -166,26 +182,31 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
                   ownerId: user.id,
                   workspaceId: foundVenue.workspace_id,
                   logo: '',
-                  isActive: foundVenue.is_active,
-                  isOpen: foundVenue.is_active,
+                  isActive: foundVenue.is_active !== undefined ? foundVenue.is_active : true,
+                  isOpen: foundVenue.is_open !== undefined ? foundVenue.is_open : foundVenue.is_active,
                   settings: {},
                   createdAt: new Date(foundVenue.created_at),
-                  updatedAt: new Date(foundVenue.updated_at || foundVenue.created_at)
+                  updatedAt: new Date(foundVenue.updated_at || foundVenue.created_at),
+                  // Store original API data for reference
+                  _apiData: foundVenue
                 };
-                setCurrentCafe(cafe as any);
+                console.log('Setting venue from fallback:', venueData);
+                setCurrentVenue(venueData as any);
               }
             } catch (fallbackError) {
-              }
+              console.error('Fallback venue loading failed:', fallbackError);
+            }
           }
         } catch (error) {
-          }
-      } else {
+          console.error('Error loading venue:', error);
         }
+      } else {
+  }
     } catch (error) {
       } finally {
       setLoading(false);
     }
-  }, [user, loadCafesForWorkspace]);
+  }, [user, loadVenuesForWorkspace, isAuthenticated]);
 
   // Initialize workspace data when user is authenticated
   useEffect(() => {
@@ -194,18 +215,16 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     } else {
       // Clear data when user logs out
       setCurrentWorkspace(null);
-      setCurrentCafe(null);
+      setCurrentVenue(null);
       setWorkspaces([]);
-      setCafes([]);
+      setVenues([]);
     }
   }, [isAuthenticated, user, initializeWorkspaceData]);
 
   const refreshWorkspaces = async () => {
     setWorkspacesLoading(true);
     try {
-      console.log('Skipping workspace API call - workspace data comes from user-data API');
-      
-      // Create workspace from user data if available
+// Create workspace from user data if available
       if (user?.workspace_id) {
         const localWorkspace = {
           id: user.workspace_id,
@@ -213,7 +232,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
           description: '',
           ownerId: user.id,
           isActive: true,
-          pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxCafes: 1, maxUsers: 5 },
+          pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxVenues: 1, maxUsers: 5 },
           createdAt: new Date(),
           updatedAt: new Date()
         };
@@ -231,9 +250,9 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     }
   };
 
-  const refreshCafes = async () => {
+  const refreshVenues = async () => {
     if (!currentWorkspace) return;
-    await loadCafesForWorkspace(currentWorkspace.id);
+    await loadVenuesForWorkspace(currentWorkspace.id);
   };
 
 
@@ -243,8 +262,8 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       const workspace = workspaces.find(w => w.id === workspaceId);
       if (workspace) {
         setCurrentWorkspace(workspace);
-        setCurrentCafe(null); // Clear current cafe when switching workspace
-        await loadCafesForWorkspace(workspaceId);
+        setCurrentVenue(null); // Clear current venue when switching workspace
+        await loadVenuesForWorkspace(workspaceId);
         
         // Store in localStorage for persistence
         localStorage.setItem('dino_current_workspace', workspaceId);
@@ -254,14 +273,14 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     }
   };
 
-  const switchCafe = async (cafeId: string) => {
+  const switchVenue = async (venueId: string) => {
     try {
-      const cafe = cafes.find(c => c.id === cafeId);
-      if (cafe) {
-        setCurrentCafe(cafe);
+      const venue = venues.find(v => v.id === venueId);
+      if (venue) {
+        setCurrentVenue(venue);
         
         // Store in localStorage for persistence
-        localStorage.setItem('dino_current_cafe', cafeId);
+        localStorage.setItem('dino_current_venue', venueId);
       }
     } catch (error) {
       throw error;
@@ -321,8 +340,8 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
             await switchWorkspace(remainingWorkspaces[0].id);
           } else {
             setCurrentWorkspace(null);
-            setCurrentCafe(null);
-            setCafes([]);
+            setCurrentVenue(null);
+            setVenues([]);
           }
         }
       } else {
@@ -333,113 +352,120 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     }
   };
 
-  const createCafe = async (cafeData: any) => {
+  const createVenue = async (venueData: any) => {
     try {
-      const response = await workspaceService.createCafe({
-        ...cafeData,
+      const response = await workspaceService.createVenue({
+        ...venueData,
         workspaceId: currentWorkspace?.id || ''
       });
       if (response.success && response.data) {
-        await refreshCafes();
-        // Auto-switch to new cafe
-        await switchCafe(response.data.id);
+        await refreshVenues();
+        // Auto-switch to new venue
+        await switchVenue(response.data.id);
       } else {
-        throw new Error(response.message || 'Failed to create cafe');
+        throw new Error(response.message || 'Failed to create venue');
       }
     } catch (error) {
       throw error;
     }
   };
 
-  const updateCafe = async (cafeId: string, cafeData: any) => {
+  const updateVenue = async (venueId: string, venueData: any) => {
     try {
-      const response = await workspaceService.updateCafe(cafeId, cafeData);
+      console.log('Updating venue:', venueId, venueData);
+      const response = await workspaceService.updateVenue(venueId, venueData);
+      console.log('Update venue response:', response);
+      
       if (response.success) {
-        await refreshCafes();
-        // Update current cafe if it's the one being updated
-        if (currentCafe?.id === cafeId && response.data) {
+        await refreshVenues();
+        // Update current venue if it's the one being updated
+        if (currentVenue?.id === venueId && response.data) {
           const venue = response.data;
-          const cafe = {
+          const venueFormatted = {
             id: venue.id,
             name: venue.name,
             description: venue.description || '',
             address: venue.location?.address || '',
             phone: venue.phone || '',
             email: venue.email || '',
-            ownerId: (venue as any).owner_id || '',
+            ownerId: venue.owner_id || '',
             workspaceId: venue.workspace_id,
             logo: '',
-            isActive: venue.is_active,
-            isOpen: venue.is_active,
+            isActive: venue.is_active !== undefined ? venue.is_active : true,
+            isOpen: venue.is_open !== undefined ? venue.is_open : venue.is_active,
             settings: {},
             createdAt: new Date(venue.created_at),
-            updatedAt: new Date(venue.updated_at || venue.created_at)
+            updatedAt: new Date(venue.updated_at || venue.created_at),
+            // Store original API data for reference
+            _apiData: venue
           };
-          setCurrentCafe(cafe as any);
+          console.log('Updated current venue:', venueFormatted);
+          setCurrentVenue(venueFormatted as any);
         }
       } else {
-        throw new Error(response.message || 'Failed to update cafe');
+        throw new Error(response.message || 'Failed to update venue');
       }
     } catch (error) {
+      console.error('Error updating venue:', error);
       throw error;
     }
   };
 
-  const deleteCafe = async (cafeId: string) => {
+  const deleteVenue = async (venueId: string) => {
     try {
-      const response = await workspaceService.deleteCafe(cafeId);
+      const response = await workspaceService.deleteVenue(venueId);
       if (response.success) {
-        await refreshCafes();
-        // If current cafe was deleted, switch to first available
-        if (currentCafe?.id === cafeId) {
-          const remainingCafes = cafes.filter(c => c.id !== cafeId);
-          if (remainingCafes.length > 0) {
-            await switchCafe(remainingCafes[0].id);
+        await refreshVenues();
+        // If current venue was deleted, switch to first available
+        if (currentVenue?.id === venueId) {
+          const remainingVenues = venues.filter(v => v.id !== venueId);
+          if (remainingVenues.length > 0) {
+            await switchVenue(remainingVenues[0].id);
           } else {
-            setCurrentCafe(null);
+            setCurrentVenue(null);
           }
         }
       } else {
-        throw new Error(response.message || 'Failed to delete cafe');
+        throw new Error(response.message || 'Failed to delete venue');
       }
     } catch (error) {
       throw error;
     }
   };
 
-  const activateCafe = async (cafeId: string) => {
+  const activateVenue = async (venueId: string) => {
     try {
-      const response = await workspaceService.activateCafe(cafeId);
+      const response = await workspaceService.activateVenue(venueId);
       if (response.success) {
-        await refreshCafes();
+        await refreshVenues();
       } else {
-        throw new Error(response.message || 'Failed to activate cafe');
+        throw new Error(response.message || 'Failed to activate venue');
       }
     } catch (error) {
       throw error;
     }
   };
 
-  const deactivateCafe = async (cafeId: string) => {
+  const deactivateVenue = async (venueId: string) => {
     try {
-      const response = await workspaceService.deactivateCafe(cafeId);
+      const response = await workspaceService.deactivateVenue(venueId);
       if (response.success) {
-        await refreshCafes();
+        await refreshVenues();
       } else {
-        throw new Error(response.message || 'Failed to deactivate cafe');
+        throw new Error(response.message || 'Failed to deactivate venue');
       }
     } catch (error) {
       throw error;
     }
   };
 
-  const toggleCafeStatus = async (cafeId: string, isOpen: boolean) => {
+  const toggleVenueStatus = async (venueId: string, isOpen: boolean) => {
     try {
-      const response = await workspaceService.toggleCafeStatus(cafeId, isOpen);
+      const response = await workspaceService.toggleVenueStatus(venueId, isOpen);
       if (response.success) {
-        await refreshCafes();
+        await refreshVenues();
       } else {
-        throw new Error(response.message || 'Failed to toggle cafe status');
+        throw new Error(response.message || 'Failed to toggle venue status');
       }
     } catch (error) {
       throw error;
@@ -447,17 +473,22 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   };
 
   const initializeVenueFromUser = async () => {
-    if (!user) return;
+    if (!user) {
+return;
+    }
     
-    const venueId = user.cafeId || user.venue_id;
+    const venueId = user.venueId || user.venue_id;
     if (!venueId) {
-      return;
+return;
     }
 
     try {
-      const venue = await workspaceService.getCafe(venueId);
+      console.log('Initializing venue from user data, venue ID:', venueId);
+      const venue = await workspaceService.getVenue(venueId);
+      console.log('Fetched venue for initialization:', venue);
+      
       if (venue) {
-        const cafe = {
+        const venueData = {
           id: venue.id,
           name: venue.name,
           description: venue.description || '',
@@ -467,41 +498,48 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
           ownerId: user.id,
           workspaceId: venue.workspace_id,
           logo: '',
-          isActive: venue.is_active,
-          isOpen: venue.is_active,
+          isActive: venue.is_active !== undefined ? venue.is_active : true,
+          isOpen: venue.is_open !== undefined ? venue.is_open : venue.is_active,
           settings: {},
           createdAt: new Date(venue.created_at),
-          updatedAt: new Date(venue.updated_at || venue.created_at)
+          updatedAt: new Date(venue.updated_at || venue.created_at),
+          // Store original API data for reference
+          _apiData: venue
         };
-        setCurrentCafe(cafe as any);
+        console.log('Initialized venue data:', venueData);
+        setCurrentVenue(venueData as any);
       } else {
-        }
-    } catch (error) {
+        console.warn('Venue not found for ID:', venueId);
       }
+    } catch (error) {
+      console.error('Error initializing venue from user:', error);
+    }
   };
+
+
 
   const value: WorkspaceContextType = {
     currentWorkspace,
-    currentCafe,
+    currentVenue,
     workspaces,
-    cafes,
+    venues,
     pricingPlans,
     loading,
     workspacesLoading,
-    cafesLoading,
+    venuesLoading,
     switchWorkspace,
-    switchCafe,
+    switchVenue,
     refreshWorkspaces,
-    refreshCafes,
+    refreshVenues,
     createWorkspace,
     updateWorkspace,
     deleteWorkspace,
-    createCafe,
-    updateCafe,
-    deleteCafe,
-    activateCafe,
-    deactivateCafe,
-    toggleCafeStatus,
+    createVenue,
+    updateVenue,
+    deleteVenue,
+    activateVenue,
+    deactivateVenue,
+    toggleVenueStatus,
     initializeVenueFromUser,
   };
 

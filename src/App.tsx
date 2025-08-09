@@ -1,7 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-// import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-// import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
@@ -9,6 +7,7 @@ import { UserDataProvider } from './contexts/UserDataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { validatePasswordHashingSetup } from './utils/passwordValidation';
 
 // Public Pages
 import HomePage from './pages/HomePage';
@@ -16,7 +15,7 @@ import FeaturesPage from './pages/FeaturesPage';
 import PricingPage from './pages/PricingPage';
 import ContactPage from './pages/ContactPage';
 import TestimonialsPage from './pages/TestimonialsPage';
-import DebugPage from './pages/DebugPage';
+
 // RegistrationPage now imported from LazyComponents
 import LoginPage from './pages/LoginPage';
 
@@ -28,7 +27,7 @@ import {
   OrdersManagement,
   MenuManagement,
   TableManagement,
-  CafeSettings,
+  VenueSettings,
   UserManagement,
   WorkspaceManagement,
   UserPermissionsDashboard,
@@ -46,19 +45,49 @@ import Layout from './components/Layout';
 import UserProfile from './components/UserProfile';
 import PermissionSync from './components/PermissionSync';
 import { PERMISSIONS } from './types/auth';
+import AppInitializer from './components/AppInitializer';
+import { logger } from './utils/logger';
+import { config, isDevelopment } from './config/environment';
+import { StorageCleanup } from './utils/storageCleanup';
+import { tokenRefreshScheduler } from './utils/tokenRefreshScheduler';
 
 function App() {
+  // Validate password hashing setup and cleanup storage on app startup
+  useEffect(() => {
+    try {
+      // Clean up demo and legacy data from localStorage
+      StorageCleanup.performCompleteCleanup();
+      logger.info('Storage cleanup completed successfully');
+      
+      // Validate password hashing setup
+      validatePasswordHashingSetup();
+      logger.info('Password hashing setup validated successfully');
+      
+      // Start token refresh scheduler if authenticated
+      if (typeof window !== 'undefined') {
+        tokenRefreshScheduler.start();
+        logger.info('Token refresh scheduler initialized');
+      }
+    } catch (error) {
+      logger.error('CRITICAL: App initialization failed:', error);
+      // In production, show a user-friendly error message
+      if (config.APP_ENV === 'production') {
+        alert('Application initialization failed. Please contact support.');
+      }
+    }
+  }, []);
+
   return (
     <ThemeProvider>
       <ToastProvider>
-        {/* <LocalizationProvider dateAdapter={AdapterDateFns}> */}
-          <AuthProvider>
-            <PermissionSync autoRefreshInterval={5 * 60 * 1000} showSyncStatus={process.env.NODE_ENV === 'development'}>
-              <UserDataProvider>
+        <AuthProvider>
+          <PermissionSync autoRefreshInterval={0} showSyncStatus={false}>
+            <UserDataProvider>
+              <AppInitializer>
                 <WorkspaceProvider>
                   <NotificationProvider>
                     <CartProvider>
-                  <Layout>
+                      <Layout>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<HomePage />} />
@@ -69,11 +98,15 @@ function App() {
                 <Route path="/testimonials" element={<TestimonialsPage />} />
                 <Route path="/register" element={<RegistrationPage />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/debug" element={<DebugPage />} />
-                <Route path="/menu/:cafeId/:tableId" element={<MenuPage />} />
-                <Route path="/checkout/:cafeId/:tableId" element={<CheckoutPage />} />
+                <Route path="/menu/:venueId/:tableId" element={<MenuPage />} />
+                <Route path="/checkout/:venueId/:tableId" element={<CheckoutPage />} />
                 <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
                 <Route path="/order/:orderId" element={<OrderTrackingPage />} />
+                
+                {/* Development/Testing Routes - Only available in development */}
+                {isDevelopment() && (
+                  <Route path="/test-password-hashing" element={<div>Test route only available in development</div>} />
+                )}
                 
                 {/* Protected User Routes */}
                 <Route path="/profile" element={
@@ -105,7 +138,7 @@ function App() {
                 } />
                 <Route path="/admin/settings" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.SETTINGS_VIEW]}>
-                    <CafeSettings />
+                    <VenueSettings />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/users" element={
@@ -127,14 +160,14 @@ function App() {
                 {/* Catch all route */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-                  </Layout>
+                      </Layout>
                     </CartProvider>
                   </NotificationProvider>
                 </WorkspaceProvider>
-              </UserDataProvider>
-            </PermissionSync>
-          </AuthProvider>
-        {/* </LocalizationProvider> */}
+              </AppInitializer>
+            </UserDataProvider>
+          </PermissionSync>
+        </AuthProvider>
       </ToastProvider>
     </ThemeProvider>
   );

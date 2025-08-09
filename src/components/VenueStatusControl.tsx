@@ -15,55 +15,55 @@ import { useUserData } from '../contexts/UserDataContext';
 import { PERMISSIONS } from '../types/auth';
 import { venueService } from '../services/venueService';
 
-const CafeStatusControl: React.FC = () => {
+const VenueStatusControl: React.FC = () => {
   const { hasPermission, hasBackendPermission } = useAuth();
   const { userData } = useUserData();
-  const currentCafe = userData?.venue;
-  const [cafeActive, setCafeActive] = useState(true);
-  const [cafeOpen, setCafeOpen] = useState(true);
+  const currentVenue = userData?.venue;
+  const [venueActive, setVenueActive] = useState(true);
+  const [venueOpen, setVenueOpen] = useState(true);
   const [statusLoading, setStatusLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
-  const loadCafeStatus = useCallback(async () => {
-    if (!currentCafe?.id) return;
+  const loadVenueStatus = useCallback(async () => {
+    if (!currentVenue?.id) return;
     
     try {
-      const venue = await venueService.getVenue(currentCafe.id);
+      const venue = await venueService.getVenue(currentVenue.id);
       if (venue) {
-        setCafeActive(venue.is_active || false);
-        setCafeOpen(venue.status === 'active' || currentCafe?.is_open || false);
+        setVenueActive(venue.is_active || false);
+        setVenueOpen(venue.status === 'active' || venue.is_open || false);
       }
     } catch (error) {
-      console.error('Error loading cafe status:', error);
+      console.error('Error loading venue status:', error);
     }
-  }, [currentCafe?.id, currentCafe?.is_open]);
+  }, [currentVenue?.id]);
 
   useEffect(() => {
-    loadCafeStatus();
-  }, [loadCafeStatus]);
+    loadVenueStatus();
+  }, [loadVenueStatus]);
 
-  const handleToggleCafeOpen = async () => {
-    if (!currentCafe?.id || statusLoading) return;
+  const handleToggleVenueOpen = async () => {
+    if (!currentVenue?.id || statusLoading) return;
 
     try {
       setStatusLoading(true);
-      const newStatus = !cafeOpen;
+      const newStatus = !venueOpen;
       
-      await venueService.updateVenue(currentCafe.id, { 
+      await venueService.updateVenue(currentVenue.id, { 
         status: newStatus ? 'active' : 'closed' 
       });
 
-      setCafeOpen(newStatus);
+      setVenueOpen(newStatus);
       setSnackbar({ 
         open: true, 
-        message: `Cafe ${newStatus ? 'opened' : 'closed'} for orders`, 
+        message: `Venue ${newStatus ? 'opened' : 'closed'} for orders`, 
         severity: 'success' 
       });
     } catch (error) {
-      console.error('Error toggling cafe open status:', error);
+      console.error('Error toggling venue open status:', error);
       setSnackbar({ 
         open: true, 
-        message: 'Failed to update cafe status', 
+        message: 'Failed to update venue status', 
         severity: 'error' 
       });
     } finally {
@@ -78,8 +78,8 @@ const CafeStatusControl: React.FC = () => {
            hasBackendPermission('venue.manage');
   };
 
-  // Don't show if no cafe or no permissions
-  if (!currentCafe || !canManageVenue()) {
+  // Don't show if no venue or no permissions
+  if (!currentVenue || !canManageVenue()) {
     return null;
   }
 
@@ -89,18 +89,18 @@ const CafeStatusControl: React.FC = () => {
         <CardContent sx={{ p: 1.5 }}>
           <Box>
             <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 0.5 }}>
-              {currentCafe.name || 'Current Cafe'}
+              {currentVenue.name || 'Current Venue'}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-              Status: {cafeActive ? (cafeOpen ? 'Open for Orders' : 'Closed for Orders') : 'Inactive'}
+              Status: {venueActive ? (venueOpen ? 'Open for Orders' : 'Closed for Orders') : 'Inactive'}
             </Typography>
             
             <FormControlLabel
               control={
                 <Switch
-                  checked={cafeOpen}
-                  onChange={handleToggleCafeOpen}
-                  disabled={statusLoading || !cafeActive}
+                  checked={venueOpen}
+                  onChange={handleToggleVenueOpen}
+                  disabled={statusLoading || !venueActive}
                   color="success"
                   size="small"
                 />
@@ -108,10 +108,10 @@ const CafeStatusControl: React.FC = () => {
               label={
                 <Box>
                   <Typography variant="caption" fontWeight="500">
-                    {cafeOpen ? 'Open' : 'Closed'}
+                    {venueOpen ? 'Open' : 'Closed'}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.65rem' }}>
-                    {cafeOpen ? 'Accepting orders' : 'Orders disabled'}
+                    {venueOpen ? 'Accepting orders' : 'Orders disabled'}
                   </Typography>
                 </Box>
               }
@@ -146,4 +146,4 @@ const CafeStatusControl: React.FC = () => {
   );
 };
 
-export default CafeStatusControl;
+export default VenueStatusControl;

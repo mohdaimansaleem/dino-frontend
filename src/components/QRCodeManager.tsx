@@ -41,16 +41,16 @@ import { QRCodeData, qrService, QRGenerationRequest } from '../services/qrServic
 interface Table {
   id: string;
   number: string;
-  cafeId: string;
-  cafeName: string;
+  venueId: string;
+  venueName: string;
 }
 
 interface QRCodeManagerProps {
   open: boolean;
   onClose: () => void;
   tables: Table[];
-  cafeId: string;
-  cafeName: string;
+  venueId: string;
+  venueName: string;
 }
 
 interface QRGenerationStatus {
@@ -64,8 +64,8 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
   open,
   onClose,
   tables,
-  cafeId,
-  cafeName,
+  venueId,
+  venueName,
 }) => {
   const [selectedTables, setSelectedTables] = useState<string[]>([]);
   const [generationStatus, setGenerationStatus] = useState<QRGenerationStatus[]>([]);
@@ -112,9 +112,9 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
     const requests: QRGenerationRequest[] = selectedTables.map(tableId => {
       const table = tables.find(t => t.id === tableId)!;
       return {
-        cafeId,
+        venueId,
         tableId,
-        cafeName,
+        venueName,
         tableNumber: table.number,
         customization: {
           template,
@@ -199,7 +199,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
       setTimeout(() => {
         const link = document.createElement('a');
         link.href = qrData.qrCodeBase64;
-        link.download = `qr-code-${cafeName}-table-${qrData.tableNumber}.png`;
+        link.download = `qr-code-${venueName}-table-${qrData.tableNumber}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -221,7 +221,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>QR Codes - ${cafeName}</title>
+        <title>QR Codes - ${venueName}</title>
         <style>
           @page { 
             margin: 15mm; 
@@ -275,7 +275,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
             flex-direction: column;
             justify-content: center;
           }
-          .qr-cafe-name {
+          .qr-venue-name {
             font-size: 18px;
             color: #333;
             margin-bottom: 5px;
@@ -326,7 +326,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
       
       return `
         <div class="qr-item">
-          <div class="qr-cafe-name">${qrData.cafeName}</div>
+          <div class="qr-venue-name">${qrData.venueName}</div>
           <div class="qr-table-number">Table ${qrData.tableNumber}</div>
           
           <div class="qr-code-container">
@@ -352,7 +352,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
     return `
       <div class="page">
         <div class="page-header">
-          <div class="page-title">🦕 ${cafeName} - QR Codes</div>
+          <div class="page-title">🦕 ${venueName} - QR Codes</div>
           <div class="page-subtitle">Table QR Codes for Digital Menu Access</div>
         </div>
         <div class="qr-grid">
@@ -472,7 +472,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
                     />
                     <ListItemText
                       primary={`Table ${table.number}`}
-                      secondary={table.cafeName}
+                      secondary={table.venueName}
                     />
                   </ListItem>
                 ))}

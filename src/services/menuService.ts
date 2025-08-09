@@ -22,9 +22,53 @@ class MenuService {
       if (filters?.venue_id) params.append('venue_id', filters.venue_id);
       if (filters?.is_available !== undefined) params.append('is_active', filters.is_available.toString());
 
-      const response = await apiService.get<PaginatedResponse<MenuCategory>>(`/menu/categories?${params.toString()}`);
+      const response = await apiService.get<any>(`/menu/categories?${params.toString()}`);
       
-      return response.data || {
+      console.log('Raw API response for categories:', response);
+      console.log('Response structure:', {
+        hasSuccess: 'success' in response,
+        hasData: 'data' in response,
+        dataType: typeof response.data,
+        isDataArray: Array.isArray(response.data),
+        responseKeys: Object.keys(response),
+        hasTotal: 'total' in response,
+        hasPage: 'page' in response,
+        dataLength: Array.isArray(response.data) ? response.data.length : 'N/A'
+      });
+      
+      // Handle different response formats
+      
+      // Case 1: Response is the PaginatedResponse directly (most common case)
+      if (response && response.success && Array.isArray(response.data) && 'total' in response && 'page' in response) {
+        console.log('Case 1: Response is already paginated response');
+        console.log('Categories found:', response.data.length);
+        return response as PaginatedResponse<MenuCategory>;
+      }
+      
+      // Case 2: API service wrapped the response - response.data contains the PaginatedResponse
+      if (response && response.success && response.data && typeof response.data === 'object' && 'data' in response.data) {
+        console.log('Case 2: Found paginated response in response.data');
+        return response.data as PaginatedResponse<MenuCategory>;
+      }
+      
+      // Case 3: Response.data is the array directly
+      if (response && response.success && Array.isArray(response.data)) {
+        console.log('Case 3: Response.data is array, creating paginated response');
+        return {
+          success: true,
+          data: response.data,
+          total: response.data.length,
+          page: 1,
+          page_size: response.data.length,
+          total_pages: 1,
+          has_next: false,
+          has_prev: false
+        };
+      }
+      
+      console.log('No matching case, using fallback');
+      // Fallback if no data
+      return {
         success: true,
         data: [],
         total: 0,
@@ -35,6 +79,7 @@ class MenuService {
         has_prev: false
       };
     } catch (error) {
+      console.error('Error fetching menu categories:', error);
       return {
         success: true,
         data: [],
@@ -50,9 +95,11 @@ class MenuService {
 
   async getVenueCategories(venueId: string): Promise<MenuCategory[]> {
     try {
-      const response = await apiService.get<MenuCategory[]>(`/menu/venues/${venueId}/categories`);
+      // Try public endpoint first
+      const response = await apiService.get<MenuCategory[]>(`/menu/public/venues/${venueId}/categories`);
       return response.data || [];
     } catch (error) {
+      console.error('Failed to load venue categories:', error);
       return [];
     }
   }
@@ -103,9 +150,42 @@ class MenuService {
       if (filters?.is_vegetarian !== undefined) params.append('is_vegetarian', filters.is_vegetarian.toString());
       if (filters?.spice_level) params.append('spice_level', filters.spice_level);
 
-      const response = await apiService.get<PaginatedResponse<MenuItem>>(`/menu/items?${params.toString()}`);
+      const response = await apiService.get<any>(`/menu/items?${params.toString()}`);
       
-      return response.data || {
+      console.log('Raw API response for menu items:', response);
+      
+      // Handle different response formats
+      
+      // Case 1: Response is the PaginatedResponse directly (most common case)
+      if (response && response.success && Array.isArray(response.data) && 'total' in response && 'page' in response) {
+        console.log('Case 1: Response is already paginated response');
+        console.log('Menu items found:', response.data.length);
+        return response as PaginatedResponse<MenuItem>;
+      }
+      
+      // Case 2: API service wrapped the response - response.data contains the PaginatedResponse
+      if (response && response.success && response.data && typeof response.data === 'object' && 'data' in response.data) {
+        console.log('Case 2: Found paginated response in response.data');
+        return response.data as PaginatedResponse<MenuItem>;
+      }
+      
+      // Case 3: Response.data is the array directly
+      if (response && response.success && Array.isArray(response.data)) {
+        console.log('Case 3: Response.data is array, creating paginated response');
+        return {
+          success: true,
+          data: response.data,
+          total: response.data.length,
+          page: 1,
+          page_size: response.data.length,
+          total_pages: 1,
+          has_next: false,
+          has_prev: false
+        };
+      }
+      
+      // Fallback if no data
+      return {
         success: true,
         data: [],
         total: 0,
@@ -116,6 +196,7 @@ class MenuService {
         has_prev: false
       };
     } catch (error) {
+      console.error('Error fetching menu items:', error);
       return {
         success: true,
         data: [],
@@ -131,10 +212,12 @@ class MenuService {
 
   async getVenueMenuItems(venueId: string, categoryId?: string): Promise<MenuItem[]> {
     try {
+      // Try public endpoint first
       const params = categoryId ? `?category_id=${categoryId}` : '';
-      const response = await apiService.get<MenuItem[]>(`/menu/venues/${venueId}/items${params}`);
+      const response = await apiService.get<MenuItem[]>(`/menu/public/venues/${venueId}/items${params}`);
       return response.data || [];
     } catch (error) {
+      console.error('Failed to load venue menu items:', error);
       return [];
     }
   }

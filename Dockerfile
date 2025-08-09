@@ -35,9 +35,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY scripts/generate-config.sh /usr/local/bin/generate-config.sh
 RUN chmod +x /usr/local/bin/generate-config.sh
 
-# Copy environment validation script
-COPY scripts/validate-env.sh /usr/local/bin/validate-env.sh
-RUN chmod +x /usr/local/bin/validate-env.sh
+# Environment validation is handled by generate-config.sh
 
 # Copy startup script
 COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

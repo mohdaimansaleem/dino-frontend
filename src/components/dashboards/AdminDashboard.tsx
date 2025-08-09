@@ -18,11 +18,10 @@ import {
   Alert,
   CircularProgress,
   LinearProgress,
-  Switch,
-  FormControlLabel,
-  Divider,
-  Avatar,
+
   Snackbar,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Restaurant,
@@ -36,8 +35,7 @@ import {
   Today,
   BarChart as BarChartIcon,
   PieChart as PieChartIcon,
-  CheckCircle,
-  Cancel,
+
   Settings,
   Refresh,
 } from '@mui/icons-material';
@@ -92,6 +90,15 @@ interface RecentOrder {
   created_at: string;
 }
 
+interface TopMenuItem {
+  id: string;
+  name: string;
+  category: string;
+  order_count: number;
+  total_revenue: number;
+  price: number;
+}
+
 interface ChartData {
   weeklyRevenue: Array<{ day: string; revenue: number; orders: number }>;
   tableStatus: Array<{ name: string; value: number; color: string }>;
@@ -99,19 +106,29 @@ interface ChartData {
   orderStatus: Array<{ name: string; value: number; color: string }>;
 }
 
+interface AdminDashboardResponse {
+  summary: DashboardStats;
+  recent_orders: RecentOrder[];
+  top_menu_items: TopMenuItem[];
+}
+
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const { user, hasPermission, hasBackendPermission } = useAuth();
-  const { userData, loading: userDataLoading } = useUserData();
+  const { userData } = useUserData();
   const navigate = useNavigate();
-  const currentCafe = userData?.venue;
+  const theme = useTheme();
+  // const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const currentVenue = userData?.venue;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [chartData, setChartData] = useState<ChartData | null>(null);
+  const [topMenuItems, setTopMenuItems] = useState<TopMenuItem[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
-  const [cafeActive, setCafeActive] = useState(true);
-  const [cafeOpen, setCafeOpen] = useState(true);
+  const [venueActive, setVenueActive] = useState(true);
+  const [venueOpen, setVenueOpen] = useState(true);
   const [statusLoading, setStatusLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
@@ -121,14 +138,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       setError(null);
       
       // Load dashboard stats from API
-      const dashboardData = await dashboardService.getAdminDashboard();
+      const dashboardData = await dashboardService.getAdminDashboard() as AdminDashboardResponse;
       
       if (dashboardData && dashboardData.summary) {
         setStats(dashboardData.summary);
         setRecentOrders(dashboardData.recent_orders || []);
+        setTopMenuItems(dashboardData.top_menu_items || []);
       } else {
         setStats(null);
         setRecentOrders([]);
+        setTopMenuItems([]);
       }
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to load dashboard data';
@@ -139,25 +158,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
         setError(null);
         setStats(null);
         setRecentOrders([]);
+        setTopMenuItems([]);
       } else {
         setError(errorMessage);
         setStats(null);
         setRecentOrders([]);
+        setTopMenuItems([]);
       }
     } finally {
       setLoading(false);
     }
-  }, [currentCafe?.id]);
+  }, []);
 
   const loadChartData = useCallback(async () => {
-    if (!currentCafe?.id) return;
+    if (!currentVenue?.id) return;
 
     try {
       setChartLoading(true);
       // Get analytics data for charts with proper error handling
       const [dashboardAnalytics, revenueTrend] = await Promise.allSettled([
-        analyticsService.getDashboardAnalytics(currentCafe.id),
-        analyticsService.getRevenueTrend(currentCafe.id, analyticsService.generateDateRange(7))
+        analyticsService.getDashboardAnalytics(currentVenue.id),
+        analyticsService.getRevenueTrend(currentVenue.id, analyticsService.generateDateRange(7))
       ]);
 
       // Extract successful results and log any failures
@@ -209,7 +230,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     } finally {
       setChartLoading(false);
     }
-  }, [currentCafe?.id]);
+  }, []);
 
 
 
@@ -228,33 +249,33 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const refreshDashboard = async () => {
     await Promise.all([
       loadDashboardData(),
-      loadCafeStatus(),
+      loadVenueStatus(),
       loadChartData()
     ]);
   };
 
-  const loadCafeStatus = useCallback(async () => {
-    if (!currentCafe?.id) return;
+  const loadVenueStatus = useCallback(async () => {
+    if (!currentVenue?.id) return;
     
     try {
-      const venue = await venueService.getVenue(currentCafe.id);
+      const venue = await venueService.getVenue(currentVenue.id);
       if (venue) {
-        setCafeActive(venue.is_active || false);
-        // Check venue status or fall back to currentCafe isOpen
-        setCafeOpen(venue.status === 'active' || currentCafe?.is_open || false);
+        setVenueActive(venue.is_active || false);
+        // Check venue status or fall back to currentVenue isOpen
+        setVenueOpen(venue.status === 'active' || venue.is_open || false);
       }
     } catch (error) {
-      console.error('Error loading cafe status:', error);
+      console.error('Error loading venue status:', error);
     }
-  }, [currentCafe?.id, currentCafe?.is_open]);
+  }, []);
 
   useEffect(() => {
-    if (currentCafe?.id) {
+    if (currentVenue?.id) {
       loadDashboardData();
-      loadCafeStatus();
+      loadVenueStatus();
       loadChartData();
     } else {
-      // If no cafe, set loading to false to show the venue assignment check
+      // If no venue, set loading to false to show the venue assignment check
       setLoading(false);
     }
     
@@ -265,67 +286,67 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     return () => {
       document.documentElement.style.scrollBehavior = 'auto';
     };
-  }, [currentCafe?.id, user, loadDashboardData, loadCafeStatus, loadChartData]);
+  }, [currentVenue?.id, user, loadDashboardData, loadVenueStatus, loadChartData]);
 
-  const handleToggleCafeActive = async () => {
-    if (!currentCafe?.id || statusLoading) return;
+  // const handleToggleVenueActive = async () => {
+  //   if (!currentVenue?.id || statusLoading) return;
 
-    try {
-      setStatusLoading(true);
-      const newStatus = !cafeActive;
+  //   try {
+  //     setStatusLoading(true);
+  //     const newStatus = !venueActive;
       
-      if (newStatus) {
-        await venueService.activateVenue(currentCafe.id);
-      } else {
-        await venueService.updateVenue(currentCafe.id, { is_active: false });
-      }
+  //     if (newStatus) {
+  //       await venueService.activateVenue(currentVenue.id);
+  //     } else {
+  //       await venueService.updateVenue(currentVenue.id, { is_active: false });
+  //     }
 
-      setCafeActive(newStatus);
-      setSnackbar({ 
-        open: true, 
-        message: `Cafe ${newStatus ? 'activated' : 'deactivated'} successfully`, 
-        severity: 'success' 
-      });
-    } catch (error) {
-      console.error('Error toggling cafe status:', error);
-      setSnackbar({ 
-        open: true, 
-        message: 'Failed to update cafe status', 
-        severity: 'error' 
-      });
-    } finally {
-      setStatusLoading(false);
-    }
-  };
+  //     setVenueActive(newStatus);
+  //     setSnackbar({ 
+  //       open: true, 
+  //       message: `Venue ${newStatus ? 'activated' : 'deactivated'} successfully`, 
+  //       severity: 'success' 
+  //     });
+  //   } catch (error) {
+  //     console.error('Error toggling venue status:', error);
+  //     setSnackbar({ 
+  //       open: true, 
+  //       message: 'Failed to update venue status', 
+  //       severity: 'error' 
+  //     });
+  //   } finally {
+  //     setStatusLoading(false);
+  //   }
+  // };
 
-  const handleToggleCafeOpen = async () => {
-    if (!currentCafe?.id || statusLoading) return;
+  // const handleToggleVenueOpen = async () => {
+  //   if (!currentVenue?.id || statusLoading) return;
 
-    try {
-      setStatusLoading(true);
-      const newStatus = !cafeOpen;
+  //   try {
+  //     setStatusLoading(true);
+  //     const newStatus = !venueOpen;
       
-      await venueService.updateVenue(currentCafe.id, { 
-        status: newStatus ? 'active' : 'closed' 
-      });
+  //     await venueService.updateVenue(currentVenue.id, { 
+  //       status: newStatus ? 'active' : 'closed' 
+  //     });
 
-      setCafeOpen(newStatus);
-      setSnackbar({ 
-        open: true, 
-        message: `Cafe ${newStatus ? 'opened' : 'closed'} for orders`, 
-        severity: 'success' 
-      });
-    } catch (error) {
-      console.error('Error toggling cafe open status:', error);
-      setSnackbar({ 
-        open: true, 
-        message: 'Failed to update cafe open status', 
-        severity: 'error' 
-      });
-    } finally {
-      setStatusLoading(false);
-    }
-  };
+  //     setVenueOpen(newStatus);
+  //     setSnackbar({ 
+  //       open: true, 
+  //       message: `Venue ${newStatus ? 'opened' : 'closed'} for orders`, 
+  //       severity: 'success' 
+  //     });
+  //   } catch (error) {
+  //     console.error('Error toggling venue open status:', error);
+  //     setSnackbar({ 
+  //       open: true, 
+  //       message: 'Failed to update venue open status', 
+  //       severity: 'error' 
+  //     });
+  //   } finally {
+  //     setStatusLoading(false);
+  //   }
+  // };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -346,11 +367,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
            hasBackendPermission('venue.manage');
   };
 
-  const canViewDashboard = () => {
-    return hasPermission(PERMISSIONS.DASHBOARD_VIEW) || 
-           hasBackendPermission('dashboard.read') ||
-           hasBackendPermission('dashboard.view');
-  };
+  // const canViewDashboard = () => {
+  //   return hasPermission(PERMISSIONS.DASHBOARD_VIEW) || 
+  //          hasBackendPermission('dashboard.read') ||
+  //          hasBackendPermission('dashboard.view');
+  // };
 
   const canManageOrders = () => {
     return hasPermission(PERMISSIONS.ORDERS_VIEW) || 
@@ -412,7 +433,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   };
 
   const renderDashboardContent = () => {
-    if (loading && currentCafe?.id) {
+    if (loading && currentVenue?.id) {
       return (
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
           <CircularProgress size={60} />
@@ -450,10 +471,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       <Box 
         className={className} 
         sx={{ 
-          p: { xs: 2, lg: 1 }, 
-          pt: { xs: 2, lg: 1 }, // Add some top padding but less than before
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          width: '100%',
+          maxWidth: '100%',
+          overflow: 'hidden'
         }}
       >
 
@@ -461,22 +483,69 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
 
 
         {/* Header */}
-        <Box sx={{ mb: { xs: 2, lg: 1.5 }, flexShrink: 0, mt: 0 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-            <Box>
-              <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, mt: 0 }}>
-                <DashboardIcon color="primary" />
+        <Box sx={{ mb: 4, flexShrink: 0, pt: 3 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-start', 
+            mb: 2
+          }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography 
+                variant="h3" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 2, 
+                  mb: 1.5,
+                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                  fontWeight: 800,
+                  color: 'text.primary',
+                  letterSpacing: '-0.025em'
+                }}
+              >
+                <DashboardIcon 
+                  color="primary" 
+                  sx={{ 
+                    fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                  }} 
+                />
                 Admin Dashboard
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography 
+                variant="h6" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '1rem', sm: '1.125rem' },
+                  fontWeight: 500,
+                  lineHeight: 1.4,
+                  maxWidth: { xs: '100%', md: '600px' }
+                }}
+              >
                 Welcome back, {getUserFirstName(user)}! Here's your venue overview for today.
               </Typography>
             </Box>
             <IconButton
               onClick={refreshDashboard}
               disabled={loading || chartLoading}
-              size="small"
-              sx={{ mt: 1 }}
+              size="large"
+              sx={{ 
+                backgroundColor: 'primary.main',
+                color: 'white',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                '&:hover': { 
+                  backgroundColor: 'primary.dark',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                  transform: 'translateY(-1px)'
+                },
+                '&:disabled': {
+                  backgroundColor: 'action.disabledBackground',
+                  color: 'action.disabled'
+                },
+                transition: 'all 0.2s ease-in-out',
+                ml: 2
+              }}
               title={loading || chartLoading ? 'Refreshing...' : 'Refresh Dashboard'}
             >
               <Refresh />
@@ -484,20 +553,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
           </Box>
         </Box>
 
-        {/* Fallback Toggle for Testing - Always Visible */}
-        {!currentCafe && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            <Typography variant="body2">
-              <strong>No Cafe Available:</strong> Please ensure you have a cafe assigned to your account to see the status toggle controls.
-            </Typography>
-          </Alert>
-        )}
+
 
         {/* Show message if user lacks venue management permissions */}
-        {currentCafe && !canManageVenue() && (
+        {currentVenue && !canManageVenue() && (
           <Alert severity="info" sx={{ mb: 2 }}>
             <Typography variant="body2">
-              <strong>Permission Required:</strong> Cafe status controls require venue management permissions.
+              <strong>Permission Required:</strong> Venue status controls require venue management permissions.
               <br/>Your current role: {user?.role || 'Unknown'}
             </Typography>
           </Alert>
@@ -506,153 +568,446 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
         {/* Dashboard Content Container */}
         <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 2 } }}>
           {/* Row 1: Quick Stats */}
-          <Grid container spacing={{ xs: 3, lg: 2 }}>
+          <Grid container spacing={3}>
             <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Today color="primary" sx={{ fontSize: { xs: 40, lg: 35 } }} />
-                    <Box>
-                      <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '2rem', lg: '1.8rem' } }}>
-                        {displayStats.today_orders || 0}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Today's Orders
-                      </Typography>
-                    </Box>
-                  </Box>
+              <Card sx={{ 
+                height: '160px',
+                borderRadius: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                  transform: 'translateY(-4px)',
+                  borderColor: 'primary.light'
+                }
+              }}>
+                <CardContent sx={{ 
+                  p: 3,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  textAlign: 'center'
+                }}>
+                  <Today 
+                    color="primary" 
+                    sx={{ 
+                      fontSize: 40, 
+                      mb: 2,
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                    }} 
+                  />
+                  <Typography 
+                    variant="h3" 
+                    fontWeight="800" 
+                    sx={{ 
+                      fontSize: '2rem',
+                      mb: 1,
+                      color: 'text.primary',
+                      letterSpacing: '-0.02em'
+                    }}
+                  >
+                    {displayStats.today_orders || 0}
+                  </Typography>
+                  <Typography 
+                    variant="subtitle1" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.01em'
+                    }}
+                  >
+                    Today's Orders
+                  </Typography>
                 </CardContent>
               </Card>
             </Grid>
 
             <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <TrendingUp color="success" sx={{ fontSize: { xs: 40, lg: 35 } }} />
-                    <Box>
-                      <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '2rem', lg: '1.8rem' } }}>
-                        ₹{displayStats.today_revenue?.toLocaleString() || 0}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Today's Revenue
-                      </Typography>
-                    </Box>
-                  </Box>
+              <Card sx={{ 
+                height: '160px',
+                borderRadius: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                  transform: 'translateY(-4px)',
+                  borderColor: 'success.light'
+                }
+              }}>
+                <CardContent sx={{ 
+                  p: 3,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  textAlign: 'center'
+                }}>
+                  <TrendingUp 
+                    color="success" 
+                    sx={{ 
+                      fontSize: 40, 
+                      mb: 2,
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                    }} 
+                  />
+                  <Typography 
+                    variant="h3" 
+                    fontWeight="800" 
+                    sx={{ 
+                      fontSize: { xs: '1.5rem', sm: '1.75rem' },
+                      mb: 1,
+                      color: 'text.primary',
+                      letterSpacing: '-0.02em'
+                    }}
+                  >
+                    ₹{displayStats.today_revenue?.toLocaleString() || 0}
+                  </Typography>
+                  <Typography 
+                    variant="subtitle1" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.01em'
+                    }}
+                  >
+                    Today's Revenue
+                  </Typography>
                 </CardContent>
               </Card>
             </Grid>
 
             <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <TableRestaurant color="warning" sx={{ fontSize: { xs: 40, lg: 35 } }} />
-                    <Box>
-                      <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '2rem', lg: '1.8rem' } }}>
-                        {displayStats.occupied_tables || 0}/{displayStats.total_tables || 0}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Tables Occupied
-                      </Typography>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={tableOccupancyPercentage} 
-                        sx={{ mt: 1 }}
-                      />
-                    </Box>
-                  </Box>
+              <Card sx={{ 
+                height: '160px',
+                borderRadius: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                  transform: 'translateY(-4px)',
+                  borderColor: 'warning.light'
+                }
+              }}>
+                <CardContent sx={{ 
+                  p: 3,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  textAlign: 'center'
+                }}>
+                  <TableRestaurant 
+                    color="warning" 
+                    sx={{ 
+                      fontSize: 40, 
+                      mb: 1.5,
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                    }} 
+                  />
+                  <Typography 
+                    variant="h3" 
+                    fontWeight="800" 
+                    sx={{ 
+                      fontSize: '1.75rem',
+                      mb: 0.5,
+                      color: 'text.primary',
+                      letterSpacing: '-0.02em'
+                    }}
+                  >
+                    {displayStats.occupied_tables || 0}/{displayStats.total_tables || 0}
+                  </Typography>
+                  <Typography 
+                    variant="subtitle1" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.01em',
+                      mb: 1.5
+                    }}
+                  >
+                    Tables Occupied
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={tableOccupancyPercentage} 
+                    sx={{ 
+                      width: '100%',
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: 'action.hover',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 4
+                      }
+                    }}
+                  />
                 </CardContent>
               </Card>
             </Grid>
 
             <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Restaurant color="info" sx={{ fontSize: { xs: 40, lg: 35 } }} />
-                    <Box>
-                      <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '2rem', lg: '1.8rem' } }}>
-                        {displayStats.active_menu_items || 0}/{displayStats.total_menu_items || 0}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Menu Items Active
-                      </Typography>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={menuActivePercentage} 
-                        sx={{ mt: 1 }}
-                      />
-                    </Box>
-                  </Box>
+              <Card sx={{ 
+                height: '160px',
+                borderRadius: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                  transform: 'translateY(-4px)',
+                  borderColor: 'info.light'
+                }
+              }}>
+                <CardContent sx={{ 
+                  p: 3,
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  textAlign: 'center'
+                }}>
+                  <Restaurant 
+                    color="info" 
+                    sx={{ 
+                      fontSize: 40, 
+                      mb: 1.5,
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                    }} 
+                  />
+                  <Typography 
+                    variant="h3" 
+                    fontWeight="800" 
+                    sx={{ 
+                      fontSize: '1.75rem',
+                      mb: 0.5,
+                      color: 'text.primary',
+                      letterSpacing: '-0.02em'
+                    }}
+                  >
+                    {displayStats.active_menu_items || 0}/{displayStats.total_menu_items || 0}
+                  </Typography>
+                  <Typography 
+                    variant="subtitle1" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.01em',
+                      mb: 1.5
+                    }}
+                  >
+                    Menu Items Active
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={menuActivePercentage} 
+                    sx={{ 
+                      width: '100%',
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: 'action.hover',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 4
+                      }
+                    }}
+                  />
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
 
           {/* Row 2: Weekly Revenue Chart & Recent Orders Status */}
-          <Grid container spacing={{ xs: 3, lg: 2 }}>
+          <Grid container spacing={3}>
             {/* Weekly Revenue Trend */}
             <Grid item xs={12} md={8}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 3, lg: 2 } }}>
-                    <BarChartIcon color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6">
+              <Card sx={{ 
+                height: '420px',
+                borderRadius: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                  transform: 'translateY(-2px)'
+                }
+              }}>
+                <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    mb: 3,
+                    gap: 2
+                  }}>
+                    <BarChartIcon 
+                      color="primary" 
+                      sx={{ 
+                        fontSize: '1.75rem',
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                      }} 
+                    />
+                    <Typography 
+                      variant="h5"
+                      sx={{ 
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        color: 'text.primary',
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
                       Weekly Revenue & Orders Trend
                     </Typography>
                   </Box>
-                  {chartLoading ? (
-                    <Box display="flex" justifyContent="center" alignItems="center" height={280}>
-                      <CircularProgress />
-                    </Box>
-                  ) : getWeeklyRevenueData().length > 0 ? (
-                    <WeeklyRevenueChart data={getWeeklyRevenueData()} height={280} />
-                  ) : (
-                    <Box display="flex" justifyContent="center" alignItems="center" height={280}>
-                      <Typography variant="body2" color="text.secondary">
-                        No revenue data available
-                      </Typography>
-                    </Box>
-                  )}
+                  <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {chartLoading ? (
+                      <CircularProgress size={40} />
+                    ) : getWeeklyRevenueData().length > 0 ? (
+                      <WeeklyRevenueChart data={getWeeklyRevenueData()} height={300} />
+                    ) : (
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: 2
+                      }}>
+                        <BarChartIcon sx={{ fontSize: 48, color: 'text.secondary' }} />
+                        <Typography variant="h6" color="text.secondary" textAlign="center">
+                          No Revenue Data Available
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" textAlign="center">
+                          Revenue trends will appear here once orders are placed.
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
 
             {/* Recent Orders Status */}
             <Grid item xs={12} md={4}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-                  <Typography variant="h6" gutterBottom>
-                    Recent Orders Status
-                  </Typography>
-                  {chartLoading ? (
-                    <Box display="flex" justifyContent="center" alignItems="center" height={280}>
-                      <CircularProgress />
-                    </Box>
-                  ) : getOrderStatusData().length > 0 ? (
-                    <DonutChart data={getOrderStatusData()} height={280} />
-                  ) : (
-                    <Box display="flex" justifyContent="center" alignItems="center" height={280}>
-                      <Typography variant="body2" color="text.secondary">
-                        No order status data available
-                      </Typography>
-                    </Box>
-                  )}
+              <Card sx={{ 
+                height: '420px',
+                borderRadius: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                  transform: 'translateY(-2px)'
+                }
+              }}>
+                <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    mb: 3,
+                    gap: 2
+                  }}>
+                    <PieChartIcon 
+                      color="primary" 
+                      sx={{ 
+                        fontSize: '1.75rem',
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                      }} 
+                    />
+                    <Typography 
+                      variant="h5" 
+                      sx={{ 
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        color: 'text.primary',
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
+                      Recent Orders Status
+                    </Typography>
+                  </Box>
+                  <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {chartLoading ? (
+                      <CircularProgress size={40} />
+                    ) : getOrderStatusData().length > 0 ? (
+                      <DonutChart data={getOrderStatusData()} height={300} />
+                    ) : (
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        gap: 2
+                      }}>
+                        <PieChartIcon sx={{ fontSize: 48, color: 'text.secondary' }} />
+                        <Typography variant="h6" color="text.secondary" textAlign="center">
+                          No Order Status Data Available
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" textAlign="center">
+                          Order status breakdown will appear here once orders are placed.
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
           </Grid>
 
           {/* Row 3: Table Status & Venue Status */}
-          <Grid container spacing={{ xs: 3, lg: 2 }}>
+          <Grid container spacing={3}>
             {/* Table Status */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, lg: 1.5 } }}>
-                    <PieChartIcon color="primary" sx={{ mr: 1 }} />
-                    <Typography variant="h6">
+              <Card sx={{ 
+                height: '380px',
+                borderRadius: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                  transform: 'translateY(-2px)'
+                }
+              }}>
+                <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+                    <PieChartIcon 
+                      color="primary" 
+                      sx={{ 
+                        fontSize: '1.75rem',
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                      }} 
+                    />
+                    <Typography 
+                      variant="h5"
+                      sx={{ 
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        color: 'text.primary',
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
                       Table Status
                     </Typography>
                   </Box>
@@ -663,9 +1018,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                   ) : getTableStatusData().some(item => item.value > 0) ? (
                     <StatusPieChart data={getTableStatusData()} height={220} />
                   ) : (
-                    <Box display="flex" justifyContent="center" alignItems="center" height={220}>
-                      <Typography variant="body2" color="text.secondary">
-                        No table data available
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      height: 220,
+                      gap: 2
+                    }}>
+                      <TableRestaurant sx={{ fontSize: 48, color: 'text.secondary' }} />
+                      <Typography variant="h6" color="text.secondary" textAlign="center">
+                        No Table Data Available
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" textAlign="center">
+                        Table occupancy status will appear here once tables are configured.
                       </Typography>
                     </Box>
                   )}
@@ -673,58 +1039,139 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
               </Card>
             </Grid>
 
-            {/* Venue Status */}
+            {/* Top Menu Items */}
             <Grid item xs={12} md={6}>
-              <Card sx={{ height: '100%' }}>
-                <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-                  <Typography variant="h6" gutterBottom>
-                    Venue Status
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 2 }, mt: { xs: 4, lg: 2 } }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body1">Table Occupancy</Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {tableOccupancyPercentage}%
-                      </Typography>
-                    </Box>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={tableOccupancyPercentage} 
-                      sx={{ height: 8, borderRadius: 4 }}
+              <Card sx={{ 
+                height: '380px',
+                borderRadius: 4,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+                transition: 'all 0.3s ease-in-out',
+                '&:hover': {
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                  transform: 'translateY(-2px)'
+                }
+              }}>
+                <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3, gap: 2 }}>
+                    <Restaurant 
+                      color="primary" 
+                      sx={{ 
+                        fontSize: '1.75rem',
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                      }} 
                     />
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body1">Menu Availability</Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {menuActivePercentage}%
-                      </Typography>
-                    </Box>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={menuActivePercentage} 
-                      sx={{ height: 8, borderRadius: 4 }}
-                    />
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body1">Staff Count</Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {displayStats.total_staff || 0} Active
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body1">Total Tables</Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {displayStats.total_tables || 0}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body1">Total Menu Items</Typography>
-                      <Typography variant="body1" fontWeight="bold">
-                        {displayStats.total_menu_items || 0}
-                      </Typography>
-                    </Box>
+                    <Typography 
+                      variant="h5"
+                      sx={{ 
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        color: 'text.primary',
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
+                      Top 5 Most Ordered Items
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, overflow: 'auto' }}>
+                    {topMenuItems.length === 0 ? (
+                      <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        height: '100%',
+                        gap: 2
+                      }}>
+                        <Restaurant sx={{ fontSize: 48, color: 'text.secondary' }} />
+                        <Typography variant="h6" color="text.secondary" textAlign="center">
+                          No Order Data Available
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" textAlign="center">
+                          Popular menu items will appear here once orders are placed.
+                        </Typography>
+                      </Box>
+                    ) : (
+                      topMenuItems.slice(0, 5).map((item, index) => (
+                        <Box 
+                          key={item.id}
+                          sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            p: 2,
+                            borderRadius: 2,
+                            backgroundColor: index === 0 ? 'primary.light' : 'action.hover',
+                            border: index === 0 ? '2px solid' : '1px solid',
+                            borderColor: index === 0 ? 'primary.main' : 'divider',
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              transform: 'scale(1.02)',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                            }
+                          }}
+                        >
+                          <Box sx={{ flex: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                              <Typography 
+                                variant="h6" 
+                                sx={{ 
+                                  fontSize: '0.875rem',
+                                  fontWeight: 800,
+                                  color: index === 0 ? 'primary.main' : 'text.primary',
+                                  minWidth: '20px'
+                                }}
+                              >
+                                #{index + 1}
+                              </Typography>
+                              <Typography 
+                                variant="subtitle1" 
+                                sx={{ 
+                                  fontWeight: 700,
+                                  color: index === 0 ? 'primary.main' : 'text.primary',
+                                  fontSize: '0.95rem'
+                                }}
+                              >
+                                {item.name}
+                              </Typography>
+                            </Box>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: 'text.secondary',
+                                fontSize: '0.75rem',
+                                fontWeight: 500
+                              }}
+                            >
+                              {item.category} • ₹{item.price}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography 
+                              variant="h6" 
+                              sx={{ 
+                                fontWeight: 800,
+                                color: index === 0 ? 'primary.main' : 'success.main',
+                                fontSize: '1rem'
+                              }}
+                            >
+                              {item.order_count}
+                            </Typography>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: 'text.secondary',
+                                fontSize: '0.7rem'
+                              }}
+                            >
+                              orders
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ))
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -732,33 +1179,136 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
           </Grid>
 
           {/* Recent Orders */}
-          <Card sx={{ mt: { xs: 0, lg: 1 } }}>
-            <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: { xs: 3, lg: 2 } }}>
-                <Typography variant="h6">
-                  Recent Orders
-                </Typography>
+          <Card sx={{ 
+            borderRadius: 4,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+            border: '1px solid',
+            borderColor: 'divider',
+            background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <ShoppingCart 
+                    color="primary" 
+                    sx={{ 
+                      fontSize: '1.75rem',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                    }} 
+                  />
+                  <Typography 
+                    variant="h5"
+                    sx={{ 
+                      fontSize: '1.25rem',
+                      fontWeight: 700,
+                      color: 'text.primary',
+                      letterSpacing: '-0.01em'
+                    }}
+                  >
+                    Recent Orders
+                  </Typography>
+                </Box>
                 {canManageOrders() && (
                   <Button
-                    variant="outlined"
+                    variant="contained"
                     onClick={() => navigate('/admin/orders')}
-                    size="small"
+                    size="medium"
+                    sx={{
+                      borderRadius: 3,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      '&:hover': {
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                        transform: 'translateY(-1px)'
+                      }
+                    }}
                   >
                     View All Orders
                   </Button>
                 )}
               </Box>
 
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
+              <TableContainer 
+                component={Paper} 
+                variant="outlined"
+                sx={{ 
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  '& .MuiTable-root': {
+                    minWidth: { xs: 'auto', sm: 650 }
+                  }
+                }}
+              >
+                <Table size={isSmallScreen ? "small" : "medium"}>
                   <TableHead>
-                    <TableRow>
-                      <TableCell>Order #</TableCell>
-                      <TableCell align="center">Table</TableCell>
-                      <TableCell align="center">Amount</TableCell>
-                      <TableCell align="center">Status</TableCell>
-                      <TableCell align="center">Time</TableCell>
-                      <TableCell align="center">Actions</TableCell>
+                    <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                      <TableCell sx={{ 
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        fontWeight: 700,
+                        color: 'text.primary'
+                      }}>
+                        Order #
+                      </TableCell>
+                      <TableCell 
+                        align="center"
+                        sx={{ 
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
+                          fontWeight: 700,
+                          color: 'text.primary',
+                          display: { xs: 'none', sm: 'table-cell' }
+                        }}
+                      >
+                        Table
+                      </TableCell>
+                      <TableCell 
+                        align="center"
+                        sx={{ 
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
+                          fontWeight: 700,
+                          color: 'text.primary'
+                        }}
+                      >
+                        Amount
+                      </TableCell>
+                      <TableCell 
+                        align="center"
+                        sx={{ 
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
+                          fontWeight: 700,
+                          color: 'text.primary'
+                        }}
+                      >
+                        Status
+                      </TableCell>
+                      <TableCell 
+                        align="center"
+                        sx={{ 
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
+                          fontWeight: 700,
+                          color: 'text.primary',
+                          display: { xs: 'none', md: 'table-cell' }
+                        }}
+                      >
+                        Time
+                      </TableCell>
+                      <TableCell 
+                        align="center"
+                        sx={{ 
+                          fontSize: { xs: '0.875rem', sm: '1rem' },
+                          fontWeight: 700,
+                          color: 'text.primary'
+                        }}
+                      >
+                        Actions
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -777,46 +1327,137 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      recentOrders.slice(0, 4).map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell>
-                            <Typography variant="subtitle2" fontWeight="bold">
+                      recentOrders.slice(0, 4).map((order, index) => (
+                        <TableRow 
+                          key={order.id}
+                          sx={{
+                            backgroundColor: index % 2 === 0 ? 'background.default' : 'action.hover',
+                            '&:hover': {
+                              backgroundColor: 'action.selected',
+                              transform: 'scale(1.01)',
+                              transition: 'all 0.2s ease-in-out'
+                            }
+                          }}
+                        >
+                          <TableCell sx={{ py: 2.5 }}>
+                            <Typography 
+                              variant="subtitle1" 
+                              fontWeight="700"
+                              sx={{ 
+                                fontSize: { xs: '0.875rem', sm: '1rem' },
+                                color: 'primary.main'
+                              }}
+                            >
                               {order.order_number}
                             </Typography>
+                            {/* Show table on mobile in the order cell */}
+                            <Typography 
+                              variant="caption" 
+                              color="text.secondary"
+                              sx={{ 
+                                display: { xs: 'block', sm: 'none' },
+                                fontSize: '0.75rem',
+                                fontWeight: 500
+                              }}
+                            >
+                              Table {order.table_number}
+                            </Typography>
                           </TableCell>
-                          <TableCell align="center">
+                          <TableCell 
+                            align="center"
+                            sx={{ 
+                              display: { xs: 'none', sm: 'table-cell' },
+                              py: 2.5,
+                              fontSize: { xs: '0.875rem', sm: '1rem' },
+                              fontWeight: 600
+                            }}
+                          >
                             Table {order.table_number}
                           </TableCell>
-                          <TableCell align="center">
+                          <TableCell 
+                            align="center"
+                            sx={{ 
+                              py: 2.5,
+                              fontSize: { xs: '0.875rem', sm: '1rem' },
+                              fontWeight: 700,
+                              color: 'success.main'
+                            }}
+                          >
                             ₹{order.total_amount.toLocaleString()}
                           </TableCell>
-                          <TableCell align="center">
+                          <TableCell 
+                            align="center"
+                            sx={{ py: 2.5 }}
+                          >
                             <Chip
-                              label={order.status}
+                              label={order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                               color={getStatusColor(order.status) as any}
-                              size="small"
+                              size="medium"
+                              sx={{
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                fontWeight: 600,
+                                height: { xs: 24, sm: 28 },
+                                borderRadius: 2
+                              }}
                             />
                           </TableCell>
-                          <TableCell align="center">
+                          <TableCell 
+                            align="center"
+                            sx={{ 
+                              display: { xs: 'none', md: 'table-cell' },
+                              py: 2.5,
+                              fontSize: { xs: '0.875rem', sm: '1rem' },
+                              fontWeight: 500,
+                              color: 'text.secondary'
+                            }}
+                          >
                             {new Date(order.created_at).toLocaleTimeString()}
                           </TableCell>
-                          <TableCell align="center">
-                            {canManageOrders() && (
-                              <IconButton
-                                size="small"
-                                onClick={() => navigate(`/admin/orders/${order.id}`)}
-                              >
-                                <Visibility />
-                              </IconButton>
-                            )}
-                            {(hasPermission(PERMISSIONS.ORDERS_UPDATE) || hasBackendPermission('order.update')) && (
-                              <IconButton
-                                size="small"
-                                onClick={() => navigate(`/admin/orders/${order.id}/edit`)}
-                              >
-                                <Edit />
-                              </IconButton>
-                            )}
+                          <TableCell 
+                            align="center"
+                            sx={{ py: 2.5 }}
+                          >
+                            <Box sx={{ 
+                              display: 'flex', 
+                              gap: 1,
+                              justifyContent: 'center',
+                              flexDirection: { xs: 'column', sm: 'row' }
+                            }}>
+                              {canManageOrders() && (
+                                <IconButton
+                                  size="medium"
+                                  onClick={() => navigate(`/admin/orders/${order.id}`)}
+                                  sx={{ 
+                                    backgroundColor: 'primary.main',
+                                    color: 'white',
+                                    '&:hover': {
+                                      backgroundColor: 'primary.dark',
+                                      transform: 'scale(1.1)'
+                                    },
+                                    transition: 'all 0.2s ease-in-out'
+                                  }}
+                                >
+                                  <Visibility sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              )}
+                              {(hasPermission(PERMISSIONS.ORDERS_UPDATE) || hasBackendPermission('order.update')) && (
+                                <IconButton
+                                  size="medium"
+                                  onClick={() => navigate(`/admin/orders/${order.id}/edit`)}
+                                  sx={{ 
+                                    backgroundColor: 'warning.main',
+                                    color: 'white',
+                                    '&:hover': {
+                                      backgroundColor: 'warning.dark',
+                                      transform: 'scale(1.1)'
+                                    },
+                                    transition: 'all 0.2s ease-in-out'
+                                  }}
+                                >
+                                  <Edit sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              )}
+                            </Box>
                           </TableCell>
                         </TableRow>
                       ))
@@ -828,12 +1469,42 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
           </Card>
 
           {/* Quick Actions - Full Width */}
-          <Card sx={{ flexShrink: 0, mb: { xs: 4, lg: 3 } }}>
-            <CardContent sx={{ p: { xs: 2, lg: 1.5 } }}>
-              <Typography variant="h6" gutterBottom sx={{ mb: { xs: 3, lg: 2 } }}>
-                Quick Actions
-              </Typography>
-              <Grid container spacing={{ xs: 3, lg: 2 }}>
+          <Card sx={{ 
+            flexShrink: 0, 
+            mb: 4,
+            borderRadius: 4,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+            border: '1px solid',
+            borderColor: 'divider',
+            background: 'linear-gradient(135deg, #ffffff 0%, #fafbfc 100%)',
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+              transform: 'translateY(-2px)'
+            }
+          }}>
+            <CardContent sx={{ p: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Settings 
+                  color="primary" 
+                  sx={{ 
+                    fontSize: '1.75rem',
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                  }} 
+                />
+                <Typography 
+                  variant="h5" 
+                  sx={{ 
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    color: 'text.primary',
+                    letterSpacing: '-0.01em'
+                  }}
+                >
+                  Quick Actions
+                </Typography>
+              </Box>
+              <Grid container spacing={3}>
                 {canManageOrders() && (
                   <Grid item xs={12} sm={6} md={3}>
                     <Button
@@ -842,7 +1513,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       size="large"
                       startIcon={<ShoppingCart />}
                       onClick={() => navigate('/admin/orders')}
-                      sx={{ py: { xs: 2, lg: 1.5 } }}
+                      sx={{ 
+                        py: 2.5,
+                        borderRadius: 3,
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        textTransform: 'none',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        },
+                        transition: 'all 0.3s ease-in-out'
+                      }}
                     >
                       View Orders
                     </Button>
@@ -856,7 +1538,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       size="large"
                       startIcon={<Restaurant />}
                       onClick={() => navigate('/admin/menu')}
-                      sx={{ py: { xs: 2, lg: 1.5 } }}
+                      sx={{ 
+                        py: 2.5,
+                        borderRadius: 3,
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        textTransform: 'none',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        },
+                        transition: 'all 0.3s ease-in-out'
+                      }}
                     >
                       Manage Menu
                     </Button>
@@ -870,7 +1563,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       size="large"
                       startIcon={<TableRestaurant />}
                       onClick={() => navigate('/admin/tables')}
-                      sx={{ py: { xs: 2, lg: 1.5 } }}
+                      sx={{ 
+                        py: 2.5,
+                        borderRadius: 3,
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        textTransform: 'none',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        },
+                        transition: 'all 0.3s ease-in-out'
+                      }}
                     >
                       Manage Tables
                     </Button>
@@ -884,7 +1588,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       size="large"
                       startIcon={<People />}
                       onClick={() => navigate('/admin/users')}
-                      sx={{ py: { xs: 2, lg: 1.5 } }}
+                      sx={{ 
+                        py: 2.5,
+                        borderRadius: 3,
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        textTransform: 'none',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        },
+                        transition: 'all 0.3s ease-in-out'
+                      }}
                     >
                       Manage Staff
                     </Button>

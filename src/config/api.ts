@@ -108,6 +108,7 @@ export const logApiConfig = (): void => {
   const config = getRuntimeConfig();
   
   if (config.DEBUG_MODE || isDevelopment()) {
+    // Use console directly for configuration logging to avoid circular dependency
     console.group('🔧 API Configuration');
     console.log('Environment:', getEnvironment());
     console.log('API Base URL:', API_CONFIG.BASE_URL);
