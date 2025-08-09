@@ -40,9 +40,8 @@ class AuthService {
       if (response.success && response.data) {
         return response;
       }
-      
-      throw new Error(response.message || 'Registration failed');
     } catch (error: any) {
+      console.error('Registration error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Registration failed');
     }
   }
@@ -75,11 +74,11 @@ class AuthService {
       
       if (response.success && response.data) {
         // Update stored user data
-        localStorage.setItem(this.USER_KEY, JSON.stringify(response.data));
+        localStorage.setItem('dino_user', JSON.stringify(response.data));
         return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to get user data');
       }
-      
-      throw new Error('Failed to get user profile');
     } catch (error: any) {
       // If unauthorized, clear tokens
       if (error.response?.status === 401) {
@@ -134,34 +133,14 @@ class AuthService {
       
       if (response.success && response.data) {
         // Update stored user data
-        localStorage.setItem(this.USER_KEY, JSON.stringify(response.data));
+        localStorage.setItem('dino_user', JSON.stringify(response.data));
         return response.data;
+      } else {
+        throw new Error(response.message || 'Profile update failed');
       }
-      
-      throw new Error(response.message || 'Failed to update profile');
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to update profile');
-    }
-  }
-
-  async uploadProfileImage(file: File): Promise<{ fileUrl: string }> {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const response = await apiService.post<{ fileUrl: string }>('/users/profile/image', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      if (response.success && response.data) {
-        return response.data;
-      }
-      
-      throw new Error(response.message || 'Failed to upload image');
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to upload image');
+      console.error('Profile update error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Profile update failed');
     }
   }
 
@@ -187,7 +166,7 @@ class AuthService {
     }
   }
 
-  async addAddress(address: any): Promise<void> {
+  async refreshToken(): Promise<AuthToken> {
     try {
       const response = await apiService.post('/users/addresses', address);
       
@@ -288,13 +267,15 @@ class AuthService {
 
       console.log('Attempting to refresh token...');
       const response = await apiService.post<AuthToken>('/auth/refresh', {
-        refresh_token: refreshToken
+        refresh_token: refreshToken,
       });
       
       if (response.success && response.data && response.data.access_token) {
         console.log('Token refreshed successfully');
         this.setTokens(response.data);
         return response.data;
+      } else {
+        throw new Error(response.message || 'Token refresh failed');
       }
       
       console.warn('Token refresh failed: Invalid response');
@@ -381,15 +362,15 @@ class AuthService {
 
   getStoredUser(): UserProfile | null {
     try {
-      const userData = localStorage.getItem(this.USER_KEY);
+      const userData = localStorage.getItem('dino_user');
       return userData ? JSON.parse(userData) : null;
     } catch {
       return null;
     }
   }
 
-  logout(): void {
-    this.clearTokens();
+  getToken(): string | null {
+    return localStorage.getItem('dino_token');
   }
 
   /**

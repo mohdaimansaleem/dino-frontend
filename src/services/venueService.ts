@@ -135,6 +135,22 @@ class VenueService {
     try {
       return await apiService.post<Venue>('/venues', venueData);
     } catch (error: any) {
+      console.error('Get venue error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch venue');
+    }
+  }
+
+  async createVenue(venueData: VenueCreate): Promise<Venue> {
+    try {
+      const response = await apiService.post<Venue>('/venues', venueData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to create venue');
+      }
+    } catch (error: any) {
+      console.error('Create venue error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to create venue');
     }
   }
@@ -157,8 +173,13 @@ class VenueService {
    */
   async deleteVenue(venueId: string): Promise<ApiResponse<void>> {
     try {
-      return await apiService.delete<void>(`/venues/${venueId}`);
+      const response = await apiService.delete(`/venues/${venueId}`);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete venue');
+      }
     } catch (error: any) {
+      console.error('Delete venue error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to delete venue');
     }
   }
@@ -168,8 +189,13 @@ class VenueService {
    */
   async activateVenue(venueId: string): Promise<ApiResponse<void>> {
     try {
-      return await apiService.post<void>(`/venues/${venueId}/activate`);
+      const response = await apiService.post(`/venues/${venueId}/activate`);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to activate venue');
+      }
     } catch (error: any) {
+      console.error('Activate venue error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to activate venue');
     }
   }
@@ -434,7 +460,11 @@ class VenueService {
           day: 'Today'
         };
       }
+    } catch (error: any) {
+      console.error('Upload venue images error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to upload venue images');
     }
+  }
 
     // Look for next opening day
     for (let i = 1; i <= 7; i++) {
@@ -448,9 +478,10 @@ class VenueService {
           day: i === 1 ? 'Tomorrow' : days[nextDay]
         };
       }
+    } catch (error: any) {
+      console.error('Upload venue logo error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to upload venue logo');
     }
-
-    return null;
   }
 
   /**

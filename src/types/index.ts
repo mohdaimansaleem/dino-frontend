@@ -60,14 +60,41 @@ export interface Venue {
   id: string;
   name: string;
   description: string;
-  address: string;
-  phone: string;
-  email: string;
-  ownerId: string;
-  logo?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  workspace_id: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+  };
+  contact: {
+    phone: string;
+    email: string;
+    website?: string;
+  };
+  business_hours: {
+    [key: string]: {
+      open: string;
+      close: string;
+      is_closed: boolean;
+    };
+  };
+  cuisine_types: string[];
+  features: string[];
+  image_urls: string[];
+  logo_url?: string;
+  is_active: boolean;
+  settings: {
+    tax_rate: number;
+    service_charge_rate: number;
+    currency: string;
+    timezone: string;
+    auto_accept_orders: boolean;
+    max_tables: number;
+  };
+  created_at: string;
+  updated_at: string;
 }
 
 // Legacy Cafe type (alias for Venue for backward compatibility)
@@ -75,6 +102,17 @@ export interface Cafe extends Venue {}
 export type LegacyCafe = Cafe;
 
 // Menu Types
+export interface MenuCategory {
+  id: string;
+  name: string;
+  description: string;
+  venue_id: string;
+  image_url?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -152,13 +190,48 @@ export interface Table {
 }
 
 // Order Types
+export interface OrderItem {
+  menu_item_id: string;
+  menu_item_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  special_instructions?: string;
+  customizations?: Record<string, any>;
+}
+
+export interface Order {
+  id: string;
+  order_number: string;
+  venue_id: string;
+  table_id?: string;
+  customer_name?: string;
+  customer_phone?: string;
+  customer_email?: string;
+  items: OrderItem[];
+  subtotal: number;
+  tax_amount: number;
+  service_charge: number;
+  discount_amount: number;
+  total_amount: number;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  payment_method?: string;
+  special_instructions?: string;
+  estimated_preparation_time?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Cart Types (Frontend only)
 export interface CartItem {
   menuItem: MenuItem;
   quantity: number;
   specialInstructions?: string;
 }
 
-export interface Order {
+// Workspace Types
+export interface Workspace {
   id: string;
   orderNumber?: string;
   venueId: string;
@@ -176,57 +249,50 @@ export interface Order {
   updatedAt: Date;
 }
 
-export interface OrderItem {
-  menuItemId: string;
-  menuItemName: string;
-  variantName?: string;
-  quantity: number;
-  price: number;
-  totalPrice?: number;
-  specialInstructions?: string;
-}
-
-export type OrderStatus = 
-  | 'pending' 
-  | 'confirmed' 
-  | 'preparing' 
-  | 'ready' 
-  | 'delivered'
-  | 'served' 
-  | 'cancelled';
-
-export type PaymentStatus = 
-  | 'pending' 
-  | 'paid' 
-  | 'failed' 
-  | 'refunded';
-
 // Analytics Types
-export interface SalesAnalytics {
-  totalRevenue: number;
-  totalOrders: number;
-  averageOrderValue: number;
-  popularItems: PopularItem[];
-  revenueByDay: RevenueData[];
-  ordersByStatus: StatusData[];
-}
-
-export interface PopularItem {
-  menuItemId: string;
-  menuItemName: string;
-  orderCount: number;
-  revenue: number;
-}
-
-export interface RevenueData {
-  date: string;
-  revenue: number;
-  orders: number;
-}
-
-export interface StatusData {
-  status: OrderStatus;
-  count: number;
+export interface DashboardAnalytics {
+  venue_id: string;
+  period: string;
+  revenue: {
+    total: number;
+    today: number;
+    yesterday: number;
+    this_week: number;
+    this_month: number;
+    growth_rate: number;
+  };
+  orders: {
+    total: number;
+    today: number;
+    pending: number;
+    completed: number;
+    cancelled: number;
+    average_order_value: number;
+  };
+  customers: {
+    total: number;
+    new_today: number;
+    returning: number;
+    satisfaction_rate: number;
+  };
+  popular_items: Array<{
+    menu_item_id: string;
+    menu_item_name: string;
+    order_count: number;
+    revenue: number;
+    rating: number;
+  }>;
+  peak_hours: Array<{
+    hour: number;
+    order_count: number;
+    revenue: number;
+  }>;
+  table_utilization: {
+    total_tables: number;
+    occupied: number;
+    available: number;
+    utilization_rate: number;
+  };
 }
 
 // API Response Types
@@ -237,18 +303,17 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
-// Filter Types
-export interface MenuFilters {
-  category?: string;
-  isVeg?: boolean;
-  priceRange?: {
-    min: number;
-    max: number;
-  };
-  searchQuery?: string;
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
 }
 
-// Enhanced Notification Types
+// Notification Types
 export interface AppNotification {
   id: string;
   recipientId: string;
@@ -257,13 +322,13 @@ export interface AppNotification {
   title: string;
   message: string;
   data?: Record<string, any>;
-  isRead: boolean;
+  is_read: boolean;
   priority: 'low' | 'normal' | 'high' | 'urgent';
-  createdAt: Date;
-  readAt?: Date;
+  created_at: string;
+  read_at?: string;
 }
 
-export type NotificationTypeEnum = 
+export type NotificationType = 
   | 'order_placed'
   | 'order_confirmed' 
   | 'order_ready'
@@ -306,4 +371,18 @@ export interface CartContextType {
   clearCart: () => void;
   getTotalAmount: () => number;
   getTotalItems: () => number;
+}
+
+// Filter Types
+export interface MenuFilters {
+  category?: string;
+  is_vegetarian?: boolean;
+  is_vegan?: boolean;
+  is_gluten_free?: boolean;
+  spice_level?: string;
+  price_range?: {
+    min: number;
+    max: number;
+  };
+  search_query?: string;
 }

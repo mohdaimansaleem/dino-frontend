@@ -354,12 +354,19 @@ class MenuService {
     };
   }
 
-  // Format price
-  formatPrice(price: number, currency: string = 'INR'): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(price);
+  async createMenuItem(itemData: MenuItemCreate): Promise<MenuItem> {
+    try {
+      const response = await apiService.post<MenuItem>('/menu/items', itemData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to create menu item');
+      }
+    } catch (error: any) {
+      console.error('Create menu item error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to create menu item');
+    }
   }
 
   // Check if item is available
@@ -376,7 +383,84 @@ class MenuService {
       maxTime = Math.max(maxTime, itemTime);
     });
 
-    return maxTime + 5; // Add 5 minutes for order processing
+  async searchMenuItems(venueId: string, query: string): Promise<MenuItem[]> {
+    try {
+      const response = await apiService.get<MenuItem[]>(`/menu/venues/${venueId}/search`, { q: query });
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to search menu items');
+      }
+    } catch (error: any) {
+      console.error('Search menu items error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to search menu items');
+    }
+  }
+
+  async updateItemAvailability(itemId: string, isAvailable: boolean): Promise<void> {
+    try {
+      const response = await apiService.put(`/menu/items/${itemId}`, { is_available: isAvailable });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update item availability');
+      }
+    } catch (error: any) {
+      console.error('Update item availability error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update item availability');
+    }
+  }
+
+  async bulkUpdateAvailability(itemIds: string[], isAvailable: boolean): Promise<void> {
+    try {
+      const response = await apiService.post('/menu/items/bulk-update-availability', {
+        item_ids: itemIds,
+        is_available: isAvailable,
+      });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to bulk update availability');
+      }
+    } catch (error: any) {
+      console.error('Bulk update availability error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to bulk update availability');
+    }
+  }
+
+  async uploadCategoryImage(categoryId: string, file: File): Promise<string> {
+    try {
+      const response = await apiService.uploadFile<{ image_url: string }>(
+        `/menu/categories/${categoryId}/image`,
+        file
+      );
+      
+      if (response.success && response.data) {
+        return response.data.image_url;
+      } else {
+        throw new Error(response.message || 'Failed to upload category image');
+      }
+    } catch (error: any) {
+      console.error('Upload category image error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to upload category image');
+    }
+  }
+
+  async uploadItemImages(itemId: string, files: File[]): Promise<string[]> {
+    try {
+      const response = await apiService.uploadFiles<{ image_urls: string[] }>(
+        `/menu/items/${itemId}/images`,
+        files
+      );
+      
+      if (response.success && response.data) {
+        return response.data.image_urls;
+      } else {
+        throw new Error(response.message || 'Failed to upload item images');
+      }
+    } catch (error: any) {
+      console.error('Upload item images error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to upload item images');
+    }
   }
 
   // Get spice level options

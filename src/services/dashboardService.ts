@@ -43,6 +43,12 @@ interface AdminDashboard {
     status: string;
     created_at: string;
   }>;
+  table_utilization: {
+    total_tables: number;
+    occupied: number;
+    available: number;
+    utilization_rate: number;
+  };
 }
 
 interface OperatorDashboard {

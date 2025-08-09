@@ -19,7 +19,9 @@ class UserService {
    */
   async getUsers(filters?: UserFilters): Promise<PaginatedResponse<User>> {
     try {
-      const params = new URLSearchParams();
+      const params: any = {};
+      if (workspaceId) params.workspace_id = workspaceId;
+      if (venueId) params.venue_id = venueId;
       
       if (filters?.page) params.append('page', filters.page.toString());
       if (filters?.page_size) params.append('page_size', filters.page_size.toString());
@@ -73,6 +75,37 @@ class UserService {
     try {
       return await apiService.post<User>('/users', userData);
     } catch (error: any) {
+      console.error('Get users error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch users');
+    }
+  }
+
+  async getUser(userId: string): Promise<UserProfile> {
+    try {
+      const response = await apiService.get<UserProfile>(`/users/${userId}`);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch user');
+      }
+    } catch (error: any) {
+      console.error('Get user error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch user');
+    }
+  }
+
+  async createUser(userData: UserCreate): Promise<UserProfile> {
+    try {
+      const response = await apiService.post<UserProfile>('/users', userData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to create user');
+      }
+    } catch (error: any) {
+      console.error('Create user error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to create user');
     }
   }
@@ -82,8 +115,15 @@ class UserService {
    */
   async updateUser(userId: string, userData: UserUpdate): Promise<ApiResponse<User>> {
     try {
-      return await apiService.put<User>(`/users/${userId}`, userData);
+      const response = await apiService.put<UserProfile>(`/users/${userId}`, userData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to update user');
+      }
     } catch (error: any) {
+      console.error('Update user error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update user');
     }
   }
@@ -95,6 +135,7 @@ class UserService {
     try {
       return await apiService.delete<void>(`/users/${userId}`);
     } catch (error: any) {
+      console.error('Delete user error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to delete user');
     }
   }
@@ -350,6 +391,9 @@ class UserService {
       if (!emailRegex.test(userData.email)) {
         errors.push('Please enter a valid email address');
       }
+    } catch (error: any) {
+      console.error('Update user role error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update user role');
     }
 
     if ('phone' in userData && userData.phone) {

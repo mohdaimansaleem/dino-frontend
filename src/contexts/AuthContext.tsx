@@ -12,11 +12,12 @@ import { tokenRefreshScheduler } from '../utils/tokenRefreshScheduler';
 
 interface AuthContextType {
   user: UserProfile | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: UserRegistration) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<UserProfile>) => Promise<void>;
   refreshUser: () => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   loading: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -116,7 +117,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (credentials: LoginCredentials): Promise<void> => {
     try {
       setLoading(true);
       
@@ -199,7 +200,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const register = async (userData: UserRegistration): Promise<void> => {
+  const register = async (userData: RegisterData): Promise<void> => {
     try {
       setLoading(true);
       
@@ -507,6 +508,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
     updateUser,
     refreshUser,
+    changePassword,
     loading,
     isLoading: loading,
     isAuthenticated: !!user,

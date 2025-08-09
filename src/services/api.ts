@@ -427,6 +427,34 @@ class ApiService {
       return false;
     }
   }
+<<<<<<< HEAD
+=======
+
+  // Get API instance for custom requests
+  getApiInstance(): AxiosInstance {
+    return this.api;
+  }
+
+  // Set custom headers
+  setHeader(key: string, value: string): void {
+    this.api.defaults.headers.common[key] = value;
+  }
+
+  // Remove custom headers
+  removeHeader(key: string): void {
+    delete this.api.defaults.headers.common[key];
+  }
+
+  // Update base URL
+  setBaseURL(baseURL: string): void {
+    this.api.defaults.baseURL = baseURL;
+  }
+
+  // Update timeout
+  setTimeout(timeout: number): void {
+    this.api.defaults.timeout = timeout;
+  }
+>>>>>>> main
 }
 
 // Export singleton instance

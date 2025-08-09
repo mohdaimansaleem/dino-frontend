@@ -21,7 +21,8 @@ class TableService {
    */
   async getTables(filters?: TableFilters): Promise<PaginatedResponse<Table>> {
     try {
-      const params = new URLSearchParams();
+      const params = venueId ? { venue_id: venueId } : {};
+      const response = await apiService.get<Table[]>('/tables', params);
       
       if (filters?.page) params.append('page', filters.page.toString());
       if (filters?.page_size) params.append('page_size', filters.page_size.toString());
@@ -74,6 +75,37 @@ class TableService {
     try {
       return await apiService.post<Table>('/tables', tableData);
     } catch (error: any) {
+      console.error('Get table error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch table');
+    }
+  }
+
+  async getTableByQR(qrCode: string): Promise<{ table: Table; venue: any; menu: any }> {
+    try {
+      const response = await apiService.get<{ table: Table; venue: any; menu: any }>(`/public/qr/${qrCode}`);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Invalid QR code');
+      }
+    } catch (error: any) {
+      console.error('Get table by QR error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Invalid QR code');
+    }
+  }
+
+  async createTable(tableData: TableCreate): Promise<Table> {
+    try {
+      const response = await apiService.post<Table>('/tables', tableData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to create table');
+      }
+    } catch (error: any) {
+      console.error('Create table error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to create table');
     }
   }
@@ -83,8 +115,15 @@ class TableService {
    */
   async updateTable(tableId: string, tableData: TableUpdate): Promise<ApiResponse<Table>> {
     try {
-      return await apiService.put<Table>(`/tables/${tableId}`, tableData);
+      const response = await apiService.put<Table>(`/tables/${tableId}`, tableData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to update table');
+      }
     } catch (error: any) {
+      console.error('Update table error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update table');
     }
   }
@@ -111,6 +150,7 @@ class TableService {
     try {
       return await apiService.put<void>(`/tables/${tableId}/status?new_status=${newStatus}`);
     } catch (error: any) {
+      console.error('Update table status error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update table status');
     }
   }
@@ -304,6 +344,9 @@ class TableService {
       if (tableData.table_number && tableData.table_number.length > 10) {
         errors.push('Table number must be less than 10 characters');
       }
+    } catch (error: any) {
+      console.error('Get available tables error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch available tables');
     }
 
     if ('capacity' in tableData) {

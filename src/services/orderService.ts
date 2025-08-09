@@ -26,7 +26,9 @@ class OrderService {
   // Get orders with filtering
   async getOrders(filters?: OrderFilters): Promise<PaginatedResponse<Order>> {
     try {
-      const params = new URLSearchParams();
+      const params: any = {};
+      if (venueId) params.venue_id = venueId;
+      if (status) params.status = status;
       
       if (filters?.page) params.append('page', filters.page.toString());
       if (filters?.page_size) params.append('page_size', filters.page_size.toString());
@@ -61,8 +63,7 @@ class OrderService {
     }
   }
 
-  // Get order by ID
-  async getOrder(orderId: string): Promise<Order | null> {
+  async getOrder(orderId: string): Promise<Order> {
     try {
       const response = await apiService.get<Order>(`/orders/${orderId}`);
       return response.data || null;
@@ -71,26 +72,37 @@ class OrderService {
     }
   }
 
-  // Create new order
-  async createOrder(orderData: OrderCreate): Promise<ApiResponse<Order>> {
+  async createOrder(orderData: CreateOrderData): Promise<Order> {
     try {
-      return await apiService.post<Order>('/orders', orderData);
+      const response = await apiService.post<Order>('/orders', orderData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to create order');
+      }
     } catch (error: any) {
+      console.error('Create order error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to create order');
     }
   }
 
-  // Create public order (from QR scan)
-  async createPublicOrder(orderData: PublicOrderCreate): Promise<ApiResponse<any>> {
+  async createPublicOrder(orderData: CreateOrderData): Promise<Order> {
     try {
-      return await apiService.post<any>('/orders/public/create-order', orderData);
+      const response = await apiService.post<Order>('/orders/public/create-order', orderData);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to create order');
+      }
     } catch (error: any) {
+      console.error('Create public order error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to create order');
     }
   }
 
-  // Update order
-  async updateOrder(orderId: string, orderData: OrderUpdate): Promise<ApiResponse<Order>> {
+  async updateOrderStatus(orderId: string, statusData: UpdateOrderStatusData): Promise<Order> {
     try {
       return await apiService.put<Order>(`/orders/${orderId}`, orderData);
     } catch (error: any) {
@@ -103,35 +115,25 @@ class OrderService {
     try {
       return await apiService.put<void>(`/orders/${orderId}/status`, { new_status: status });
     } catch (error: any) {
+      console.error('Update order status error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update order status');
     }
   }
 
-  // Confirm order
-  async confirmOrder(orderId: string, estimatedMinutes?: number): Promise<ApiResponse<void>> {
+  async cancelOrder(orderId: string, reason?: string): Promise<void> {
     try {
-      const params = estimatedMinutes ? `?estimated_minutes=${estimatedMinutes}` : '';
-      return await apiService.post<void>(`/orders/${orderId}/confirm${params}`);
+      const response = await apiService.put(`/orders/${orderId}/cancel`, { reason });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to cancel order');
+      }
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to confirm order');
-    }
-  }
-
-  // Cancel order
-  async cancelOrder(orderId: string, reason?: string): Promise<ApiResponse<void>> {
-    try {
-      const params = reason ? `?reason=${encodeURIComponent(reason)}` : '';
-      return await apiService.post<void>(`/orders/${orderId}/cancel${params}`);
-    } catch (error: any) {
+      console.error('Cancel order error:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to cancel order');
     }
   }
 
-  // Get venue orders
-  async getVenueOrders(venueId: string, filters?: {
-    status?: OrderStatus;
-    limit?: number;
-  }): Promise<Order[]> {
+  async getOrdersByTable(tableId: string): Promise<Order[]> {
     try {
       const params = new URLSearchParams();
       if (filters?.status) params.append('status', filters.status);
@@ -350,22 +352,116 @@ class OrderService {
       const now = new Date();
       const diffMinutes = Math.ceil((estimatedTime.getTime() - now.getTime()) / (1000 * 60));
       
-      if (diffMinutes > 0) {
-        return `${diffMinutes} minutes`;
+      if (response.success && response.data) {
+        return response.data;
       } else {
-        return 'Ready';
+        throw new Error(response.message || 'Failed to fetch table orders');
       }
+    } catch (error: any) {
+      console.error('Get table orders error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch table orders');
     }
-    return null;
   }
 
-  // Format currency
-  formatCurrency(amount: number, currency: string = 'INR'): string {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2,
-    }).format(amount);
+  async getActiveOrders(venueId: string): Promise<Order[]> {
+    try {
+      const response = await apiService.get<Order[]>('/orders', {
+        venue_id: venueId,
+        status: 'pending,confirmed,preparing,ready'
+      });
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch active orders');
+      }
+    } catch (error: any) {
+      console.error('Get active orders error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch active orders');
+    }
+  }
+
+  async getOrderHistory(venueId?: string, limit?: number): Promise<Order[]> {
+    try {
+      const params: any = {};
+      if (venueId) params.venue_id = venueId;
+      if (limit) params.limit = limit;
+      
+      const response = await apiService.get<Order[]>('/orders/history', params);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch order history');
+      }
+    } catch (error: any) {
+      console.error('Get order history error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch order history');
+    }
+  }
+
+  async updatePaymentStatus(orderId: string, paymentStatus: Order['payment_status'], paymentMethod?: string): Promise<void> {
+    try {
+      const response = await apiService.put(`/orders/${orderId}/payment`, {
+        payment_status: paymentStatus,
+        payment_method: paymentMethod
+      });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update payment status');
+      }
+    } catch (error: any) {
+      console.error('Update payment status error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to update payment status');
+    }
+  }
+
+  async addOrderNote(orderId: string, note: string): Promise<void> {
+    try {
+      const response = await apiService.post(`/orders/${orderId}/notes`, { note });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to add order note');
+      }
+    } catch (error: any) {
+      console.error('Add order note error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to add order note');
+    }
+  }
+
+  async getOrderAnalytics(venueId: string, startDate?: string, endDate?: string): Promise<any> {
+    try {
+      const params: any = { venue_id: venueId };
+      if (startDate) params.start_date = startDate;
+      if (endDate) params.end_date = endDate;
+      
+      const response = await apiService.get('/orders/analytics', params);
+      
+      if (response.success && response.data) {
+        return response.data;
+      } else {
+        throw new Error(response.message || 'Failed to fetch order analytics');
+      }
+    } catch (error: any) {
+      console.error('Get order analytics error:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to fetch order analytics');
+    }
+  }
+
+  // Real-time order updates
+  subscribeToOrderUpdates(venueId: string, callback: (order: Order) => void): () => void {
+    // This would typically use WebSocket or Server-Sent Events
+    // For now, we'll implement polling as a fallback
+    const interval = setInterval(async () => {
+      try {
+        const orders = await this.getActiveOrders(venueId);
+        orders.forEach(callback);
+      } catch (error) {
+        console.error('Error polling order updates:', error);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
   }
 }
 
