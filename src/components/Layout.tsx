@@ -5,8 +5,16 @@ import {
   IconButton, 
   Badge,
   Fade,
-
   Typography,
+  useTheme,
+  useMediaQuery,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
 } from '@mui/material';
 import { 
   ShoppingCart, 
@@ -30,7 +38,7 @@ import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import AppHeader from './layout/AppHeader';
-import CafeStatusControl from './CafeStatusControl';
+import VenueStatusControl from './VenueStatusControl';
 import { getUserFirstName } from '../utils/userUtils';
 
 interface LayoutProps {
@@ -40,10 +48,14 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
   const { user, logout, hasPermission, isOperator } = useAuth();
   const { getTotalItems } = useCart();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [cafeOpen, setCafeOpen] = useState(true);
+  const [venueOpen, setVenueOpen] = useState(true);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   
   // Feature flags
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
@@ -58,13 +70,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const handleLogout = () => {
     logout();
     navigate('/');
+    setMobileDrawerOpen(false);
+  };
+
+  const handleMobileDrawerToggle = () => {
+    setMobileDrawerOpen(!mobileDrawerOpen);
   };
 
   const renderNavigation = () => {
     if (isPublicMenuRoute) {
-      // Extract cafeId and tableId from current path for proper routing
+      // Extract venueId and tableId from current path for proper routing
       const pathParts = location.pathname.split('/');
-      const cafeId = pathParts[2];
+      const venueId = pathParts[2];
       const tableId = pathParts[3];
       
       return (
@@ -73,7 +90,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           
           <IconButton
             color="primary"
-            onClick={() => navigate(`/checkout/${cafeId}/${tableId}`)}
+            onClick={() => navigate(`/checkout/${venueId}/${tableId}`)}
             disabled={getTotalItems() === 0}
             sx={{
               backgroundColor: getTotalItems() > 0 ? 'primary.50' : 'transparent',
@@ -299,51 +316,293 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <AppHeader />
       )}
 
-      {/* Admin Layout with Sidebar */}
+      {/* Admin Layout with Responsive Sidebar */}
       {isAdminRoute && user ? (
-        <Box sx={{ display: 'flex', flexGrow: 1 }}>
-          {/* Admin Sidebar Navigation */}
-          <Box sx={{ 
-            position: 'sticky',
-            top: 70, // Position below the sticky navbar (navbar height ~70px)
-            height: 'calc(100vh - 70px)', // Adjust height to account for navbar
-            width: 240,
-            backgroundColor: 'background.paper',
-            borderRight: '1px solid',
-            borderColor: 'divider',
-            zIndex: 1050,
-            boxShadow: 2,
-            overflow: 'hidden', // Remove scroll from sidebar
-            pt: 2,
-            flexShrink: 0,
-          }}>
-            <Box sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-                Control Panel
-              </Typography>
-              
-              {/* Cafe Status Control */}
-              <CafeStatusControl />
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {renderNavigation()}
+        <Box sx={{ display: 'flex', minHeight: 'calc(100vh - 70px)', position: 'relative' }}>
+          {/* Desktop Sidebar Navigation - Fixed */}
+          {!isMobile && (
+            <Box sx={{ 
+              position: 'fixed',
+              top: 70,
+              left: 0,
+              bottom: 0,
+              width: isTablet ? 200 : 240,
+              backgroundColor: 'background.paper',
+              borderRight: '1px solid',
+              borderColor: 'divider',
+              zIndex: 1200,
+              display: 'flex',
+              flexDirection: 'column',
+            }}>
+              <Box 
+                sx={{ 
+                  p: 2,
+                  flex: 1,
+                  overflow: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: 'transparent',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0,0,0,0.2)',
+                    borderRadius: '3px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0,0,0,0.3)',
+                    },
+                  },
+                }}
+              >
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    mb: 2, 
+                    fontWeight: 600, 
+                    color: 'text.primary',
+                    fontSize: { md: '1rem', lg: '1.25rem' }
+                  }}
+                >
+                  Control Panel
+                </Typography>
+                
+                {/* Venue Status Control */}
+                <VenueStatusControl />
+                
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pb: 2 }}>
+                  {renderNavigation()}
+                </Box>
               </Box>
             </Box>
-          </Box>
+          )}
+
+          {/* Mobile Drawer Navigation */}
+          {isMobile && (
+            <Drawer
+              variant="temporary"
+              anchor="left"
+              open={mobileDrawerOpen}
+              onClose={handleMobileDrawerToggle}
+              ModalProps={{
+                keepMounted: true, // Better open performance on mobile
+              }}
+              sx={{
+                '& .MuiDrawer-paper': {
+                  width: 280,
+                  backgroundColor: 'background.paper',
+                  pt: 2,
+                },
+              }}
+            >
+              <Box sx={{ p: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+                  Control Panel
+                </Typography>
+                
+                {/* Venue Status Control */}
+                <VenueStatusControl />
+                
+                <Divider sx={{ my: 2 }} />
+                
+                <List sx={{ p: 0 }}>
+                  {/* Render admin navigation items as list items for mobile */}
+                  {(() => {
+                    // Define all possible admin navigation items with their required permissions
+                    const allAdminNavItems = [
+                      { 
+                        label: 'Dashboard', 
+                        path: '/admin', 
+                        icon: <Dashboard />, 
+                        permission: PERMISSIONS.DASHBOARD_VIEW,
+                        roles: ['admin'] 
+                      },
+                      { 
+                        label: 'Orders', 
+                        path: '/admin/orders', 
+                        icon: <Assignment />, 
+                        permission: PERMISSIONS.ORDERS_VIEW,
+                        roles: ['admin', 'operator'] 
+                      },
+                      { 
+                        label: 'Menu', 
+                        path: '/admin/menu', 
+                        icon: <Restaurant />, 
+                        permission: PERMISSIONS.MENU_VIEW,
+                        roles: ['admin'] 
+                      },
+                      { 
+                        label: 'Tables', 
+                        path: '/admin/tables', 
+                        icon: <TableRestaurant />, 
+                        permission: PERMISSIONS.TABLES_VIEW,
+                        roles: ['admin'] 
+                      },
+                      { 
+                        label: 'Users', 
+                        path: '/admin/users', 
+                        icon: <People />, 
+                        permission: PERMISSIONS.USERS_VIEW,
+                        roles: ['admin', 'superadmin'] 
+                      },
+                      { 
+                        label: 'Permissions', 
+                        path: '/admin/permissions', 
+                        icon: <Security />, 
+                        permission: PERMISSIONS.USERS_VIEW,
+                        roles: ['admin', 'superadmin'] 
+                      },
+                      { 
+                        label: 'Settings', 
+                        path: '/admin/settings', 
+                        icon: <Settings />, 
+                        permission: PERMISSIONS.SETTINGS_VIEW,
+                        roles: ['admin'] 
+                      },
+                      { 
+                        label: 'Workspace', 
+                        path: '/admin/workspace', 
+                        icon: <Business />, 
+                        permission: PERMISSIONS.WORKSPACE_VIEW,
+                        roles: ['superadmin'] 
+                      },
+                    ];
+
+                    // Filter navigation items based on user permissions and roles
+                    const adminNavItems = allAdminNavItems.filter(item => {
+                      const backendRole = PermissionService.getBackendRole();
+                      const userRole = backendRole?.name || user.role || (user as any).role || 'unknown';
+                      
+                      if (userRole === 'superadmin') {
+                        return true;
+                      }
+                      
+                      if (item.roles && item.roles.length > 0) {
+                        const hasRequiredRole = item.roles.includes(userRole as string);
+                        if (!hasRequiredRole) {
+                          return false;
+                        }
+                      }
+                      
+                      const hasPermissionResult = hasPermission(item.permission);
+                      return hasPermissionResult;
+                    });
+
+                    return adminNavItems.map((item) => (
+                      <ListItem key={item.label} disablePadding>
+                        <ListItemButton
+                          onClick={() => {
+                            navigate(item.path);
+                            setMobileDrawerOpen(false);
+                          }}
+                          selected={location.pathname === item.path}
+                          sx={{
+                            borderRadius: 2,
+                            mb: 0.5,
+                            '&.Mui-selected': {
+                              backgroundColor: 'primary.50',
+                              color: 'primary.main',
+                              '& .MuiListItemIcon-root': {
+                                color: 'primary.main',
+                              },
+                            },
+                            '&:hover': {
+                              backgroundColor: 'action.hover',
+                            },
+                          }}
+                        >
+                          <ListItemIcon sx={{ minWidth: 40 }}>
+                            {item.icon}
+                          </ListItemIcon>
+                          <ListItemText 
+                            primary={item.label}
+                            primaryTypographyProps={{
+                              fontWeight: location.pathname === item.path ? 600 : 400,
+                            }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    ));
+                  })()}
+                </List>
+              </Box>
+            </Drawer>
+          )}
 
           {/* Main Content */}
           <Box
             component="main"
             sx={{
-              flexGrow: 1,
+              flex: 1,
               backgroundColor: 'background.default',
-              minHeight: '100vh',
+              minHeight: 'calc(100vh - 70px)',
+              marginLeft: isMobile ? 0 : (isTablet ? '200px' : '240px'),
+              marginTop: '70px',
               display: 'flex',
               flexDirection: 'column',
+              position: 'relative',
             }}
           >
+            {/* Mobile Header for Admin */}
+            {isMobile && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  backgroundColor: 'background.paper',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 1000,
+                  flexShrink: 0,
+                }}
+              >
+                <IconButton
+                  onClick={handleMobileDrawerToggle}
+                  sx={{
+                    color: 'text.primary',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                  }}
+                >
+                  <Dashboard />
+                </IconButton>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  {isOperator() ? 'Dino Operator' : 'Dino Admin'}
+                </Typography>
+                <Box sx={{ width: 48 }} /> {/* Spacer for centering */}
+              </Box>
+            )}
+
             <Fade in timeout={300}>
-              <Box sx={{ flexGrow: 1 }}>
+              <Box 
+                sx={{ 
+                  flex: 1,
+                  p: { xs: 2, sm: 3, md: 4 },
+                  pt: { xs: 3, sm: 4, md: 5 },
+                  overflow: 'auto',
+                  height: '100%',
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: 'rgba(0,0,0,0.1)',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                    borderRadius: '4px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(0,0,0,0.5)',
+                    },
+                  },
+                }}
+              >
                 {children}
               </Box>
             </Fade>
@@ -353,19 +612,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               sx={{ 
                 flexShrink: 0,
                 textAlign: 'center',
-                py: { xs: 2, lg: 1.5 },
+                py: { xs: 1, lg: 1 },
                 px: { xs: 2, lg: 1 },
                 borderTop: '1px solid',
                 borderColor: 'divider',
                 backgroundColor: 'background.paper',
-                mt: 'auto'
+                mt: 'auto',
               }}
             >
               <Typography 
                 variant="body2" 
                 color="text.secondary"
                 sx={{ 
-                  fontSize: '0.875rem',
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
                   fontWeight: 500 
                 }}
               >
@@ -375,7 +634,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 variant="caption" 
                 color="text.secondary"
                 sx={{ 
-                  fontSize: '0.75rem',
+                  fontSize: { xs: '0.65rem', sm: '0.75rem' },
                   display: 'block',
                   mt: 0.5
                 }}
@@ -393,14 +652,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             flexGrow: 1,
             backgroundColor: 'background.default',
             minHeight: '100vh',
-            pt: isCustomerFacingRoute ? 0 : 9, // Top padding for sticky navbar
+            pt: isCustomerFacingRoute ? 0 : { xs: 8, sm: 9 }, // Responsive top padding for sticky navbar
             transition: 'padding-top 0.3s ease-in-out',
             // Smooth scrolling
             scrollBehavior: 'smooth',
+            width: '100%',
+            maxWidth: '100%',
+            overflow: 'hidden',
           }}
         >
           <Fade in timeout={300}>
-            <div>{children}</div>
+            <Box 
+              sx={{ 
+                width: '100%',
+                maxWidth: '100%',
+                overflow: 'auto',
+              }}
+            >
+              {children}
+            </Box>
           </Fade>
         </Box>
       )}

@@ -5,7 +5,7 @@ export const PAGE_TITLES = {
   ORDERS_MANAGEMENT: 'Orders Management',
   MENU_MANAGEMENT: 'Menu Management',
   TABLE_MANAGEMENT: 'Table Management',
-  CAFE_SETTINGS: 'Cafe Settings',
+  VENUE_SETTINGS: 'Venue Settings',
   CUSTOMER_MENU: 'Menu',
   CHECKOUT: 'Checkout',
   LOGIN: 'Sign In',
@@ -17,7 +17,7 @@ export const APP_TITLES = {
   DINO_ADMIN: 'Dino Admin',
   DINO_OPERATOR: 'Dino Operator',
   DINO_E_MENU: 'Dino',
-  DINO_CAFE: 'Dino Cafe',
+  DINO_VENUE: 'Dino Venue',
 } as const;
 
 // Success Messages
@@ -32,7 +32,7 @@ export const SUCCESS_MESSAGES = {
   MENU_ITEM_DELETED: 'Menu item deleted successfully',
   PROFILE_UPDATED: 'Profile updated successfully',
   SETTINGS_SAVED: 'Settings saved successfully',
-  CAFE_STATUS_UPDATED: 'Cafe status updated successfully',
+  VENUE_STATUS_UPDATED: 'Venue status updated successfully',
 } as const;
 
 // Error Messages

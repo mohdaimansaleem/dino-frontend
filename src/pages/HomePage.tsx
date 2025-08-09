@@ -144,8 +144,8 @@ const HomePage: React.FC = () => {
         }}
       >
         <AnimatedBackground />
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
-          <Grid container spacing={6} alignItems="center">
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, px: { xs: 2, sm: 3 } }}>
+          <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 3 }}>
                 <Chip 
@@ -167,9 +167,11 @@ const HomePage: React.FC = () => {
                 <Typography 
                   variant="h1" 
                   sx={{ 
-                    mb: 3,
+                    mb: { xs: 2, md: 3 },
                     fontWeight: 700,
                     color: 'text.primary',
+                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem', lg: '3.5rem' },
+                    lineHeight: { xs: 1.2, md: 1.1 },
                   }}
                 >
                   {CONTENT.hero.title}
@@ -178,9 +180,11 @@ const HomePage: React.FC = () => {
                 <Typography 
                   variant="h4" 
                   sx={{ 
-                    mb: 4,
+                    mb: { xs: 3, md: 4 },
                     fontWeight: 400,
                     color: 'text.secondary',
+                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' },
+                    lineHeight: { xs: 1.3, md: 1.2 },
                   }}
                 >
                   {CONTENT.hero.subtitle}
@@ -189,28 +193,35 @@ const HomePage: React.FC = () => {
                 <Typography 
                   variant="body1" 
                   sx={{ 
-                    mb: 6,
-                    fontSize: '1.1rem',
-                    lineHeight: 1.7,
+                    mb: { xs: 4, md: 6 },
+                    fontSize: { xs: '1rem', md: '1.1rem' },
+                    lineHeight: { xs: 1.5, md: 1.7 },
                     color: 'text.secondary',
-                    maxWidth: 500,
+                    maxWidth: { xs: '100%', md: 500 },
                   }}
                 >
                   {CONTENT.hero.description}
                 </Typography>
 
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: { xs: 1, sm: 2 }, 
+                  flexWrap: 'wrap',
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'stretch', sm: 'center' }
+                }}>
                   {user?.role !== 'operator' ? (
                     <Button
                       variant="contained"
                       size="large"
                       onClick={() => navigate(('/admin' ))}
                       sx={{ 
-                        px: 4, 
-                        py: 1.5, 
-                        fontSize: '1rem',
+                        px: { xs: 3, sm: 4 }, 
+                        py: { xs: 1.2, sm: 1.5 }, 
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
                         backgroundColor: 'white',
                         color: 'primary.main',
+                        width: { xs: '100%', sm: 'auto' },
                         '&:hover': {
                           backgroundColor: 'rgba(255,255,255,0.9)',
                           transform: 'translateY(-2px)',
@@ -227,11 +238,12 @@ const HomePage: React.FC = () => {
                         size="large"
                         onClick={() => navigate('/login')}
                         sx={{ 
-                          px: 4, 
-                          py: 1.5, 
-                          fontSize: '1rem',
+                          px: { xs: 3, sm: 4 }, 
+                          py: { xs: 1.2, sm: 1.5 }, 
+                          fontSize: { xs: '0.9rem', sm: '1rem' },
                           backgroundColor: 'primary.main',
                           color: 'white',
+                          width: { xs: '100%', sm: 'auto' },
                           '&:hover': {
                             backgroundColor: 'primary.dark',
                             transform: 'translateY(-2px)',
@@ -247,11 +259,12 @@ const HomePage: React.FC = () => {
                         startIcon={<PlayArrow />}
                         onClick={() => navigate('/register')}
                         sx={{ 
-                          px: 4, 
-                          py: 1.5, 
-                          fontSize: '1rem',
+                          px: { xs: 3, sm: 4 }, 
+                          py: { xs: 1.2, sm: 1.5 }, 
+                          fontSize: { xs: '0.9rem', sm: '1rem' },
                           borderColor: 'primary.main',
                           color: 'primary.main',
+                          width: { xs: '100%', sm: 'auto' },
                           '&:hover': {
                             borderColor: 'primary.dark',
                             backgroundColor: 'rgba(25, 118, 210, 0.04)',
@@ -267,7 +280,14 @@ const HomePage: React.FC = () => {
                 </Box>
                 
                 {/* Quick Action Buttons */}
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 3 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: { xs: 1, sm: 2 }, 
+                  flexWrap: 'wrap', 
+                  mt: { xs: 2, sm: 3 },
+                  flexDirection: { xs: 'column', sm: 'row' },
+                  alignItems: { xs: 'stretch', sm: 'flex-start' }
+                }}>
                   <Button
                     variant="text"
                     onClick={() => navigate('/features')}
@@ -275,6 +295,11 @@ const HomePage: React.FC = () => {
                       textTransform: 'none',
                       color: 'text.secondary',
                       fontWeight: 500,
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
+                      px: { xs: 2, sm: 3 },
+                      py: { xs: 1, sm: 1.5 },
+                      width: { xs: '100%', sm: 'auto' },
+                      justifyContent: { xs: 'flex-start', sm: 'center' },
                       '&:hover': {
                         color: 'primary.main',
                         backgroundColor: 'rgba(25, 118, 210, 0.04)',
@@ -292,6 +317,11 @@ const HomePage: React.FC = () => {
                       textTransform: 'none',
                       color: 'text.secondary',
                       fontWeight: 500,
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
+                      px: { xs: 2, sm: 3 },
+                      py: { xs: 1, sm: 1.5 },
+                      width: { xs: '100%', sm: 'auto' },
+                      justifyContent: { xs: 'flex-start', sm: 'center' },
                       '&:hover': {
                         color: 'primary.main',
                         backgroundColor: 'rgba(25, 118, 210, 0.04)',
@@ -378,17 +408,35 @@ const HomePage: React.FC = () => {
 
 
       {/* Features Section */}
-      <Container maxWidth="lg" sx={{ py: 10 }} ref={featuresRef} id="features">
-        <Box sx={{ textAlign: 'center', mb: 8 }}>
-          <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
+      <Container maxWidth="lg" sx={{ py: { xs: 6, md: 10 }, px: { xs: 2, sm: 3 } }} ref={featuresRef} id="features">
+        <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
+          <Typography 
+            variant="h2" 
+            gutterBottom 
+            fontWeight="600" 
+            color="text.primary"
+            sx={{
+              fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' },
+              mb: { xs: 2, md: 3 }
+            }}
+          >
             {CONTENT.features.title}
           </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+          <Typography 
+            variant="h6" 
+            color="text.secondary" 
+            sx={{ 
+              maxWidth: 600, 
+              mx: 'auto',
+              fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+              px: { xs: 2, sm: 0 }
+            }}
+          >
             {CONTENT.features.subtitle}
           </Typography>
         </Box>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={{ xs: 3, md: 4 }}>
           {features.map((feature, index) => (
             <Grid item xs={12} md={6} lg={4} key={index}>
               <Card
@@ -405,15 +453,31 @@ const HomePage: React.FC = () => {
                   cursor: 'pointer',
                 }}
               >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ mb: 3 }}>
+                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                  <Box sx={{ mb: { xs: 2, md: 3 } }}>
                     {feature.icon}
                   </Box>
                   
-                  <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
+                  <Typography 
+                    variant="h6" 
+                    gutterBottom 
+                    fontWeight="600" 
+                    color="text.primary"
+                    sx={{
+                      fontSize: { xs: '1.125rem', md: '1.25rem' }
+                    }}
+                  >
                     {feature.title}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary" 
+                    sx={{ 
+                      mb: { xs: 2, md: 3 }, 
+                      lineHeight: 1.6,
+                      fontSize: { xs: '0.875rem', md: '1rem' }
+                    }}
+                  >
                     {feature.description}
                   </Typography>
                   
@@ -422,6 +486,9 @@ const HomePage: React.FC = () => {
                     size="small"
                     color="primary"
                     variant="outlined"
+                    sx={{
+                      fontSize: { xs: '0.75rem', md: '0.8125rem' }
+                    }}
                   />
                 </CardContent>
               </Card>

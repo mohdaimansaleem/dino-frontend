@@ -42,21 +42,30 @@ interface QRCodeViewerProps {
   open: boolean;
   onClose: () => void;
   tableId?: string;
-  cafeId?: string;
-  cafeName?: string;
+  venueId?: string;
+  venueName?: string;
   tableNumber?: string;
   qrData?: QRCodeData;
+  // Legacy compatibility
+  cafeId?: string;
+  cafeName?: string;
 }
 
 const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
   open,
   onClose,
   tableId,
-  cafeId,
-  cafeName,
+  venueId,
+  venueName,
   tableNumber,
   qrData: initialQrData,
+  // Legacy compatibility
+  cafeId,
+  cafeName,
 }) => {
+  // Use venue props with fallback to legacy cafe props
+  const actualVenueId = venueId || cafeId;
+  const actualVenueName = venueName || cafeName;
   const [qrData, setQrData] = useState<QRCodeData | null>(initialQrData || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -65,16 +74,16 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
   const [copied, setCopied] = useState(false);
 
   const generateQRCode = useCallback(async () => {
-    if (!tableId || !cafeId || !cafeName || !tableNumber) return;
+    if (!tableId || !actualVenueId || !actualVenueName || !tableNumber) return;
 
     setLoading(true);
     setError('');
 
     try {
       const newQrData = await qrService.generateTableQR({
-        cafeId,
+        venueId: actualVenueId,
         tableId,
-        cafeName,
+        venueName: actualVenueName,
         tableNumber,
         customization: {
           template,
@@ -88,7 +97,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [tableId, cafeId, cafeName, tableNumber, template]);
+  }, [tableId, actualVenueId, actualVenueName, tableNumber, template]);
 
   // Generate a demo QR code as base64 image
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -136,10 +145,10 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
   };
 
   useEffect(() => {
-    if (open && !qrData && tableId && cafeId && cafeName && tableNumber) {
+    if (open && !qrData && tableId && actualVenueId && actualVenueName && tableNumber) {
       generateQRCode();
     }
-  }, [open, qrData, generateQRCode, tableId, cafeId, cafeName, tableNumber]);
+  }, [open, qrData, generateQRCode, tableId, actualVenueId, actualVenueName, tableNumber]);
 
   const handleRegenerateQR = async () => {
     if (!qrData) return;
@@ -149,9 +158,9 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
 
     try {
       const newQrData = await qrService.regenerateQR(qrData.id, {
-        cafeId: qrData.cafeId,
+        venueId: qrData.venueId || qrData.cafeId || '',
         tableId: qrData.tableId,
-        cafeName: qrData.cafeName,
+        venueName: qrData.venueName || qrData.cafeName || '',
         tableNumber: qrData.tableNumber,
         customization: {
           template,
@@ -199,7 +208,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
 
     const link = document.createElement('a');
     link.href = qrData.qrCodeBase64;
-    link.download = `qr-code-${qrData.cafeName}-table-${qrData.tableNumber}.png`;
+    link.download = `qr-code-${qrData.venueName || qrData.cafeName}-table-${qrData.tableNumber}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -211,7 +220,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${qrData.cafeName} - Table ${qrData.tableNumber}`,
+          title: `${qrData.venueName || qrData.cafeName} - Table ${qrData.tableNumber}`,
           text: 'Scan this QR code to view the menu and place your order!',
           url: qrData.menuUrl,
         });
@@ -241,7 +250,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>QR Code - ${qrData?.cafeName} Table ${qrData?.tableNumber}</title>
+        <title>QR Code - ${qrData?.venueName || qrData?.cafeName} Table ${qrData?.tableNumber}</title>
         <style>
           @page { margin: 20mm; size: A4; }
           body { 
@@ -315,7 +324,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       <body>
         <div class="qr-container">
           <div class="header">🦕 Dino E-Menu</div>
-          <div class="cafe-name">${qrData?.cafeName}</div>
+          <div class="cafe-name">${qrData?.venueName || qrData?.cafeName}</div>
           <div class="table-number">Table ${qrData?.tableNumber}</div>
           
           <div class="qr-code">
@@ -347,7 +356,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>QR Code - ${qrData?.cafeName} Table ${qrData?.tableNumber}</title>
+        <title>QR Code - ${qrData?.venueName || qrData?.cafeName} Table ${qrData?.tableNumber}</title>
         <style>
           @page { margin: 15mm; size: A4; }
           body { 
@@ -428,7 +437,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       <body>
         <div class="qr-container">
           <div class="header">🦕 Dino E-Menu</div>
-          <div class="cafe-name">${qrData?.cafeName}</div>
+          <div class="cafe-name">${qrData?.venueName || qrData?.cafeName}</div>
           <div class="table-number">Table ${qrData?.tableNumber}</div>
           
           <div class="qr-code">
@@ -464,7 +473,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>QR Code - ${qrData?.cafeName} Table ${qrData?.tableNumber}</title>
+        <title>QR Code - ${qrData?.venueName || qrData?.cafeName} Table ${qrData?.tableNumber}</title>
         <style>
           @page { margin: 20mm; size: A4; }
           body { 
@@ -544,7 +553,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       <body>
         <div class="qr-container">
           <div class="header">🦕 Dino E-Menu</div>
-          <div class="cafe-name">${qrData?.cafeName}</div>
+          <div class="cafe-name">${qrData?.venueName || qrData?.cafeName}</div>
           <div class="table-number">Table ${qrData?.tableNumber}</div>
           
           <div class="divider"></div>
@@ -573,7 +582,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>QR Code - ${qrData?.cafeName} Table ${qrData?.tableNumber}</title>
+        <title>QR Code - ${qrData?.venueName || qrData?.cafeName} Table ${qrData?.tableNumber}</title>
         <style>
           @page { margin: 25mm; size: A4; }
           body { 
@@ -627,7 +636,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       <body>
         <div class="qr-container">
           <div class="header">DINO E-MENU</div>
-          <div class="cafe-name">${qrData?.cafeName}</div>
+          <div class="cafe-name">${qrData?.venueName || qrData?.cafeName}</div>
           <div class="table-number">Table ${qrData?.tableNumber}</div>
           
           <div class="qr-code">
@@ -692,7 +701,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
                 }}
               >
                 <Typography variant="h6" gutterBottom fontWeight="600" color="primary">
-                  {qrData.cafeName}
+                  {qrData.venueName || qrData.cafeName}
                 </Typography>
                 <Typography variant="subtitle1" gutterBottom color="text.secondary">
                   Table {qrData.tableNumber}
@@ -791,7 +800,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">Cafe:</Typography>
-                    <Typography variant="body2">{qrData.cafeName}</Typography>
+                    <Typography variant="body2">{qrData.venueName || qrData.cafeName}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant="body2" color="text.secondary">Table:</Typography>

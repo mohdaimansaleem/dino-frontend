@@ -41,19 +41,48 @@ import {
 } from '@mui/icons-material';
 import { menuService } from '../../services/menuService';
 import { useUserData } from '../../contexts/UserDataContext';
-import { MenuItem, MenuCategory } from '../../types';
+import { MenuItem, MenuCategory } from '../../types/api';
 
-interface MenuItemType extends MenuItem {
-  available?: boolean; // For backward compatibility
+interface MenuItemType {
+  id: string;
+  name: string;
+  description: string;
+  price: number; // Mapped from base_price
+  category: string; // Mapped from category_id
+  isVeg: boolean; // Mapped from is_vegetarian
+  available?: boolean; // Mapped from is_available
+  isAvailable?: boolean; // Mapped from is_available
+  preparationTime: number; // Mapped from preparation_time_minutes
+  image?: string;
   featured?: boolean;
   allergens?: string[];
   calories?: number;
   spicyLevel?: number;
   dietaryInfo?: string[];
+  // Original API fields
+  base_price?: number;
+  category_id?: string;
+  venue_id?: string;
+  is_vegetarian?: boolean;
+  is_available?: boolean;
+  preparation_time_minutes?: number;
+  image_urls?: string[];
+  created_at?: string;
+  updated_at?: string;
 }
 
-interface CategoryType extends MenuCategory {
+interface CategoryType {
+  id: string;
+  name: string;
+  description?: string;
   active?: boolean; // For backward compatibility
+  order?: number;
+  venueId?: string; // For backward compatibility
+  // Original API fields
+  venue_id?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const MenuManagement: React.FC = () => {
@@ -115,7 +144,7 @@ const MenuManagement: React.FC = () => {
           ...cat, 
           active: true,
           order: 0,
-          cafeId: cat.venue_id
+          venueId: cat.venue_id
         } as unknown as CategoryType)));
         
         if (!userDataMenuItems || userDataMenuItems.length === 0) {
@@ -177,7 +206,7 @@ const MenuManagement: React.FC = () => {
     try {
       if (editingItem) {
         // Update existing item
-        const response = await menuService.updateMenuItem(editingItem.id, {
+        const updateData = {
           name: itemData.name,
           description: itemData.description,
           base_price: itemData.price,
@@ -185,21 +214,28 @@ const MenuManagement: React.FC = () => {
           is_vegetarian: itemData.isVeg,
           is_available: itemData.available ?? itemData.isAvailable,
           preparation_time_minutes: itemData.preparationTime,
-        });
-        if (response.data) {
+        };
+        
+        const response = await menuService.updateMenuItem(editingItem.id, updateData);
+        
+        if (response.success && response.data) {
           setMenuItems(prev => prev.map(item => 
             item.id === editingItem.id ? { 
               ...item,
+              name: response.data!.name,
+              description: response.data!.description,
               price: response.data!.base_price,
               category: response.data!.category_id,
               isVeg: response.data!.is_vegetarian || false,
-              available: response.data!.is_available,
-              isAvailable: response.data!.is_available,
+              available: response.data!.is_available || false,
+              isAvailable: response.data!.is_available || false,
               preparationTime: response.data!.preparation_time_minutes || 15
             } as unknown as MenuItemType : item
           ));
+          setSnackbar({ open: true, message: 'Menu item updated successfully', severity: 'success' });
+        } else {
+          throw new Error(response.message || 'Update failed');
         }
-        setSnackbar({ open: true, message: 'Menu item updated successfully', severity: 'success' });
       } else {
         // Create new item
         const venue = getVenue();
@@ -207,7 +243,7 @@ const MenuManagement: React.FC = () => {
           throw new Error('No venue available');
         }
         
-        const response = await menuService.createMenuItem({
+        const createData = {
           name: itemData.name || '',
           description: itemData.description || '',
           base_price: itemData.price || 0,
@@ -215,24 +251,34 @@ const MenuManagement: React.FC = () => {
           venue_id: venue.id,
           is_vegetarian: itemData.isVeg ?? true,
           preparation_time_minutes: itemData.preparationTime || 15,
-        });
-        if (response.data) {
+        };
+        
+        const response = await menuService.createMenuItem(createData);
+        
+        if (response.success && response.data) {
           const newItem = {
             ...response.data!,
             price: response.data!.base_price,
             category: response.data!.category_id,
             isVeg: response.data!.is_vegetarian || false,
-            available: response.data!.is_available,
-            isAvailable: response.data!.is_available,
+            available: response.data!.is_available || false,
+            isAvailable: response.data!.is_available || false,
             preparationTime: response.data!.preparation_time_minutes || 15
           } as unknown as MenuItemType;
           setMenuItems(prev => [...prev, newItem]);
+          setSnackbar({ open: true, message: 'Menu item added successfully', severity: 'success' });
+        } else {
+          throw new Error(response.message || 'Creation failed');
         }
-        setSnackbar({ open: true, message: 'Menu item added successfully', severity: 'success' });
       }
       setOpenItemDialog(false);
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Failed to save menu item', severity: 'error' });
+    } catch (error: any) {
+      console.error('Error saving menu item:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to save menu item', 
+        severity: 'error' 
+      });
     }
   };
 
@@ -293,7 +339,7 @@ const MenuManagement: React.FC = () => {
               ...response.data!,
               active: true,
               order: cat.order || 0,
-              cafeId: response.data!.venue_id
+              venueId: response.data!.venue_id
             } as unknown as CategoryType : cat
           ));
         }
@@ -315,7 +361,7 @@ const MenuManagement: React.FC = () => {
             ...response.data!,
             active: true,
             order: 0,
-            cafeId: response.data!.venue_id
+            venueId: response.data!.venue_id
           } as unknown as CategoryType;
           setCategories(prev => [...prev, newCategory]);
         }

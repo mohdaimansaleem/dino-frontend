@@ -111,7 +111,7 @@ class NotificationService {
     const notification: AppNotification = {
       id: Date.now().toString(),
       recipientId: payload.cafeId,
-      recipientType: 'cafe',
+      recipientType: 'venue',
       notificationType: 'order_placed' as NotificationTypeEnum,
       title: 'New Order',
       message: `Order #${payload.orderNumber} has been ${payload.status}`,
@@ -131,7 +131,7 @@ class NotificationService {
     const notification: AppNotification = {
       id: Date.now().toString(),
       recipientId: payload.cafeId,
-      recipientType: 'cafe',
+      recipientType: 'venue',
       notificationType: 'system_alert' as NotificationTypeEnum,
       title: 'Cafe Status Update',
       message: `Cafe is now ${payload.isOpen ? 'open' : 'closed'}`,

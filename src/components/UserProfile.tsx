@@ -708,10 +708,9 @@ const UserProfile: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Postal Code"
+                label="Postal Code (Optional)"
                 value={newAddress.postalCode}
                 onChange={(e) => setNewAddress(prev => ({ ...prev, postalCode: e.target.value }))}
-                required
               />
             </Grid>
             
@@ -743,7 +742,7 @@ const UserProfile: React.FC = () => {
           <Button 
             onClick={handleAddressAdd} 
             variant="contained"
-            disabled={loading || !newAddress.addressLine1 || !newAddress.city || !newAddress.state || !newAddress.postalCode}
+            disabled={loading || !newAddress.addressLine1 || !newAddress.city || !newAddress.state}
           >
             Add Address
           </Button>

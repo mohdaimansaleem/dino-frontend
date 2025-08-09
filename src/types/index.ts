@@ -1,38 +1,6 @@
 // Re-export all API types
 export * from './api';
 
-// Main UserProfile type (from API)
-export type { UserProfile } from './api';
-
-// Legacy compatibility types - use API types instead
-export interface LegacyUserProfile {
-  id: string;
-  email: string;
-  phone?: string;
-  firstName: string;
-  lastName: string;
-  name?: string;
-  dateOfBirth?: Date;
-  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
-  role: UserRole;
-  permissions: Permission[];
-  profileImageUrl?: string;
-  isActive: boolean;
-  isVerified: boolean;
-  addresses?: UserAddress[];
-  preferences?: UserPreferences;
-  createdAt: Date;
-  updatedAt: Date;
-  lastLogin?: Date;
-  loginCount?: number;
-  totalOrders?: number;
-  totalSpent?: number;
-  workspaceId?: string;
-  workspace_id?: string;
-  cafeId?: string;
-  venue_id?: string;
-}
-
 export interface UserAddress {
   id?: string;
   label: string;
@@ -40,7 +8,7 @@ export interface UserAddress {
   addressLine2?: string;
   city: string;
   state: string;
-  postalCode: string;
+  postalCode?: string;
   country: string;
   latitude?: number;
   longitude?: number;
@@ -56,21 +24,7 @@ export interface UserPreferences {
   smsNotifications: boolean;
 }
 
-export interface UserRegistration {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  phone: string;
-  dateOfBirth?: Date;
-  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
-  role?: 'customer' | 'admin' | 'cafe_owner' | 'staff';
-  addresses?: UserAddress[];
-  preferences?: UserPreferences;
-  termsAccepted: boolean;
-  marketingConsent: boolean;
-}
+// UserRegistration is now imported from api.ts
 
 export interface UserLogin {
   email: string;
@@ -93,26 +47,16 @@ export interface Permission {
   description: string;
 }
 
-export type UserRole = 'customer' | 'admin' | 'cafe_owner' | 'staff' | 'superadmin' | 'operator';
+export type UserRole = 'customer' | 'admin' | 'venue_owner' | 'staff' | 'superadmin' | 'operator';
 export type UserRoleName = UserRole;
 
-// Additional User Types
-export interface User extends LegacyUserProfile {}
+// Additional User Types - using API types as primary
+// User and UserCreate are now imported from api.ts
 
-export interface UserCreate extends UserRegistration {}
+// AuthToken is now imported from api.ts
 
-export interface Token extends AuthToken {}
-
-export interface AuthToken {
-  access_token: string;
-  refresh_token?: string;
-  token_type: string;
-  expires_in: number;
-  user: LegacyUserProfile;
-}
-
-// Cafe Types
-export interface Cafe {
+// Legacy Venue Types (deprecated - use Venue from api.ts)
+export interface Venue {
   id: string;
   name: string;
   description: string;
@@ -125,6 +69,10 @@ export interface Cafe {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Legacy Cafe type (alias for Venue for backward compatibility)
+export interface Cafe extends Venue {}
+export type LegacyCafe = Cafe;
 
 // Menu Types
 export interface MenuItem {
@@ -139,7 +87,7 @@ export interface MenuItem {
   preparationTime: number; // in minutes
   ingredients?: string[];
   allergens?: string[];
-  cafeId: string;
+  venueId: string;
   order: number; // for drag-drop ordering
 }
 
@@ -148,7 +96,7 @@ export interface MenuCategory {
   name: string;
   description?: string;
   order: number;
-  cafeId: string;
+  venueId: string;
 }
 
 export interface MenuItemCreate {
@@ -162,7 +110,7 @@ export interface MenuItemCreate {
   preparationTime: number;
   ingredients?: string[];
   allergens?: string[];
-  cafeId: string;
+  venueId: string;
 }
 
 export interface MenuItemUpdate {
@@ -182,7 +130,7 @@ export interface MenuCategoryCreate {
   name: string;
   description?: string;
   order: number;
-  cafeId: string;
+  venueId: string;
 }
 
 export interface MenuCategoryUpdate {
@@ -197,7 +145,8 @@ export interface Table {
   tableNumber: number;
   qrCode: string;
   qrCodeUrl: string;
-  cafeId: string;
+  venueId: string;
+  venueName?: string;
   isActive: boolean;
   createdAt: Date;
 }
@@ -212,7 +161,7 @@ export interface CartItem {
 export interface Order {
   id: string;
   orderNumber?: string;
-  cafeId: string;
+  venueId: string;
   tableId: string;
   customerId?: string;
   customerPhone?: string;
@@ -303,7 +252,7 @@ export interface MenuFilters {
 export interface AppNotification {
   id: string;
   recipientId: string;
-  recipientType: 'user' | 'cafe' | 'admin';
+  recipientType: 'user' | 'venue' | 'admin';
   notificationType: NotificationTypeEnum;
   title: string;
   message: string;
@@ -347,18 +296,7 @@ export type PaymentMethod =
   | 'wallet'
   | 'net_banking';
 
-// Context Types
-export interface AuthContextType {
-  user: LegacyUserProfile | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (userData: UserRegistration) => Promise<void>;
-  logout: () => void;
-  updateUser: (userData: Partial<LegacyUserProfile>) => Promise<void>;
-  refreshUser: () => Promise<void>;
-  loading: boolean;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-}
+// Context Types - AuthContextType is defined in AuthContext.tsx
 
 export interface CartContextType {
   items: CartItem[];

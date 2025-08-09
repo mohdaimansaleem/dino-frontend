@@ -42,7 +42,6 @@ import {
   LocationOn,
   Email,
   Phone,
-  Language,
   Store,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
@@ -75,20 +74,20 @@ const WorkspaceManagement: React.FC = () => {
   const { userData, loading: userDataLoading, refreshUserData } = useUserData();
   
   // Extract venue data from userData
-  const currentCafe = userData?.venue;
-  const cafes = currentCafe ? [currentCafe] : [];
+  const currentVenue = userData?.venue;
+  const venues = currentVenue ? [currentVenue] : [];
 
-  const [openCafeDialog, setOpenCafeDialog] = useState(false);
-  const [editingCafe, setEditingCafe] = useState<any>(null);
+  const [openVenueDialog, setOpenVenueDialog] = useState(false);
+  const [editingVenue, setEditingVenue] = useState<any>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
-  const [cafeFormData, setCafeFormData] = useState({
+  const [venueFormData, setVenueFormData] = useState({
     name: '',
     description: '',
-    venueType: 'cafe',
+    venueType: 'restaurant',
     location: {
       address: '',
       city: '',
@@ -99,45 +98,45 @@ const WorkspaceManagement: React.FC = () => {
     },
     phone: '',
     email: '',
-    website: '',
+
     priceRange: 'mid_range',
     isActive: true,
     isOpen: true,
   });
 
-  // Cafe Management
-  const handleOpenCafeDialog = (cafe?: any) => {
-    if (cafe) {
-      setEditingCafe(cafe);
+  // Venue Management
+  const handleOpenVenueDialog = (venue?: any) => {
+    if (venue) {
+      setEditingVenue(venue);
       
-      // Debug logging to see the cafe object structure
-      console.log('Editing cafe:', cafe);
+      // Debug logging to see the venue object structure
+      console.log('Editing venue:', venue);
       
-      setCafeFormData({
-        name: String(cafe.name || ''),
-        description: String(cafe.description || ''),
-        venueType: String(cafe.venueType || cafe.venue_type || 'cafe'),
+      setVenueFormData({
+        name: String(venue.name || ''),
+        description: String(venue.description || ''),
+        venueType: String(venue.venueType || venue.venue_type || 'restaurant'),
         location: {
-          address: String(cafe.location?.address || ''),
-          city: String(cafe.location?.city || ''),
-          state: String(cafe.location?.state || ''),
-          country: String(cafe.location?.country || 'India'),
-          postal_code: String(cafe.location?.postal_code || cafe.location?.postalCode || ''),
-          landmark: String(cafe.location?.landmark || '')
+          address: String(venue.location?.address || ''),
+          city: String(venue.location?.city || ''),
+          state: String(venue.location?.state || ''),
+          country: String(venue.location?.country || 'India'),
+          postal_code: String(venue.location?.postal_code || venue.location?.postalCode || ''),
+          landmark: String(venue.location?.landmark || '')
         },
-        phone: String(cafe.phone || ''),
-        email: String(cafe.email || ''),
-        website: String(cafe.website || ''),
-        priceRange: String(cafe.priceRange || cafe.price_range || 'mid_range'),
-        isActive: Boolean(cafe.is_active !== undefined ? cafe.is_active : cafe.isActive !== undefined ? cafe.isActive : true),
-        isOpen: Boolean(cafe.is_open !== undefined ? cafe.is_open : cafe.isOpen !== undefined ? cafe.isOpen : true),
+        phone: String(venue.phone || ''),
+        email: String(venue.email || ''),
+
+        priceRange: String(venue.priceRange || venue.price_range || 'mid_range'),
+        isActive: Boolean(venue.is_active !== undefined ? venue.is_active : venue.isActive !== undefined ? venue.isActive : true),
+        isOpen: Boolean(venue.is_open !== undefined ? venue.is_open : venue.isOpen !== undefined ? venue.isOpen : true),
       });
     } else {
-      setEditingCafe(null);
-      setCafeFormData({
+      setEditingVenue(null);
+      setVenueFormData({
         name: '',
         description: '',
-        venueType: 'cafe',
+        venueType: 'restaurant',
         location: {
           address: '',
           city: '',
@@ -148,73 +147,73 @@ const WorkspaceManagement: React.FC = () => {
         },
         phone: '',
         email: '',
-        website: '',
+    
         priceRange: 'mid_range',
         isActive: true,
         isOpen: true,
       });
     }
-    setOpenCafeDialog(true);
+    setOpenVenueDialog(true);
   };
 
-  const handleCloseCafeDialog = () => {
-    setOpenCafeDialog(false);
-    setEditingCafe(null);
+  const handleCloseVenueDialog = () => {
+    setOpenVenueDialog(false);
+    setEditingVenue(null);
   };
 
-  const handleSubmitCafe = async () => {
+  const handleSubmitVenue = async () => {
     try {
       setSaving(true);
       
-      if (editingCafe) {
-        // Update existing cafe
+      if (editingVenue) {
+        // Update existing venue
         const updateData = {
-          name: cafeFormData.name,
-          description: cafeFormData.description,
+          name: venueFormData.name,
+          description: venueFormData.description,
           location: {
-            address: cafeFormData.location.address,
-            city: cafeFormData.location.city,
-            state: cafeFormData.location.state,
-            country: cafeFormData.location.country,
-            postal_code: cafeFormData.location.postal_code,
-            landmark: cafeFormData.location.landmark
+            address: venueFormData.location.address,
+            city: venueFormData.location.city,
+            state: venueFormData.location.state,
+            country: venueFormData.location.country,
+            postal_code: venueFormData.location.postal_code,
+            landmark: venueFormData.location.landmark
           },
-          phone: cafeFormData.phone,
-          email: cafeFormData.email,
-          website: cafeFormData.website,
-          cuisine_types: [cafeFormData.venueType],
-          price_range: cafeFormData.priceRange as any,
-          is_active: cafeFormData.isActive
+          phone: venueFormData.phone,
+          email: venueFormData.email,
+
+          cuisine_types: [venueFormData.venueType],
+          price_range: venueFormData.priceRange as any,
+          is_active: venueFormData.isActive
         };
         
-        const response = await venueService.updateVenue(editingCafe.id, updateData);
+        const response = await venueService.updateVenue(editingVenue.id, updateData);
         if (response.success) {
           setSnackbar({ 
             open: true, 
-            message: 'Cafe updated successfully', 
+            message: 'Venue updated successfully', 
             severity: 'success' 
           });
           // Refresh user data to get updated venue information
           await refreshUserData();
         }
       } else {
-        // Create new cafe
+        // Create new venue
         const createData = {
-          name: cafeFormData.name,
-          description: cafeFormData.description,
+          name: venueFormData.name,
+          description: venueFormData.description,
           location: {
-            address: cafeFormData.location.address,
-            city: cafeFormData.location.city,
-            state: cafeFormData.location.state,
-            country: cafeFormData.location.country,
-            postal_code: cafeFormData.location.postal_code,
-            landmark: cafeFormData.location.landmark
+            address: venueFormData.location.address,
+            city: venueFormData.location.city,
+            state: venueFormData.location.state,
+            country: venueFormData.location.country,
+            postal_code: venueFormData.location.postal_code,
+            landmark: venueFormData.location.landmark
           },
-          phone: cafeFormData.phone,
-          email: cafeFormData.email,
-          website: cafeFormData.website,
-          cuisine_types: [cafeFormData.venueType],
-          price_range: cafeFormData.priceRange as any,
+          phone: venueFormData.phone,
+          email: venueFormData.email,
+
+          cuisine_types: [venueFormData.venueType],
+          price_range: venueFormData.priceRange as any,
           workspace_id: currentUser?.workspace_id || ''
         };
         
@@ -222,7 +221,7 @@ const WorkspaceManagement: React.FC = () => {
         if (response.success) {
           setSnackbar({ 
             open: true, 
-            message: 'Cafe created successfully', 
+            message: 'Venue created successfully', 
             severity: 'success' 
           });
           // Refresh user data to get updated venue information
@@ -230,12 +229,12 @@ const WorkspaceManagement: React.FC = () => {
         }
       }
       
-      handleCloseCafeDialog();
+      handleCloseVenueDialog();
     } catch (error: any) {
-      console.error('Error saving cafe:', error);
+      console.error('Error saving venue:', error);
       setSnackbar({ 
         open: true, 
-        message: error.message || 'Failed to save cafe', 
+        message: error.message || 'Failed to save venue', 
         severity: 'error' 
       });
     } finally {
@@ -256,7 +255,7 @@ const WorkspaceManagement: React.FC = () => {
   const handleInputChange = (field: string, value: any) => {
     if (field.startsWith('location.')) {
       const locationField = field.split('.')[1];
-      setCafeFormData(prev => ({
+      setVenueFormData(prev => ({
         ...prev,
         location: {
           ...prev.location,
@@ -264,14 +263,14 @@ const WorkspaceManagement: React.FC = () => {
         }
       }));
     } else {
-      setCafeFormData(prev => ({
+      setVenueFormData(prev => ({
         ...prev,
         [field]: value
       }));
     }
   };
 
-  const handleSwitchCafe = async (cafeId: string) => {
+  const handleSwitchVenue = async (venueId: string) => {
     // For single venue users, switching is not needed
     setSnackbar({ 
       open: true, 
@@ -280,52 +279,52 @@ const WorkspaceManagement: React.FC = () => {
     });
   };
 
-  const handleToggleCafeStatus = async (cafeId: string, isOpen: boolean) => {
+  const handleToggleVenueStatus = async (venueId: string, isOpen: boolean) => {
     try {
       // Update venue status via API
-      const response = await venueService.updateVenue(cafeId, { is_active: isOpen });
+      const response = await venueService.updateVenue(venueId, { is_active: isOpen });
       if (response.success) {
         setSnackbar({ 
           open: true, 
-          message: `Cafe ${isOpen ? 'opened' : 'closed'} successfully`, 
+          message: `Venue ${isOpen ? 'opened' : 'closed'} successfully`, 
           severity: 'success' 
         });
         // Refresh user data to get updated venue information
         await refreshUserData();
       }
     } catch (error: any) {
-      console.error('Error toggling cafe status:', error);
+      console.error('Error toggling venue status:', error);
       setSnackbar({ 
         open: true, 
-        message: error.message || 'Failed to update cafe status', 
+        message: error.message || 'Failed to update venue status', 
         severity: 'error' 
       });
     }
   };
 
-  const handleDeleteCafe = async (cafeId: string) => {
+  const handleDeleteVenue = async (venueId: string) => {
     try {
-      const response = await venueService.deleteVenue(cafeId);
+      const response = await venueService.deleteVenue(venueId);
       if (response.success) {
         setSnackbar({ 
           open: true, 
-          message: 'Cafe deleted successfully', 
+          message: 'Venue deleted successfully', 
           severity: 'success' 
         });
         // Refresh user data to get updated venue information
         await refreshUserData();
       }
     } catch (error: any) {
-      console.error('Error deleting cafe:', error);
+      console.error('Error deleting venue:', error);
       setSnackbar({ 
         open: true, 
-        message: error.message || 'Failed to delete cafe', 
+        message: error.message || 'Failed to delete venue', 
         severity: 'error' 
       });
     }
   };
 
-  const canCreateCafes = hasPermission(PERMISSIONS.VENUE_ACTIVATE);
+  const canCreateVenues = hasPermission(PERMISSIONS.VENUE_ACTIVATE);
   const canDeleteItems = isSuperAdmin(); // Use proper role check
 
   return (
@@ -334,33 +333,33 @@ const WorkspaceManagement: React.FC = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-            Cafes
+            Venues
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Manage your cafe locations
+            Manage your venue locations
           </Typography>
         </Box>
-        {canCreateCafes && (
+        {canCreateVenues && (
           <Button
             variant="contained"
             startIcon={<Add />}
-            onClick={() => handleOpenCafeDialog()}
+            onClick={() => handleOpenVenueDialog()}
             size="large"
           >
-            Add Cafe
+            Add Venue
           </Button>
         )}
       </Box>
 
-      {/* Cafes Grid */}
-      {cafes.length > 0 ? (
+      {/* Venues Grid */}
+      {venues.length > 0 ? (
         <Grid container spacing={3}>
-          {cafes.map((cafe) => (
-            <Grid item xs={12} sm={6} md={4} key={cafe.id}>
+          {venues.map((venue) => (
+            <Grid item xs={12} sm={6} md={4} key={venue.id}>
               <Card
                 sx={{
-                  border: cafe.id === currentCafe?.id ? '2px solid' : '1px solid',
-                  borderColor: cafe.id === currentCafe?.id ? 'secondary.main' : 'divider',
+                  border: venue.id === currentVenue?.id ? '2px solid' : '1px solid',
+                  borderColor: venue.id === currentVenue?.id ? 'secondary.main' : 'divider',
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
@@ -369,35 +368,35 @@ const WorkspaceManagement: React.FC = () => {
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Typography variant="h6" fontWeight="600">
-                      {cafe.name}
+                      {venue.name}
                     </Typography>
                     <IconButton
                       size="small"
-                      onClick={(e) => handleMenuClick(e, cafe)}
+                      onClick={(e) => handleMenuClick(e, venue)}
                     >
                       <MoreVert />
                     </IconButton>
                   </Box>
                   
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {cafe.location?.address || 'No address available'}
+                    {venue.location?.address || 'No address available'}
                   </Typography>
                   
-                  {cafe.description && (
+                  {venue.description && (
                     <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontStyle: 'italic' }}>
-                      {cafe.description}
+                      {venue.description}
                     </Typography>
                   )}
                   
                   <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                     <Chip
-                      label={cafe.is_active ? 'Active' : 'Inactive'}
-                      color={cafe.is_active ? 'success' : 'default'}
+                      label={venue.is_active ? 'Active' : 'Inactive'}
+                      color={venue.is_active ? 'success' : 'default'}
                       size="small"
                     />
                     <Chip
-                      label={cafe.is_open ? 'Open' : 'Closed'}
-                      color={cafe.is_open ? 'success' : 'error'}
+                      label={venue.is_open ? 'Open' : 'Closed'}
+                      color={venue.is_open ? 'success' : 'error'}
                       size="small"
                     />
                   </Box>
@@ -405,17 +404,17 @@ const WorkspaceManagement: React.FC = () => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 'auto' }}>
                     <Button
                       size="small"
-                      startIcon={cafe.is_open ? <VisibilityOff /> : <Visibility />}
-                      onClick={() => handleToggleCafeStatus(cafe.id, !cafe.is_open)}
+                      startIcon={venue.is_open ? <VisibilityOff /> : <Visibility />}
+                      onClick={() => handleToggleVenueStatus(venue.id, !venue.is_open)}
                     >
-                      {cafe.is_open ? 'Close' : 'Open'}
+                      {venue.is_open ? 'Close' : 'Open'}
                     </Button>
                     
-                    {cafe.id !== currentCafe?.id && (
+                    {venue.id !== currentVenue?.id && (
                       <Button
                         size="small"
                         startIcon={<SwapHoriz />}
-                        onClick={() => handleSwitchCafe(cafe.id)}
+                        onClick={() => handleSwitchVenue(venue.id)}
                       >
                         Switch
                       </Button>
@@ -449,30 +448,30 @@ const WorkspaceManagement: React.FC = () => {
             }}
           />
           <Typography variant="h5" fontWeight="600" gutterBottom color="text.secondary">
-            No Cafes Found
+            No Venues Found
           </Typography>
           <Typography variant="body1" color="text.secondary" textAlign="center" mb={3}>
-            You haven't added any cafes yet. Get started by creating your first cafe location.
+            You haven't added any venues yet. Get started by creating your first venue location.
           </Typography>
-          {canCreateCafes && (
+          {canCreateVenues && (
             <Button
               variant="contained"
               startIcon={<Add />}
-              onClick={() => handleOpenCafeDialog()}
+              onClick={() => handleOpenVenueDialog()}
               size="large"
             >
-              Add Your First Cafe
+              Add Your First Venue
             </Button>
           )}
         </Box>
       )}
 
-      {/* Cafe Dialog */}
-      <Dialog open={openCafeDialog} onClose={handleCloseCafeDialog} maxWidth="md" fullWidth>
+      {/* Venue Dialog */}
+      <Dialog open={openVenueDialog} onClose={handleCloseVenueDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Store color="primary" />
-            {editingCafe ? 'Edit Cafe' : 'Add New Cafe'}
+            {editingVenue ? 'Edit Venue' : 'Add New Venue'}
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -488,8 +487,8 @@ const WorkspaceManagement: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Cafe Name"
-                value={String(cafeFormData.name || '')}
+                label="Venue Name"
+                value={String(venueFormData.name || '')}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 required
               />
@@ -499,7 +498,7 @@ const WorkspaceManagement: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>Venue Type</InputLabel>
                 <Select
-                  value={String(cafeFormData.venueType || 'cafe')}
+                  value={String(venueFormData.venueType || 'restaurant')}
                   label="Venue Type"
                   onChange={(e) => handleInputChange('venueType', e.target.value)}
                 >
@@ -516,7 +515,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Description"
-                value={String(cafeFormData.description || '')}
+                value={String(venueFormData.description || '')}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 multiline
                 rows={2}
@@ -537,7 +536,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Address"
-                value={String(cafeFormData.location?.address || '')}
+                value={String(venueFormData.location?.address || '')}
                 onChange={(e) => handleInputChange('location.address', e.target.value)}
                 required
               />
@@ -547,7 +546,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="City"
-                value={String(cafeFormData.location?.city || '')}
+                value={String(venueFormData.location?.city || '')}
                 onChange={(e) => handleInputChange('location.city', e.target.value)}
                 required
               />
@@ -557,7 +556,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="State"
-                value={String(cafeFormData.location?.state || '')}
+                value={String(venueFormData.location?.state || '')}
                 onChange={(e) => handleInputChange('location.state', e.target.value)}
                 required
               />
@@ -566,10 +565,9 @@ const WorkspaceManagement: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Postal Code"
-                value={String(cafeFormData.location?.postal_code || '')}
+                label="Postal Code (Optional)"
+                value={String(venueFormData.location?.postal_code || '')}
                 onChange={(e) => handleInputChange('location.postal_code', e.target.value)}
-                required
               />
             </Grid>
             
@@ -577,7 +575,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Country"
-                value={String(cafeFormData.location?.country || 'India')}
+                value={String(venueFormData.location?.country || 'India')}
                 onChange={(e) => handleInputChange('location.country', e.target.value)}
                 disabled
               />
@@ -587,7 +585,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Landmark (Optional)"
-                value={String(cafeFormData.location?.landmark || '')}
+                value={String(venueFormData.location?.landmark || '')}
                 onChange={(e) => handleInputChange('location.landmark', e.target.value)}
                 helperText="Nearby landmark to help customers find you"
               />
@@ -605,7 +603,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Phone"
-                value={String(cafeFormData.phone || '')}
+                value={String(venueFormData.phone || '')}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -621,7 +619,7 @@ const WorkspaceManagement: React.FC = () => {
               <TextField
                 fullWidth
                 label="Email (Optional)"
-                value={String(cafeFormData.email || '')}
+                value={String(venueFormData.email || '')}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -633,27 +631,13 @@ const WorkspaceManagement: React.FC = () => {
               />
             </Grid>
             
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Website (Optional)"
-                value={String(cafeFormData.website || '')}
-                onChange={(e) => handleInputChange('website', e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Language />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
+
             
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Price Range</InputLabel>
                 <Select
-                  value={String(cafeFormData.priceRange || 'mid_range')}
+                  value={String(venueFormData.priceRange || 'mid_range')}
                   label="Price Range"
                   onChange={(e) => handleInputChange('priceRange', e.target.value)}
                 >
@@ -667,18 +651,17 @@ const WorkspaceManagement: React.FC = () => {
               </FormControl>
             </Grid>
 
-
           </Grid>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseCafeDialog} disabled={saving}>Cancel</Button>
+          <Button onClick={handleCloseVenueDialog} disabled={saving}>Cancel</Button>
           <Button 
-            onClick={handleSubmitCafe} 
+            onClick={handleSubmitVenue} 
             variant="contained"
             disabled={saving}
             startIcon={saving ? <CircularProgress size={16} /> : null}
           >
-            {saving ? 'Saving...' : (editingCafe ? 'Update' : 'Create')}
+            {saving ? 'Saving...' : (editingVenue ? 'Update' : 'Create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -690,7 +673,7 @@ const WorkspaceManagement: React.FC = () => {
         onClose={handleMenuClose}
       >
         <MenuItem onClick={() => {
-          handleOpenCafeDialog(selectedItem);
+          handleOpenVenueDialog(selectedItem);
           handleMenuClose();
         }}>
           <ListItemIcon>
@@ -701,7 +684,7 @@ const WorkspaceManagement: React.FC = () => {
         
         <MenuItem onClick={() => {
           if (selectedItem) {
-            handleToggleCafeStatus(selectedItem.id, !selectedItem.is_open);
+            handleToggleVenueStatus(selectedItem.id, !selectedItem.is_open);
           }
           handleMenuClose();
         }}>
@@ -709,15 +692,15 @@ const WorkspaceManagement: React.FC = () => {
             {selectedItem?.is_open ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
           </ListItemIcon>
           <ListItemText>
-            {selectedItem?.is_open ? 'Close Cafe' : 'Open Cafe'}
+            {selectedItem?.is_open ? 'Close Venue' : 'Open Venue'}
           </ListItemText>
         </MenuItem>
 
         {canDeleteItems && (
           <MenuItem onClick={() => {
-            if (window.confirm('Are you sure you want to delete this cafe?')) {
+            if (window.confirm('Are you sure you want to delete this venue?')) {
               if (selectedItem) {
-                handleDeleteCafe(selectedItem.id);
+                handleDeleteVenue(selectedItem.id);
               }
             }
             handleMenuClose();

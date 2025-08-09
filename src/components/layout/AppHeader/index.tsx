@@ -262,27 +262,28 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
 
   return (
     <>
-      <Slide appear={false} direction="down" in={!trigger || isHomePage || isAdminRoute}>
-        <AppBar
-          position={isAdminRoute ? "sticky" : "fixed"}
-          elevation={isAdminRoute ? 0 : (trigger ? 4 : 0)}
-          sx={{
-            backgroundColor: trigger || isAdminRoute
-              ? 'rgba(255, 255, 255, 0.95)' 
-              : isHomePage 
-                ? 'rgba(255, 255, 255, 0.1)' 
-                : 'background.paper',
-            backdropFilter: trigger || isHomePage || isAdminRoute ? 'blur(20px)' : 'none',
-            borderBottom: trigger || isAdminRoute ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
-            color: 'text.primary',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            zIndex: 1100,
-            top: isAdminRoute ? 0 : 'auto',
-            boxShadow: isAdminRoute ? 'none' : undefined,
-          }}
-        >
-          <Container maxWidth="xl">
-            <Toolbar sx={{ px: { xs: 0, sm: 0 }, minHeight: 70 }}>
+      <AppBar
+        position="fixed"
+        elevation={isAdminRoute ? 0 : (trigger ? 4 : 0)}
+        sx={{
+          backgroundColor: trigger || isAdminRoute
+            ? 'rgba(255, 255, 255, 0.95)' 
+            : isHomePage 
+              ? 'rgba(255, 255, 255, 0.1)' 
+              : 'background.paper',
+          backdropFilter: trigger || isHomePage || isAdminRoute ? 'blur(20px)' : 'none',
+          borderBottom: trigger || isAdminRoute ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
+          color: 'text.primary',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          zIndex: 1300,
+          top: 0,
+          left: 0,
+          right: 0,
+          boxShadow: isAdminRoute ? 'none' : undefined,
+        }}
+      >
+          <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
+            <Toolbar sx={{ px: 0, minHeight: { xs: 56, sm: 64, md: 70 } }}>
               {/* Logo and Title */}
               <Box
                 sx={{
@@ -290,9 +291,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                   alignItems: 'center',
                   flexGrow: 1,
                   cursor: 'pointer',
-                  gap: 1.5,
+                  gap: { xs: 1, sm: 1.5 },
                   minWidth: 0,
-                  pl: { xs: 1, sm: 2 }, // Add left padding to move logo left
                   '&:hover': {
                     opacity: 0.8,
                   },
@@ -300,32 +300,40 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                 }}
                 onClick={() => navigate('/')}
               >
-                <DinoLogo size={45} animated={true} />
-                <Box>
+                <DinoLogo size={isMobile ? 35 : 45} animated={true} />
+                <Box sx={{ minWidth: 0, flex: 1 }}>
                   <Typography
                     variant="h6"
                     component="div"
                     sx={{
                       fontWeight: 700,
-                      fontSize: { xs: '1.1rem', sm: '1.3rem' },
+                      fontSize: { xs: '1rem', sm: '1.1rem', md: '1.3rem' },
                       color: 'text.primary',
                       lineHeight: 1.2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {getPageTitle()}
                   </Typography>
+                  {!isMobile && (
                     <Typography
                       variant="caption"
                       sx={{
                         color: 'text.secondary',
-                        fontSize: '0.75rem',
+                        fontSize: { xs: '0.65rem', sm: '0.75rem' },
                         fontWeight: 500,
                         display: 'block',
                         lineHeight: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
                       {COMPANY_INFO.tagline}
                     </Typography>
+                  )}
                 </Box>
               </Box>
 
@@ -367,7 +375,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
             </Toolbar>
           </Container>
         </AppBar>
-      </Slide>
 
       {/* Mobile Menu */}
       <MobileMenu

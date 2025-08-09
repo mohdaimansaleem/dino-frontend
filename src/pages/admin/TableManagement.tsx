@@ -634,8 +634,8 @@ const TableManagement: React.FC = () => {
           setSelectedTableForQR(null);
         }}
         tableId={selectedTableForQR?.id}
-        cafeId={getVenue()?.id || ''}
-        cafeName={getVenueDisplayName()}
+        venueId={getVenue()?.id || ''}
+        venueName={getVenueDisplayName()}
         tableNumber={selectedTableForQR?.table_number.toString()}
       />
 
@@ -645,11 +645,12 @@ const TableManagement: React.FC = () => {
         tables={tables.map(table => ({
           id: table.id,
           number: table.table_number.toString(),
-          cafeId: getVenue()?.id || '',
+          venueId: getVenue()?.id || '',
+          venueName: getVenue()?.name || '',
           cafeName: getVenueDisplayName()
         }))}
-        cafeId={getVenue()?.id || ''}
-        cafeName={getVenueDisplayName()}
+        venueId={getVenue()?.id || ''}
+        venueName={getVenueDisplayName()}
       />
     </Container>
   );
