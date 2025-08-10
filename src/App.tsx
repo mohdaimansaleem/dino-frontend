@@ -102,6 +102,8 @@ import { StorageCleanup } from './utils/storageCleanup';
 
 import { tokenRefreshScheduler } from './utils/tokenRefreshScheduler';
 
+import { apiService } from './services/api';
+
 
 
 // Debug configuration in development
@@ -116,7 +118,7 @@ if (isDevelopment()) {
 
 function App() {
 
- // Validate password hashing setup and cleanup storage on  app startup
+ // Validate password hashing setup and cleanup storage on app startup
 
  useEffect(() => {
 
@@ -138,9 +140,21 @@ function App() {
 
     
 
-   // Start token refresh scheduler if authenticated
+   // Refresh API configuration from runtime config
 
    if (typeof window !== 'undefined') {
+
+    // Wait a bit for config.js to load
+
+    setTimeout(() => {
+
+     apiService.refreshConfiguration();
+
+     logger.info('API configuration refreshed from runtime config');
+
+    }, 200);
+
+     
 
     tokenRefreshScheduler.start();
 

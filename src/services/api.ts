@@ -192,6 +192,14 @@ class ApiService {
 
  constructor() {
 
+  // Log configuration during initialization
+
+  console.log('🔧 ApiService constructor - API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
+
+  console.log('🔧 ApiService constructor - window.APP_CONFIG:', (window as any).APP_CONFIG);
+
+   
+
   this.axiosInstance = axios.create({
 
    baseURL: API_CONFIG.BASE_URL,
@@ -840,7 +848,51 @@ class ApiService {
 
  setBaseURL(baseURL: string): void {
 
+  console.log('🔧 Updating API base URL from', this.axiosInstance.defaults.baseURL, 'to', baseURL);
+
   this.axiosInstance.defaults.baseURL = baseURL;
+
+ }
+
+
+
+ /**
+
+  * Refresh configuration from runtime config
+
+  */
+
+ refreshConfiguration(): void {
+
+  const runtimeConfig = (window as any).APP_CONFIG;
+
+  if (runtimeConfig && runtimeConfig.API_BASE_URL) {
+
+   console.log('🔧 Refreshing API configuration from runtime config');
+
+   console.log(' Current base URL:', this.axiosInstance.defaults.baseURL);
+
+   console.log(' Runtime config API_BASE_URL:', runtimeConfig.API_BASE_URL);
+
+    
+
+   if (this.axiosInstance.defaults.baseURL !== runtimeConfig.API_BASE_URL) {
+
+    this.setBaseURL(runtimeConfig.API_BASE_URL);
+
+    console.log('✅ API base URL updated to:', runtimeConfig.API_BASE_URL);
+
+   } else {
+
+    console.log('✅ API base URL already correct');
+
+   }
+
+  } else {
+
+   console.warn('⚠️ No runtime config found or API_BASE_URL not set');
+
+  }
 
  }
 
@@ -880,6 +932,16 @@ export const apiService = new ApiService();
 
 
 
+// Make apiService available globally for debugging
+
+if (typeof window !== 'undefined') {
+
+ (window as any).apiService = apiService;
+
+}
+
+
+
 // Add debug method to the instance
 
 apiService.debugConfiguration = function() {
@@ -899,6 +961,12 @@ apiService.debugConfiguration = function() {
  console.log('User Agent:', navigator.userAgent);
 
  console.log('Is Mobile:', /Mobile|Android|iPhone|iPad/.test(navigator.userAgent));
+
+ console.log('NODE_ENV:', process.env.NODE_ENV);
+
+ console.log('REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
+
+ console.log('Runtime Config API_BASE_URL:', API_CONFIG.BASE_URL);
 
  console.groupEnd();
 

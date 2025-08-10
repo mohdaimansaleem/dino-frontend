@@ -20,6 +20,8 @@ import { tokenRefreshScheduler } from '../utils/tokenRefreshScheduler';
 
 import { API_CONFIG } from '../config/api';
 
+import { apiService } from '../services/api';
+
 // Password hashing is now handled by authService
 
 
@@ -241,6 +243,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   try {
 
    setLoading(true);
+
+    
+
+   // Ensure API configuration is up to date before login
+
+   apiService.refreshConfiguration();
+
+    
+
+   // Debug API configuration before login
+
+   console.log('🔧 Login Debug - API Configuration:');
+
+   console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
+
+   console.log('process.env.REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
+
+   console.log('Current location:', window.location.href);
+
+   console.log('window.APP_CONFIG:', (window as any).APP_CONFIG);
+
+    
+
+   // Call debug method if available
+
+   if (typeof apiService.debugConfiguration === 'function') {
+
+    apiService.debugConfiguration();
+
+   }
 
     
 
