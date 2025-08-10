@@ -61,8 +61,8 @@ const DEFAULT_CONFIG: AppConfig = {
   APP_VERSION: '1.0.0',
   
   // API Configuration
-  API_BASE_URL: 'https://dino-backend-api-867506203789.us-central1.run.app/api/v1',
-  WS_URL: 'wss://dino-backend-api-867506203789.us-central1.run.app/ws',
+  API_BASE_URL: '/api/v1',
+  WS_URL: '/ws',
   BACKEND_URL: 'https://dino-backend-api-867506203789.us-central1.run.app',
   API_TIMEOUT: 30000,
   

@@ -16,8 +16,8 @@ cat > "$CONFIG_FILE" << EOF
 // This file is generated at container startup from environment variables
 window.APP_CONFIG = {
   // API Configuration
-  API_BASE_URL: "${API_BASE_URL:-https://dino-backend-api-867506203789.us-central1.run.app/api/v1}",
-  WS_URL: "${WS_URL:-wss://dino-backend-api-867506203789.us-central1.run.app/ws}",
+  API_BASE_URL: "${API_BASE_URL:-/api/v1}",
+  WS_URL: "${WS_URL:-/ws}",
   BACKEND_URL: "${BACKEND_URL:-https://dino-backend-api-867506203789.us-central1.run.app}",
   
   // App Configuration
