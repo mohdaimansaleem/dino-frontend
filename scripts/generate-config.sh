@@ -22,6 +22,20 @@ CONFIG_FILE="/usr/share/nginx/html/config.js"
 
 
 
+# Log current environment for debugging
+
+echo "📋 Current environment variables:"
+
+echo " API_BASE_URL: ${API_BASE_URL:-/api/v1}"
+
+echo " WS_URL: ${WS_URL:-/ws}"
+
+echo " BACKEND_URL: ${BACKEND_URL:-https://dino-backend-api-867506203789.us-central1.run.app}"
+
+echo " APP_ENV: ${APP_ENV:-production}"
+
+
+
 # Create the config.js file with environment variables
 
 cat > "$CONFIG_FILE" << EOF
