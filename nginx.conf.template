@@ -1,4 +1,4 @@
-# Production-optimized Nginx Configuration for Dino Frontend
+# Production-optimized Nginx Configuration Template for Dino Frontend
 
 
 
@@ -196,13 +196,13 @@ http {
 
 
 
-    # API proxy to backend - FIXED
+    # API proxy to backend - CORRECTED
 
     location /api/ {
 
-      # Forward to backend - the backend URL should include the full path
+      # Forward the request to backend, keeping the /api path
 
-      proxy_pass https://dino-backend-api-867506203789.us-central1.run.app/;
+      proxy_pass ${BACKEND_URL}/;
 
        
 
@@ -254,13 +254,13 @@ http {
 
 
 
-    # WebSocket proxy - FIXED
+    # WebSocket proxy - CORRECTED
 
     location /ws/ {
 
-      # Forward WebSocket requests to backend
+      # Forward WebSocket requests to backend, keeping the /ws path
 
-      proxy_pass https://dino-backend-api-867506203789.us-central1.run.app/;
+      proxy_pass ${BACKEND_URL}/;
 
        
 
