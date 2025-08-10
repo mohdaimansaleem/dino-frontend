@@ -11,13 +11,6 @@ echo "🐳 Container ID: $(hostname)"
 echo "🌍 Environment: ${APP_ENV:-production}"
 echo ""
 
-# Validate environment variables
-echo "🔍 Validating environment variables..."
-if [ -f "/usr/local/bin/validate-env.sh" ]; then
-    /usr/local/bin/validate-env.sh
-else
-    echo "⚠️ validate-env.sh not found, skipping validation"
-fi
 
 # Generate runtime configuration
 echo ""
