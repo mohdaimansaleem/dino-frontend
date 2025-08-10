@@ -180,6 +180,32 @@ http {
 
     location /api/ {
 
+      proxy_pass ${BACKEND_URL}/;
+
+      proxy_set_header Host dino-backend-api-867506203789.us-central1.run.app;
+
+      proxy_set_header X-Real-IP \$remote_addr;
+
+      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+
+      proxy_set_header X-Forwarded-Proto \$scheme;
+
+      proxy_set_header X-Original-URI \$request_uri;
+
+      proxy_method \$request_method;
+
+      proxy_pass_request_headers on;
+
+      proxy_pass_request_body on;
+
+      proxy_connect_timeout 30s;
+
+      proxy_send_timeout 30s;
+
+      proxy_read_timeout 30s;
+
+       
+
       if (\$request_method = 'OPTIONS') {
 
         add_header Access-Control-Allow-Origin \$http_origin always;
@@ -200,24 +226,6 @@ http {
 
        
 
-      proxy_pass ${BACKEND_URL}/;
-
-      proxy_set_header Host \$host;
-
-      proxy_set_header X-Real-IP \$remote_addr;
-
-      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-
-      proxy_set_header X-Forwarded-Proto \$scheme;
-
-      proxy_connect_timeout 30s;
-
-      proxy_send_timeout 30s;
-
-      proxy_read_timeout 30s;
-
-       
-
       add_header Access-Control-Allow-Origin \$http_origin always;
 
       add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
@@ -228,13 +236,15 @@ http {
 
       add_header X-Proxy-Backend "${BACKEND_URL}" always;
 
+      add_header X-Proxy-Method \$request_method always;
+
     }
 
      
 
     location /ws/ {
 
-      proxy_pass ${BACKEND_URL}/;
+      proxy_pass ${BACKEND_URL};
 
       proxy_http_version 1.1;
 
@@ -242,7 +252,7 @@ http {
 
       proxy_set_header Connection "upgrade";
 
-      proxy_set_header Host \$host;
+      proxy_set_header Host dino-backend-api-867506203789.us-central1.run.app;
 
       proxy_set_header X-Real-IP \$remote_addr;
 
@@ -340,6 +350,26 @@ http {
 
     location /api/ {
 
+      proxy_pass ${BACKEND_URL};
+
+      proxy_set_header Host dino-backend-api-867506203789.us-central1.run.app;
+
+      proxy_set_header X-Real-IP \$remote_addr;
+
+      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+
+      proxy_set_header X-Forwarded-Proto \$scheme;
+
+      proxy_set_header X-Original-URI \$request_uri;
+
+      proxy_method \$request_method;
+
+      proxy_pass_request_headers on;
+
+      proxy_pass_request_body on;
+
+       
+
       if (\$request_method = 'OPTIONS') {
 
         add_header Access-Control-Allow-Origin \$http_origin always;
@@ -357,18 +387,6 @@ http {
         return 204;
 
       }
-
-       
-
-      proxy_pass ${BACKEND_URL}/;
-
-      proxy_set_header Host \$host;
-
-      proxy_set_header X-Real-IP \$remote_addr;
-
-      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-
-      proxy_set_header X-Forwarded-Proto \$scheme;
 
        
 
@@ -448,6 +466,26 @@ http {
 
     location /api/ {
 
+      proxy_pass ${BACKEND_URL}/;
+
+      proxy_set_header Host dino-backend-api-867506203789.us-central1.run.app;
+
+      proxy_set_header X-Real-IP \$remote_addr;
+
+      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+
+      proxy_set_header X-Forwarded-Proto \$scheme;
+
+      proxy_set_header X-Original-URI \$request_uri;
+
+      proxy_method \$request_method;
+
+      proxy_pass_request_headers on;
+
+      proxy_pass_request_body on;
+
+       
+
       if (\$request_method = 'OPTIONS') {
 
         add_header Access-Control-Allow-Origin \$http_origin always;
@@ -465,18 +503,6 @@ http {
         return 204;
 
       }
-
-       
-
-      proxy_pass ${BACKEND_URL}/;
-
-      proxy_set_header Host \$host;
-
-      proxy_set_header X-Real-IP \$remote_addr;
-
-      proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-
-      proxy_set_header X-Forwarded-Proto \$scheme;
 
        
 
