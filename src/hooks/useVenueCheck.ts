@@ -1,35 +1,69 @@
 import { useAuth } from '../contexts/AuthContext';
+
 import { useUserData } from '../contexts/UserDataContext';
 
+import { validateVenueAccess, requiresVenueAssignment, debugVenueAssignment } from '../utils/venueUtils';
+
+
+
 interface VenueCheckResult {
-  hasVenueAssigned: boolean;
-  venueId: string | null;
-  requiresVenueAssignment: boolean;
-  canBypassVenueCheck: boolean;
+
+ hasVenueAssigned: boolean;
+
+ venueId: string | null;
+
+ requiresVenueAssignment: boolean;
+
+ canBypassVenueCheck: boolean;
+
 }
 
+
+
 export const useVenueCheck = (): VenueCheckResult => {
-  const { isSuperAdmin } = useAuth();
-  const { userData, hasVenue } = useUserData();
+
+ const { isSuperAdmin, user } = useAuth();
+
+ const { userData } = useUserData();
+
   
-  // Get venue ID from user data context
-  const venueId = userData?.venue?.id || null;
+
+ // Use centralized venue validation
+
+ const validation = validateVenueAccess(userData, user);
+
   
-  // Check if user has venue assigned using the new structure
-  const hasVenueAssigned = hasVenue();
+
+ // Debug venue assignment
+
+ debugVenueAssignment(userData, user, 'useVenueCheck');
+
   
-  // Super admins can bypass venue checks for most operations
-  const canBypassVenueCheck = isSuperAdmin();
+
+ const hasVenueAssigned = validation.hasVenue;
+
+ const venueId = validation.venueId;
+
+ const canBypassVenueCheck = isSuperAdmin();
+
+ const requiresAssignment = requiresVenueAssignment(userData, user);
+
   
-  // Determine if venue assignment is required for this user
-  const requiresVenueAssignment = !hasVenueAssigned && !canBypassVenueCheck;
-  
-  return {
-    hasVenueAssigned,
-    venueId,
-    requiresVenueAssignment,
-    canBypassVenueCheck,
-  };
+
+ return {
+
+  hasVenueAssigned,
+
+  venueId,
+
+  requiresVenueAssignment: requiresAssignment,
+
+  canBypassVenueCheck,
+
+ };
+
 };
+
+
 
 export default useVenueCheck;
