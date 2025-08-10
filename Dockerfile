@@ -1,106 +1,63 @@
-# Build stage
 
 
+# Dino Frontend Dockerfile
 
-FROM node:18-alpine as build
+FROM node:18-alpine AS builder
+
+
 
 WORKDIR /app
 
-
-
 # Copy package files and npm config
-
 COPY package*.json .npmrc ./
 
-
-
 # Install all dependencies (including dev dependencies for build)
-
-RUN npm ci --legacy-peer-deps
-
-
-
-# Copy source code
+RUN npm install --legacy-peer-deps
 
 COPY . .
-
-
-
-# Build with minimal environment variables (only needed for build process)
-
-ENV GENERATE_SOURCEMAP=false
-
-ENV NODE_ENV=production
-
-
-
-# Build the  app
 
 RUN npm run build
 
 
 
-# Production stage
-
 FROM nginx:alpine
 
 
 
-# Install curl and bash for health checks and config generation
+# Install bash and curl
 
-RUN apk add --no-cache curl bash
-
-
-
-# Copy built app to nginx
-
-COPY --from=build /app/build /usr/share/nginx/html
+RUN apk add --no-cache bash curl
 
 
 
-# Copy nginx configuration
+# Copy nginx config FIRST to ensure it's not cached
 
-COPY default.conf /etc/nginx/conf.d/default.conf
-
-
-
-# Copy config generation script
-
-COPY scripts/generate-config.sh /usr/local/bin/generate-config.sh
-
-RUN chmod +x /usr/local/bin/generate-config.sh
+COPY nginx.conf /etc/nginx/nginx.conf
 
 
 
-# Environment validation is handled by generate-config.sh
+# Verify nginx config is correct
+
+RUN nginx -t
 
 
 
-# Copy startup script
+# Copy built app
 
-COPY scripts/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY --from=builder /app/build /usr/share/nginx/html
 
 
 
-# Set proper permissions for nginx
+# Copy scripts
 
-RUN chmod -R 755 /usr/share/nginx/html
+COPY scripts/ /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/*.sh
 
 
 
 EXPOSE 8080
 
 
-
-# Health check
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
- CMD curl -f http://localhost:8080/health || exit 1
-
-
-
-# Use custom entrypoint that generates config and starts nginx
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
