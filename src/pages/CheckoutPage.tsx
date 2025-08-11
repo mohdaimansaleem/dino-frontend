@@ -52,7 +52,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import CustomerNavbar from '../components/CustomerNavbar';
-import Footer from '../components/layout/Footer';
+
 import { promoService, PromoValidation } from '../services/promoService';
 import { orderService } from '../services/orderService';
 
@@ -414,7 +414,41 @@ const CheckoutPage: React.FC = () => {
             </Button>
           </Paper>
         </Container>
-        <Footer />
+        {/* Dashboard-style Footer */}
+        <Box 
+          sx={{ 
+            flexShrink: 0,
+            textAlign: 'center',
+            py: { xs: 2, lg: 3 },
+            px: { xs: 2, lg: 3 },
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
+            mt: '2vh',
+          }}
+        >
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ 
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              fontWeight: 500 
+            }}
+          >
+            © 2024 Dino E-Menu. All rights reserved.
+          </Typography>
+          <Typography 
+            variant="caption" 
+            color="text.secondary"
+            sx={{ 
+              fontSize: { xs: '0.65rem', sm: '0.75rem' },
+              display: 'block',
+              mt: 0.5
+            }}
+          >
+            Digital Menu Revolution
+          </Typography>
+        </Box>
       </Box>
     );
   }
@@ -556,7 +590,41 @@ const CheckoutPage: React.FC = () => {
             </Box>
           </Paper>
         </Container>
-        <Footer />
+        {/* Dashboard-style Footer */}
+        <Box 
+          sx={{ 
+            flexShrink: 0,
+            textAlign: 'center',
+            py: { xs: 2, lg: 3 },
+            px: { xs: 2, lg: 3 },
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            backgroundColor: 'background.paper',
+            mt: '2vh',
+          }}
+        >
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ 
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              fontWeight: 500 
+            }}
+          >
+            © 2024 Dino E-Menu. All rights reserved.
+          </Typography>
+          <Typography 
+            variant="caption" 
+            color="text.secondary"
+            sx={{ 
+              fontSize: { xs: '0.65rem', sm: '0.75rem' },
+              display: 'block',
+              mt: 0.5
+            }}
+          >
+            Digital Menu Revolution
+          </Typography>
+        </Box>
       </Box>
     );
   }
@@ -1191,18 +1259,7 @@ const CheckoutPage: React.FC = () => {
                 </Box>
               </Box>
 
-              {subtotal < 25 && (
-                <Box sx={{ 
-                  p: 2, 
-                  backgroundColor: 'warning.light', 
-                  borderRadius: 2,
-                  mb: 2
-                }}>
-                  <Typography variant="body2" color="warning.dark">
-                    Add {formatPrice(25 - subtotal)} more for free delivery!
-                  </Typography>
-                </Box>
-              )}
+
             </Paper>
           </Grid>
         </Grid>
@@ -1282,7 +1339,41 @@ const CheckoutPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Footer />
+      {/* Dashboard-style Footer */}
+      <Box 
+        sx={{ 
+          flexShrink: 0,
+          textAlign: 'center',
+          py: { xs: 2, lg: 3 },
+          px: { xs: 2, lg: 3 },
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: 'background.paper',
+          mt: '2vh',
+        }}
+      >
+        <Typography 
+          variant="body2" 
+          color="text.secondary"
+          sx={{ 
+            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+            fontWeight: 500 
+          }}
+        >
+          © 2024 Dino E-Menu. All rights reserved.
+        </Typography>
+        <Typography 
+          variant="caption" 
+          color="text.secondary"
+          sx={{ 
+            fontSize: { xs: '0.65rem', sm: '0.75rem' },
+            display: 'block',
+            mt: 0.5
+          }}
+        >
+          Digital Menu Revolution
+        </Typography>
+      </Box>
     </Box>
   );
 };

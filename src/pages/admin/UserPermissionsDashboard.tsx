@@ -357,77 +357,37 @@ const UserPermissionsDashboard: React.FC = () => {
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-          User Permissions Dashboard
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Monitor and manage user permissions across your organization
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+              User Permissions Dashboard
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Monitor and manage user permissions across your organization
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<Visibility />}
+            onClick={() => handleViewPermissions({
+              ...(currentUserAuth || {}),
+              firstName: user?.first_name || user?.firstName,
+              lastName: user?.last_name || user?.lastName,
+              email: user?.email,
+              isActive: true,
+              lastLogin: new Date(),
+              cafeId: userData?.venue?.id,
+            })}
+            sx={{ 
+              minWidth: 'auto',
+              whiteSpace: 'nowrap'
+            }}
+          >
+          </Button>
+        </Box>
       </Box>
 
-      {/* Current User Permissions Card */}
-      <Card sx={{ mb: 4, border: '2px solid', borderColor: 'primary.main' }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Avatar
-                sx={{
-                  bgcolor: 'primary.main',
-                  mr: 2,
-                  width: 56,
-                  height: 56,
-                }}
-              >
-                <Security />
-              </Avatar>
-              <Box>
-                <Typography variant="h6" fontWeight="600">
-                  Your Current Permissions
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {user?.first_name || user?.firstName} {user?.last_name || user?.lastName} • {user?.email}
-                </Typography>
-                <Box sx={{ mt: 1 }}>
-                  <Chip
-                    label={getRoleDisplayName(
-                      typeof currentUserAuth?.role === 'string' 
-                        ? currentUserAuth.role 
-                        : (currentUserAuth?.role?.displayName || currentUserAuth?.role?.name || user?.role || 'Unknown')
-                    )}
-                    color={getRoleColor(
-                      typeof currentUserAuth?.role === 'string' 
-                        ? currentUserAuth.role 
-                        : (currentUserAuth?.role?.name || currentUserAuth?.role?.displayName || user?.role || 'unknown')
-                    ) as any}
-                    size="small"
-                    sx={{ mr: 1 }}
-                  />
-                  <Chip
-                    label={`${currentUserAuth?.permissions?.length || 0} Permissions`}
-                    variant="outlined"
-                    size="small"
-                  />
-                </Box>
-              </Box>
-            </Box>
-            <Button
-              variant="outlined"
-              startIcon={<Visibility />}
-              onClick={() => handleViewPermissions({
-                ...(currentUserAuth || {}),
-                firstName: user?.first_name || user?.firstName,
-                lastName: user?.last_name || user?.lastName,
-                email: user?.email,
-                isActive: true,
-                lastLogin: new Date(),
-                cafeId: userData?.venue?.id,
-              })}
-            >
-              View My Permissions
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+
 
       {/* Filters and Search */}
       <Card sx={{ mb: 4 }}>
@@ -478,14 +438,6 @@ const UserPermissionsDashboard: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
                   variant="outlined"
-                  startIcon={<Download />}
-                  onClick={exportPermissions}
-                  size="small"
-                >
-                  Export
-                </Button>
-                <Button
-                  variant="outlined"
                   startIcon={<Refresh />}
                   size="small"
                 >
@@ -512,11 +464,9 @@ const UserPermissionsDashboard: React.FC = () => {
                     <TableRow>
                       <TableCell>User</TableCell>
                       <TableCell>Role</TableCell>
-                      <TableCell>Cafe</TableCell>
-                      <TableCell>Permissions</TableCell>
                       <TableCell>Status</TableCell>
                       <TableCell>Last Login</TableCell>
-                      <TableCell align="right">Actions</TableCell>
+                      <TableCell align="center">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -546,21 +496,6 @@ const UserPermissionsDashboard: React.FC = () => {
                             />
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">
-                              {user.cafeId ? 
-                                userData?.venue?.name || 'Unknown Cafe' : 
-                                'All Cafes'
-                              }
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={`${user.permissions?.length || 0} permissions`}
-                              variant="outlined"
-                              size="small"
-                            />
-                          </TableCell>
-                          <TableCell>
                             <Chip
                               label={user.isActive ? 'Active' : 'Inactive'}
                               color={user.isActive ? 'success' : 'default'}
@@ -572,36 +507,39 @@ const UserPermissionsDashboard: React.FC = () => {
                               {user.lastLogin ? user.lastLogin.toLocaleDateString() : 'Never'}
                             </Typography>
                           </TableCell>
-                          <TableCell align="right">
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              startIcon={<Visibility />}
-                              onClick={() => handleViewPermissions(user)}
+                          <TableCell align="center">
+                            <Visibility 
                               sx={{ 
-                                minWidth: 'auto', 
-                                whiteSpace: 'nowrap',
-                                px: 2
+                                cursor: 'pointer',
+                                color: 'primary.main',
+                                '&:hover': {
+                                  color: 'primary.dark'
+                                }
                               }}
-                            >
-                              View
-                            </Button>
+                              onClick={() => handleViewPermissions(user)}
+                            />
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={7} align="center">
-                          <Box sx={{ py: 6 }}>
-                            <Security sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                            <Typography variant="h6" color="text.secondary" gutterBottom>
+                        <TableCell colSpan={5} align="center">
+                          <Box sx={{ py: 8, px: 4, textAlign: 'center', maxWidth: 500, mx: 'auto' }}>
+                            <Security sx={{ fontSize: 80, color: 'text.secondary', mb: 3 }} />
+                            <Typography variant="h5" color="text.secondary" gutterBottom fontWeight="600">
                               No Users Available
                             </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                              The user management API is not yet implemented. This page will show user permissions once the backend API is ready.
+                            <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+                              The user management system is currently being set up. User permissions and roles will be displayed here once the backend API is implemented.
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              💡 Check back later or contact your administrator for updates.
+                            <Typography variant="body2" color="text.secondary" sx={{ 
+                              backgroundColor: 'info.50', 
+                              p: 2, 
+                              borderRadius: 2,
+                              border: '1px solid',
+                              borderColor: 'info.200'
+                            }}>
+                              💡 This feature is coming soon. Contact your system administrator for more information.
                             </Typography>
                           </Box>
                         </TableCell>

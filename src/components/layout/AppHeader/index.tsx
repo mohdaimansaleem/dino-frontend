@@ -11,6 +11,11 @@ import {
   Avatar,
   useTheme,
   useMediaQuery,
+  Paper,
+  Switch,
+  FormControlLabel,
+  CircularProgress,
+  Chip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -18,6 +23,9 @@ import {
   ExitToApp,
   Login,
   PersonAdd,
+  Store,
+  CheckCircle,
+  Cancel,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -29,6 +37,8 @@ import MobileMenu from '../MobileMenu';
 import { NAVIGATION, COMPANY_INFO } from '../../../data/info';
 import { getUserFirstName } from '../../../utils/userUtils';
 import { ROLE_NAMES, isAdminLevel } from '../../../constants/roles';
+import { useUserData } from '../../../contexts/UserDataContext';
+import { venueService } from '../../../services/venueService';
 
 interface AppHeaderProps {
   onSectionScroll?: (sectionId: string) => void;
@@ -39,10 +49,17 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin } = useAuth();
+  const { userData } = useUserData();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
   const [dinoAvatar, setDinoAvatar] = useState<string>('');
+  const [venueStatus, setVenueStatus] = useState<{
+    isActive: boolean;
+    isOpen: boolean;
+    venueName: string;
+  } | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
   
   // Feature flags
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
@@ -71,6 +88,69 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
       window.removeEventListener('dinoAvatarUpdated', handleStorageChange);
     };
   }, []);
+
+  // Load venue status for admin users
+  useEffect(() => {
+    const loadVenueStatus = async () => {
+      const userIsAdmin = isAdmin() || isSuperAdmin();
+      
+      if (!user || !userIsAdmin) {
+        setVenueStatus(null);
+        return;
+      }
+
+      if (!userData?.venue?.id) {
+        setVenueStatus({
+          isActive: false,
+          isOpen: false,
+          venueName: userData?.venue?.name || 'No Venue Selected'
+        });
+        return;
+      }
+
+      try {
+        const venue = await venueService.getVenue(userData.venue.id);
+        
+        if (venue) {
+          const statusData = {
+            isActive: venue.is_active || false,
+            isOpen: venue.status === 'active' || venue.is_open || false,
+            venueName: venue.name || userData.venue.name || 'Current Venue'
+          };
+          setVenueStatus(statusData);
+        }
+      } catch (error) {
+        console.error('❌ AppHeader - Error loading venue status:', error);
+        setVenueStatus({
+          isActive: false,
+          isOpen: false,
+          venueName: userData?.venue?.name || 'Error Loading Venue'
+        });
+      }
+    };
+
+    loadVenueStatus();
+  }, [user, userData?.venue?.id, isAdmin, isSuperAdmin]);
+
+  // Handle venue status toggle
+  const handleToggleVenueOpen = async () => {
+    if (!userData?.venue?.id || statusLoading || !venueStatus) return;
+
+    try {
+      setStatusLoading(true);
+      const newStatus = !venueStatus.isOpen;
+      
+      await venueService.updateVenue(userData.venue.id, { 
+        status: newStatus ? 'active' : 'closed' 
+      });
+
+      setVenueStatus(prev => prev ? { ...prev, isOpen: newStatus } : null);
+    } catch (error) {
+      console.error('❌ AppHeader - Error toggling venue status:', error);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   // Scroll trigger for navbar background
   const trigger = useScrollTrigger({
@@ -184,6 +264,62 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
     }
 
     return null;
+  };
+
+  const renderVenueStatus = () => {
+    if (!user || !(isAdmin() || isSuperAdmin()) || !venueStatus) return null;
+
+    return (
+      <Paper
+        elevation={1}
+        sx={{
+          p: 1.5,
+          backgroundColor: venueStatus.isOpen ? 'success.50' : 'error.50',
+          border: '1px solid',
+          borderColor: venueStatus.isOpen ? 'success.200' : 'error.200',
+          borderRadius: 2,
+          minWidth: 200,
+          maxWidth: 280,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Store sx={{ fontSize: 16, color: venueStatus.isOpen ? 'success.main' : 'error.main' }} />
+            <Typography variant="caption" fontWeight={600} color="text.primary">
+              {venueStatus.venueName}
+            </Typography>
+          </Box>
+          <Chip
+            icon={venueStatus.isOpen ? <CheckCircle /> : <Cancel />}
+            label={venueStatus.isOpen ? 'OPEN' : 'CLOSED'}
+            size="small"
+            color={venueStatus.isOpen ? 'success' : 'error'}
+            sx={{ fontSize: '0.65rem', height: 20 }}
+          />
+        </Box>
+        
+        <FormControlLabel
+          control={
+            <Switch
+              checked={venueStatus.isOpen}
+              onChange={handleToggleVenueOpen}
+              disabled={statusLoading || !venueStatus.isActive}
+              color="success"
+              size="small"
+            />
+          }
+          label={
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {statusLoading && <CircularProgress size={10} />}
+              <Typography variant="caption" fontWeight={500}>
+                {venueStatus.isOpen ? 'Open for Orders' : 'Closed for Orders'}
+              </Typography>
+            </Box>
+          }
+          sx={{ m: 0, alignItems: 'center' }}
+        />
+      </Paper>
+    );
   };
 
   const renderUserActions = () => {
@@ -309,6 +445,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
     if (isHomePage) return COMPANY_INFO.name;
     return COMPANY_INFO.name;
   };
+
+
 
   return (
     <>
@@ -439,21 +577,23 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
           </Container>
         </AppBar>
 
-      {/* Mobile Menu */}
-      <MobileMenu
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        homeNavItems={homeNavItems}
-        activeSection={activeSection}
-        onSectionClick={scrollToSection}
-        user={user}
-        onLogout={handleLogout}
-        onNavigate={(path) => {
-          navigate(path);
-          setMobileMenuOpen(false);
-        }}
-        isHomePage={isHomePage}
-      />
+      {/* Mobile Menu - Only for non-admin routes */}
+      {!isAdminRoute && (
+        <MobileMenu
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          homeNavItems={homeNavItems}
+          activeSection={activeSection}
+          onSectionClick={scrollToSection}
+          user={user}
+          onLogout={handleLogout}
+          onNavigate={(path) => {
+            navigate(path);
+            setMobileMenuOpen(false);
+          }}
+          isHomePage={isHomePage}
+        />
+      )}
     </>
   );
 };

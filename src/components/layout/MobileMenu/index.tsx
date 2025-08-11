@@ -14,6 +14,9 @@ import {
   Chip,
   Paper,
   Button,
+  Switch,
+  FormControlLabel,
+  CircularProgress,
 } from '@mui/material';
 import {
   Close,
@@ -22,10 +25,31 @@ import {
   Login,
   PersonAdd,
   Dashboard,
+  TableRestaurant,
+  Restaurant,
+  Receipt,
+  People,
+  Settings,
+  Analytics,
+  QrCode,
+  Notifications,
+  TrendingUp,
+  Assignment,
+  MenuBook,
+  Business,
+  Security,
+  Store,
+  CheckCircle,
+  Cancel,
 } from '@mui/icons-material';
 import DinoLogo from '../../DinoLogo';
 import { getUserFirstName } from '../../../utils/userUtils';
-import { ROLE_NAMES, isAdminLevel } from '../../../constants/roles';
+import { ROLE_NAMES, isAdminLevel, getRoleDisplayName } from '../../../constants/roles';
+import { useAuth } from '../../../contexts/AuthContext';
+import PermissionService from '../../../services/permissionService';
+import VenueStatusControl from '../../VenueStatusControl';
+import { useUserData } from '../../../contexts/UserDataContext';
+import { venueService } from '../../../services/venueService';
 
 interface MobileMenuProps {
   open: boolean;
@@ -41,6 +65,7 @@ interface MobileMenuProps {
   onLogout: () => void;
   onNavigate: (path: string) => void;
   isHomePage: boolean;
+  isAdminRoute?: boolean;
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -53,8 +78,17 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   onLogout,
   onNavigate,
   isHomePage,
+  isAdminRoute = false,
 }) => {
   const [dinoAvatar, setDinoAvatar] = useState<string>('');
+  const { userData } = useUserData();
+  const { isAdmin, isSuperAdmin } = useAuth();
+  const [venueStatus, setVenueStatus] = useState<{
+    isActive: boolean;
+    isOpen: boolean;
+    venueName: string;
+  } | null>(null);
+  const [statusLoading, setStatusLoading] = useState(false);
 
   // Load dinosaur avatar from localStorage
   useEffect(() => {
@@ -80,6 +114,86 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     };
   }, []);
 
+  // Load venue status for admin users
+  useEffect(() => {
+    const loadVenueStatus = async () => {
+      const userIsAdmin = isAdmin() || isSuperAdmin();
+      
+      console.log('🔍 MobileMenu - Checking venue status conditions:', {
+        hasUser: !!user,
+        userRole: user?.role,
+        isAdminFromContext: userIsAdmin,
+        isAdminMethod: isAdmin(),
+        isSuperAdminMethod: isSuperAdmin(),
+        venueId: userData?.venue?.id,
+        venueName: userData?.venue?.name
+      });
+
+      if (!user || !userIsAdmin) {
+        console.log('❌ MobileMenu - User not admin level, hiding venue status');
+        setVenueStatus(null);
+        return;
+      }
+
+      if (!userData?.venue?.id) {
+        console.log('⚠️ MobileMenu - No venue ID found, setting fallback status');
+        setVenueStatus({
+          isActive: false,
+          isOpen: false,
+          venueName: userData?.venue?.name || 'No Venue Selected'
+        });
+        return;
+      }
+
+      try {
+        console.log('🔄 MobileMenu - Loading venue status for ID:', userData.venue.id);
+        const venue = await venueService.getVenue(userData.venue.id);
+        console.log('✅ MobileMenu - Venue data loaded:', venue);
+        
+        if (venue) {
+          const statusData = {
+            isActive: venue.is_active || false,
+            isOpen: venue.status === 'active' || venue.is_open || false,
+            venueName: venue.name || userData.venue.name || 'Current Venue'
+          };
+          console.log('📊 MobileMenu - Setting venue status:', statusData);
+          setVenueStatus(statusData);
+        }
+      } catch (error) {
+        console.error('❌ MobileMenu - Error loading venue status:', error);
+        setVenueStatus({
+          isActive: false,
+          isOpen: false,
+          venueName: userData?.venue?.name || 'Error Loading Venue'
+        });
+      }
+    };
+
+    loadVenueStatus();
+  }, [user, userData?.venue?.id]);
+
+  // Handle venue status toggle
+  const handleToggleVenueOpen = async () => {
+    if (!userData?.venue?.id || statusLoading || !venueStatus) return;
+
+    try {
+      setStatusLoading(true);
+      const newStatus = !venueStatus.isOpen;
+      
+      await venueService.updateVenue(userData.venue.id, { 
+        status: newStatus ? 'active' : 'closed' 
+      });
+
+      setVenueStatus(prev => prev ? { ...prev, isOpen: newStatus } : null);
+      
+      console.log(`✅ MobileMenu - Venue ${newStatus ? 'opened' : 'closed'} for orders`);
+    } catch (error) {
+      console.error('❌ MobileMenu - Error toggling venue status:', error);
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
   const handleSectionClick = (sectionId: string) => {
     onSectionClick(sectionId);
     onClose();
@@ -89,6 +203,37 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     onNavigate(path);
     onClose();
   };
+
+  // Force drawer to take full height from top
+  useEffect(() => {
+    if (open) {
+      const drawerPaper = document.querySelector('.MuiDrawer-paper');
+      const modal = document.querySelector('.MuiModal-root');
+      const backdrop = document.querySelector('.MuiBackdrop-root');
+      
+      if (drawerPaper) {
+        (drawerPaper as HTMLElement).style.height = '100vh';
+        (drawerPaper as HTMLElement).style.minHeight = '100vh';
+        (drawerPaper as HTMLElement).style.maxHeight = '100vh';
+        (drawerPaper as HTMLElement).style.top = '0';
+        (drawerPaper as HTMLElement).style.bottom = '0';
+        (drawerPaper as HTMLElement).style.margin = '0';
+        (drawerPaper as HTMLElement).style.position = 'fixed';
+      }
+      
+      if (modal) {
+        (modal as HTMLElement).style.top = '0';
+        (modal as HTMLElement).style.height = '100vh';
+        (modal as HTMLElement).style.position = 'fixed';
+      }
+      
+      if (backdrop) {
+        (backdrop as HTMLElement).style.top = '0';
+        (backdrop as HTMLElement).style.height = '100vh';
+        (backdrop as HTMLElement).style.position = 'fixed';
+      }
+    }
+  }, [open]);
 
   return (
     <Drawer
@@ -101,36 +246,51 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           width: { xs: '100vw', sm: 320 },
           maxWidth: 320,
           backgroundColor: 'background.paper',
-          backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.9) 100%)',
-          backdropFilter: 'blur(20px)',
-          borderLeft: '1px solid rgba(0, 0, 0, 0.08)',
-          marginTop: { xs: '56px', sm: '64px', md: '70px' },
-          height: { xs: 'calc(100vh - 56px)', sm: 'calc(100vh - 64px)', md: 'calc(100vh - 70px)' },
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          paddingLeft: 'env(safe-area-inset-left)',
-          paddingRight: 'env(safe-area-inset-right)',
+          borderLeft: '1px solid',
+          borderColor: 'divider',
+          borderRadius: '0 !important',
+          height: '100vh !important',
+          minHeight: '100vh !important',
+          maxHeight: '100vh !important',
+          top: '0 !important',
+          bottom: '0 !important',
+          position: 'fixed !important',
+          margin: '0 !important',
+          transform: 'none !important',
+        },
+        '& .MuiModal-root': {
+          top: '0 !important',
+          height: '100vh !important',
+          position: 'fixed !important',
         },
         '& .MuiBackdrop-root': {
-          marginTop: { xs: '56px', sm: '64px', md: '70px' },
+          top: '0 !important',
+          height: '100vh !important',
+          position: 'fixed !important',
         },
       }}
     >
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ 
+        height: '100vh',
+        display: 'flex', 
+        flexDirection: 'column',
+      }}>
         {/* Header */}
         <Box
           sx={{
-            p: 3,
+            p: 2,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            minHeight: 64,
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <DinoLogo size={35} animated={false} />
+            <DinoLogo size={32} animated={false} />
             <Box>
-              <Typography variant="h6" fontWeight={700} color="text.primary">
+              <Typography variant="h6" fontWeight={600} color="text.primary">
                 Dino E-Menu
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -143,7 +303,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             sx={{
               color: 'text.secondary',
               '&:hover': {
-                backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                backgroundColor: 'action.hover',
               },
             }}
           >
@@ -153,122 +313,248 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
 
         {/* User Section */}
         {user && (
-          <Paper
-            elevation={0}
-            sx={{
-              m: 2,
-              p: 2,
-              backgroundColor: 'rgba(25, 118, 210, 0.05)',
-              border: '1px solid rgba(25, 118, 210, 0.1)',
-              borderRadius: 2,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Avatar
-                src={dinoAvatar || undefined}
-                sx={{
-                  backgroundColor: dinoAvatar ? 'transparent' : 'primary.main',
-                  width: 40,
-                  height: 40,
-                  border: dinoAvatar ? '2px solid' : 'none',
-                  borderColor: 'primary.main',
-                }}
-              >
-                {dinoAvatar ? '🦕' : <AccountCircle />}
-              </Avatar>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle1" fontWeight={600} color="text.primary">
-                  {getUserFirstName(user) || user.email}
-                </Typography>
-                <Chip
-                  label={user.role || 'User'}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                  sx={{ fontSize: '0.7rem', height: 20 }}
-                />
+          <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                backgroundColor: '#E3F2FD',
+                border: 'none',
+                borderRadius: 2,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Avatar
+                  src={dinoAvatar || undefined}
+                  sx={{
+                    backgroundColor: dinoAvatar ? 'transparent' : 'primary.main',
+                    width: 40,
+                    height: 40,
+                    border: dinoAvatar ? '2px solid' : 'none',
+                    borderColor: 'primary.main',
+                  }}
+                >
+                  {dinoAvatar ? '🦕' : <AccountCircle />}
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={600} color="text.primary">
+                    {getUserFirstName(user) || user.email}
+                  </Typography>
+                  <Chip
+                    label={(() => {
+                      // Use the same logic as UserPermissionsDashboard
+                      const getUserRoleDisplayName = (role: string | any) => {
+                        // Handle role object (from getUserWithRole)
+                        if (typeof role === 'object' && role !== null) {
+                          if (role.displayName) return String(role.displayName);
+                          if (role.name) return String(role.name);
+                        }
+                        
+                        // Handle string role
+                        if (!role || (typeof role !== 'string' && typeof role !== 'object')) {
+                          return 'Unknown Role';
+                        }
+                        
+                        if (typeof role === 'string') {
+                          const roleDefinition = PermissionService.getRoleDefinition(role);
+                          
+                          // Ensure we always return a string
+                          if (typeof roleDefinition === 'object' && roleDefinition?.displayName) {
+                            return String(roleDefinition.displayName);
+                          }
+                          
+                          return String(role);
+                        }
+                        
+                        return 'Unknown Role';
+                      };
+
+                      // First try to get backend role
+                      const backendRole = PermissionService.getBackendRole();
+                      if (backendRole && backendRole.name) {
+                        return getUserRoleDisplayName(backendRole.name);
+                      }
+
+                      // Fallback to user.role
+                      return getUserRoleDisplayName(user?.role || '');
+                    })()}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                    sx={{ fontSize: '0.7rem', height: 20 }}
+                  />
+                </Box>
               </Box>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                size="small"
-                variant="outlined"
-                startIcon={<Dashboard sx={{ fontSize: 18 }} />}
-                onClick={() => handleNavigate(isAdminLevel(user.role) ? '/admin' : '/profile')}
-                sx={{ 
-                  flex: 1, 
-                  textTransform: 'none',
-                  minHeight: 36,
-                  fontSize: '0.875rem',
-                  '&:active': {
-                    backgroundColor: 'primary.50',
-                  },
-                }}
-              >
-                Dashboard
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
-                color="error"
-                startIcon={<ExitToApp sx={{ fontSize: 18 }} />}
-                onClick={onLogout}
-                sx={{ 
-                  flex: 1, 
-                  textTransform: 'none',
-                  minHeight: 36,
-                  fontSize: '0.875rem',
-                  '&:active': {
-                    backgroundColor: 'error.50',
-                  },
-                }}
-              >
-                Logout
-              </Button>
-            </Box>
-          </Paper>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<AccountCircle sx={{ fontSize: 16 }} />}
+                  onClick={() => handleNavigate('/profile')}
+                  sx={{ 
+                    flex: 1, 
+                    textTransform: 'none',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  Profile
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  color="error"
+                  startIcon={<ExitToApp sx={{ fontSize: 16 }} />}
+                  onClick={onLogout}
+                  sx={{ 
+                    flex: 1, 
+                    textTransform: 'none',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  Logout
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
         )}
 
-        {/* Navigation Items */}
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
-          {isHomePage && (
-            <>
+        {/* Venue Status Display - Only for Admin and SuperAdmin */}
+        {user && (isAdmin() || isSuperAdmin()) && (
+          <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                backgroundColor: venueStatus?.isOpen ? 'success.50' : 'warning.50',
+                border: '1px solid',
+                borderColor: venueStatus?.isOpen ? 'success.200' : 'warning.200',
+                borderRadius: 2,
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                fontWeight={600}
+                color="text.primary"
+                sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <Store sx={{ fontSize: 16, color: venueStatus?.isOpen ? 'success.main' : 'error.main' }} />
+                Venue Status
+              </Typography>
+              
+              {venueStatus ? (
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                      {venueStatus.venueName}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {venueStatus.isOpen ? (
+                        <CheckCircle sx={{ fontSize: 16, color: 'success.main' }} />
+                      ) : (
+                        <Cancel sx={{ fontSize: 16, color: 'error.main' }} />
+                      )}
+                      <Typography 
+                        variant="caption" 
+                        fontWeight={600}
+                        color={venueStatus.isOpen ? 'success.main' : 'error.main'}
+                      >
+                        {venueStatus.isOpen ? 'OPEN' : 'CLOSED'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={venueStatus.isOpen}
+                        onChange={handleToggleVenueOpen}
+                        disabled={statusLoading || !venueStatus.isActive}
+                        color="success"
+                        size="small"
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {statusLoading && <CircularProgress size={12} />}
+                        <Box>
+                          <Typography variant="caption" fontWeight={500}>
+                            {venueStatus.isOpen ? 'Open for Orders' : 'Closed for Orders'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.65rem' }}>
+                            {venueStatus.isActive 
+                              ? (venueStatus.isOpen ? 'Customers can place orders' : 'Orders are disabled')
+                              : 'Venue is inactive'
+                            }
+                          </Typography>
+                        </Box>
+                      </Box>
+                    }
+                    sx={{ m: 0, alignItems: 'flex-start' }}
+                  />
+                </>
+              ) : (
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" fontWeight={500} color="text.primary">
+                      {userData?.venue?.name || 'Current Venue'}
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <Cancel sx={{ fontSize: 16, color: 'warning.main' }} />
+                      <Typography 
+                        variant="caption" 
+                        fontWeight={600}
+                        color="warning.main"
+                      >
+                        LOADING...
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  <Typography variant="caption" color="text.secondary">
+                    Loading venue status...
+                  </Typography>
+                </>
+              )}
+            </Paper>
+          </Box>
+        )}
+
+        {/* Navigation Items - Scrollable */}
+        <Box sx={{ 
+          flex: 1, 
+          overflowY: 'auto',
+          overflowX: 'hidden',
+        }}>
+          {/* Home Navigation */}
+          {isHomePage && homeNavItems.length > 0 && (
+            <Box sx={{ p: 2 }}>
               <Typography
                 variant="overline"
                 sx={{
-                  px: 3,
-                  py: 1,
                   color: 'text.secondary',
                   fontWeight: 600,
                   fontSize: '0.75rem',
+                  mb: 1,
+                  display: 'block',
                 }}
               >
                 Navigation
               </Typography>
-              <List sx={{ px: 2 }}>
+              <List sx={{ p: 0 }}>
                 {homeNavItems.map((item) => (
                   <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
                     <ListItemButton
                       onClick={() => handleSectionClick(item.id)}
                       sx={{
-                        borderRadius: 2,
-                        minHeight: 48,
-                        backgroundColor: activeSection === item.id ? 'rgba(25, 118, 210, 0.1)' : 'transparent',
+                        borderRadius: 1,
+                        minHeight: 44,
+                        backgroundColor: activeSection === item.id ? 'primary.100' : 'transparent',
                         '&:hover': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                          backgroundColor: 'primary.50',
                         },
-                        '&:active': {
-                          backgroundColor: 'rgba(25, 118, 210, 0.15)',
-                        },
-                        transition: 'all 0.3s ease',
                       }}
                     >
-                      <ListItemIcon
-                        sx={{
-                          color: activeSection === item.id ? 'primary.main' : 'text.secondary',
-                          minWidth: 40,
-                        }}
-                      >
+                      <ListItemIcon sx={{ color: activeSection === item.id ? 'primary.main' : 'text.secondary', minWidth: 36 }}>
                         {item.icon}
                       </ListItemIcon>
                       <ListItemText
@@ -276,106 +562,302 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                         primaryTypographyProps={{
                           fontWeight: activeSection === item.id ? 600 : 400,
                           color: activeSection === item.id ? 'primary.main' : 'text.primary',
+                          fontSize: '0.875rem',
                         }}
                       />
                     </ListItemButton>
                   </ListItem>
                 ))}
               </List>
-              <Divider sx={{ mx: 2, my: 2 }} />
-            </>
+            </Box>
           )}
 
           {/* Quick Actions */}
-          <Typography
-            variant="overline"
-            sx={{
-              px: 3,
-              py: 1,
-              color: 'text.secondary',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-            }}
-          >
-            Quick Actions
-          </Typography>
-          <List sx={{ px: 2 }}>
-            {!user && (
-              <>
-                <ListItem disablePadding sx={{ mb: 0.5 }}>
-                  <ListItemButton
-                    onClick={() => handleNavigate('/register')}
-                    sx={{
-                      borderRadius: 2,
-                      minHeight: 48,
-                      '&:hover': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                      },
-                      '&:active': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.12)',
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ color: 'text.secondary', minWidth: 40 }}>
-                      <PersonAdd />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Create Account"
-                      primaryTypographyProps={{
-                        fontWeight: 500,
-                        color: 'text.primary',
+          <Box sx={{ p: 2 }}>
+            <Typography
+              variant="overline"
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                mb: 1,
+                display: 'block',
+              }}
+            >
+              Quick Actions
+            </Typography>
+            <List sx={{ p: 0 }}>
+              {/* Admin Menu Items - Only show when logged in */}
+              {user && (
+                <>
+                  {/* Dashboard */}
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/admin')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
                       }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-                <ListItem disablePadding sx={{ mb: 0.5 }}>
-                  <ListItemButton
-                    onClick={() => handleNavigate('/login')}
-                    sx={{
-                      borderRadius: 2,
-                      minHeight: 48,
-                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                      '&:hover': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.15)',
-                      },
-                      '&:active': {
-                        backgroundColor: 'rgba(25, 118, 210, 0.2)',
-                      },
-                    }}
-                  >
-                    <ListItemIcon sx={{ color: 'primary.main', minWidth: 40 }}>
-                      <Login />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Sign In"
-                      primaryTypographyProps={{
-                        fontWeight: 600,
-                        color: 'primary.main',
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <Dashboard />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Dashboard"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+
+                  {/* Orders */}
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/admin/orders')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
                       }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              </>
-            )}
-          </List>
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <Assignment />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Orders"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+
+                  {/* Menu */}
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/admin/menu')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <Restaurant />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Menu"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+
+                  {/* Tables */}
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/admin/tables')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <TableRestaurant />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Tables"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+
+                  {/* Users */}
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/admin/users')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <People />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Users"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+
+                  {/* Permissions */}
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/admin/permissions')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <Security />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Permissions"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+
+                  {/* Settings */}
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/admin/settings')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <Settings />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Settings"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+
+                  {/* Workspace */}
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/admin/workspace')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <Business />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Workspace"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                </>
+              )}
+
+              {/* Login/Register for non-authenticated users */}
+              {!user && (
+                <>
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/login')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <Login />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Sign In"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding sx={{ mb: 0.5 }}>
+                    <ListItemButton
+                      onClick={() => handleNavigate('/register')}
+                      sx={{
+                        borderRadius: 1,
+                        minHeight: 44,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                        <PersonAdd />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Create Account"
+                        primaryTypographyProps={{
+                          fontWeight: 500,
+                          color: 'text.primary',
+                          fontSize: '0.875rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                </>
+              )}
+            </List>
+          </Box>
         </Box>
 
-        {/* Footer */}
-        <Box
-          sx={{
-            p: 3,
-            borderTop: '1px solid rgba(0, 0, 0, 0.08)',
-            backgroundColor: 'rgba(0, 0, 0, 0.02)',
-          }}
-        >
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ textAlign: 'center', display: 'block' }}
-          >
-            © 2024 Dino E-Menu. All rights reserved.
-          </Typography>
-        </Box>
+
       </Box>
     </Drawer>
   );

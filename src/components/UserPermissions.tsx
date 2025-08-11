@@ -239,7 +239,7 @@ const UserPermissions: React.FC = () => {
                   <List dense>
                     {category.permissions.map((permission: any, index: number) => (
                       <ListItem key={index} sx={{ px: 0, py: 0.5 }}>
-                        <ListItemIcon sx={{ minWidth: 32 }}>
+                        <ListItemIcon sx={{ minWidth: 48, mr: 1 }}>
                           <Chip
                             icon={getActionIcon(permission.action || '')}
                             label={permission.action || 'view'}
@@ -255,6 +255,7 @@ const UserPermissions: React.FC = () => {
                             variant: 'body2',
                             fontSize: '0.875rem'
                           }}
+                          sx={{ ml: 1 }}
                         />
                       </ListItem>
                     ))}

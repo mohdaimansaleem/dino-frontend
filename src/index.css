@@ -774,6 +774,61 @@ html, body {
   max-width: 100%;
 }
 
+/* Ensure proper mobile scrolling */
+@media (max-width: 899px) {
+  /* Enable momentum scrolling on iOS */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix mobile viewport issues */
+  html {
+    height: 100%;
+    overflow-y: auto;
+  }
+  
+  body {
+    height: 100%;
+    overflow-y: auto;
+    position: relative;
+  }
+  
+  /* Ensure main content areas are scrollable */
+  .MuiContainer-root {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Fix admin layout scrolling */
+  .admin-main-content {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    height: auto !important;
+    min-height: calc(100vh - 64px);
+  }
+  
+  /* Ensure table management and other admin pages scroll properly */
+  .container-responsive {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    max-height: none !important;
+  }
+  
+  /* Fix root container scrolling on mobile */
+  #root {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+  
+  /* Ensure all main content areas can scroll */
+  main {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* Responsive images */
 img {
   max-width: 100%;

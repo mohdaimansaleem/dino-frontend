@@ -20,7 +20,7 @@ import {
   ShoppingCart, 
   Restaurant, 
   AccountCircle, 
-
+  Menu as MenuIcon,
   Dashboard,
   TableRestaurant,
   Settings,
@@ -38,7 +38,9 @@ import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import AppHeader from './layout/AppHeader';
+import MobileMenu from './layout/MobileMenu';
 import VenueStatusControl from './VenueStatusControl';
+import DinoLogo from './DinoLogo';
 import { getUserFirstName } from '../utils/userUtils';
 
 interface LayoutProps {
@@ -320,14 +322,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      {/* Enhanced AppHeader - Hidden for customer facing pages */}
-      {!isCustomerFacingRoute && (
+      {/* Enhanced AppHeader - Hidden for customer facing pages and mobile admin routes */}
+      {!isCustomerFacingRoute && !(isAdminRoute && isMobile) && (
         <AppHeader />
       )}
 
       {/* Admin Layout with Responsive Sidebar */}
       {isAdminRoute && user ? (
-        <Box sx={{ display: 'flex', minHeight: 'calc(100vh - 70px)', position: 'relative' }}>
+        <Box sx={{ display: 'flex', minHeight: isMobile ? 'calc(100vh - 64px)' : 'calc(100vh - 70px)', position: 'relative', height: isMobile ? 'auto' : 'calc(100vh - 70px)' }}>
           {/* Desktop Sidebar Navigation - Fixed */}
           {!isMobile && (
             <Box sx={{ 
@@ -387,178 +389,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Box>
           )}
 
-          {/* Mobile Drawer Navigation */}
-          {isMobile && (
-            <Drawer
-              variant="temporary"
-              anchor="left"
-              open={mobileDrawerOpen}
-              onClose={handleMobileDrawerToggle}
-              ModalProps={{
-                keepMounted: true, // Better open performance on mobile
-              }}
-              sx={{
-                '& .MuiDrawer-paper': {
-                  width: { xs: '85vw', sm: 320 },
-                  maxWidth: 320,
-                  backgroundColor: 'background.paper',
-                  pt: { xs: 1, sm: 2 },
-                  paddingTop: 'env(safe-area-inset-top)',
-                  paddingBottom: 'env(safe-area-inset-bottom)',
-                  paddingLeft: 'env(safe-area-inset-left)',
-                  paddingRight: 'env(safe-area-inset-right)',
-                },
-              }}
-            >
-              <Box sx={{ p: 2 }}>
-                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
-                  Control Panel
-                </Typography>
-                
-                {/* Venue Status Control */}
-                <VenueStatusControl />
-                
-                <Divider sx={{ my: 2 }} />
-                
-                <List sx={{ p: 0 }}>
-                  {/* Render admin navigation items as list items for mobile */}
-                  {(() => {
-                    // Define all possible admin navigation items with their required permissions
-                    const allAdminNavItems = [
-                      { 
-                        label: 'Dashboard', 
-                        path: '/admin', 
-                        icon: <Dashboard />, 
-                        permission: PERMISSIONS.DASHBOARD_VIEW,
-                        roles: ['admin'] 
-                      },
-                      { 
-                        label: 'Orders', 
-                        path: '/admin/orders', 
-                        icon: <Assignment />, 
-                        permission: PERMISSIONS.ORDERS_VIEW,
-                        roles: ['admin', 'operator'] 
-                      },
-                      { 
-                        label: 'Menu', 
-                        path: '/admin/menu', 
-                        icon: <Restaurant />, 
-                        permission: PERMISSIONS.MENU_VIEW,
-                        roles: ['admin'] 
-                      },
-                      { 
-                        label: 'Tables', 
-                        path: '/admin/tables', 
-                        icon: <TableRestaurant />, 
-                        permission: PERMISSIONS.TABLES_VIEW,
-                        roles: ['admin'] 
-                      },
-                      { 
-                        label: 'Users', 
-                        path: '/admin/users', 
-                        icon: <People />, 
-                        permission: PERMISSIONS.USERS_VIEW,
-                        roles: ['admin', 'superadmin'] 
-                      },
-                      { 
-                        label: 'Permissions', 
-                        path: '/admin/permissions', 
-                        icon: <Security />, 
-                        permission: PERMISSIONS.USERS_VIEW,
-                        roles: ['admin', 'superadmin'] 
-                      },
-                      { 
-                        label: 'Settings', 
-                        path: '/admin/settings', 
-                        icon: <Settings />, 
-                        permission: PERMISSIONS.SETTINGS_VIEW,
-                        roles: ['admin'] 
-                      },
-                      { 
-                        label: 'Workspace', 
-                        path: '/admin/workspace', 
-                        icon: <Business />, 
-                        permission: PERMISSIONS.WORKSPACE_VIEW,
-                        roles: ['superadmin'] 
-                      },
-                    ];
 
-                    // Filter navigation items based on user permissions and roles
-                    const adminNavItems = allAdminNavItems.filter(item => {
-                      const backendRole = PermissionService.getBackendRole();
-                      const userRole = backendRole?.name || user.role || (user as any).role || 'unknown';
-                      
-                      if (userRole === 'superadmin') {
-                        return true;
-                      }
-                      
-                      if (item.roles && item.roles.length > 0) {
-                        const hasRequiredRole = item.roles.includes(userRole as string);
-                        if (!hasRequiredRole) {
-                          return false;
-                        }
-                      }
-                      
-                      const hasPermissionResult = hasPermission(item.permission);
-                      return hasPermissionResult;
-                    });
-
-                    return adminNavItems.map((item) => (
-                      <ListItem key={item.label} disablePadding>
-                        <ListItemButton
-                          onClick={() => {
-                            navigate(item.path);
-                            setMobileDrawerOpen(false);
-                          }}
-                          selected={location.pathname === item.path}
-                          sx={{
-                            borderRadius: 2,
-                            mb: 0.5,
-                            '&.Mui-selected': {
-                              backgroundColor: 'primary.50',
-                              color: 'primary.main',
-                              '& .MuiListItemIcon-root': {
-                                color: 'primary.main',
-                              },
-                            },
-                            '&:hover': {
-                              backgroundColor: 'action.hover',
-                            },
-                          }}
-                        >
-                          <ListItemIcon sx={{ minWidth: 40 }}>
-                            {item.icon}
-                          </ListItemIcon>
-                          <ListItemText 
-                            primary={item.label}
-                            primaryTypographyProps={{
-                              fontWeight: location.pathname === item.path ? 600 : 400,
-                            }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ));
-                  })()}
-                </List>
-              </Box>
-            </Drawer>
-          )}
 
           {/* Main Content */}
           <Box
             component="main"
+            className={isMobile ? "admin-main-content" : ""}
             sx={{
               flex: 1,
               backgroundColor: 'background.default',
-              minHeight: 'calc(100vh - 70px)',
+              minHeight: isMobile ? 'calc(100vh - 64px)' : 'calc(100vh - 70px)',
+              height: isMobile ? 'auto' : 'calc(100vh - 70px)',
               marginLeft: isMobile ? 0 : (isTablet ? '200px' : '240px'),
-              marginTop: '70px',
+              marginTop: isMobile ? 0 : '70px',
               display: 'flex',
               flexDirection: 'column',
               position: 'relative',
+              overflow: 'auto', // Allow scrolling on main container
             }}
           >
-            {/* Mobile Header for Admin */}
+            {/* Mobile Header for Admin - Now uses MobileMenu */}
             {isMobile && (
               <Box
                 sx={{
@@ -573,8 +423,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   top: 0,
                   zIndex: 1000,
                   flexShrink: 0,
+                  minHeight: '64px', // Fixed height
+                  maxHeight: '64px',
                 }}
               >
+                {/* Logo on the left */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <DinoLogo size={30} animated={true} />
+                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                    {isOperator() ? 'Dino Operator' : 'Dino Admin'}
+                  </Typography>
+                </Box>
+                
+                {/* Hamburger menu on the right */}
                 <IconButton
                   onClick={handleMobileDrawerToggle}
                   sx={{
@@ -589,12 +450,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     },
                   }}
                 >
-                  <Dashboard sx={{ fontSize: 24 }} />
+                  <MenuIcon sx={{ fontSize: 24 }} />
                 </IconButton>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  {isOperator() ? 'Dino Operator' : 'Dino Admin'}
-                </Typography>
-                <Box sx={{ width: 48 }} /> {/* Spacer for centering */}
               </Box>
             )}
 
@@ -605,19 +462,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   p: { xs: 2, sm: 3, md: 4 },
                   pt: { xs: 3, sm: 4, md: 5 },
                   overflow: 'auto',
-                  height: '100%',
+                  overflowY: 'scroll', // Force vertical scrolling
+                  height: isMobile ? 'auto' : '100%', // Auto height for mobile to allow natural scrolling
+                  minHeight: 0, // Allow flex shrinking
+                  WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
+                  maxHeight: isMobile ? 'none' : '100%', // Remove height restriction on mobile
                   '&::-webkit-scrollbar': {
-                    width: '8px',
+                    width: '6px',
                   },
                   '&::-webkit-scrollbar-track': {
-                    backgroundColor: 'rgba(0,0,0,0.1)',
-                    borderRadius: '4px',
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    borderRadius: '3px',
                   },
                   '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: 'rgba(0,0,0,0.3)',
-                    borderRadius: '4px',
+                    backgroundColor: 'rgba(0,0,0,0.2)',
+                    borderRadius: '3px',
                     '&:hover': {
-                      backgroundColor: 'rgba(0,0,0,0.5)',
+                      backgroundColor: 'rgba(0,0,0,0.4)',
                     },
                   },
                 }}
@@ -662,6 +523,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Typography>
             </Box>
           </Box>
+
+          {/* Mobile Menu for Admin Routes */}
+          {isMobile && (
+            <MobileMenu
+              open={mobileDrawerOpen}
+              onClose={() => setMobileDrawerOpen(false)}
+              homeNavItems={[]}
+              activeSection=""
+              onSectionClick={() => {}}
+              user={user}
+              onLogout={handleLogout}
+              onNavigate={(path) => {
+                navigate(path);
+                setMobileDrawerOpen(false);
+              }}
+              isHomePage={false}
+              isAdminRoute={true}
+            />
+          )}
         </Box>
       ) : (
         /* Non-admin routes */
@@ -677,7 +557,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             scrollBehavior: 'smooth',
             width: '100%',
             maxWidth: '100%',
-            overflow: 'hidden',
+            overflow: 'auto',
+            WebkitOverflowScrolling: 'touch', // Enable momentum scrolling on iOS
           }}
         >
           <Fade in timeout={300}>

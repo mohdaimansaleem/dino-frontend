@@ -474,7 +474,7 @@ const VenueSettings: React.FC = () => {
                 mb: { xs: 3, md: 4 }
               }}
             >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, mb: 2, flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, md: 0 } }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Avatar
                   sx={{ 
@@ -499,38 +499,35 @@ const VenueSettings: React.FC = () => {
                   </Typography>
                 </Box>
               </Box>
-              <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column', alignItems: 'flex-end' }}>
-                <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'flex-end' }, width: { xs: '100%', md: 'auto' } }}>
+                <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', md: 'auto' } }}>
                   <Tooltip title={venueActive ? 'Deactivate venue operations' : 'Activate venue operations'}>
                     <Button
                       variant={venueActive ? "outlined" : "contained"}
                       color={venueActive ? "error" : "success"}
                       onClick={handleToggleVenueStatus}
                       startIcon={<PowerSettingsNew />}
+                      size={isMobile ? "small" : "medium"}
                       sx={{
-                        textTransform: 'none'
+                        textTransform: 'none',
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        px: { xs: 1.5, sm: 2 },
+                        py: { xs: 0.5, sm: 1 },
+                        minWidth: { xs: 'auto', sm: '140px' },
+                        width: { xs: 'auto', md: 'auto' }
                       }}
                     >
-                      {venueActive ? 'Deactivate Venue' : 'Activate Venue'}
+                      {isMobile ? (venueActive ? 'Deactivate' : 'Activate') : (venueActive ? 'Deactivate Venue' : 'Activate Venue')}
                     </Button>
                   </Tooltip>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography variant="body2" color="text.secondary" fontWeight="500">
-                    Current Status:
-                  </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
                   <Chip 
                     icon={venueActive ? <CheckCircle /> : <Cancel />}
                     label={venueActive ? 'Active' : 'Inactive'} 
                     color={venueActive ? 'success' : 'error'}
                     size="small"
                   />
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AccessTime sx={{ fontSize: '1rem', color: 'text.secondary' }} />
-                  <Typography variant="caption" color="text.secondary">
-                    Last updated: {new Date().toLocaleDateString()}
-                  </Typography>
                 </Box>
               </Box>
             </Box>
@@ -602,16 +599,6 @@ const VenueSettings: React.FC = () => {
               <Tab 
                 icon={<Restaurant fontSize={isMobile ? "small" : "medium"} />} 
                 label="Basic Info" 
-                iconPosition={isMobile ? "start" : "top"} 
-              />
-              <Tab 
-                icon={<Schedule fontSize={isMobile ? "small" : "medium"} />} 
-                label="Hours" 
-                iconPosition={isMobile ? "start" : "top"} 
-              />
-              <Tab 
-                icon={<Palette fontSize={isMobile ? "small" : "medium"} />} 
-                label="Theme" 
                 iconPosition={isMobile ? "start" : "top"} 
               />
               <Tab 
@@ -737,185 +724,6 @@ const VenueSettings: React.FC = () => {
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
-                  Operating Hours
-                </Typography>
-                <Grid container spacing={3}>
-                  {days.map((day) => (
-                    <Grid item xs={12} key={day}>
-                      <Paper elevation={1} sx={{ p: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-                          <Typography 
-                            variant="subtitle1" 
-                            sx={{ 
-                              minWidth: 100, 
-                              textTransform: 'capitalize'
-                            }}
-                          >
-                            {day}
-                          </Typography>
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={!settings.operatingHours[day].closed}
-                                onChange={(e) => handleSettingChange('operatingHours', day, {
-                                  ...settings.operatingHours[day],
-                                  closed: !e.target.checked
-                                })}
-                                color="success"
-                              />
-                            }
-                            label={
-                              <Typography variant="body1" fontWeight="500">
-                                {settings.operatingHours[day].closed ? 'Closed' : 'Open'}
-                              </Typography>
-                            }
-                          />
-                          {!settings.operatingHours[day].closed && (
-                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                              <TextField
-                                type="time"
-                                label="Opening Time"
-                                value={settings.operatingHours[day].open}
-                                onChange={(e) => handleSettingChange('operatingHours', day, {
-                                  ...settings.operatingHours[day],
-                                  open: e.target.value
-                                })}
-                                size="small"
-                              />
-                              <Typography variant="body2" color="text.secondary">to</Typography>
-                              <TextField
-                                type="time"
-                                label="Closing Time"
-                                value={settings.operatingHours[day].close}
-                                onChange={(e) => handleSettingChange('operatingHours', day, {
-                                  ...settings.operatingHours[day],
-                                  close: e.target.value
-                                })}
-                                size="small"
-                              />
-                            </Box>
-                          )}
-                        </Box>
-                      </Paper>
-                    </Grid>
-                  ))}
-                </Grid>
-              </CardContent>
-            </Card>
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={2}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Theme & Appearance
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Primary Color
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                      {colorOptions.map((color) => (
-                        <Box
-                          key={color}
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            backgroundColor: color,
-                            borderRadius: 1,
-                            cursor: 'pointer',
-                            border: settings.theme.primaryColor === color ? '3px solid #000' : '1px solid rgba(0, 0, 0, 0.2)',
-                            position: 'relative'
-                          }}
-                          onClick={() => handleSettingChange('theme', 'primaryColor', color)}
-                        >
-                          {settings.theme.primaryColor === color && (
-                            <CheckCircle 
-                              sx={{ 
-                                position: 'absolute',
-                                top: '50%',
-                                left: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                color: 'white',
-                                fontSize: '1.2rem'
-                              }} 
-                            />
-                          )}
-                        </Box>
-                      ))}
-                    </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Selected: {settings.theme.primaryColor}
-                    </Typography>
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Logo Settings
-                    </Typography>
-                    <FormControl fullWidth sx={{ mb: 2 }}>
-                      <InputLabel>Logo Position</InputLabel>
-                      <Select
-                        value={settings.theme.logoPosition}
-                        onChange={(e) => handleSettingChange('theme', 'logoPosition', e.target.value)}
-                        label="Logo Position"
-                      >
-                        <MenuItem value="left">Left Aligned</MenuItem>
-                        <MenuItem value="center">Center Aligned</MenuItem>
-                        <MenuItem value="right">Right Aligned</MenuItem>
-                      </Select>
-                    </FormControl>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={settings.theme.showLogo}
-                          onChange={(e) => handleSettingChange('theme', 'showLogo', e.target.checked)}
-                          color="primary"
-                        />
-                      }
-                      label="Show Logo in Menu"
-                    />
-                  </Grid>
-                  
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      Preview
-                    </Typography>
-                    <Box 
-                      sx={{ 
-                        p: 2, 
-                        backgroundColor: settings.theme.primaryColor,
-                        color: 'white',
-                        textAlign: settings.theme.logoPosition,
-                        minHeight: 100,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'center',
-                        alignItems: settings.theme.logoPosition === 'center' ? 'center' : 
-                                   settings.theme.logoPosition === 'right' ? 'flex-end' : 'flex-start'
-                      }}
-                    >
-                      {settings.theme.showLogo && (
-                        <Typography variant="h5" sx={{ mb: 1 }}>🦕</Typography>
-                      )}
-                      <Typography variant="h6">
-                        {settings.name || 'Your Venue'}
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Menu Preview
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={3}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
                   Features & Capabilities
                 </Typography>
                 <Grid container spacing={2}>
@@ -988,316 +796,234 @@ const VenueSettings: React.FC = () => {
             </Card>
           </TabPanel>
 
-          <TabPanel value={tabValue} index={4}>
-            <Fade in timeout={600}>
-              <Card sx={{ 
-                borderRadius: 3, 
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                border: '1px solid rgba(0, 0, 0, 0.05)',
-                overflow: 'hidden'
-              }}>
-                <Box sx={{ 
-                  p: 3, 
-                  background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                  color: 'white'
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', width: 40, height: 40 }}>
-                      <Payment />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight="700">
-                        Payment Methods
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Configure accepted payment options
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <CardContent sx={{ p: 4 }}>
-                  <Grid container spacing={3}>
-                    {Object.entries(settings.paymentMethods).map(([key, value], index) => (
-                      <Grid item xs={12} sm={6} key={key}>
-                        <Zoom in timeout={400 + index * 100}>
-                          <Paper 
-                            elevation={value ? 3 : 1}
-                            sx={{ 
-                              p: 3, 
-                              borderRadius: 2,
-                              border: value ? '2px solid' : '1px solid rgba(0, 0, 0, 0.05)',
-                              borderColor: value ? 'success.main' : 'transparent',
-                              background: value ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(139, 195, 74, 0.05) 100%)' : 'white',
-                              transition: 'all 0.3s ease-in-out',
-                              '&:hover': {
-                                transform: 'translateY(-2px)',
-                                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.1)'
-                              }
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Avatar 
-                                  sx={{ 
-                                    bgcolor: value ? 'success.main' : 'grey.200',
-                                    color: value ? 'white' : 'grey.600',
-                                    width: 40,
-                                    height: 40
-                                  }}
-                                >
-                                  <Payment />
-                                </Avatar>
-                                <Box>
-                                  <Typography variant="h6" fontWeight="600">
-                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                                  </Typography>
-                                  <Typography variant="body2" color="text.secondary">
-                                    Accept {key.toLowerCase()} payments
-                                  </Typography>
-                                </Box>
-                              </Box>
-                              <Switch
-                                checked={value}
-                                onChange={(e) => handleSettingChange('paymentMethods', key, e.target.checked)}
-                                color="success"
-                              />
-                            </Box>
-                          </Paper>
-                        </Zoom>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Fade>
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={5}>
-            <Fade in timeout={600}>
-              <Card sx={{ 
-                borderRadius: 3, 
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                border: '1px solid rgba(0, 0, 0, 0.05)',
-                overflow: 'hidden'
-              }}>
-                <Box sx={{ 
-                  p: 3, 
-                  background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-                  color: 'text.primary'
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
-                      <Notifications />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight="700">
-                        Notification Settings
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Manage your notification preferences
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <CardContent sx={{ p: 4 }}>
-                  <Grid container spacing={3}>
-                    {Object.entries(settings.notifications).map(([key, value], index) => (
-                      <Grid item xs={12} key={key}>
-                        <Slide direction="left" in timeout={300 + index * 100}>
-                          <Paper 
-                            elevation={1}
-                            sx={{ 
-                              p: 3, 
-                              borderRadius: 2,
-                              border: '1px solid rgba(0, 0, 0, 0.05)',
-                              transition: 'all 0.2s ease-in-out',
-                              '&:hover': {
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                transform: 'translateX(4px)'
-                              }
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                <Avatar 
-                                  sx={{ 
-                                    bgcolor: value ? 'info.main' : 'grey.200',
-                                    color: value ? 'white' : 'grey.600',
-                                    width: 40,
-                                    height: 40
-                                  }}
-                                >
-                                  <Notifications />
-                                </Avatar>
-                                <Box>
-                                  <Typography variant="h6" fontWeight="600">
-                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                                  </Typography>
-                                  <Typography variant="body2" color="text.secondary">
-                                    {key === 'orderAlerts' ? 'Get notified when new orders are placed' :
-                                     key === 'lowStock' ? 'Receive alerts when inventory is running low' :
-                                     key === 'dailyReports' ? 'Daily summary of sales and performance' :
-                                     'Notifications about customer feedback and reviews'}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                {value && (
-                                  <Chip 
-                                    icon={<CheckCircle />}
-                                    label="Enabled" 
-                                    color="info" 
-                                    size="small"
-                                    sx={{ fontWeight: 600 }}
-                                  />
-                                )}
-                                <Switch
-                                  checked={value}
-                                  onChange={(e) => handleSettingChange('notifications', key, e.target.checked)}
-                                  color="info"
+          <TabPanel value={tabValue} index={2}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Payment Methods
+                </Typography>
+                <Grid container spacing={2}>
+                  {Object.entries(settings.paymentMethods).map(([key, value]) => (
+                    <Grid item xs={12} md={6} key={key}>
+                      <Paper 
+                        elevation={1}
+                        sx={{ 
+                          p: 2,
+                          border: value ? '1px solid' : 'none',
+                          borderColor: value ? 'primary.main' : 'transparent'
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1 }}>
+                            <Avatar 
+                              sx={{ 
+                                bgcolor: value ? 'primary.main' : 'grey.200',
+                                color: value ? 'white' : 'grey.600',
+                                width: 48,
+                                height: 48
+                              }}
+                            >
+                              <Payment />
+                            </Avatar>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="h6" fontWeight="600" gutterBottom>
+                                {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Accept {key.toLowerCase()} payments
+                              </Typography>
+                              {value && (
+                                <Chip 
+                                  icon={<CheckCircle />}
+                                  label="Active" 
+                                  color="success" 
+                                  size="small"
+                                  sx={{ fontWeight: 600 }}
                                 />
-                              </Box>
+                              )}
                             </Box>
-                          </Paper>
-                        </Slide>
-                      </Grid>
-                    ))}
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Fade>
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={6}>
-            <Fade in timeout={600}>
-              <Card sx={{ 
-                borderRadius: 3, 
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                border: '1px solid rgba(0, 0, 0, 0.05)',
-                overflow: 'hidden'
-              }}>
-                <Box sx={{ 
-                  p: 3, 
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white'
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Avatar sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)', width: 40, height: 40 }}>
-                      <Security />
-                    </Avatar>
-                    <Box>
-                      <Typography variant="h6" fontWeight="700">
-                        Advanced Settings
-                      </Typography>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Fine-tune your venue operations
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <CardContent sx={{ p: 4 }}>
-                  <Grid container spacing={4}>
-                    <Grid item xs={12}>
-                      <Paper elevation={1} sx={{ p: 3, borderRadius: 2, border: '1px solid rgba(0, 0, 0, 0.05)' }}>
-                        <Typography variant="h6" gutterBottom fontWeight="600" sx={{ mb: 3 }}>
-                          Order Management
-                        </Typography>
-                        <Grid container spacing={3}>
-                          <Grid item xs={12}>
-                            <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'grey.50' }}>
-                              <FormControlLabel
-                                control={
-                                  <Switch
-                                    checked={settings.advanced.autoAcceptOrders}
-                                    onChange={(e) => handleSettingChange('advanced', 'autoAcceptOrders', e.target.checked)}
-                                    color="primary"
-                                  />
-                                }
-                                label={
-                                  <Box>
-                                    <Typography variant="body1" fontWeight="600">
-                                      Auto Accept Orders
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                      Automatically accept incoming orders without manual confirmation
-                                    </Typography>
-                                  </Box>
-                                }
-                              />
-                            </Box>
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              label="Order Timeout (minutes)"
-                              type="number"
-                              value={settings.advanced.orderTimeout}
-                              onChange={(e) => handleSettingChange('advanced', 'orderTimeout', parseInt(e.target.value))}
-                              InputProps={{
-                                startAdornment: <AccessTime sx={{ mr: 1, color: 'text.secondary' }} />
-                              }}
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2,
-                                }
-                              }}
-                              helperText="Time before order expires if not confirmed"
-                            />
-                          </Grid>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              label="Max Orders Per Table"
-                              type="number"
-                              value={settings.advanced.maxOrdersPerTable}
-                              onChange={(e) => handleSettingChange('advanced', 'maxOrdersPerTable', parseInt(e.target.value))}
-                              InputProps={{
-                                startAdornment: <Restaurant sx={{ mr: 1, color: 'text.secondary' }} />
-                              }}
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2,
-                                }
-                              }}
-                              helperText="Maximum simultaneous orders per table"
-                            />
-                          </Grid>
-                        </Grid>
+                          </Box>
+                          <Switch
+                            checked={value}
+                            onChange={(e) => handleSettingChange('paymentMethods', key, e.target.checked)}
+                            color="primary"
+                            sx={{
+                              '& .MuiSwitch-thumb': {
+                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                              }
+                            }}
+                          />
+                        </Box>
                       </Paper>
                     </Grid>
-                    
-                    <Grid item xs={12}>
-                      <Paper elevation={1} sx={{ p: 3, borderRadius: 2, border: '1px solid rgba(0, 0, 0, 0.05)' }}>
-                        <Typography variant="h6" gutterBottom fontWeight="600" sx={{ mb: 3 }}>
-                          Customer Requirements
-                        </Typography>
-                        <Box sx={{ p: 2, borderRadius: 2, backgroundColor: 'grey.50' }}>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={3}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Notification Settings
+                </Typography>
+                <Grid container spacing={2}>
+                  {Object.entries(settings.notifications).map(([key, value]) => (
+                    <Grid item xs={12} key={key}>
+                      <Paper 
+                        elevation={1}
+                        sx={{ 
+                          p: 2,
+                          border: value ? '1px solid' : 'none',
+                          borderColor: value ? 'primary.main' : 'transparent'
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1 }}>
+                            <Avatar 
+                              sx={{ 
+                                bgcolor: value ? 'primary.main' : 'grey.200',
+                                color: value ? 'white' : 'grey.600',
+                                width: 48,
+                                height: 48
+                              }}
+                            >
+                              <Notifications />
+                            </Avatar>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="h6" fontWeight="600" gutterBottom>
+                                {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                {key === 'orderAlerts' ? 'Get notified when new orders are placed' :
+                                 key === 'lowStock' ? 'Receive alerts when inventory is running low' :
+                                 key === 'dailyReports' ? 'Daily summary of sales and performance' :
+                                 'Notifications about customer feedback and reviews'}
+                              </Typography>
+                              {value && (
+                                <Chip 
+                                  icon={<CheckCircle />}
+                                  label="Active" 
+                                  color="success" 
+                                  size="small"
+                                  sx={{ fontWeight: 600 }}
+                                />
+                              )}
+                            </Box>
+                          </Box>
+                          <Switch
+                            checked={value}
+                            onChange={(e) => handleSettingChange('notifications', key, e.target.checked)}
+                            color="primary"
+                            sx={{
+                              '& .MuiSwitch-thumb': {
+                                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+                              }
+                            }}
+                          />
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
+              </CardContent>
+            </Card>
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Advanced Settings
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" gutterBottom fontWeight="600">
+                      Order Management
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12}>
+                        <Paper elevation={1} sx={{ p: 2 }}>
                           <FormControlLabel
                             control={
                               <Switch
-                                checked={settings.advanced.requireCustomerInfo}
-                                onChange={(e) => handleSettingChange('advanced', 'requireCustomerInfo', e.target.checked)}
-                                color="secondary"
+                                checked={settings.advanced.autoAcceptOrders}
+                                onChange={(e) => handleSettingChange('advanced', 'autoAcceptOrders', e.target.checked)}
+                                color="primary"
                               />
                             }
                             label={
                               <Box>
                                 <Typography variant="body1" fontWeight="600">
-                                  Require Customer Information
+                                  Auto Accept Orders
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
-                                  Mandate customer details (name, phone) for all orders
+                                  Automatically accept incoming orders without manual confirmation
                                 </Typography>
                               </Box>
                             }
                           />
-                        </Box>
-                      </Paper>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Order Timeout (minutes)"
+                          type="number"
+                          value={settings.advanced.orderTimeout}
+                          onChange={(e) => handleSettingChange('advanced', 'orderTimeout', parseInt(e.target.value))}
+                          InputProps={{
+                            startAdornment: <AccessTime sx={{ mr: 1, color: 'text.secondary' }} />
+                          }}
+                          helperText="Time before order expires if not confirmed"
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <TextField
+                          fullWidth
+                          label="Max Orders Per Table"
+                          type="number"
+                          value={settings.advanced.maxOrdersPerTable}
+                          onChange={(e) => handleSettingChange('advanced', 'maxOrdersPerTable', parseInt(e.target.value))}
+                          InputProps={{
+                            startAdornment: <Restaurant sx={{ mr: 1, color: 'text.secondary' }} />
+                          }}
+                          helperText="Maximum simultaneous orders per table"
+                        />
+                      </Grid>
                     </Grid>
                   </Grid>
-                </CardContent>
-              </Card>
-            </Fade>
+                  
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" gutterBottom fontWeight="600">
+                      Customer Requirements
+                    </Typography>
+                    <Paper elevation={1} sx={{ p: 2 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={settings.advanced.requireCustomerInfo}
+                            onChange={(e) => handleSettingChange('advanced', 'requireCustomerInfo', e.target.checked)}
+                            color="primary"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body1" fontWeight="600">
+                              Require Customer Information
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Mandate customer details (name, phone) for all orders
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
           </TabPanel>
           </Paper>
 

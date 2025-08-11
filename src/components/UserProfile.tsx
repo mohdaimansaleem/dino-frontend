@@ -360,41 +360,85 @@ const UserProfile: React.FC = () => {
           </Typography>
 
           <List>
-            <ListItem>
-              <ListItemIcon>
-                <Security />
-              </ListItemIcon>
-              <ListItemText
-                primary="Password"
-                secondary="Change your account password"
-              />
-              <ListItemSecondaryAction>
+            <ListItem 
+              sx={{ 
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                gap: { xs: 2, sm: 0 },
+                py: 2
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <Security />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Password"
+                  secondary="Change your account password"
+                  sx={{ 
+                    pr: { xs: 0, sm: 2 },
+                    '& .MuiListItemText-primary': {
+                      fontSize: { xs: '1rem', sm: '1rem' }
+                    },
+                    '& .MuiListItemText-secondary': {
+                      fontSize: { xs: '0.875rem', sm: '0.875rem' }
+                    }
+                  }}
+                />
+              </Box>
+              <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
                 <Button
                   variant="outlined"
                   onClick={() => setPasswordDialogOpen(true)}
+                  size="small"
+                  sx={{ 
+                    minWidth: { xs: '100%', sm: 'auto' },
+                    whiteSpace: 'nowrap'
+                  }}
                 >
                   Change Password
                 </Button>
-              </ListItemSecondaryAction>
+              </Box>
             </ListItem>
             
             <Divider />
             
-            <ListItem>
-              <ListItemIcon>
-                <Person />
-              </ListItemIcon>
-              <ListItemText
-                primary="Account Status"
-                secondary={user?.isVerified ? "Verified account" : "Unverified account"}
-              />
-              <ListItemSecondaryAction>
+            <ListItem 
+              sx={{ 
+                flexDirection: { xs: 'column', sm: 'row' },
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                gap: { xs: 2, sm: 0 },
+                py: 2
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                <ListItemIcon sx={{ minWidth: 40 }}>
+                  <Person />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Account Status"
+                  secondary={user?.isVerified ? "Verified account" : "Unverified account"}
+                  sx={{ 
+                    pr: { xs: 0, sm: 2 },
+                    '& .MuiListItemText-primary': {
+                      fontSize: { xs: '1rem', sm: '1rem' }
+                    },
+                    '& .MuiListItemText-secondary': {
+                      fontSize: { xs: '0.875rem', sm: '0.875rem' }
+                    }
+                  }}
+                />
+              </Box>
+              <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
                 <Chip
                   label={user?.isVerified ? "Verified" : "Unverified"}
                   color={user?.isVerified ? "success" : "warning"}
                   size="small"
+                  sx={{ 
+                    minWidth: { xs: '100px', sm: 'auto' }
+                  }}
                 />
-              </ListItemSecondaryAction>
+              </Box>
             </ListItem>
           </List>
         </TabPanel>
