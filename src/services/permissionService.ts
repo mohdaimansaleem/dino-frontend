@@ -100,7 +100,6 @@ class PermissionService {
     
     // If user is superadmin, grant all permissions
     if (backendRole && backendRole.name === ROLE_NAMES.SUPERADMIN) {
-      console.log('✅ Granting permission due to superadmin role:', permission);
       return true;
     }
     
@@ -230,11 +229,8 @@ class PermissionService {
 
     // First check backend role if available
     const backendRole = this.getBackendRole();
-    console.log('🔍 hasRole check:', { roleName, backendRole, user: user?.email });
     if (backendRole) {
-      const hasRole = backendRole.name === roleName;
-      console.log('Backend role check result:', hasRole);
-      return hasRole;
+      return backendRole.name === roleName;
     }
 
     // Fallback to static role

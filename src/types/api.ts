@@ -55,7 +55,7 @@ export interface UserProfile {
   venue_id?: string;
   // Legacy camelCase properties for compatibility
   workspaceId?: string;
-  cafeId?: string;
+  venueId?: string;
   is_active: boolean;
   isActive?: boolean;
   isVerified?: boolean;
@@ -100,7 +100,7 @@ export interface WorkspaceRegistration {
   venue_location: VenueLocation;
   venue_phone?: string;
   venue_email?: string;
-  venue_website?: string;
+
   price_range: PriceRange;
   venue_type?: string;
   owner_email: string;
@@ -167,18 +167,28 @@ export interface Venue {
   location: VenueLocation;
   phone?: string;
   email?: string;
-  website?: string;
+
   cuisine_types: string[];
   price_range: PriceRange;
   rating?: number;
   total_reviews?: number;
   is_active: boolean;
+  is_open: boolean; // Required for venue status
   status?: string;
   workspace_id: string;
+  owner_id?: string; // Added for compatibility
   operating_hours?: OperatingHours[];
   subscription_status?: string;
   created_at: string;
   updated_at?: string;
+  createdAt?: string; // Legacy compatibility
+  updatedAt?: string; // Legacy compatibility
+  // Legacy compatibility fields
+  address?: string; // For backward compatibility
+  ownerId?: string; // For backward compatibility
+  workspaceId?: string; // For backward compatibility
+  isActive?: boolean; // For backward compatibility
+  isOpen?: boolean; // For backward compatibility
 }
 
 export interface VenueLocation {
@@ -186,7 +196,7 @@ export interface VenueLocation {
   city: string;
   state: string;
   country: string;
-  postal_code: string;
+  postal_code?: string;
   landmark?: string;
   latitude?: number;
   longitude?: number;
@@ -208,11 +218,12 @@ export interface VenueCreate {
   location: VenueLocation;
   phone?: string;
   email?: string;
-  website?: string;
+
   cuisine_types: string[];
   price_range: PriceRange;
   operating_hours?: OperatingHours[];
   workspace_id: string;
+  is_open?: boolean; // Optional for creation, defaults to false
 }
 
 export interface VenueUpdate {
@@ -221,10 +232,11 @@ export interface VenueUpdate {
   location?: Partial<VenueLocation>;
   phone?: string;
   email?: string;
-  website?: string;
+
   cuisine_types?: string[];
   price_range?: PriceRange;
   is_active?: boolean;
+  is_open?: boolean;
   status?: string;
 }
 
@@ -332,7 +344,7 @@ export interface MenuItemUpdate {
 
 export interface Table {
   id: string;
-  table_number: number;
+  table_number: string;
   capacity: number;
   location?: string;
   venue_id: string;
@@ -346,14 +358,14 @@ export interface Table {
 export type TableStatus = 'available' | 'booked' | 'occupied' | 'maintenance' | 'out_of_service';
 
 export interface TableCreate {
-  table_number: number;
+  table_number: string;
   capacity: number;
   location?: string;
   venue_id: string;
 }
 
 export interface TableUpdate {
-  table_number?: number;
+  table_number?: string;
   capacity?: number;
   location?: string;
   table_status?: TableStatus;
@@ -365,13 +377,13 @@ export interface TableQRCode {
   qr_code: string;
   qr_code_url?: string;
   venue_id: string;
-  table_number: number;
+  table_number: string;
 }
 
 export interface QRCodeVerification {
   table_id: string;
   venue_id: string;
-  table_number: number;
+  table_number: string;
   is_valid: boolean;
 }
 
@@ -484,7 +496,7 @@ export interface OrderReceipt {
   total_amount: number;
   payment_status: PaymentStatus;
   order_date: string;
-  table_number?: number;
+  table_number?: string;
 }
 
 // =============================================================================

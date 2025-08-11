@@ -1,4 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
+import { useUserData } from '../contexts/UserDataContext';
+import { validateVenueAccess, requiresVenueAssignment, debugVenueAssignment } from '../utils/venueUtils';
 
 interface VenueCheckResult {
   hasVenueAssigned: boolean;
@@ -8,24 +10,24 @@ interface VenueCheckResult {
 }
 
 export const useVenueCheck = (): VenueCheckResult => {
-  const { user, isSuperAdmin } = useAuth();
+  const { isSuperAdmin, user } = useAuth();
+  const { userData } = useUserData();
   
-  // Get venue ID from user data
-  const venueId = user?.venue_id || user?.cafeId || null;
+  // Use centralized venue validation
+  const validation = validateVenueAccess(userData, user);
   
-  // Check if user has venue assigned
-  const hasVenueAssigned = !!venueId;
+  // Debug venue assignment
+  debugVenueAssignment(userData, user, 'useVenueCheck');
   
-  // Super admins can bypass venue checks for most operations
+  const hasVenueAssigned = validation.hasVenue;
+  const venueId = validation.venueId;
   const canBypassVenueCheck = isSuperAdmin();
-  
-  // Determine if venue assignment is required for this user
-  const requiresVenueAssignment = !hasVenueAssigned && !canBypassVenueCheck;
+  const requiresAssignment = requiresVenueAssignment(userData, user);
   
   return {
     hasVenueAssigned,
     venueId,
-    requiresVenueAssignment,
+    requiresVenueAssignment: requiresAssignment,
     canBypassVenueCheck,
   };
 };

@@ -1,22 +1,24 @@
-# Cloud Build configuration for Dino Frontend
+# Production-optimized Cloud Build configuration for Dino Frontend
 steps:
-  # Build the container image (no build-time environment variables needed)
+  # Build the container image with production optimizations
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'build',
+      '--build-arg', 'NODE_ENV=production',
+      '--build-arg', 'REACT_APP_ENV=production',
       '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/dino-repo/dino-frontend:$BUILD_ID',
       '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/dino-repo/dino-frontend:latest',
       '.'
     ]
 
-  # Push the container image to Artifact Registry
+  # Push the container image
   - name: 'gcr.io/cloud-builders/docker'
     args: [
       'push', 
       'us-central1-docker.pkg.dev/$PROJECT_ID/dino-repo/dino-frontend:$BUILD_ID'
     ]
 
-  # Deploy to Cloud Run with runtime environment variables
+  # Deploy to Cloud Run with production configuration
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'gcloud'
     args: [
@@ -27,50 +29,21 @@ steps:
       '--allow-unauthenticated',
       '--memory', '512Mi',
       '--cpu', '1',
-      '--min-instances', '0',
-      '--max-instances', '5',
-      '--concurrency', '100',
-      '--timeout', '300',
       '--port', '8080',
-      # Runtime environment variables (loaded at container startup)
-      '--set-env-vars', 'API_BASE_URL=/api/v1',
-      '--set-env-vars', 'WS_URL=/ws',
-      '--set-env-vars', 'BACKEND_URL=https://dino-backend-api-867506203789.us-central1.run.app',
-      '--set-env-vars', 'APP_NAME=Dino',
-      '--set-env-vars', 'APP_VERSION=1.0.0',
-      '--set-env-vars', 'APP_ENV=production',
-      '--set-env-vars', 'DEBUG_MODE=false',
-      '--set-env-vars', 'ENABLE_THEME_TOGGLE=false',
-      '--set-env-vars', 'ENABLE_DEMO_MODE=false',
-      '--set-env-vars', 'ENABLE_ANALYTICS=true',
-      '--set-env-vars', 'ENABLE_QR_CODES=true',
-      '--set-env-vars', 'ENABLE_NOTIFICATIONS=true',
-      '--set-env-vars', 'ENABLE_I18N=false',
-      '--set-env-vars', 'ENABLE_ANIMATIONS=true',
-      '--set-env-vars', 'ENABLE_IMAGE_OPTIMIZATION=true',
-      '--set-env-vars', 'ENABLE_SERVICE_WORKER=true',
-      '--set-env-vars', 'API_TIMEOUT=30000',
-      '--set-env-vars', 'API_RATE_LIMIT=100',
-      '--set-env-vars', 'JWT_EXPIRY_HOURS=24',
-      '--set-env-vars', 'SESSION_TIMEOUT_MINUTES=60',
-      '--set-env-vars', 'MIN_PASSWORD_LENGTH=8',
-      '--set-env-vars', 'DEFAULT_THEME=light',
-      '--set-env-vars', 'CHART_ANIMATION_INTERVAL=30000',
-      '--set-env-vars', 'CHART_ANIMATION_DURATION=1000',
-      '--set-env-vars', 'CHART_ANIMATION_EASING=easeInOutQuart',
-      '--set-env-vars', 'CHART_ANIMATIONS_ENABLED=true',
-      '--set-env-vars', 'CHART_AUTO_REFRESH_ENABLED=true',
-      '--set-env-vars', 'LOG_LEVEL=info',
-      '--set-env-vars', 'ENABLE_CONSOLE_LOGGING=false',
-      '--set-env-vars', 'ENABLE_HOT_RELOAD=false',
-      '--set-env-vars', 'GENERATE_SOURCEMAP=false'
+      '--max-instances', '10',
+      '--concurrency', '80',
+      '--timeout', '300',
+      '--set-env-vars', 
+        'APP_ENV=production,BACKEND_URL=https://dino-backend-api-867506203789.us-central1.run.app,API_BASE_URL=/api/v1,WS_URL=/ws,LOG_LEVEL=warn,ENABLE_CONSOLE_LOGGING=false,DEBUG_MODE=false'
     ]
-
-# Build options
-options:
-  logging: CLOUD_LOGGING_ONLY
-  machineType: 'E2_HIGHCPU_8'
 
 # Images to be pushed to registry
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/dino-repo/dino-frontend:$BUILD_ID'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/dino-repo/dino-frontend:latest'
+
+# Build options for optimization
+options:
+  machineType: 'E2_HIGHCPU_8'
+  diskSizeGb: '100'
+  logging: 'CLOUD_LOGGING_ONLY'

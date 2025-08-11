@@ -108,6 +108,7 @@ export const logApiConfig = (): void => {
   const config = getRuntimeConfig();
   
   if (config.DEBUG_MODE || isDevelopment()) {
+    // Use console directly for configuration logging to avoid circular dependency
     console.group('🔧 API Configuration');
     console.log('Environment:', getEnvironment());
     console.log('API Base URL:', API_CONFIG.BASE_URL);
@@ -187,5 +188,10 @@ if (typeof window !== 'undefined') {
     if (!validation.valid) {
       console.warn('⚠️ API Configuration Issues:', validation.errors);
     }
-  }, 100);
+    
+    // Trigger API service configuration refresh if needed
+    if ((window as any).apiService && typeof (window as any).apiService.refreshConfiguration === 'function') {
+      (window as any).apiService.refreshConfiguration();
+    }
+  }, 150);
 }

@@ -26,7 +26,7 @@ import type {
   Order as LegacyOrder,
   OrderItem as LegacyOrderItem,
   Table as LegacyTable,
-  Cafe as LegacyCafe,
+  LegacyCafe,
   OrderStatus as LegacyOrderStatus,
   PaymentStatus as LegacyPaymentStatus,
   UserRole as LegacyUserRole
@@ -70,7 +70,7 @@ export const convertApiUserToLegacy = (apiUser: ApiUserProfile): UserProfile => 
     totalSpent: undefined, // Not in API response
     workspaceId: apiUser.workspace_id,
     workspace_id: apiUser.workspace_id,
-    cafeId: apiUser.venue_id,
+    venueId: apiUser.venue_id,
     venue_id: apiUser.venue_id
   };
 };
@@ -87,7 +87,7 @@ export const convertLegacyUserToApi = (legacyUser: UserProfile): Partial<ApiUser
     last_name: legacyUser.last_name || legacyUser.lastName,
     role: legacyUser.role as ApiUserRole,
     workspace_id: legacyUser.workspace_id || legacyUser.workspaceId,
-    venue_id: legacyUser.venue_id || legacyUser.cafeId,
+    venue_id: legacyUser.venue_id || legacyUser.venueId,
     is_active: legacyUser.is_active ?? legacyUser.isActive,
     created_at: legacyUser.created_at || legacyUser.createdAt?.toISOString(),
     updated_at: legacyUser.updated_at || legacyUser.updatedAt?.toISOString(),
@@ -112,7 +112,7 @@ export const convertApiMenuItemToLegacy = (apiItem: ApiMenuItem): LegacyMenuItem
     preparationTime: apiItem.preparation_time_minutes || 15,
     ingredients: [], // Not in API response
     allergens: [], // Not in API response
-    cafeId: apiItem.venue_id,
+    venueId: apiItem.venue_id,
     order: 0 // Not in API response
   };
 };
@@ -127,7 +127,7 @@ export const convertLegacyMenuItemToApi = (legacyItem: LegacyMenuItem): Partial<
     description: legacyItem.description,
     base_price: legacyItem.price,
     category_id: legacyItem.category,
-    venue_id: legacyItem.cafeId,
+    venue_id: legacyItem.venueId,
     is_vegetarian: legacyItem.isVeg,
     is_available: legacyItem.isAvailable,
     preparation_time_minutes: legacyItem.preparationTime,
@@ -144,7 +144,7 @@ export const convertApiMenuCategoryToLegacy = (apiCategory: ApiMenuCategory): Le
     name: apiCategory.name,
     description: apiCategory.description,
     order: 0, // Not in API response
-    cafeId: apiCategory.venue_id
+    venueId: apiCategory.venue_id
   };
 };
 
@@ -155,7 +155,7 @@ export const convertApiOrderToLegacy = (apiOrder: ApiOrder): LegacyOrder => {
   return {
     id: apiOrder.id,
     orderNumber: apiOrder.order_number,
-    cafeId: apiOrder.venue_id,
+    venueId: apiOrder.venue_id,
     tableId: apiOrder.table_id || '',
     customerId: apiOrder.customer_id,
     customerPhone: undefined, // Not in API response
@@ -192,10 +192,10 @@ export const convertApiOrderItemToLegacy = (apiItem: ApiOrderItem): LegacyOrderI
 export const convertApiTableToLegacy = (apiTable: ApiTable): LegacyTable => {
   return {
     id: apiTable.id,
-    tableNumber: apiTable.table_number,
+    tableNumber: parseInt(apiTable.table_number) || 0,
     qrCode: apiTable.qr_code,
     qrCodeUrl: '', // Would need to be generated
-    cafeId: apiTable.venue_id,
+    venueId: apiTable.venue_id,
     isActive: apiTable.is_active,
     createdAt: new Date(apiTable.created_at)
   };
@@ -233,7 +233,7 @@ export const formatVenueAddress = (venue: Venue): string => {
     location.address,
     location.city,
     location.state,
-    location.postal_code,
+    location.postal_code || '',
     location.country
   ].filter(Boolean);
   
@@ -306,7 +306,7 @@ export class UserAdapter {
   }
 
   get venueId(): string | undefined {
-    return this.user.cafeId || this.user.venue_id;
+    return this.user.venueId || this.user.venue_id;
   }
 
   toLegacy(): LegacyUserProfile {
@@ -357,7 +357,7 @@ export class MenuItemAdapter {
   }
 
   get venueId(): string {
-    return isLegacyMenuItem(this.item) ? this.item.cafeId : this.item.venue_id;
+    return isLegacyMenuItem(this.item) ? this.item.venueId : this.item.venue_id;
   }
 
   toLegacy(): LegacyMenuItem {

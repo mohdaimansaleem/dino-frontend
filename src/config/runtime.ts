@@ -66,7 +66,7 @@ declare global {
 
 // Default configuration (fallback)
 const DEFAULT_CONFIG: RuntimeConfig = {
-  // API Configuration
+  // API Configuration - Use relative URLs for nginx proxy
   API_BASE_URL: '/api/v1',
   WS_URL: '/ws',
   BACKEND_URL: 'https://dino-backend-api-867506203789.us-central1.run.app',
@@ -164,6 +164,7 @@ export const getRuntimeConfig = (): RuntimeConfig => {
   
   // In production, try to get from window.APP_CONFIG (runtime)
   if (typeof window !== 'undefined' && window.APP_CONFIG) {
+    console.log('🔧 Using runtime configuration from window.APP_CONFIG');
     return { ...DEFAULT_CONFIG, ...window.APP_CONFIG };
   }
   
@@ -200,6 +201,7 @@ export const logRuntimeConfig = (): void => {
   const config = getRuntimeConfig();
   
   if (config.DEBUG_MODE || isDevelopment()) {
+    // Use console directly for configuration logging to avoid circular dependency
     console.group('🔧 Runtime Configuration');
     console.log('Environment:', config.APP_ENV);
     console.log('API Base URL:', config.API_BASE_URL);
@@ -229,6 +231,9 @@ export const RUNTIME_CONFIG = getRuntimeConfig();
 if (typeof window !== 'undefined') {
   // Delay logging to ensure window.APP_CONFIG is loaded
   setTimeout(() => {
+    console.log('🔧 Runtime config loading - window.APP_CONFIG:', window.APP_CONFIG);
+    console.log('🔧 Runtime config loading - NODE_ENV:', process.env.NODE_ENV);
+    console.log('🔧 Runtime config loading - REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
     logRuntimeConfig();
   }, 100);
 }

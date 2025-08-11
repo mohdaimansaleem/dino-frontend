@@ -11,9 +11,6 @@ import {
   IconButton,
   Tabs,
   Tab,
-  Card,
-  CardContent,
-  CardActions,
   Chip,
   Dialog,
   DialogTitle,
@@ -26,39 +23,19 @@ import {
   ListItemText,
   ListItemIcon,
   ListItemSecondaryAction,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  Switch,
-  Autocomplete,
   CircularProgress
 } from '@mui/material';
 import {
-  Edit,
-  Save,
-  Cancel,
-  PhotoCamera,
-  LocationOn,
-  Add,
-  Delete,
-  Home,
-  Work,
   Person,
   Security,
-  Restaurant
+  Edit,
+  Cancel,
+  Save
 } from '@mui/icons-material';
-// import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-// import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-// import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useAuth } from '../contexts/AuthContext';
-import { UserProfile as UserProfileType, UserAddress } from '../types';
 import { authService } from '../services/authService';
-import ImageUpload from './ImageUpload';
 import UserPermissions from './UserPermissions';
 import { getUserFirstName, getUserLastName, getUserProfileImageUrl, getUserCreatedAt } from '../utils/userUtils';
-
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -90,52 +67,91 @@ const UserProfile: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   
   // Profile data
-  const [profileData, setProfileData] = useState<Partial<UserProfileType>>({});
-  const [addresses, setAddresses] = useState<UserAddress[]>([]);
-  const [preferences, setPreferences] = useState<any>({});
+  const [profileData, setProfileData] = useState<Partial<any>>({});
+  
+  // Random dinosaur avatar
+  const [dinoAvatar, setDinoAvatar] = useState<string>('');
+  const [avatarLoading, setAvatarLoading] = useState<boolean>(true);
   
   // Dialog states
-  const [addressDialogOpen, setAddressDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [imageUploadOpen, setImageUploadOpen] = useState(false);
   
   // Form states
-  const [newAddress, setNewAddress] = useState<Partial<UserAddress>>({
-    label: 'Home',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: 'India',
-    isDefault: false
-  });
-  
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
 
+  // Generate random dinosaur avatar
+  const generateDinosaurAvatar = () => {
+    const dinosaurNames = [
+      'trex', 'stegosaurus', 'triceratops', 'velociraptor', 'brontosaurus', 
+      'allosaurus', 'ankylosaurus', 'parasaurolophus', 'spinosaurus', 'diplodocus',
+      'carnotaurus', 'compsognathus', 'deinonychus', 'gallimimus', 'iguanodon',
+      'kentrosaurus', 'lambeosaurus', 'maiasaura', 'nodosaurus', 'ouranosaurus',
+      'pachycephalosaurus', 'quetzalcoatlus', 'raptorex', 'styracosaurus', 'therizinosaurus',
+      'utahraptor', 'vulcanodon', 'wannanosaurus', 'xenotarsosaurus', 'yangchuanosaurus',
+      'zuniceratops', 'albertosaurus', 'baryonyx', 'ceratosaurus', 'dracorex',
+      'edmontosaurus', 'fukuiraptor', 'giganotosaurus', 'herrerasaurus', 'irritator'
+    ];
+    
+    // Use a more reliable dinosaur-specific avatar style
+    const randomDino = dinosaurNames[Math.floor(Math.random() * dinosaurNames.length)];
+    const randomSeed = Math.random().toString(36).substring(2, 8);
+    const timestamp = Date.now();
+    
+    // Try multiple avatar styles to ensure one works
+    const avatarStyles = [
+      `https://api.dicebear.com/7.x/bottts/svg?seed=${randomDino}${randomSeed}${timestamp}&backgroundColor=65c3c8&radius=50`,
+      `https://api.dicebear.com/7.x/identicon/svg?seed=${randomDino}${randomSeed}${timestamp}&backgroundColor=4CAF50&radius=50`,
+      `https://api.dicebear.com/7.x/shapes/svg?seed=${randomDino}${randomSeed}${timestamp}&backgroundColor=2196F3&radius=50`,
+      `https://api.dicebear.com/7.x/pixel-art/svg?seed=${randomDino}${randomSeed}${timestamp}&backgroundColor=FF9800&radius=50`
+    ];
+    
+    const dinoAvatarUrl = avatarStyles[Math.floor(Math.random() * avatarStyles.length)];
+    
+    console.log('🦕 Generated Dino Avatar:', randomDino, dinoAvatarUrl);
+    setAvatarLoading(true);
+    setDinoAvatar(dinoAvatarUrl);
+    
+    // Store in localStorage so navbar can access it
+    localStorage.setItem('dinoAvatar', dinoAvatarUrl);
+    localStorage.setItem('dinoName', randomDino);
+    
+    // Dispatch custom event to notify navbar
+    window.dispatchEvent(new Event('dinoAvatarUpdated'));
+    
+    // Also set success message to confirm generation
+    setSuccess(`🦕 New ${randomDino} avatar generated!`);
+    
+    // Set loading to false after a short delay to allow image to load
+    setTimeout(() => setAvatarLoading(false), 1000);
+  };
+
   useEffect(() => {
     if (user) {
       setProfileData(user);
-      loadUserData();
     }
   }, [user]);
 
-  const loadUserData = async () => {
-    try {
-      const [addressesData, preferencesData] = await Promise.all([
-        authService.getAddresses(),
-        authService.getPreferences()
-      ]);
-      
-      setAddresses(addressesData);
-      setPreferences(preferencesData);
-    } catch (err: any) {
-      }
-  };
+  useEffect(() => {
+    // Check if there's already an avatar in localStorage
+    const savedAvatar = localStorage.getItem('dinoAvatar');
+    if (savedAvatar) {
+      console.log('🦕 Found saved avatar, using it:', savedAvatar);
+      setDinoAvatar(savedAvatar);
+    } else {
+      console.log('🦕 No saved avatar, generating new one...');
+      generateDinosaurAvatar();
+    }
+  }, []);
+
+  // Generate new avatar on every page refresh (not just component mount)
+  useEffect(() => {
+    console.log('🦕 UserProfile mounted, generating fresh dinosaur avatar...');
+    generateDinosaurAvatar();
+  }, []);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -151,49 +167,6 @@ const UserProfile: React.FC = () => {
       setEditing(false);
     } catch (err: any) {
       setError(err.message || 'Failed to update profile');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddressAdd = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      await authService.addAddress(newAddress);
-      await loadUserData();
-      
-      setAddressDialogOpen(false);
-      setNewAddress({
-        label: 'Home',
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        country: 'India',
-        isDefault: false
-      });
-      setSuccess('Address added successfully');
-    } catch (err: any) {
-      setError(err.message || 'Failed to add address');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddressDelete = async (addressId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      await authService.deleteAddress(addressId);
-      await loadUserData();
-      
-      setSuccess('Address deleted successfully');
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete address');
     } finally {
       setLoading(false);
     }
@@ -225,40 +198,7 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  const handlePreferencesUpdate = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      await authService.updatePreferences(preferences);
-      setSuccess('Preferences updated successfully');
-    } catch (err: any) {
-      setError(err.message || 'Failed to update preferences');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleImageUpload = async (response: any) => {
-    try {
-      // Note: profileImageUrl is not supported in the current UserProfile type
-      // This would need to be implemented in the backend and type definitions
-      setImageUploadOpen(false);
-      setSuccess('Profile image upload feature coming soon');
-    } catch (err: any) {
-      setError(err.message || 'Failed to update profile image');
-    }
-  };
-
-  const dietaryOptions = [
-    'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Nut-Free',
-    'Keto', 'Paleo', 'Halal', 'Kosher'
-  ];
-
-  const cuisineOptions = [
-    'Indian', 'Chinese', 'Italian', 'Mexican', 'Thai', 'Japanese',
-    'Mediterranean', 'American', 'French', 'Korean'
-  ];
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -268,25 +208,39 @@ const UserProfile: React.FC = () => {
           <Grid item>
             <Box sx={{ position: 'relative' }}>
               <Avatar
-                src={getUserProfileImageUrl(user)}
-                sx={{ width: 100, height: 100 }}
+                src={dinoAvatar}
+                sx={{ 
+                  width: 100, 
+                  height: 100,
+                  border: '3px solid',
+                  borderColor: 'primary.main',
+                  boxShadow: 3,
+                  backgroundColor: '#4CAF50',
+                  fontSize: '2rem'
+                }}
+                onLoad={() => {
+                  console.log('🦕 Avatar loaded successfully');
+                  setAvatarLoading(false);
+                }}
+                onError={() => {
+                  console.log('🦕 Avatar failed to load:', dinoAvatar);
+                  setAvatarLoading(false);
+                  // Don't clear avatar, just show fallback
+                }}
               >
-                {getUserFirstName(user)?.[0]}{getUserLastName(user)?.[0]}
+                {avatarLoading ? '⏳' : '🦕'}
               </Avatar>
-              <IconButton
+              <Chip
+                label="🦕 Dino"
+                size="small"
+                color="primary"
                 sx={{
                   position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  '&:hover': { bgcolor: 'primary.dark' }
+                  bottom: -8,
+                  right: -8,
+                  fontSize: '0.7rem'
                 }}
-                size="small"
-                onClick={() => setImageUploadOpen(true)}
-              >
-                <PhotoCamera />
-              </IconButton>
+              />
             </Box>
           </Grid>
           <Grid item xs>
@@ -320,9 +274,7 @@ const UserProfile: React.FC = () => {
       <Paper elevation={2}>
         <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
           <Tab icon={<Person />} label="Personal Info" />
-          <Tab icon={<LocationOn />} label="Addresses" />
           <Tab icon={<Security />} label="Security" />
-          <Tab icon={<Restaurant />} label="Preferences" />
           <Tab icon={<Security />} label="Permissions" />
         </Tabs>
 
@@ -370,9 +322,9 @@ const UserProfile: React.FC = () => {
                 fullWidth
                 label="Email"
                 value={profileData.email || ''}
-                onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                disabled={!editing}
+                disabled={true}
                 type="email"
+                helperText="Email cannot be changed"
               />
             </Grid>
             
@@ -384,36 +336,6 @@ const UserProfile: React.FC = () => {
                 onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
                 disabled={!editing}
               />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Date of Birth"
-                type="date"
-                value={profileData.date_of_birth ? new Date(profileData.date_of_birth).toISOString().split('T')[0] : ''}
-                onChange={(e) => setProfileData(prev => ({ ...prev, date_of_birth: e.target.value }))}
-                disabled={!editing}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth disabled={!editing}>
-                <InputLabel>Gender</InputLabel>
-                <Select
-                  value={profileData.gender || ''}
-                  label="Gender"
-                  onChange={(e) => setProfileData(prev => ({ ...prev, gender: e.target.value as 'male' | 'female' | 'other' | 'prefer_not_to_say' }))}
-                >
-                  <MenuItem value="male">Male</MenuItem>
-                  <MenuItem value="female">Female</MenuItem>
-                  <MenuItem value="other">Other</MenuItem>
-                  <MenuItem value="prefer_not_to_say">Prefer not to say</MenuItem>
-                </Select>
-              </FormControl>
             </Grid>
           </Grid>
 
@@ -431,72 +353,8 @@ const UserProfile: React.FC = () => {
           )}
         </TabPanel>
 
-        {/* Addresses Tab */}
-        <TabPanel value={tabValue} index={1}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h6">Saved Addresses</Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setAddressDialogOpen(true)}
-            >
-              Add Address
-            </Button>
-          </Box>
-
-          {addresses.length === 0 ? (
-            <Box textAlign="center" py={4}>
-              <LocationOn sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary">
-                No addresses saved
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Add your addresses for faster checkout
-              </Typography>
-            </Box>
-          ) : (
-            <Grid container spacing={2}>
-              {addresses.map((address) => (
-                <Grid item xs={12} sm={6} key={address.id}>
-                  <Card>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {address.label === 'Home' ? <Home /> : <Work />}
-                          {address.label}
-                        </Typography>
-                        {address.isDefault && (
-                          <Chip label="Default" size="small" color="primary" />
-                        )}
-                      </Box>
-                      <Typography variant="body2" color="text.secondary">
-                        {address.addressLine1}<br />
-                        {address.addressLine2 && `${address.addressLine2}`}<br />
-                        {address.city}, {address.state} {address.postalCode}
-                      </Typography>
-                    </CardContent>
-                    <CardActions>
-                      <Button size="small" startIcon={<Edit />}>
-                        Edit
-                      </Button>
-                      <Button 
-                        size="small" 
-                        color="error" 
-                        startIcon={<Delete />}
-                        onClick={() => address.id && handleAddressDelete(address.id)}
-                      >
-                        Delete
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </TabPanel>
-
         {/* Security Tab */}
-        <TabPanel value={tabValue} index={2}>
+        <TabPanel value={tabValue} index={1}>
           <Typography variant="h6" gutterBottom>
             Security Settings
           </Typography>
@@ -541,214 +399,11 @@ const UserProfile: React.FC = () => {
           </List>
         </TabPanel>
 
-        {/* Preferences Tab */}
-        <TabPanel value={tabValue} index={3}>
-          <Typography variant="h6" gutterBottom>
-            Food Preferences
-          </Typography>
-
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                options={dietaryOptions}
-                value={preferences.dietaryRestrictions || []}
-                onChange={(_, value) => setPreferences((prev: any) => ({ ...prev, dietaryRestrictions: value }))}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-                  ))
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Dietary Restrictions"
-                    placeholder="Select dietary restrictions"
-                  />
-                )}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <Autocomplete
-                multiple
-                options={cuisineOptions}
-                value={preferences.favoriteCuisines || []}
-                onChange={(_, value) => setPreferences((prev: any) => ({ ...prev, favoriteCuisines: value }))}
-                renderTags={(value, getTagProps) =>
-                  value.map((option, index) => (
-                    <Chip variant="outlined" label={option} {...getTagProps({ index })} />
-                  ))
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Favorite Cuisines"
-                    placeholder="Select favorite cuisines"
-                  />
-                )}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Spice Level Preference</InputLabel>
-                <Select
-                  value={preferences.spiceLevel || 'medium'}
-                  label="Spice Level Preference"
-                  onChange={(e) => setPreferences((prev: any) => ({ ...prev, spiceLevel: e.target.value }))}
-                >
-                  <MenuItem value="mild">Mild 🌶️</MenuItem>
-                  <MenuItem value="medium">Medium 🌶️🌶️</MenuItem>
-                  <MenuItem value="hot">Hot 🌶️🌶️🌶️</MenuItem>
-                  <MenuItem value="extra_hot">Extra Hot 🌶️🌶️🌶️🌶️</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-
-          <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-            Notification Preferences
-          </Typography>
-
-          <Box>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={preferences.emailNotifications || false}
-                  onChange={(e) => setPreferences((prev: any) => ({ ...prev, emailNotifications: e.target.checked }))}
-                />
-              }
-              label="Email notifications for order updates"
-            />
-            
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={preferences.smsNotifications || false}
-                  onChange={(e) => setPreferences((prev: any) => ({ ...prev, smsNotifications: e.target.checked }))}
-                />
-              }
-              label="SMS notifications for order updates"
-            />
-          </Box>
-
-          <Box sx={{ mt: 3 }}>
-            <Button
-              variant="contained"
-              onClick={handlePreferencesUpdate}
-              disabled={loading}
-              startIcon={loading ? <CircularProgress size={20} /> : <Save />}
-            >
-              Save Preferences
-            </Button>
-          </Box>
-        </TabPanel>
-
         {/* Permissions Tab */}
-        <TabPanel value={tabValue} index={4}>
+        <TabPanel value={tabValue} index={2}>
           <UserPermissions />
         </TabPanel>
       </Paper>
-
-      {/* Add Address Dialog */}
-      <Dialog open={addressDialogOpen} onClose={() => setAddressDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Add New Address</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address Label"
-                value={newAddress.label}
-                onChange={(e) => setNewAddress(prev => ({ ...prev, label: e.target.value }))}
-                placeholder="e.g., Home, Work, etc."
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address Line 1"
-                value={newAddress.addressLine1}
-                onChange={(e) => setNewAddress(prev => ({ ...prev, addressLine1: e.target.value }))}
-                required
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Address Line 2 (Optional)"
-                value={newAddress.addressLine2}
-                onChange={(e) => setNewAddress(prev => ({ ...prev, addressLine2: e.target.value }))}
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="City"
-                value={newAddress.city}
-                onChange={(e) => setNewAddress(prev => ({ ...prev, city: e.target.value }))}
-                required
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="State"
-                value={newAddress.state}
-                onChange={(e) => setNewAddress(prev => ({ ...prev, state: e.target.value }))}
-                required
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Postal Code"
-                value={newAddress.postalCode}
-                onChange={(e) => setNewAddress(prev => ({ ...prev, postalCode: e.target.value }))}
-                required
-              />
-            </Grid>
-            
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Country"
-                value={newAddress.country}
-                onChange={(e) => setNewAddress(prev => ({ ...prev, country: e.target.value }))}
-                disabled
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={newAddress.isDefault || false}
-                    onChange={(e) => setNewAddress(prev => ({ ...prev, isDefault: e.target.checked }))}
-                  />
-                }
-                label="Set as default address"
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setAddressDialogOpen(false)}>Cancel</Button>
-          <Button 
-            onClick={handleAddressAdd} 
-            variant="contained"
-            disabled={loading || !newAddress.addressLine1 || !newAddress.city || !newAddress.state || !newAddress.postalCode}
-          >
-            Add Address
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Change Password Dialog */}
       <Dialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -804,21 +459,7 @@ const UserProfile: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Image Upload Dialog */}
-      <Dialog open={imageUploadOpen} onClose={() => setImageUploadOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Update Profile Image</DialogTitle>
-        <DialogContent>
-          <ImageUpload
-            variant="profile"
-            multiple={false}
-            onUpload={handleImageUpload}
-            onError={(error) => setError(error)}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setImageUploadOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+
     </Container>
   );
 };

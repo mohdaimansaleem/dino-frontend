@@ -298,11 +298,11 @@ class TableService {
     const errors: string[] = [];
 
     if ('table_number' in tableData) {
-      if (!tableData.table_number || tableData.table_number < 1) {
-        errors.push('Table number must be a positive number');
+      if (!tableData.table_number || tableData.table_number.trim() === '') {
+        errors.push('Table number is required');
       }
-      if (tableData.table_number && tableData.table_number > 9999) {
-        errors.push('Table number must be less than 10000');
+      if (tableData.table_number && tableData.table_number.length > 10) {
+        errors.push('Table number must be less than 10 characters');
       }
     }
 
@@ -365,7 +365,11 @@ class TableService {
    * Sort tables by number
    */
   sortTablesByNumber(tables: Table[]): Table[] {
-    return [...tables].sort((a, b) => a.table_number - b.table_number);
+    return [...tables].sort((a, b) => {
+      const aNum = parseInt(a.table_number) || 0;
+      const bNum = parseInt(b.table_number) || 0;
+      return aNum - bNum;
+    });
   }
 
   /**
@@ -432,7 +436,7 @@ class TableService {
   /**
    * Check for table number conflicts
    */
-  checkTableNumberConflict(tables: Table[], tableNumber: number, excludeTableId?: string): boolean {
+  checkTableNumberConflict(tables: Table[], tableNumber: string, excludeTableId?: string): boolean {
     return tables.some(table => 
       table.table_number === tableNumber && 
       table.id !== excludeTableId &&
@@ -443,18 +447,18 @@ class TableService {
   /**
    * Suggest next available table number
    */
-  suggestNextTableNumber(tables: Table[]): number {
+  suggestNextTableNumber(tables: Table[]): string {
     const activeTables = tables.filter(t => t.is_active);
-    const usedNumbers = activeTables.map(t => t.table_number).sort((a, b) => a - b);
+    const usedNumbers = activeTables.map(t => parseInt(t.table_number) || 0).sort((a, b) => a - b);
     
     // Find the first gap in the sequence
     for (let i = 1; i <= usedNumbers.length + 1; i++) {
       if (!usedNumbers.includes(i)) {
-        return i;
+        return i.toString();
       }
     }
     
-    return usedNumbers.length + 1;
+    return (usedNumbers.length + 1).toString();
   }
 
   /**
@@ -485,7 +489,7 @@ class TableService {
    */
   async getAreas(venueId: string): Promise<any[]> {
     try {
-      const response = await apiService.get<any[]>(`/tables/venues/${venueId}/areas`);
+      const response = await apiService.get<any[]>(`/table-areas/venues/${venueId}/areas`);
       return response.data || [];
     } catch (error) {
       return [];
@@ -497,7 +501,7 @@ class TableService {
    */
   async createArea(areaData: any, venueId?: string): Promise<any> {
     try {
-      const response = await apiService.post<any>('/tables/areas', {
+      const response = await apiService.post<any>('/table-areas/areas', {
         ...areaData,
         venue_id: venueId || areaData.venue_id
       });
@@ -512,7 +516,7 @@ class TableService {
    */
   async updateArea(areaData: any): Promise<any> {
     try {
-      const response = await apiService.put<any>(`/tables/areas/${areaData.id}`, areaData);
+      const response = await apiService.put<any>(`/table-areas/areas/${areaData.id}`, areaData);
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update area');

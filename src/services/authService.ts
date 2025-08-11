@@ -1,5 +1,12 @@
 import { AuthToken, UserProfile, UserRegistration, WorkspaceRegistration, ApiResponse } from '../types/api';
 import { apiService } from './api';
+import { 
+  loginWithHashedPassword, 
+  isPasswordHashingSupported,
+  changePasswordWithHashing,
+  registerWithHashedPassword
+} from '../utils/passwordHashing';
+import { logger } from '../utils/logger';
 
 class AuthService {
   private readonly TOKEN_KEY = 'dino_token';
@@ -8,26 +15,20 @@ class AuthService {
 
   async login(email: string, password: string, rememberMe: boolean = false): Promise<AuthToken> {
     try {
-      const response = await apiService.post<AuthToken>('/auth/login', {
-        email,
-        password,
-        remember_me: rememberMe
-      });
-      
-      // Handle direct AuthToken response from backend
-      let authToken: AuthToken;
-      if (response.success && response.data) {
-        authToken = response.data;
-      } else if (response && 'access_token' in response) {
-        // Direct response from backend without wrapper
-        authToken = response as any as AuthToken;
-      } else {
-        throw new Error(response.message || 'Login failed');
+      // MANDATORY: Check if password hashing is supported
+      if (!isPasswordHashingSupported()) {
+        throw new Error('Password hashing is not supported in this browser. Please use a modern browser with crypto.subtle support.');
       }
+
+      logger.authEvent("Starting client-side password hashing for login");
+      
+      // ALWAYS hash password - NO FALLBACKS
+      const authToken = await loginWithHashedPassword(email, password);
       
       this.setTokens(authToken);
       return authToken;
     } catch (error: any) {
+      logger.error('Login failed:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Login failed');
     }
   }
@@ -48,14 +49,22 @@ class AuthService {
 
   async registerWorkspace(workspaceData: WorkspaceRegistration): Promise<ApiResponse<any>> {
     try {
-      const response = await apiService.post<any>('/auth/register', workspaceData);
-      
-      if (response.success && response.data) {
-        return response;
+      // MANDATORY: Check if password hashing is supported
+      if (!isPasswordHashingSupported()) {
+        throw new Error('Password hashing is not supported in this browser. Please use a modern browser with crypto.subtle support.');
       }
+
+      logger.authEvent("Starting client-side password hashing for registration");
       
-      throw new Error(response.message || 'Workspace registration failed');
+      // ALWAYS hash password - NO FALLBACKS
+      const hashedResponse = await registerWithHashedPassword(workspaceData);
+      return {
+        success: true,
+        data: hashedResponse,
+        message: 'Registration successful'
+      };
     } catch (error: any) {
+      logger.error('Registration failed:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Workspace registration failed');
     }
   }
@@ -158,15 +167,22 @@ class AuthService {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     try {
-      const response = await apiService.post('/auth/change-password', {
-        current_password: currentPassword,
-        new_password: newPassword
-      });
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to change password');
+      // MANDATORY: Check if password hashing is supported
+      if (!isPasswordHashingSupported()) {
+        throw new Error('Password hashing is not supported in this browser. Please use a modern browser with crypto.subtle support.');
       }
+
+      logger.authEvent("Starting client-side password hashing for password change");
+      
+      const token = this.getToken();
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      
+      // ALWAYS hash passwords - NO FALLBACKS
+      await changePasswordWithHashing(currentPassword, newPassword, token);
     } catch (error: any) {
+      logger.error('Password change failed:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to change password');
     }
   }
@@ -265,42 +281,94 @@ class AuthService {
     try {
       const refreshToken = this.getRefreshToken();
       if (!refreshToken) {
+        console.warn('No refresh token available');
+        this.clearTokens();
         return null;
       }
 
+      console.log('Attempting to refresh token...');
       const response = await apiService.post<AuthToken>('/auth/refresh', {
         refresh_token: refreshToken
       });
       
-      if (response.success && response.data) {
+      if (response.success && response.data && response.data.access_token) {
+        console.log('Token refreshed successfully');
         this.setTokens(response.data);
         return response.data;
       }
       
+      console.warn('Token refresh failed: Invalid response');
+      this.clearTokens();
       return null;
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Token refresh error:', error);
       this.clearTokens();
       return null;
     }
   }
 
   private setTokens(tokenData: AuthToken): void {
+    console.log('💾 Storing tokens:', {
+      hasAccessToken: !!tokenData.access_token,
+      hasRefreshToken: !!tokenData.refresh_token,
+      hasUser: !!tokenData.user,
+      tokenType: tokenData.token_type,
+      expiresIn: tokenData.expires_in
+    });
+    
     localStorage.setItem(this.TOKEN_KEY, tokenData.access_token);
     localStorage.setItem(this.USER_KEY, JSON.stringify(tokenData.user));
     
     if (tokenData.refresh_token) {
       localStorage.setItem(this.REFRESH_TOKEN_KEY, tokenData.refresh_token);
+      console.log('✅ Refresh token stored successfully');
+    } else {
+      console.warn('⚠️ No refresh token provided in response');
+    }
+    
+    // Store token expiry time for proactive refresh
+    if (tokenData.expires_in) {
+      const expiryTime = Date.now() + (tokenData.expires_in * 1000);
+      localStorage.setItem('dino_token_expiry', expiryTime.toString());
     }
   }
 
   private clearTokens(): void {
+    console.log('🗑️ Clearing all authentication tokens');
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    localStorage.removeItem('dino_token_expiry');
   }
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+    
+    // Check if token is expired
+    const expiryTime = localStorage.getItem('dino_token_expiry');
+    if (expiryTime) {
+      const expiry = parseInt(expiryTime);
+      const now = Date.now();
+      const timeUntilExpiry = expiry - now;
+      
+      // If token expires in less than 5 minutes, try to refresh
+      if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
+        console.log('🔄 Token expires soon, attempting proactive refresh...');
+        this.refreshToken().catch(error => {
+          console.error('Proactive token refresh failed:', error);
+        });
+      }
+      
+      // If token is already expired, return false
+      if (timeUntilExpiry <= 0) {
+        console.warn('🚨 Token has expired');
+        this.clearTokens();
+        return false;
+      }
+    }
+    
+    return true;
   }
 
   getToken(): string | null {
@@ -322,6 +390,34 @@ class AuthService {
 
   logout(): void {
     this.clearTokens();
+  }
+
+  /**
+   * Get token expiry information
+   */
+  getTokenExpiryInfo(): { isExpired: boolean; expiresIn: number; expiryTime: number | null } {
+    const expiryTime = localStorage.getItem('dino_token_expiry');
+    if (!expiryTime) {
+      return { isExpired: true, expiresIn: 0, expiryTime: null };
+    }
+    
+    const expiry = parseInt(expiryTime);
+    const now = Date.now();
+    const expiresIn = expiry - now;
+    
+    return {
+      isExpired: expiresIn <= 0,
+      expiresIn: Math.max(0, expiresIn),
+      expiryTime: expiry
+    };
+  }
+
+  /**
+   * Check if token needs refresh (expires in less than 10 minutes)
+   */
+  shouldRefreshToken(): boolean {
+    const { expiresIn } = this.getTokenExpiryInfo();
+    return expiresIn > 0 && expiresIn < 10 * 60 * 1000; // Less than 10 minutes
   }
 }
 

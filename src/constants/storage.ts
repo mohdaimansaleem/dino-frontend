@@ -16,7 +16,7 @@ export const STORAGE_KEYS = {
   
   // App state
   LAST_WORKSPACE: 'dino_last_workspace',
-  LAST_CAFE: 'dino_last_cafe',
+  LAST_VENUE: 'dino_last_venue',
   
   // Cache keys
   CACHE_PREFIX: 'dino_cache_',

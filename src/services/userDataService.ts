@@ -1,5 +1,6 @@
 import { apiService } from './api';
 import { ApiResponse } from '../types/api';
+import { ROLE_NAMES, isAdminLevel } from '../constants/roles';
 
 export interface UserData {
   user: {
@@ -9,60 +10,53 @@ export interface UserData {
     last_name: string;
     phone: string;
     role: string;
+    venue_ids: string[];
     is_active: boolean;
-    venue_id: string;
-    workspace_id: string;
     created_at: string;
-    updated_at: string;
+    updated_at?: string;
+    // Compatibility fields
+    firstName?: string;
+    lastName?: string;
+    isActive?: boolean;
+    createdAt?: string;
   };
   venue: {
     id: string;
     name: string;
-    description: string;
+    description?: string;
     location: {
+      landmark?: string;
       address: string;
-      city: string;
       state: string;
-      country: string;
+      city: string;
       postal_code: string;
+      country: string;
     };
-    phone: string;
-    email: string;
+    phone?: string;
+    email?: string;
+    website?: string;
     is_active: boolean;
     is_open: boolean;
-    workspace_id: string;
     created_at: string;
-    updated_at: string;
-  };
+    updated_at?: string;
+    // Compatibility fields
+    workspaceId?: string;
+    ownerId?: string;
+    isActive?: boolean;
+    isOpen?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+    address?: string; // For backward compatibility
+  } | null;
   workspace: {
     id: string;
     name: string;
-    display_name: string;
-    description: string;
+    display_name?: string;
+    description?: string;
     is_active: boolean;
     created_at: string;
-    updated_at: string;
+    updated_at?: string;
   } | null;
-  statistics: {
-    total_orders: number;
-    total_revenue: number;
-    active_tables: number;
-    total_tables: number;
-    total_menu_items: number;
-    total_users: number;
-  };
-  menu_items: any[];
-  tables: any[];
-  recent_orders: any[];
-  users: any[];
-  permissions: {
-    can_manage_menu: boolean;
-    can_manage_tables: boolean;
-    can_manage_orders: boolean;
-    can_manage_users: boolean;
-    can_view_analytics: boolean;
-    can_manage_venue: boolean;
-  };
 }
 
 export interface VenueData {
@@ -89,18 +83,71 @@ class UserDataService {
    */
   async getUserData(): Promise<UserData | null> {
     try {
-      console.log('Fetching user data...');
-      const response = await apiService.get<UserData>('/auth/user-data');
+      console.log('🔄 Fetching user data from /auth/user-data...');
+      const response = await apiService.get<{data: UserData, timestamp: string}>('/auth/user-data');
       
       if (response.success && response.data) {
-        console.log('User data fetched successfully:', response.data);
-        return response.data;
+        // Extract the actual user data from the response
+        const userData = response.data.data || response.data;
+        console.log('✅ User data received:', {
+          hasUser: !!userData.user,
+          hasVenue: !!userData.venue,
+          hasWorkspace: !!userData.workspace,
+          venueId: userData.venue?.id,
+          venueName: userData.venue?.name
+        });
+        
+        // Map venue data properly with comprehensive field mapping
+        if (userData.venue) {
+          userData.venue = {
+            ...userData.venue,
+            // Ensure camelCase properties exist alongside snake_case
+            isActive: userData.venue.is_active !== undefined ? userData.venue.is_active : (userData.venue as any).isActive,
+            isOpen: userData.venue.is_open !== undefined ? userData.venue.is_open : (userData.venue as any).isOpen || false,
+            createdAt: userData.venue.created_at || (userData.venue as any).createdAt,
+            updatedAt: userData.venue.updated_at || (userData.venue as any).updatedAt,
+            
+            // Ensure location data is properly mapped
+            location: userData.venue.location || {
+              landmark: '',
+              address: '',
+              state: '',
+              city: '',
+              postal_code: '',
+              country: ''
+            },
+            
+            // Ensure all required fields have defaults
+            name: userData.venue.name || 'Unknown Venue',
+            description: userData.venue.description || '',
+            phone: userData.venue.phone || '',
+            email: userData.venue.email || ''
+          };
+        }
+        
+        // Map user data properly
+        if (userData.user) {
+          userData.user = {
+            ...userData.user,
+            firstName: userData.user.first_name || (userData.user as any).firstName,
+            lastName: userData.user.last_name || (userData.user as any).lastName,
+            isActive: userData.user.is_active !== undefined ? userData.user.is_active : (userData.user as any).isActive,
+            createdAt: userData.user.created_at || (userData.user as any).createdAt
+          };
+        }
+        
+        return userData;
       }
       
-      console.warn('User data fetch failed:', response.message);
       return null;
     } catch (error: any) {
-      console.error('Error fetching user data:', error);
+      console.error('❌ Error fetching user data:', error);
+      console.error('Error details:', {
+        status: error.response?.status,
+        message: error.message,
+        data: error.response?.data,
+        url: error.config?.url
+      });
       
       // Handle specific error cases
       if (error.response?.status === 401) {
@@ -124,15 +171,12 @@ class UserDataService {
    */
   async getVenueData(venueId: string): Promise<VenueData | null> {
     try {
-      console.log('Fetching venue data for:', venueId);
       const response = await apiService.get<VenueData>(`/auth/venue-data/${venueId}`);
       
       if (response.success && response.data) {
-        console.log('Venue data fetched successfully:', response.data);
         return response.data;
       }
       
-      console.warn('Venue data fetch failed:', response.message);
       return null;
     } catch (error: any) {
       console.error('Error fetching venue data:', error);
@@ -163,11 +207,31 @@ class UserDataService {
   }
 
   /**
-   * Check if user has specific permission
+   * Check if user has specific permission (simplified - based on role)
    */
-  hasPermission(userData: UserData | null, permission: keyof UserData['permissions']): boolean {
-    if (!userData?.permissions) return false;
-    return userData.permissions[permission];
+  hasPermission(userData: UserData | null, permission: string): boolean {
+    if (!userData?.user?.role) return false;
+    
+    const role = userData.user.role;
+    
+    // Simple role-based permission checking
+    const rolePermissions: Record<string, string[]> = {
+      'superadmin': [
+        'can_manage_menu', 'can_manage_tables', 'can_manage_orders', 
+        'can_manage_users', 'can_view_analytics', 'can_manage_venue',
+        'can_manage_workspace', 'can_switch_venues'
+      ],
+      'admin': [
+        'can_manage_menu', 'can_manage_tables', 'can_manage_orders', 
+        'can_manage_users', 'can_view_analytics', 'can_manage_venue'
+      ],
+      'operator': [
+        'can_manage_orders', 'can_manage_tables'
+      ]
+    };
+    
+    const allowedPermissions = rolePermissions[role] || [];
+    return allowedPermissions.includes(permission);
   }
 
   /**
@@ -181,7 +245,7 @@ class UserDataService {
    * Check if user is superadmin
    */
   isSuperAdmin(userData: UserData | null): boolean {
-    return this.getUserRole(userData) === 'superadmin';
+    return this.getUserRole(userData) === ROLE_NAMES.SUPERADMIN;
   }
 
   /**
@@ -189,14 +253,14 @@ class UserDataService {
    */
   isAdmin(userData: UserData | null): boolean {
     const role = this.getUserRole(userData);
-    return role === 'admin' || role === 'superadmin';
+    return isAdminLevel(role);
   }
 
   /**
    * Check if user is operator
    */
   isOperator(userData: UserData | null): boolean {
-    return this.getUserRole(userData) === 'operator';
+    return this.getUserRole(userData) === ROLE_NAMES.OPERATOR;
   }
 
   /**
@@ -228,7 +292,7 @@ class UserDataService {
    * Get venue display name
    */
   getVenueDisplayName(userData: UserData | null): string {
-    return userData?.venue?.name || 'Unknown Venue';
+    return userData?.venue?.name || 'No Venue Assigned';
   }
 
   /**
@@ -250,10 +314,8 @@ class UserDataService {
    * Get venue statistics summary
    */
   getVenueStatsSummary(userData: UserData | null): string {
-    if (!userData?.statistics) return 'No statistics available';
-    
-    const stats = userData.statistics;
-    return `${stats.total_orders} orders, ${this.formatCurrency(stats.total_revenue)} revenue, ${stats.active_tables}/${stats.total_tables} tables active`;
+    if (!userData?.venue) return 'No venue assigned';
+    return `Venue: ${userData.venue.name}`;
   }
 }
 

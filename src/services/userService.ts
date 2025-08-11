@@ -7,6 +7,7 @@ import {
   ApiResponse,
   UserFilters
 } from '../types/api';
+import { ROLE_NAMES, isAdminLevel } from '../constants/roles';
 
 class UserService {
   // =============================================================================
@@ -206,12 +207,12 @@ class UserService {
    */
   canAccessVenue(user: User, venueId: string): boolean {
     // SuperAdmin can access all venues
-    if (user.role === 'superadmin') {
+    if (user.role === ROLE_NAMES.SUPERADMIN) {
       return true;
     }
 
     // Admin and Operator can access their assigned venue
-    if (['admin', 'operator'].includes(user.role)) {
+    if (isAdminLevel(user.role) || user.role === ROLE_NAMES.OPERATOR) {
       return user.venue_id === venueId;
     }
 
@@ -228,7 +229,7 @@ class UserService {
    */
   canAccessWorkspace(user: User, workspaceId: string): boolean {
     // SuperAdmin can access all workspaces
-    if (user.role === 'superadmin') {
+    if (user.role === ROLE_NAMES.SUPERADMIN) {
       return true;
     }
 
@@ -480,13 +481,13 @@ class UserService {
     if (currentUser.id === targetUser.id) return false;
     
     // SuperAdmin can delete anyone except other SuperAdmins
-    if (currentUser.role === 'superadmin') {
-      return targetUser.role !== 'superadmin';
+    if (currentUser.role === ROLE_NAMES.SUPERADMIN) {
+      return targetUser.role !== ROLE_NAMES.SUPERADMIN;
     }
     
     // Admin can delete operators and customers in their workspace
-    if (currentUser.role === 'admin') {
-      return ['operator', 'customer'].includes(targetUser.role) && 
+    if (isAdminLevel(currentUser.role)) {
+      return (targetUser.role === ROLE_NAMES.OPERATOR || targetUser.role === ROLE_NAMES.CUSTOMER) && 
              currentUser.workspace_id === targetUser.workspace_id;
     }
     
@@ -501,11 +502,11 @@ class UserService {
     if (currentUser.id === targetUser.id) return true;
     
     // SuperAdmin can edit anyone
-    if (currentUser.role === 'superadmin') return true;
+    if (currentUser.role === ROLE_NAMES.SUPERADMIN) return true;
     
     // Admin can edit users in their workspace (except other admins)
-    if (currentUser.role === 'admin') {
-      return ['operator', 'customer'].includes(targetUser.role) && 
+    if (isAdminLevel(currentUser.role)) {
+      return (targetUser.role === ROLE_NAMES.OPERATOR || targetUser.role === ROLE_NAMES.CUSTOMER) && 
              currentUser.workspace_id === targetUser.workspace_id;
     }
     
