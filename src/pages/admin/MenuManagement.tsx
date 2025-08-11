@@ -26,6 +26,9 @@ import {
   Snackbar,
   Tooltip,
   CircularProgress,
+  useTheme,
+  useMediaQuery,
+  Stack,
 } from '@mui/material';
 import {
   Add,
@@ -100,6 +103,10 @@ const MenuManagement: React.FC = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'warning' | 'info' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
   // Simple approach: Load data on mount and when venue becomes available
   useEffect(() => {
@@ -461,9 +468,21 @@ const MenuManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-          <CircularProgress size={60} />
+      <Container maxWidth="xl" className="container-responsive">
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '400px',
+          textAlign: 'center',
+          gap: 2,
+          py: { xs: 2, sm: 4 }
+        }}>
+          <CircularProgress size={isMobile ? 48 : 60} />
+          <Typography variant={isMobile ? "body1" : "h6"}>
+            Loading Menu Management...
+          </Typography>
         </Box>
       </Container>
     );
@@ -471,174 +490,256 @@ const MenuManagement: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="warning" sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom>Unable to Load Menu Data</Typography>
-          <Typography variant="body2">
-            Don't worry! You can still manage your menu. Start by adding your first menu item or category.
-          </Typography>
-        </Alert>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant="contained" onClick={handleAddItem}>
-            Add Menu Item
-          </Button>
-          <Button variant="outlined" onClick={handleAddCategory}>
-            Add Category
-          </Button>
-          <Button variant="outlined" onClick={() => window.location.reload()}>
-            Retry Loading
-          </Button>
+      <Container maxWidth="xl" className="container-responsive">
+        <Box sx={{ py: { xs: 2, sm: 4 } }}>
+          <Alert severity="warning" sx={{ mb: 4 }}>
+            <Typography 
+              variant={isMobile ? "body1" : "h6"} 
+              gutterBottom
+              fontWeight="600"
+            >
+              Unable to Load Menu Data
+            </Typography>
+            <Typography variant="body2">
+              Don't worry! You can still manage your menu. Start by adding your first menu item or category.
+            </Typography>
+          </Alert>
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            alignItems={{ xs: 'stretch', sm: 'center' }}
+          >
+            <Button 
+              variant="contained" 
+              onClick={handleAddItem}
+              className="btn-responsive"
+              fullWidth={isMobile}
+            >
+              Add Menu Item
+            </Button>
+            <Button 
+              variant="outlined" 
+              onClick={handleAddCategory}
+              className="btn-responsive"
+              fullWidth={isMobile}
+            >
+              Add Category
+            </Button>
+            <Button 
+              variant="outlined" 
+              onClick={() => window.location.reload()}
+              className="btn-responsive"
+              fullWidth={isMobile}
+            >
+              Retry Loading
+            </Button>
+          </Stack>
         </Box>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container maxWidth="xl" className="container-responsive">
+      <Box sx={{ py: { xs: 2, sm: 4 } }}>
+        {/* Header */}
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+          <Typography 
+            variant={isMobile ? "h5" : "h4"} 
+            component="h1"
+            gutterBottom 
+            fontWeight="600" 
+            color="text.primary"
+            sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+          >
+            Menu Management
+          </Typography>
+          <Typography 
+            variant={isMobile ? "body2" : "body1"} 
+            color="text.secondary"
+          >
+            Manage your restaurant's menu items and categories for {getVenueDisplayName()}
+          </Typography>
+        </Box>
 
-
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
-          Menu Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage your restaurant's menu items and categories for {getVenueDisplayName()}
-        </Typography>
-      </Box>
-
-      {/* Enhanced Controls */}
-      <Paper elevation={1} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'divider' }}>
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={3}>
-            <TextField
-              fullWidth
-              placeholder="Search menu items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                label="Category"
-              >
-                <MuiMenuItem value="all">All Categories</MuiMenuItem>
-                {categories.filter(cat => cat.active).map(category => (
-                  <MuiMenuItem key={category.id} value={category.id}>
-                    {category.name}
-                  </MuiMenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Veg/Non-Veg</InputLabel>
-              <Select
-                value={vegFilter}
-                onChange={(e) => setVegFilter(e.target.value)}
-                label="Veg/Non-Veg"
-                size="small"
-              >
-                <MuiMenuItem value="all">All Items</MuiMenuItem>
-                <MuiMenuItem value="veg">
-                  <Nature sx={{ mr: 1, fontSize: 16, color: 'green' }} />
-                  Vegetarian
-                </MuiMenuItem>
-                <MuiMenuItem value="non-veg">
-                  <LocalDining sx={{ mr: 1, fontSize: 16, color: 'red' }} />
-                  Non-Vegetarian
-                </MuiMenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={2}>
-            <FormControl fullWidth>
-              <InputLabel>Availability</InputLabel>
-              <Select
-                value={availabilityFilter}
-                onChange={(e) => setAvailabilityFilter(e.target.value)}
-                label="Availability"
-                size="small"
-              >
-                <MuiMenuItem value="all">All Items</MuiMenuItem>
-                <MuiMenuItem value="available">Available</MuiMenuItem>
-                <MuiMenuItem value="unavailable">Unavailable</MuiMenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-              <Button
-                variant="outlined"
-                startIcon={<Category />}
-                onClick={handleAddCategory}
-              >
-                Categories
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleAddItem}
-              >
-                Add Item
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {/* Categories Overview */}
-      <Paper elevation={1} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
-          Categories
-        </Typography>
-        <Grid container spacing={2}>
-          {categories.map(category => (
-            <Grid item xs={12} sm={6} md={3} key={category.id}>
-              <Card 
-                sx={{ 
-                  border: '1px solid', 
-                  borderColor: 'divider',
-                  opacity: category.active ? 1 : 0.6,
-                  '&:hover': { boxShadow: 2 }
+        {/* Enhanced Controls */}
+        <Paper 
+          elevation={1} 
+          className="card-responsive"
+          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
+        >
+          <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
+            <Grid item xs={12} md={3}>
+              <TextField
+                fullWidth
+                className="input-responsive"
+                placeholder={isMobile ? "Search items..." : "Search menu items..."}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size={isMobile ? "medium" : "medium"}
+                InputProps={{
+                  startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
                 }}
+              />
+            </Grid>
+            <Grid item xs={6} md={2}>
+              <FormControl fullWidth className="input-responsive">
+                <InputLabel>Category</InputLabel>
+                <Select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  label="Category"
+                  size={isMobile ? "medium" : "medium"}
+                >
+                  <MuiMenuItem value="all">All Categories</MuiMenuItem>
+                  {categories.filter(cat => cat.active).map(category => (
+                    <MuiMenuItem key={category.id} value={category.id}>
+                      {category.name}
+                    </MuiMenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6} md={2}>
+              <FormControl fullWidth className="input-responsive">
+                <InputLabel>Type</InputLabel>
+                <Select
+                  value={vegFilter}
+                  onChange={(e) => setVegFilter(e.target.value)}
+                  label="Type"
+                  size={isMobile ? "medium" : "medium"}
+                >
+                  <MuiMenuItem value="all">All</MuiMenuItem>
+                  <MuiMenuItem value="veg">
+                    <Nature sx={{ mr: 1, fontSize: 16, color: 'green' }} />
+                    {isMobile ? "Veg" : "Vegetarian"}
+                  </MuiMenuItem>
+                  <MuiMenuItem value="non-veg">
+                    <LocalDining sx={{ mr: 1, fontSize: 16, color: 'red' }} />
+                    {isMobile ? "Non-Veg" : "Non-Vegetarian"}
+                  </MuiMenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6} md={2}>
+              <FormControl fullWidth className="input-responsive">
+                <InputLabel>Status</InputLabel>
+                <Select
+                  value={availabilityFilter}
+                  onChange={(e) => setAvailabilityFilter(e.target.value)}
+                  label="Status"
+                  size={isMobile ? "medium" : "medium"}
+                >
+                  <MuiMenuItem value="all">All</MuiMenuItem>
+                  <MuiMenuItem value="available">Available</MuiMenuItem>
+                  <MuiMenuItem value="unavailable">Unavailable</MuiMenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6} md={3}>
+              <Stack 
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1}
+                justifyContent={{ xs: 'stretch', md: 'flex-end' }}
               >
-                <CardContent sx={{ p: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight="600" color="text.primary">
-                        {category.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {menuItems.filter(item => item.category === category.id).length} items
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      <IconButton size="small" onClick={() => handleEditCategory(category)}>
+                <Button
+                  variant="outlined"
+                  startIcon={<Category />}
+                  onClick={handleAddCategory}
+                  className="btn-responsive"
+                  size={isMobile ? "medium" : "medium"}
+                  fullWidth={isMobile}
+                >
+                  {isMobile ? "Categories" : "Categories"}
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={handleAddItem}
+                  className="btn-responsive"
+                  size={isMobile ? "medium" : "medium"}
+                  fullWidth={isMobile}
+                >
+                  Add Item
+                </Button>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Categories Overview */}
+        <Paper 
+          elevation={1} 
+          className="card-responsive"
+          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
+        >
+          <Typography 
+            variant={isMobile ? "body1" : "h6"} 
+            gutterBottom 
+            fontWeight="600" 
+            color="text.primary"
+          >
+            Categories
+          </Typography>
+          <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+            {categories.map(category => (
+              <Grid item xs={6} sm={6} md={4} lg={3} key={category.id}>
+                <Card 
+                  className="card-responsive"
+                  sx={{ 
+                    border: '1px solid', 
+                    borderColor: 'divider',
+                    opacity: category.active ? 1 : 0.6,
+                    '&:hover': { boxShadow: 2 },
+                    height: '100%'
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                    <Stack 
+                      direction="row"
+                      justifyContent="space-between" 
+                      alignItems="flex-start"
+                      spacing={1}
+                    >
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography 
+                          variant={isMobile ? "body2" : "subtitle1"} 
+                          fontWeight="600" 
+                          color="text.primary"
+                          noWrap
+                        >
+                          {category.name}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary"
+                          sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                        >
+                          {menuItems.filter(item => item.category === category.id).length} items
+                        </Typography>
+                      </Box>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleEditCategory(category)}
+                        className="btn-responsive"
+                        sx={{ minWidth: 44, minHeight: 44 }}
+                      >
                         <Edit fontSize="small" />
                       </IconButton>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Paper>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Paper>
 
-      {/* Menu Items */}
-      <Grid container spacing={3}>
-        {filteredItems.map(item => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
+        {/* Menu Items */}
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
+          {filteredItems.map(item => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
             <Card 
+              className="card-responsive"
               sx={{ 
                 height: '100%',
                 display: 'flex',
@@ -657,7 +758,7 @@ const MenuManagement: React.FC = () => {
                   alt={item.name}
                 />
               )}
-              <CardContent sx={{ p: 2, display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <CardContent sx={{ p: { xs: 1.5, sm: 2 }, display: 'flex', flexDirection: 'column', height: '100%' }}>
                 {/* Header */}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
@@ -763,45 +864,59 @@ const MenuManagement: React.FC = () => {
         ))}
       </Grid>
 
-      {filteredItems.length === 0 && (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Restaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No menu items found
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Try adjusting your filters or add new menu items
-          </Typography>
-        </Box>
-      )}
+        {filteredItems.length === 0 && (
+          <Grid item xs={12}>
+            <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
+              <Restaurant sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.secondary', mb: 2 }} />
+              <Typography 
+                variant={isMobile ? "body1" : "h6"} 
+                color="text.secondary" 
+                fontWeight="600"
+                gutterBottom
+              >
+                No menu items found
+              </Typography>
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ maxWidth: 400, mx: 'auto' }}
+              >
+                Try adjusting your filters or add new menu items
+              </Typography>
+            </Box>
+          </Grid>
+        )}
 
-      {/* Menu Item Dialog */}
-      <MenuItemDialog
-        open={openItemDialog}
-        onClose={() => setOpenItemDialog(false)}
-        onSave={handleSaveItem}
-        item={editingItem}
-        categories={categories.filter(cat => cat.active)}
-      />
+        {/* Menu Item Dialog */}
+        <MenuItemDialog
+          open={openItemDialog}
+          onClose={() => setOpenItemDialog(false)}
+          onSave={handleSaveItem}
+          item={editingItem}
+          categories={categories.filter(cat => cat.active)}
+          isMobile={isMobile}
+        />
 
-      {/* Category Dialog */}
-      <CategoryDialog
-        open={openCategoryDialog}
-        onClose={() => setOpenCategoryDialog(false)}
-        onSave={handleSaveCategory}
-        category={editingCategory}
-      />
+        {/* Category Dialog */}
+        <CategoryDialog
+          open={openCategoryDialog}
+          onClose={() => setOpenCategoryDialog(false)}
+          onSave={handleSaveCategory}
+          category={editingCategory}
+          isMobile={isMobile}
+        />
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-      >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        >
+          <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
     </Container>
   );
 };
@@ -813,9 +928,10 @@ interface MenuItemDialogProps {
   onSave: (item: Partial<MenuItemType>) => void;
   item: MenuItemType | null;
   categories: CategoryType[];
+  isMobile?: boolean;
 }
 
-const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, item, categories }) => {
+const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, item, categories, isMobile = false }) => {
   const [formData, setFormData] = useState<Partial<MenuItemType>>({
     name: '',
     description: '',
@@ -855,9 +971,23 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {item ? 'Edit Menu Item' : 'Add Menu Item'}
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="md" 
+      fullWidth
+      fullScreen={isMobile}
+      PaperProps={{
+        sx: {
+          m: isMobile ? 0 : 2,
+          maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)'
+        }
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Typography variant={isMobile ? "h6" : "h5"} fontWeight="600">
+          {item ? 'Edit Menu Item' : 'Add Menu Item'}
+        </Typography>
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={3} sx={{ mt: 1 }}>
@@ -1048,9 +1178,10 @@ interface CategoryDialogProps {
   onClose: () => void;
   onSave: (category: Partial<CategoryType>) => void;
   category: CategoryType | null;
+  isMobile?: boolean;
 }
 
-const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, category }) => {
+const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, category, isMobile = false }) => {
   const [formData, setFormData] = useState<Partial<CategoryType>>({
     name: '',
     description: '',
@@ -1074,9 +1205,23 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, 
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {category ? 'Edit Category' : 'Add Category'}
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth
+      fullScreen={isMobile}
+      PaperProps={{
+        sx: {
+          m: isMobile ? 0 : 2,
+          maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)'
+        }
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Typography variant={isMobile ? "h6" : "h5"} fontWeight="600">
+          {category ? 'Edit Category' : 'Add Category'}
+        </Typography>
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={3} sx={{ mt: 1 }}>

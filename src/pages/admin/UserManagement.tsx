@@ -35,6 +35,9 @@ import {
   ListItemText,
   Skeleton,
   Snackbar,
+  useTheme,
+  useMediaQuery,
+  Stack,
 } from '@mui/material';
 import {
   Add,
@@ -74,6 +77,10 @@ const UserManagement: React.FC = () => {
     getWorkspace,
     getVenueDisplayName
   } = useUserData();
+  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -411,70 +418,114 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-
-
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box>
-            <Typography variant="h4" gutterBottom fontWeight="600">
-              User Management
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Manage users and their permissions for {getVenueDisplayName()}
-            </Typography>
-          </Box>
-          {canCreateUsers && (
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => handleOpenDialog()}
-            >
-              Add User
-            </Button>
-          )}
-        </Box>
-      </Box>
-
-      {/* Users Table */}
-      <Card>
-        <CardContent>
-          {users.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <People sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                No Users Found
+    <Container maxWidth="xl" className="container-responsive">
+      <Box sx={{ py: { xs: 2, sm: 4 } }}>
+        {/* Header */}
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }}
+            justifyContent="space-between" 
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            spacing={{ xs: 2, sm: 0 }}
+            sx={{ mb: 2 }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Typography 
+                variant={isMobile ? "h5" : "h4"} 
+                component="h1"
+                gutterBottom 
+                fontWeight="600"
+                sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+              >
+                User Management
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                {canCreateUsers 
-                  ? "Get started by adding your first team member to help manage your restaurant operations."
-                  : "No team members have been added yet. Contact your administrator to add users."
-                }
+              <Typography 
+                variant={isMobile ? "body2" : "body1"} 
+                color="text.secondary"
+              >
+                Manage users and their permissions for {getVenueDisplayName()}
               </Typography>
-              {canCreateUsers && (
-                <Button 
-                  variant="contained" 
-                  startIcon={<Add />} 
-                  size="large"
-                  onClick={() => handleOpenDialog()}
-                >
-                  Add Your First User
-                </Button>
-              )}
             </Box>
-          ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>User</TableCell>
-                    <TableCell>Role</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Last Login</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
+            {canCreateUsers && (
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => handleOpenDialog()}
+                className="btn-responsive"
+                size={isMobile ? "medium" : "large"}
+                fullWidth={isMobile}
+              >
+                Add User
+              </Button>
+            )}
+          </Stack>
+        </Box>
+
+        {/* Users Table */}
+        <Card className="card-responsive">
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            {users.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
+                <People sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.secondary', mb: 2 }} />
+                <Typography 
+                  variant={isMobile ? "body1" : "h6"} 
+                  color="text.secondary" 
+                  fontWeight="600"
+                  gutterBottom
+                >
+                  No Users Found
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ mb: 3, maxWidth: 400, mx: 'auto' }}
+                >
+                  {canCreateUsers 
+                    ? "Get started by adding your first team member to help manage your restaurant operations."
+                    : "No team members have been added yet. Contact your administrator to add users."
+                  }
+                </Typography>
+                {canCreateUsers && (
+                  <Button 
+                    variant="contained" 
+                    startIcon={<Add />} 
+                    className="btn-responsive"
+                    size={isMobile ? "medium" : "large"}
+                    onClick={() => handleOpenDialog()}
+                  >
+                    Add Your First User
+                  </Button>
+                )}
+              </Box>
+            ) : (
+              <TableContainer sx={{ 
+                '& .MuiTable-root': {
+                  minWidth: { xs: 'auto', sm: 650 }
+                }
+              }}>
+                <Table size={isMobile ? "small" : "medium"}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                        User
+                      </TableCell>
+                      <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                        Role
+                      </TableCell>
+                      <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                        Status
+                      </TableCell>
+                      <TableCell sx={{ 
+                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                        display: { xs: 'none', sm: 'table-cell' }
+                      }}>
+                        Last Login
+                      </TableCell>
+                      <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                        Actions
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
                 <TableBody>
                   {users.map((user) => (
                     <TableRow key={user.id}>
@@ -589,11 +640,25 @@ const UserManagement: React.FC = () => {
         )}
       </Menu>
 
-      {/* User Create/Edit Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {editingUser ? 'Edit User' : 'Create New User'}
-        </DialogTitle>
+        {/* User Create/Edit Dialog */}
+        <Dialog 
+          open={openDialog} 
+          onClose={handleCloseDialog} 
+          maxWidth="sm" 
+          fullWidth
+          fullScreen={isMobile}
+          PaperProps={{
+            sx: {
+              m: isMobile ? 0 : 2,
+              maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)'
+            }
+          }}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Typography variant={isMobile ? "h6" : "h5"} fontWeight="600">
+              {editingUser ? 'Edit User' : 'Create New User'}
+            </Typography>
+          </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12} sm={6}>
@@ -679,13 +744,30 @@ const UserManagement: React.FC = () => {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {editingUser ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              width={{ xs: '100%', sm: 'auto' }}
+            >
+              <Button 
+                onClick={handleCloseDialog}
+                className="btn-responsive"
+                fullWidth={isMobile}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmit} 
+                variant="contained"
+                className="btn-responsive"
+                fullWidth={isMobile}
+              >
+                {editingUser ? 'Update' : 'Create'}
+              </Button>
+            </Stack>
+          </DialogActions>
+        </Dialog>
 
       {/* Password Update Dialog */}
       {selectedUser && (
@@ -712,7 +794,8 @@ const UserManagement: React.FC = () => {
         <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
           {snackbar.message}
         </Alert>
-      </Snackbar>
+        </Snackbar>
+      </Box>
     </Container>
   );
 };

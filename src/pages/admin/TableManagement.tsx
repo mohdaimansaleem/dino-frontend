@@ -31,6 +31,9 @@ import {
   Divider,
   Tooltip,
   CircularProgress,
+  useTheme,
+  useMediaQuery,
+  Stack,
 } from '@mui/material';
 import {
   Add,
@@ -73,6 +76,10 @@ const TableManagement: React.FC = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
     const loadData = async () => {
@@ -342,9 +349,21 @@ const TableManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-          <CircularProgress size={60} />
+      <Container maxWidth="xl" className="container-responsive">
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: '400px',
+          textAlign: 'center',
+          gap: 2,
+          py: { xs: 2, sm: 4 }
+        }}>
+          <CircularProgress size={isMobile ? 48 : 60} />
+          <Typography variant={isMobile ? "body1" : "h6"}>
+            Loading Table Management...
+          </Typography>
         </Box>
       </Container>
     );
@@ -352,324 +371,489 @@ const TableManagement: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Alert severity="error" sx={{ mb: 4 }}>
-          {error}
-        </Alert>
-        <Button variant="contained" onClick={() => window.location.reload()}>
-          Retry
-        </Button>
+      <Container maxWidth="xl" className="container-responsive">
+        <Box sx={{ py: { xs: 2, sm: 4 } }}>
+          <Alert severity="error" sx={{ mb: 4 }}>
+            <Typography variant={isMobile ? "body2" : "body1"}>
+              {error}
+            </Typography>
+          </Alert>
+          <Button 
+            variant="contained" 
+            className="btn-responsive"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </Button>
+        </Box>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
-          Table Management
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage your restaurant's tables, seating areas, and QR codes
-        </Typography>
-      </Box>
-
-      <Paper elevation={1} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'divider' }}>
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth>
-              <InputLabel>Filter by Area</InputLabel>
-              <Select
-                value={selectedArea}
-                onChange={(e) => setSelectedArea(e.target.value)}
-                label="Filter by Area"
-              >
-                <MenuItem value="all">All Areas</MenuItem>
-                {areas.map(area => (
-                  <MenuItem key={area.id} value={area.id}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box 
-                        sx={{ 
-                          width: 12, 
-                          height: 12, 
-                          borderRadius: '50%', 
-                          backgroundColor: area.color 
-                        }} 
-                      />
-                      {area.name}
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={8}>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <Button
-                variant="outlined"
-                startIcon={<LocationOn />}
-                onClick={handleAddArea}
-              >
-                Manage Areas
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<QrCodeScanner />}
-                onClick={handleBulkQRGeneration}
-              >
-                Bulk QR Manager
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={handleAddTable}
-              >
-                Add Table
-              </Button>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {[
-          { label: 'Total Tables', value: tables.length, color: '#2196F3', icon: <TableRestaurant /> },
-          { label: 'Available', value: tables.filter(t => t.table_status === 'available').length, color: '#4CAF50', icon: <CheckCircle /> },
-          { label: 'Occupied', value: tables.filter(t => t.table_status === 'occupied').length, color: '#F44336', icon: <People /> },
-          { label: 'Reserved', value: tables.filter(t => t.table_status === 'booked').length, color: '#FF9800', icon: <Schedule /> },
-        ].map((stat, index) => (
-          <Grid item xs={6} md={3} key={index}>
-            <Paper elevation={1} sx={{ p: 3, border: '1px solid', borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ backgroundColor: stat.color, width: 48, height: 48 }}>
-                  {stat.icon}
-                </Avatar>
-                <Box>
-                  <Typography variant="h4" fontWeight="bold" color="text.primary">
-                    {stat.value}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {stat.label}
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Paper elevation={1} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="h6" gutterBottom fontWeight="600" color="text.primary">
-          Seating Areas
-        </Typography>
-        <Grid container spacing={2}>
-          {areas.map(area => (
-            <Grid item xs={12} sm={6} md={3} key={area.id}>
-              <Card 
-                sx={{ 
-                  border: '1px solid', 
-                  borderColor: 'divider',
-                  borderLeft: `4px solid ${area.color}`,
-                  '&:hover': { boxShadow: 2 }
-                }}
-              >
-                <CardContent sx={{ p: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight="600" color="text.primary">
-                        {area.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {area.description}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {tables.filter(table => (table.location || '') === area.id).length} tables
-                      </Typography>
-                    </Box>
-                    <IconButton size="small" onClick={() => handleEditArea(area)}>
-                      <Edit fontSize="small" />
-                    </IconButton>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Paper>
-
-      {filteredTables.length === 0 ? (
-        <Paper elevation={1} sx={{ p: 6, textAlign: 'center', border: '1px solid', borderColor: 'divider' }}>
-          <TableRestaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No Tables Found
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {selectedArea === 'all' 
-              ? "Get started by adding your first table to set up your dining area and enable customer ordering."
-              : `No tables found in the selected area. Try selecting a different area or add tables to "${areas.find(a => a.id === selectedArea)?.name || 'this area'}".`
-            }
-          </Typography>
-          <Button 
-            variant="contained" 
-            startIcon={<Add />} 
-            size="large"
-            onClick={handleAddTable}
+    <Container maxWidth="xl" className="container-responsive">
+      <Box sx={{ py: { xs: 2, sm: 4 } }}>
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+          <Typography 
+            variant={isMobile ? "h5" : "h4"} 
+            component="h1"
+            gutterBottom 
+            fontWeight="600" 
+            color="text.primary"
+            sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
           >
-            Add Your First Table
-          </Button>
-        </Paper>
-      ) : (
-        <Grid container spacing={3}>
-          {filteredTables.map(table => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={table.id}>
-              <Card 
-                sx={{ 
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  border: '1px solid', 
-                  borderColor: 'divider',
-                  borderLeft: `4px solid ${getAreaColor(table.location || '')}`,
-                  opacity: table.is_active ? 1 : 0.6,
-                  '&:hover': { boxShadow: 2 }
-                }}
-              >
-                <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 350 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box>
-                      <Typography variant="h6" fontWeight="600" color="text.primary">
-                        Table {table.table_number}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {getAreaName(table.location || '')}
-                      </Typography>
-                    </Box>
-                    <Chip 
-                      icon={getStatusIcon(table.table_status)}
-                      label={table.table_status.charAt(0).toUpperCase() + table.table_status.slice(1)}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: getStatusColor(table.table_status),
-                        color: 'white',
-                        '& .MuiChip-icon': { color: 'white' }
-                      }}
-                    />
-                  </Box>
-                  
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <People fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        {table.capacity} seats
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <TableRestaurant fontSize="small" color="action" />
-                      <Typography variant="body2" color="text.secondary">
-                        Table
-                      </Typography>
-                    </Box>
-                  </Box>
-                  
-                  {/* Notes section - API doesn't have notes field yet */}
-                  
-                  {/* Current order section - API doesn't have currentOrder field yet */}
+            Table Management
+          </Typography>
+          <Typography 
+            variant={isMobile ? "body2" : "body1"} 
+            color="text.secondary"
+          >
+            Manage your restaurant's tables, seating areas, and QR codes
+          </Typography>
+        </Box>
 
-                  <Box sx={{ mt: 'auto' }}>
-                    <Divider sx={{ my: 2 }} />
-                    
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      gap: 1,
-                      flexWrap: 'wrap'
-                    }}>
-                      <Tooltip title="Generate QR Code">
-                        <IconButton size="small" onClick={() => generateQRCode(table.id)}>
-                          <QrCode fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Print QR Code">
-                        <IconButton size="small" onClick={() => printQRCode(table.id)}>
-                          <Print fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Toggle Status">
-                        <IconButton size="small" onClick={() => handleToggleTableStatus(table.id)}>
-                          {table.is_active ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Edit Table">
-                        <IconButton size="small" onClick={() => handleEditTable(table)}>
-                          <Edit fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete Table">
-                        <IconButton size="small" color="error" onClick={() => handleDeleteTable(table.id)}>
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
+        <Paper 
+          elevation={1} 
+          className="card-responsive"
+          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
+        >
+          <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth className="input-responsive">
+                <InputLabel>Filter by Area</InputLabel>
+                <Select
+                  value={selectedArea}
+                  onChange={(e) => setSelectedArea(e.target.value)}
+                  label="Filter by Area"
+                  size={isMobile ? "medium" : "medium"}
+                >
+                  <MenuItem value="all">All Areas</MenuItem>
+                  {areas.map(area => (
+                    <MenuItem key={area.id} value={area.id}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box 
+                          sx={{ 
+                            width: 12, 
+                            height: 12, 
+                            borderRadius: '50%', 
+                            backgroundColor: area.color 
+                          }} 
+                        />
+                        {area.name}
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <Stack 
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={{ xs: 1, sm: 2 }}
+                justifyContent={{ xs: 'stretch', md: 'flex-end' }}
+              >
+                <Button
+                  variant="outlined"
+                  startIcon={<LocationOn />}
+                  onClick={handleAddArea}
+                  className="btn-responsive"
+                  size={isMobile ? "medium" : "medium"}
+                  fullWidth={isMobile}
+                >
+                  {isMobile ? "Areas" : "Manage Areas"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<QrCodeScanner />}
+                  onClick={handleBulkQRGeneration}
+                  className="btn-responsive"
+                  size={isMobile ? "medium" : "medium"}
+                  fullWidth={isMobile}
+                >
+                  {isMobile ? "QR Manager" : "Bulk QR Manager"}
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={handleAddTable}
+                  className="btn-responsive"
+                  size={isMobile ? "medium" : "medium"}
+                  fullWidth={isMobile}
+                >
+                  Add Table
+                </Button>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 3, md: 4 } }}>
+          {[
+            { label: 'Total Tables', value: tables.length, color: '#2196F3', icon: <TableRestaurant /> },
+            { label: 'Available', value: tables.filter(t => t.table_status === 'available').length, color: '#4CAF50', icon: <CheckCircle /> },
+            { label: 'Occupied', value: tables.filter(t => t.table_status === 'occupied').length, color: '#F44336', icon: <People /> },
+            { label: 'Reserved', value: tables.filter(t => t.table_status === 'booked').length, color: '#FF9800', icon: <Schedule /> },
+          ].map((stat, index) => (
+            <Grid item xs={6} md={3} key={index}>
+              <Paper 
+                elevation={1} 
+                className="card-responsive"
+                sx={{ p: { xs: 2, sm: 3 }, border: '1px solid', borderColor: 'divider' }}
+              >
+                <Stack 
+                  direction={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ xs: 'center', sm: 'flex-start' }}
+                  spacing={{ xs: 1, sm: 2 }}
+                  textAlign={{ xs: 'center', sm: 'left' }}
+                >
+                  <Avatar sx={{ 
+                    backgroundColor: stat.color, 
+                    width: { xs: 40, sm: 48 }, 
+                    height: { xs: 40, sm: 48 } 
+                  }}>
+                    {React.cloneElement(stat.icon, { 
+                      fontSize: isMobile ? 'medium' : 'large' 
+                    })}
+                  </Avatar>
+                  <Box>
+                    <Typography 
+                      variant={isMobile ? "h6" : "h4"} 
+                      fontWeight="bold" 
+                      color="text.primary"
+                      sx={{ fontSize: { xs: '1.25rem', sm: '2rem' } }}
+                    >
+                      {stat.value}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
+                      {stat.label}
+                    </Typography>
                   </Box>
-                </CardContent>
-              </Card>
+                </Stack>
+              </Paper>
             </Grid>
           ))}
         </Grid>
-      )}
 
-      <TableDialog
-        open={openTableDialog}
-        onClose={() => setOpenTableDialog(false)}
-        onSave={handleSaveTable}
-        table={editingTable}
-        areas={areas}
-        tables={tables}
-      />
+        <Paper 
+          elevation={1} 
+          className="card-responsive"
+          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
+        >
+          <Typography 
+            variant={isMobile ? "body1" : "h6"} 
+            gutterBottom 
+            fontWeight="600" 
+            color="text.primary"
+          >
+            Seating Areas
+          </Typography>
+          <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+            {areas.map(area => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={area.id}>
+                <Card 
+                  className="card-responsive"
+                  sx={{ 
+                    border: '1px solid', 
+                    borderColor: 'divider',
+                    borderLeft: `4px solid ${area.color}`,
+                    '&:hover': { boxShadow: 2 },
+                    height: '100%'
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                    <Stack 
+                      direction="row"
+                      justifyContent="space-between" 
+                      alignItems="flex-start"
+                      spacing={1}
+                    >
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography 
+                          variant={isMobile ? "body2" : "subtitle1"} 
+                          fontWeight="600" 
+                          color="text.primary"
+                          noWrap
+                        >
+                          {area.name}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary" 
+                          sx={{ 
+                            mb: 0.5,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          {area.description}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {tables.filter(table => (table.location || '') === area.id).length} tables
+                        </Typography>
+                      </Box>
+                      <IconButton 
+                        size="small" 
+                        onClick={() => handleEditArea(area)}
+                        className="btn-responsive"
+                        sx={{ minWidth: 44, minHeight: 44 }}
+                      >
+                        <Edit fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Paper>
 
-      <AreaDialog
-        open={openAreaDialog}
-        onClose={() => setOpenAreaDialog(false)}
-        onSave={handleSaveArea}
-        area={editingArea}
-      />
+        {filteredTables.length === 0 ? (
+          <Paper 
+            elevation={1} 
+            className="card-responsive"
+            sx={{ p: { xs: 4, sm: 6 }, textAlign: 'center', border: '1px solid', borderColor: 'divider' }}
+          >
+            <TableRestaurant sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.secondary', mb: 2 }} />
+            <Typography 
+              variant={isMobile ? "body1" : "h6"} 
+              color="text.secondary" 
+              fontWeight="600"
+              gutterBottom
+            >
+              No Tables Found
+            </Typography>
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              sx={{ mb: 3, maxWidth: 400, mx: 'auto' }}
+            >
+              {selectedArea === 'all' 
+                ? "Get started by adding your first table to set up your dining area and enable customer ordering."
+                : `No tables found in the selected area. Try selecting a different area or add tables to "${areas.find(a => a.id === selectedArea)?.name || 'this area'}".`
+              }
+            </Typography>
+            <Button 
+              variant="contained" 
+              startIcon={<Add />} 
+              className="btn-responsive"
+              size={isMobile ? "medium" : "large"}
+              onClick={handleAddTable}
+            >
+              Add Your First Table
+            </Button>
+          </Paper>
+        ) : (
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
+            {filteredTables.map(table => (
+              <Grid item xs={12} sm={6} md={4} lg={3} key={table.id}>
+                <Card 
+                  className="card-responsive"
+                  sx={{ 
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    border: '1px solid', 
+                    borderColor: 'divider',
+                    borderLeft: `4px solid ${getAreaColor(table.location || '')}`,
+                    opacity: table.is_active ? 1 : 0.6,
+                    '&:hover': { boxShadow: 2 }
+                  }}
+                >
+                  <CardContent sx={{ 
+                    p: { xs: 2, sm: 3 }, 
+                    flexGrow: 1, 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    minHeight: { xs: 280, sm: 350 }
+                  }}>
+                    <Stack 
+                      direction="row"
+                      justifyContent="space-between" 
+                      alignItems="flex-start" 
+                      spacing={1}
+                      sx={{ mb: 2 }}
+                    >
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography 
+                          variant={isMobile ? "body1" : "h6"} 
+                          fontWeight="600" 
+                          color="text.primary"
+                          noWrap
+                        >
+                          Table {table.table_number}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          noWrap
+                        >
+                          {getAreaName(table.location || '')}
+                        </Typography>
+                      </Box>
+                      <Chip 
+                        icon={getStatusIcon(table.table_status)}
+                        label={table.table_status.charAt(0).toUpperCase() + table.table_status.slice(1)}
+                        size="small"
+                        sx={{ 
+                          backgroundColor: getStatusColor(table.table_status),
+                          color: 'white',
+                          '& .MuiChip-icon': { color: 'white' },
+                          fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                        }}
+                      />
+                    </Stack>
+                    
+                    <Stack 
+                      direction="row"
+                      alignItems="center" 
+                      spacing={2} 
+                      sx={{ mb: 2 }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <People fontSize="small" color="action" />
+                        <Typography variant="body2" color="text.secondary">
+                          {table.capacity} seats
+                        </Typography>
+                      </Stack>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <TableRestaurant fontSize="small" color="action" />
+                        <Typography variant="body2" color="text.secondary">
+                          Table
+                        </Typography>
+                      </Stack>
+                    </Stack>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-      >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+                    <Box sx={{ mt: 'auto' }}>
+                      <Divider sx={{ my: 2 }} />
+                      
+                      <Stack 
+                        direction="row"
+                        justifyContent="center"
+                        alignItems="center"
+                        spacing={0.5}
+                        flexWrap="wrap"
+                        useFlexGap
+                      >
+                        <Tooltip title="Generate QR Code">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => generateQRCode(table.id)}
+                            className="btn-responsive"
+                            sx={{ minWidth: 44, minHeight: 44 }}
+                          >
+                            <QrCode fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Print QR Code">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => printQRCode(table.id)}
+                            className="btn-responsive"
+                            sx={{ minWidth: 44, minHeight: 44 }}
+                          >
+                            <Print fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Toggle Status">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleToggleTableStatus(table.id)}
+                            className="btn-responsive"
+                            sx={{ minWidth: 44, minHeight: 44 }}
+                          >
+                            {table.is_active ? <Visibility fontSize="small" /> : <VisibilityOff fontSize="small" />}
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Edit Table">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleEditTable(table)}
+                            className="btn-responsive"
+                            sx={{ minWidth: 44, minHeight: 44 }}
+                          >
+                            <Edit fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Table">
+                          <IconButton 
+                            size="small" 
+                            color="error" 
+                            onClick={() => handleDeleteTable(table.id)}
+                            className="btn-responsive"
+                            sx={{ minWidth: 44, minHeight: 44 }}
+                          >
+                            <Delete fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
 
-      <QRCodeViewer
-        open={openQRViewer}
-        onClose={() => {
-          setOpenQRViewer(false);
-          setSelectedTableForQR(null);
-        }}
-        tableId={selectedTableForQR?.id}
-        venueId={getVenue()?.id || ''}
-        venueName={getVenueDisplayName()}
-        tableNumber={selectedTableForQR?.table_number}
-      />
+        <TableDialog
+          open={openTableDialog}
+          onClose={() => setOpenTableDialog(false)}
+          onSave={handleSaveTable}
+          table={editingTable}
+          areas={areas}
+          tables={tables}
+          isMobile={isMobile}
+        />
 
-      <QRCodeManager
-        open={openQRManager}
-        onClose={() => setOpenQRManager(false)}
-        tables={tables.map(table => ({
-          id: table.id,
-          number: table.table_number,
-          venueId: getVenue()?.id || '',
-          venueName: getVenue()?.name || '',
-          cafeName: getVenueDisplayName()
-        }))}
-        venueId={getVenue()?.id || ''}
-        venueName={getVenueDisplayName()}
-      />
+        <AreaDialog
+          open={openAreaDialog}
+          onClose={() => setOpenAreaDialog(false)}
+          onSave={handleSaveArea}
+          area={editingArea}
+          isMobile={isMobile}
+        />
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        >
+          <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+
+        <QRCodeViewer
+          open={openQRViewer}
+          onClose={() => {
+            setOpenQRViewer(false);
+            setSelectedTableForQR(null);
+          }}
+          tableId={selectedTableForQR?.id}
+          venueId={getVenue()?.id || ''}
+          venueName={getVenueDisplayName()}
+          tableNumber={selectedTableForQR?.table_number}
+        />
+
+        <QRCodeManager
+          open={openQRManager}
+          onClose={() => setOpenQRManager(false)}
+          tables={tables.map(table => ({
+            id: table.id,
+            number: table.table_number,
+            venueId: getVenue()?.id || '',
+            venueName: getVenue()?.name || '',
+            cafeName: getVenueDisplayName()
+          }))}
+          venueId={getVenue()?.id || ''}
+          venueName={getVenueDisplayName()}
+        />
+      </Box>
     </Container>
   );
 };
@@ -681,9 +865,10 @@ interface TableDialogProps {
   table: Table | null;
   areas: TableArea[];
   tables: Table[];
+  isMobile?: boolean;
 }
 
-const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table, areas, tables }) => {
+const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table, areas, tables, isMobile = false }) => {
   const [formData, setFormData] = useState<any>({
     table_number: '1',
     capacity: 2,
@@ -746,30 +931,47 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {table ? 'Edit Table' : 'Add Table'}
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="md" 
+      fullWidth
+      fullScreen={isMobile}
+      PaperProps={{
+        sx: {
+          m: isMobile ? 0 : 2,
+          maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)'
+        }
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Typography variant={isMobile ? "h6" : "h5"} fontWeight="600">
+          {table ? 'Edit Table' : 'Add Table'}
+        </Typography>
       </DialogTitle>
-      <DialogContent>
-        <Grid container spacing={3} sx={{ mt: 1 }}>
+      <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 0.5 }}>
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
+              className="input-responsive"
               label="Table Number"
               type="text"
               value={formData.table_number || '1'}
               onChange={(e) => setFormData((prev: any) => ({ ...prev, table_number: e.target.value }))}
               helperText={!table ? `Next available: ${formData.table_number}` : ''}
               error={!table && tables.some(t => t.table_number === formData.table_number.trim() && t.is_active)}
+              size={isMobile ? "medium" : "medium"}
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth>
+            <FormControl fullWidth className="input-responsive">
               <InputLabel>Area</InputLabel>
               <Select
                 value={formData.location || ''}
                 onChange={(e) => setFormData((prev: any) => ({ ...prev, location: e.target.value }))}
                 label="Area"
+                size={isMobile ? "medium" : "medium"}
               >
                 {areas.map(area => (
                   <MenuItem key={area.id} value={area.id}>
@@ -782,6 +984,7 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
+              className="input-responsive"
               label="Capacity"
               type="number"
               value={formData.capacity || 2}
@@ -792,6 +995,7 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
                 onWheel: (e: any) => e.preventDefault(),
                 style: { MozAppearance: 'textfield' }
               }}
+              size={isMobile ? "medium" : "medium"}
               sx={{
                 '& input[type=number]': {
                   '&::-webkit-outer-spin-button': {
@@ -807,12 +1011,13 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <FormControl fullWidth>
+            <FormControl fullWidth className="input-responsive">
               <InputLabel>Status</InputLabel>
               <Select
                 value={formData.table_status || 'available'}
                 onChange={(e) => setFormData((prev: any) => ({ ...prev, table_status: e.target.value }))}
                 label="Status"
+                size={isMobile ? "medium" : "medium"}
               >
                 <MenuItem value="available">Available</MenuItem>
                 <MenuItem value="occupied">Occupied</MenuItem>
@@ -835,11 +1040,28 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained">
-          {table ? 'Update' : 'Add'} Table
-        </Button>
+      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          width={{ xs: '100%', sm: 'auto' }}
+        >
+          <Button 
+            onClick={onClose}
+            className="btn-responsive"
+            fullWidth={isMobile}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            variant="contained"
+            className="btn-responsive"
+            fullWidth={isMobile}
+          >
+            {table ? 'Update' : 'Add'} Table
+          </Button>
+        </Stack>
       </DialogActions>
     </Dialog>
   );
@@ -850,9 +1072,10 @@ interface AreaDialogProps {
   onClose: () => void;
   onSave: (area: Partial<TableArea>) => void;
   area: TableArea | null;
+  isMobile?: boolean;
 }
 
-const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area }) => {
+const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area, isMobile = false }) => {
   const [formData, setFormData] = useState<Partial<TableArea>>({
     name: '',
     description: '',
@@ -882,45 +1105,68 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area }) 
   ];
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {area ? 'Edit Area' : 'Add Area'}
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth
+      fullScreen={isMobile}
+      PaperProps={{
+        sx: {
+          m: isMobile ? 0 : 2,
+          maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)'
+        }
+      }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Typography variant={isMobile ? "h6" : "h5"} fontWeight="600">
+          {area ? 'Edit Area' : 'Add Area'}
+        </Typography>
       </DialogTitle>
-      <DialogContent>
-        <Grid container spacing={3} sx={{ mt: 1 }}>
+      <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 0.5 }}>
           <Grid item xs={12}>
             <TextField
               fullWidth
+              className="input-responsive"
               label="Area Name"
               value={formData.name || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              size={isMobile ? "medium" : "medium"}
             />
           </Grid>
           <Grid item xs={12}>
             <TextField
               fullWidth
+              className="input-responsive"
               label="Description"
               multiline
-              rows={2}
+              rows={isMobile ? 3 : 2}
               value={formData.description || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              size={isMobile ? "medium" : "medium"}
             />
           </Grid>
           <Grid item xs={12}>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography variant={isMobile ? "body1" : "subtitle1"} gutterBottom fontWeight="600">
               Color
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: { xs: 1, sm: 1.5 }, flexWrap: 'wrap' }}>
               {colorOptions.map((color) => (
                 <Box
                   key={color}
                   sx={{
-                    width: 40,
-                    height: 40,
+                    width: { xs: 36, sm: 40 },
+                    height: { xs: 36, sm: 40 },
                     backgroundColor: color,
                     borderRadius: 1,
                     cursor: 'pointer',
                     border: formData.color === color ? '3px solid #000' : '1px solid #ddd',
+                    minWidth: 44,
+                    minHeight: 44,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                   onClick={() => setFormData(prev => ({ ...prev, color }))}
                 />
@@ -940,11 +1186,28 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area }) 
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSave} variant="contained">
-          {area ? 'Update' : 'Add'} Area
-        </Button>
+      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
+        <Stack 
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
+          width={{ xs: '100%', sm: 'auto' }}
+        >
+          <Button 
+            onClick={onClose}
+            className="btn-responsive"
+            fullWidth={isMobile}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            variant="contained"
+            className="btn-responsive"
+            fullWidth={isMobile}
+          >
+            {area ? 'Update' : 'Add'} Area
+          </Button>
+        </Stack>
       </DialogActions>
     </Dialog>
   );

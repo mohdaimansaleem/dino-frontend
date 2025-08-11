@@ -193,9 +193,17 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               <Button
                 size="small"
                 variant="outlined"
-                startIcon={<Dashboard />}
+                startIcon={<Dashboard sx={{ fontSize: 18 }} />}
                 onClick={() => handleNavigate(isAdminLevel(user.role) ? '/admin' : '/profile')}
-                sx={{ flex: 1, textTransform: 'none' }}
+                sx={{ 
+                  flex: 1, 
+                  textTransform: 'none',
+                  minHeight: 36,
+                  fontSize: '0.875rem',
+                  '&:active': {
+                    backgroundColor: 'primary.50',
+                  },
+                }}
               >
                 Dashboard
               </Button>
@@ -203,9 +211,17 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 size="small"
                 variant="outlined"
                 color="error"
-                startIcon={<ExitToApp />}
+                startIcon={<ExitToApp sx={{ fontSize: 18 }} />}
                 onClick={onLogout}
-                sx={{ flex: 1, textTransform: 'none' }}
+                sx={{ 
+                  flex: 1, 
+                  textTransform: 'none',
+                  minHeight: 36,
+                  fontSize: '0.875rem',
+                  '&:active': {
+                    backgroundColor: 'error.50',
+                  },
+                }}
               >
                 Logout
               </Button>
@@ -236,9 +252,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                       onClick={() => handleSectionClick(item.id)}
                       sx={{
                         borderRadius: 2,
+                        minHeight: 48,
                         backgroundColor: activeSection === item.id ? 'rgba(25, 118, 210, 0.1)' : 'transparent',
                         '&:hover': {
                           backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                        },
+                        '&:active': {
+                          backgroundColor: 'rgba(25, 118, 210, 0.15)',
                         },
                         transition: 'all 0.3s ease',
                       }}
@@ -287,8 +307,12 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                     onClick={() => handleNavigate('/register')}
                     sx={{
                       borderRadius: 2,
+                      minHeight: 48,
                       '&:hover': {
                         backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                      },
+                      '&:active': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.12)',
                       },
                     }}
                   >
@@ -309,9 +333,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                     onClick={() => handleNavigate('/login')}
                     sx={{
                       borderRadius: 2,
+                      minHeight: 48,
                       backgroundColor: 'rgba(25, 118, 210, 0.1)',
                       '&:hover': {
                         backgroundColor: 'rgba(25, 118, 210, 0.15)',
+                      },
+                      '&:active': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.2)',
                       },
                     }}
                   >

@@ -199,8 +199,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                 <Avatar 
                   src={dinoAvatar} 
                   sx={{ 
-                    width: 24, 
-                    height: 24,
+                    width: { xs: 20, sm: 24 }, 
+                    height: { xs: 20, sm: 24 },
                     border: '1px solid',
                     borderColor: 'primary.main'
                   }}
@@ -208,16 +208,18 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                   🦕
                 </Avatar>
               ) : (
-                <AccountCircle />
+                <AccountCircle sx={{ fontSize: { xs: 20, sm: 24 } }} />
               )
             }
             sx={{
               color: 'text.primary',
               textTransform: 'none',
               fontWeight: 500,
-              px: 2,
-              py: 1,
+              px: { xs: 1.5, sm: 2 },
+              py: { xs: 0.75, sm: 1 },
+              minHeight: { xs: 36, sm: 40 },
               borderRadius: 2,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               '&:hover': {
                 backgroundColor: 'rgba(25, 118, 210, 0.08)',
                 transform: 'translateY(-1px)',
@@ -230,14 +232,16 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
           <Button
             color="inherit"
             onClick={handleLogout}
-            startIcon={<ExitToApp />}
+            startIcon={<ExitToApp sx={{ fontSize: { xs: 18, sm: 20 } }} />}
             sx={{
               color: 'error.main',
               textTransform: 'none',
               fontWeight: 500,
-              px: 2,
-              py: 1,
+              px: { xs: 1.5, sm: 2 },
+              py: { xs: 0.75, sm: 1 },
+              minHeight: { xs: 36, sm: 40 },
               borderRadius: 2,
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               '&:hover': {
                 backgroundColor: 'rgba(211, 47, 47, 0.08)',
                 transform: 'translateY(-1px)',
@@ -256,14 +260,16 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
         <Button
           color="inherit"
           onClick={() => navigate('/register')}
-          startIcon={<PersonAdd />}
+          startIcon={<PersonAdd sx={{ fontSize: { xs: 18, sm: 20 } }} />}
           sx={{
             color: 'text.primary',
             textTransform: 'none',
             fontWeight: 500,
-            px: 2,
-            py: 1,
+            px: { xs: 1.5, sm: 2 },
+            py: { xs: 0.75, sm: 1 },
+            minHeight: { xs: 36, sm: 40 },
             borderRadius: 2,
+            fontSize: { xs: '0.875rem', sm: '1rem' },
             '&:hover': {
               backgroundColor: 'rgba(25, 118, 210, 0.08)',
               transform: 'translateY(-1px)',
@@ -276,13 +282,15 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
         <Button
           variant="contained"
           onClick={() => navigate('/login')}
-          startIcon={<Login />}
+          startIcon={<Login sx={{ fontSize: { xs: 18, sm: 20 } }} />}
           sx={{
             fontWeight: 600,
             textTransform: 'none',
-            px: 3,
-            py: 1,
+            px: { xs: 2, sm: 3 },
+            py: { xs: 0.75, sm: 1 },
+            minHeight: { xs: 36, sm: 40 },
             borderRadius: 2,
+            fontSize: { xs: '0.875rem', sm: '1rem' },
             boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
             '&:hover': {
               boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
@@ -413,12 +421,17 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                     onClick={handleMobileMenuToggle}
                     sx={{
                       color: 'text.primary',
+                      minWidth: 44,
+                      minHeight: 44,
                       '&:hover': {
                         backgroundColor: 'rgba(25, 118, 210, 0.08)',
                       },
+                      '&:active': {
+                        backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                      },
                     }}
                   >
-                    <MenuIcon />
+                    <MenuIcon sx={{ fontSize: 24 }} />
                   </IconButton>
                 </Box>
               )}

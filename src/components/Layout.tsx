@@ -51,6 +51,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
+  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, logout, hasPermission, isOperator } = useAuth();
   const { getTotalItems } = useCart();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -85,7 +86,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       const tableId = pathParts[3];
       
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
           {isThemeToggleEnabled && <ThemeToggle variant="icon" size="small" />}
           
           <IconButton
@@ -94,8 +95,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             disabled={getTotalItems() === 0}
             sx={{
               backgroundColor: getTotalItems() > 0 ? 'primary.50' : 'transparent',
+              minWidth: { xs: 44, sm: 48 },
+              minHeight: { xs: 44, sm: 48 },
               '&:hover': {
                 backgroundColor: 'primary.100',
+              },
+              '&:disabled': {
+                opacity: 0.5,
               },
             }}
           >
@@ -106,10 +112,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 '& .MuiBadge-badge': {
                   backgroundColor: 'secondary.main',
                   color: 'white',
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  minWidth: { xs: 16, sm: 20 },
+                  height: { xs: 16, sm: 20 },
                 },
               }}
             >
-              <ShoppingCart />
+              <ShoppingCart sx={{ fontSize: { xs: 20, sm: 24 } }} />
             </Badge>
           </IconButton>
         </Box>
@@ -390,9 +399,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               }}
               sx={{
                 '& .MuiDrawer-paper': {
-                  width: 280,
+                  width: { xs: '85vw', sm: 320 },
+                  maxWidth: 320,
                   backgroundColor: 'background.paper',
-                  pt: 2,
+                  pt: { xs: 1, sm: 2 },
+                  paddingTop: 'env(safe-area-inset-top)',
+                  paddingBottom: 'env(safe-area-inset-bottom)',
+                  paddingLeft: 'env(safe-area-inset-left)',
+                  paddingRight: 'env(safe-area-inset-right)',
                 },
               }}
             >
@@ -565,12 +579,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   onClick={handleMobileDrawerToggle}
                   sx={{
                     color: 'text.primary',
+                    minWidth: 44,
+                    minHeight: 44,
                     '&:hover': {
                       backgroundColor: 'action.hover',
                     },
+                    '&:active': {
+                      backgroundColor: 'action.selected',
+                    },
                   }}
                 >
-                  <Dashboard />
+                  <Dashboard sx={{ fontSize: 24 }} />
                 </IconButton>
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
                   {isOperator() ? 'Dino Operator' : 'Dino Admin'}

@@ -145,7 +145,7 @@ const HomePage: React.FC = () => {
       >
         <AnimatedBackground />
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, px: { xs: 2, sm: 3 } }}>
-          <Grid container spacing={{ xs: 4, md: 6 }} alignItems="center">
+          <Grid container spacing={{ xs: 3, sm: 4, md: 6 }} alignItems="center">
             <Grid item xs={12} md={6}>
               <Box sx={{ mb: 3 }}>
                 <Chip 
@@ -219,12 +219,16 @@ const HomePage: React.FC = () => {
                         px: { xs: 3, sm: 4 }, 
                         py: { xs: 1.2, sm: 1.5 }, 
                         fontSize: { xs: '0.9rem', sm: '1rem' },
+                        minHeight: { xs: 44, sm: 48 },
                         backgroundColor: 'white',
                         color: 'primary.main',
                         width: { xs: '100%', sm: 'auto' },
                         '&:hover': {
                           backgroundColor: 'rgba(255,255,255,0.9)',
                           transform: 'translateY(-2px)',
+                        },
+                        '&:active': {
+                          transform: 'translateY(0px)',
                         },
                         transition: 'all 0.3s ease',
                       }}
@@ -241,12 +245,16 @@ const HomePage: React.FC = () => {
                           px: { xs: 3, sm: 4 }, 
                           py: { xs: 1.2, sm: 1.5 }, 
                           fontSize: { xs: '0.9rem', sm: '1rem' },
+                          minHeight: { xs: 44, sm: 48 },
                           backgroundColor: 'primary.main',
                           color: 'white',
                           width: { xs: '100%', sm: 'auto' },
                           '&:hover': {
                             backgroundColor: 'primary.dark',
                             transform: 'translateY(-2px)',
+                          },
+                          '&:active': {
+                            transform: 'translateY(0px)',
                           },
                           transition: 'all 0.3s ease',
                         }}
@@ -262,6 +270,7 @@ const HomePage: React.FC = () => {
                           px: { xs: 3, sm: 4 }, 
                           py: { xs: 1.2, sm: 1.5 }, 
                           fontSize: { xs: '0.9rem', sm: '1rem' },
+                          minHeight: { xs: 44, sm: 48 },
                           borderColor: 'primary.main',
                           color: 'primary.main',
                           width: { xs: '100%', sm: 'auto' },
@@ -269,6 +278,9 @@ const HomePage: React.FC = () => {
                             borderColor: 'primary.dark',
                             backgroundColor: 'rgba(25, 118, 210, 0.04)',
                             transform: 'translateY(-2px)',
+                          },
+                          '&:active': {
+                            transform: 'translateY(0px)',
                           },
                           transition: 'all 0.3s ease',
                         }}
@@ -498,18 +510,36 @@ const HomePage: React.FC = () => {
       </Container>
 
       {/* Pricing Section */}
-      <Box sx={{ py: 10, backgroundColor: 'grey.50' }} ref={pricingRef} id="pricing">
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
+      <Box sx={{ py: { xs: 6, md: 10 }, backgroundColor: 'grey.50' }} ref={pricingRef} id="pricing">
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
+            <Typography 
+              variant="h2" 
+              gutterBottom 
+              fontWeight="600" 
+              color="text.primary"
+              sx={{
+                fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' },
+                mb: { xs: 2, md: 3 }
+              }}
+            >
               {CONTENT.pricing.title}
             </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+            <Typography 
+              variant="h6" 
+              color="text.secondary" 
+              sx={{ 
+                maxWidth: 600, 
+                mx: 'auto',
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+                px: { xs: 2, sm: 0 }
+              }}
+            >
               {CONTENT.pricing.subtitle}
             </Typography>
           </Box>
 
-          <Grid container spacing={4} justifyContent="center">
+          <Grid container spacing={{ xs: 3, md: 4 }} justifyContent="center">
             {pricingPlans.map((plan, index) => (
               <Grid item xs={12} md={4} key={index}>
                 <Card
@@ -541,7 +571,7 @@ const HomePage: React.FC = () => {
                     />
                   )}
                   
-                  <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                  <CardContent sx={{ p: { xs: 3, md: 4 }, textAlign: 'center' }}>
                     <Box sx={{ mb: 3 }}>
                       {plan.icon}
                     </Box>
@@ -586,7 +616,15 @@ const HomePage: React.FC = () => {
                       fullWidth
                       size="large"
                       onClick={() => navigate('/login')}
-                      sx={{ py: 1.5 }}
+                      sx={{ 
+                        py: { xs: 1.2, sm: 1.5 },
+                        minHeight: { xs: 44, sm: 48 },
+                        fontSize: { xs: '0.9rem', sm: '1rem' },
+                        '&:active': {
+                          transform: 'scale(0.98)',
+                        },
+                        transition: 'all 0.2s ease',
+                      }}
                     >
                       Get Started
                     </Button>
@@ -612,14 +650,31 @@ const HomePage: React.FC = () => {
       </Box>
 
       {/* Benefits Section */}
-      <Box sx={{ py: 10 }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={8} alignItems="center">
+      <Box sx={{ py: { xs: 6, md: 10 } }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+          <Grid container spacing={{ xs: 4, md: 8 }} alignItems="center">
             <Grid item xs={12} md={6}>
-              <Typography variant="h3" gutterBottom fontWeight="600" color="text.primary">
+              <Typography 
+                variant="h3" 
+                gutterBottom 
+                fontWeight="600" 
+                color="text.primary"
+                sx={{
+                  fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+                  mb: { xs: 2, md: 3 }
+                }}
+              >
                 {CONTENT.benefits.title}
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 4, fontSize: '1.1rem' }}>
+              <Typography 
+                variant="body1" 
+                color="text.secondary" 
+                sx={{ 
+                  mb: { xs: 3, md: 4 }, 
+                  fontSize: { xs: '1rem', md: '1.1rem' },
+                  lineHeight: { xs: 1.5, md: 1.6 }
+                }}
+              >
                 {CONTENT.benefits.subtitle}
               </Typography>
               <List>
@@ -643,7 +698,7 @@ const HomePage: React.FC = () => {
               <Paper
                 elevation={2}
                 sx={{
-                  p: 6,
+                  p: { xs: 4, md: 6 },
                   textAlign: 'center',
                   backgroundColor: 'primary.main',
                   color: 'primary.contrastText',
@@ -678,24 +733,41 @@ const HomePage: React.FC = () => {
       </Box>
 
       {/* Testimonials Section */}
-      <Box sx={{ py: 10, backgroundColor: 'grey.50' }} ref={testimonialsRef} id="testimonials">
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
+      <Box sx={{ py: { xs: 6, md: 10 }, backgroundColor: 'grey.50' }} ref={testimonialsRef} id="testimonials">
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
+            <Typography 
+              variant="h2" 
+              gutterBottom 
+              fontWeight="600" 
+              color="text.primary"
+              sx={{
+                fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' },
+                mb: { xs: 2, md: 3 }
+              }}
+            >
               {CONTENT.testimonials.title}
             </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography 
+              variant="h6" 
+              color="text.secondary" 
+              sx={{ 
+                mb: { xs: 2, md: 3 },
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+                px: { xs: 2, sm: 0 }
+              }}
+            >
               {CONTENT.testimonials.subtitle}
             </Typography>
           </Box>
           
-          <Grid container spacing={4}>
+          <Grid container spacing={{ xs: 3, md: 4 }}>
             {testimonials.map((testimonial, index) => (
               <Grid item xs={12} md={6} lg={4} key={index}>
                 <Paper
                   elevation={1}
                   sx={{
-                    p: 4,
+                    p: { xs: 3, md: 4 },
                     height: '100%',
                     border: '1px solid',
                     borderColor: 'divider',
@@ -703,6 +775,9 @@ const HomePage: React.FC = () => {
                       boxShadow: '0 15px 30px rgba(0,0,0,0.12)',
                       transform: 'translateY(-8px) scale(1.02)',
                       borderColor: 'primary.main',
+                    },
+                    '&:active': {
+                      transform: 'translateY(-4px) scale(1.01)',
                     },
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                     cursor: 'pointer',
@@ -735,18 +810,34 @@ const HomePage: React.FC = () => {
       </Box>
 
       {/* Contact Section */}
-      <Box sx={{ py: 10 }} ref={contactRef} id="contact">
-        <Container maxWidth="lg">
-          <Box sx={{ textAlign: 'center', mb: 8 }}>
-            <Typography variant="h2" gutterBottom fontWeight="600" color="text.primary">
+      <Box sx={{ py: { xs: 6, md: 10 } }} ref={contactRef} id="contact">
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+          <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
+            <Typography 
+              variant="h2" 
+              gutterBottom 
+              fontWeight="600" 
+              color="text.primary"
+              sx={{
+                fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' },
+                mb: { xs: 2, md: 3 }
+              }}
+            >
               {CONTENT.contact.title}
             </Typography>
-            <Typography variant="h6" color="text.secondary">
+            <Typography 
+              variant="h6" 
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+                px: { xs: 2, sm: 0 }
+              }}
+            >
               {CONTENT.contact.subtitle}
             </Typography>
           </Box>
           
-          <Grid container spacing={4} sx={{ mb: 8 }}>
+          <Grid container spacing={{ xs: 3, md: 4 }} sx={{ mb: { xs: 6, md: 8 } }}>
             {[
               { icon: <Phone />, title: 'Call Us', info: COMPANY_INFO.contact.phone.primary, action: `tel:${COMPANY_INFO.contact.phone.primary.replace(/\s/g, '')}` },
               { icon: <Email />, title: 'Email Us', info: COMPANY_INFO.contact.email.primary, action: `mailto:${COMPANY_INFO.contact.email.primary}` },
@@ -756,15 +847,19 @@ const HomePage: React.FC = () => {
                 <Paper
                   elevation={1}
                   sx={{
-                    p: 4,
+                    p: { xs: 3, md: 4 },
                     textAlign: 'center',
                     border: '1px solid',
                     borderColor: 'divider',
                     cursor: contact.action !== '#' ? 'pointer' : 'default',
+                    minHeight: { xs: 'auto', sm: 200 },
                     '&:hover': {
                       boxShadow: '0 15px 30px rgba(0,0,0,0.12)',
                       transform: 'translateY(-10px) scale(1.03)',
                       borderColor: 'primary.main',
+                    },
+                    '&:active': {
+                      transform: contact.action !== '#' ? 'translateY(-5px) scale(1.01)' : 'none',
                     },
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
@@ -809,12 +904,18 @@ const HomePage: React.FC = () => {
           size="medium"
           sx={{
             position: 'fixed',
-            bottom: 24,
-            right: 24,
+            bottom: { xs: 16, sm: 24 },
+            right: { xs: 16, sm: 24 },
             boxShadow: 2,
+            minWidth: 44,
+            minHeight: 44,
+            '&:active': {
+              transform: 'scale(0.95)',
+            },
+            transition: 'transform 0.2s ease',
           }}
         >
-          <KeyboardArrowUp />
+          <KeyboardArrowUp sx={{ fontSize: { xs: 20, sm: 24 } }} />
         </Fab>
       </Zoom>
 

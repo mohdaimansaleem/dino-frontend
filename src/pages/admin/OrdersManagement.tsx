@@ -30,6 +30,9 @@ import {
   Snackbar,
   Badge,
   Skeleton,
+  useTheme,
+  useMediaQuery,
+  Stack,
 } from '@mui/material';
 import {
   Restaurant,
@@ -91,6 +94,10 @@ const OrdersManagement: React.FC = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
   // Load orders from API
   useEffect(() => {
@@ -306,6 +313,7 @@ const OrdersManagement: React.FC = () => {
   const renderOrderCard = (order: Order) => (
     <Card 
       key={order.id}
+      className="card-responsive"
       sx={{ 
         mb: 2, 
         height: '100%',
@@ -317,24 +325,52 @@ const OrdersManagement: React.FC = () => {
         '&:hover': { boxShadow: 2 }
       }}
     >
-      <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: 400 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box>
-            <Typography variant="h6" fontWeight="600" color="text.primary">
+      <CardContent sx={{ 
+        p: { xs: 2, sm: 3 }, 
+        flexGrow: 1, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        minHeight: { xs: 320, sm: 400 }
+      }}>
+        <Stack 
+          direction="row"
+          justifyContent="space-between" 
+          alignItems="flex-start" 
+          spacing={1}
+          sx={{ mb: 2 }}
+        >
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography 
+              variant={isMobile ? "body1" : "h6"} 
+              fontWeight="600" 
+              color="text.primary"
+              noWrap
+            >
               {order.order_number || order.id}
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-              <TableRestaurant fontSize="small" color="action" />
-              <Typography variant="body2" color="text.secondary">
-                Table {getTableNumber(order)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }}
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              spacing={{ xs: 0.5, sm: 1 }}
+              sx={{ mt: 0.5 }}
+            >
+              <Stack direction="row" alignItems="center" spacing={0.5}>
+                <TableRestaurant fontSize="small" color="action" />
+                <Typography variant="body2" color="text.secondary">
+                  Table {getTableNumber(order)}
+                </Typography>
+              </Stack>
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ display: { xs: 'none', sm: 'block' } }}
+              >
                 • {formatTime(order.created_at)}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                • {getTimeSinceOrder(order.created_at)}
+                {isMobile ? formatTime(order.created_at) : `• ${getTimeSinceOrder(order.created_at)}`}
               </Typography>
-            </Box>
+            </Stack>
           </Box>
           <Chip 
             icon={getStatusIcon(order.status)}
@@ -343,67 +379,118 @@ const OrdersManagement: React.FC = () => {
             sx={{ 
               backgroundColor: getStatusColor(order.status),
               color: 'white',
-              '& .MuiChip-icon': { color: 'white' }
+              '& .MuiChip-icon': { color: 'white' },
+              fontSize: { xs: '0.7rem', sm: '0.75rem' }
             }}
           />
-        </Box>
+        </Stack>
 
         <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" fontWeight="600" color="text.primary" sx={{ mb: 1 }}>
+          <Typography 
+            variant={isMobile ? "body2" : "subtitle2"} 
+            fontWeight="600" 
+            color="text.primary" 
+            sx={{ mb: 1 }}
+          >
             Items ({order.items.length})
           </Typography>
-          {order.items.slice(0, 2).map((item, index) => (
-            <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {order.items.slice(0, isMobile ? 1 : 2).map((item, index) => (
+            <Stack 
+              key={index}
+              direction="row"
+              justifyContent="space-between" 
+              alignItems="center" 
+              spacing={1}
+              sx={{ mb: 0.5 }}
+            >
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1, minWidth: 0 }}>
                 <Box
                   sx={{
                     width: 8,
                     height: 8,
                     borderRadius: '50%',
                     backgroundColor: '#4CAF50', // Default to veg, would need menu item data for actual veg/non-veg
+                    flexShrink: 0
                   }}
                 />
-                <Typography variant="body2" color="text.secondary">
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
                   {item.quantity}x {item.menu_item_name}
                 </Typography>
-              </Box>
-              <Typography variant="body2" color="text.secondary">
+              </Stack>
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  flexShrink: 0
+                }}
+              >
                 {formatCurrency(item.total_price)}
               </Typography>
-            </Box>
+            </Stack>
           ))}
-          {order.items.length > 2 && (
-            <Typography variant="body2" color="primary.main" sx={{ cursor: 'pointer' }}>
-              +{order.items.length - 2} more items
+          {order.items.length > (isMobile ? 1 : 2) && (
+            <Typography 
+              variant="body2" 
+              color="primary.main" 
+              sx={{ 
+                cursor: 'pointer',
+                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              }}
+            >
+              +{order.items.length - (isMobile ? 1 : 2)} more items
             </Typography>
           )}
         </Box>
 
         <Box sx={{ mt: 'auto' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Box>
-              <Typography variant="h6" fontWeight="600" color="text.primary">
-                Total: {formatCurrency(order.total_amount)}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+          <Box sx={{ mb: 2 }}>
+            <Typography 
+              variant={isMobile ? "body1" : "h6"} 
+              fontWeight="600" 
+              color="text.primary"
+              sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+            >
+              Total: {formatCurrency(order.total_amount)}
+            </Typography>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }}
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              spacing={1} 
+              sx={{ mt: 0.5 }}
+            >
+              <Chip 
+                label={orderService.formatPaymentStatus(order.payment_status)} 
+                size="small" 
+                color={order.payment_status === 'paid' ? 'success' : 'warning'}
+                variant="outlined"
+                sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+              />
+              {order.payment_method && (
                 <Chip 
-                  label={orderService.formatPaymentStatus(order.payment_status)} 
+                  label={order.payment_method.toUpperCase()} 
                   size="small" 
-                  color={order.payment_status === 'paid' ? 'success' : 'warning'}
                   variant="outlined"
+                  sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
                 />
-                {order.payment_method && (
-                  <Chip 
-                    label={order.payment_method.toUpperCase()} 
-                    size="small" 
-                    variant="outlined"
-                  />
-                )}
-              </Box>
-            </Box>
+              )}
+            </Stack>
           </Box>
           
-          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1} 
+            justifyContent="center"
+          >
             {/* View button only for admin */}
             {isAdmin() && (
               <Button
@@ -411,13 +498,19 @@ const OrdersManagement: React.FC = () => {
                 variant="outlined"
                 onClick={() => handleViewOrder(order)}
                 startIcon={<Visibility />}
-                sx={{ flex: isOperator() ? 0 : 1 }}
+                className="btn-responsive"
+                fullWidth={isMobile}
+                sx={{ flex: { xs: 'none', sm: isOperator() ? 0 : 1 } }}
               >
                 View
               </Button>
             )}
             {order.status !== 'served' && order.status !== 'cancelled' && (
-              <FormControl size="small" sx={{ flex: 1 }}>
+              <FormControl 
+                size="small" 
+                className="input-responsive"
+                sx={{ flex: { xs: 'none', sm: 1 }, width: { xs: '100%', sm: 'auto' } }}
+              >
                 <Select
                   value={order.status}
                   onChange={(e) => handleStatusUpdate(order.id, e.target.value as OrderStatus)}
@@ -432,16 +525,30 @@ const OrdersManagement: React.FC = () => {
                 </Select>
               </FormControl>
             )}
-          </Box>
+          </Stack>
         </Box>
 
         {order.estimated_ready_time && order.status !== 'served' && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2, p: 1, backgroundColor: 'info.50', borderRadius: 1 }}>
+          <Stack 
+            direction="row"
+            alignItems="center" 
+            spacing={1} 
+            sx={{ 
+              mt: 2, 
+              p: { xs: 1, sm: 1.5 }, 
+              backgroundColor: 'info.50', 
+              borderRadius: 1 
+            }}
+          >
             <Timer fontSize="small" color="info" />
-            <Typography variant="body2" color="info.main">
+            <Typography 
+              variant="body2" 
+              color="info.main"
+              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+            >
               Estimated ready time: {formatTime(order.estimated_ready_time)}
             </Typography>
-          </Box>
+          </Stack>
         )}
       </CardContent>
     </Card>
@@ -449,32 +556,44 @@ const OrdersManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Grid container spacing={3}>
-          {[...Array(6)].map((_, index) => (
-            <Grid item xs={12} md={6} lg={4} key={index}>
-              <Card>
-                <CardContent>
-                  <Skeleton variant="text" height={32} />
-                  <Skeleton variant="text" height={24} />
-                  <Skeleton variant="rectangular" height={120} sx={{ mt: 2 }} />
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+      <Container maxWidth="xl" className="container-responsive">
+        <Box sx={{ py: { xs: 2, sm: 4 } }}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
+            {[...Array(6)].map((_, index) => (
+              <Grid item xs={12} md={6} lg={4} key={index}>
+                <Card className="card-responsive">
+                  <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                    <Skeleton variant="text" height={isMobile ? 28 : 32} />
+                    <Skeleton variant="text" height={isMobile ? 20 : 24} />
+                    <Skeleton variant="rectangular" height={isMobile ? 100 : 120} sx={{ mt: 2 }} />
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       </Container>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="error" gutterBottom>
+      <Container maxWidth="xl" className="container-responsive">
+        <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
+          <Typography 
+            variant={isMobile ? "body1" : "h6"} 
+            color="error" 
+            gutterBottom
+            fontWeight="600"
+          >
             {error}
           </Typography>
-          <Button variant="contained" onClick={handleRefreshOrders} sx={{ mt: 2 }}>
+          <Button 
+            variant="contained" 
+            onClick={handleRefreshOrders} 
+            className="btn-responsive"
+            sx={{ mt: 2 }}
+          >
             Try Again
           </Button>
         </Box>
@@ -483,278 +602,461 @@ const OrdersManagement: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box>
-            <Typography variant="h4" gutterBottom fontWeight="600" color="text.primary">
-              {isOperator() ? 'Kitchen Dashboard' : 'Orders Management'}
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              {isOperator() 
-                ? `View and update order status for ${getVenueDisplayName()}` 
-                : `Manage and track all orders for ${getVenueDisplayName()}`
-              }
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton onClick={handleRefreshOrders}>
-              <Refresh />
-            </IconButton>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Kitchen Statistics */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        {[
-          { label: 'Total Orders Today', value: orders.length, color: '#2196F3', icon: <Assignment /> },
-          { label: 'Active Orders', value: getActiveOrders().length, color: '#FF9800', icon: <Restaurant /> },
-          { label: 'Ready to Serve', value: orders.filter(o => o.status === 'ready').length, color: '#4CAF50', icon: <CheckCircle /> },
-          { 
-            label: 'Avg Prep Time', 
-            value: orders.length > 0 ? '25 min' : '0 min', // Would calculate from actual data
-            color: '#9C27B0', 
-            icon: <Timer /> 
-          },
-        ].map((stat, index) => (
-          <Grid item xs={6} md={3} key={index}>
-            <Paper elevation={1} sx={{ p: 3, border: '1px solid', borderColor: 'divider' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ backgroundColor: stat.color, width: 48, height: 48 }}>
-                  {stat.icon}
-                </Avatar>
-                <Box>
-                  <Typography variant="h5" fontWeight="bold" color="text.primary">
-                    {typeof stat.value === 'string' ? stat.value : stat.value}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {stat.label}
-                  </Typography>
-                </Box>
-              </Box>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-
-      {/* Controls */}
-      <Paper elevation={1} sx={{ p: 3, mb: 4, border: '1px solid', borderColor: 'divider' }}>
-        <Grid container spacing={3} alignItems="center">
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              placeholder="Search orders by ID, table, or items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              InputProps={{
-                startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={8}>
-            <FormControl fullWidth>
-              <InputLabel>Filter by Status</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                label="Filter by Status"
+    <Container maxWidth="xl" className="container-responsive">
+      <Box sx={{ py: { xs: 2, sm: 4 } }}>
+        {/* Header */}
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }}
+            justifyContent="space-between" 
+            alignItems={{ xs: 'flex-start', sm: 'flex-start' }}
+            spacing={{ xs: 2, sm: 0 }}
+            sx={{ mb: 2 }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <Typography 
+                variant={isMobile ? "h5" : "h4"} 
+                component="h1"
+                gutterBottom 
+                fontWeight="600" 
+                color="text.primary"
+                sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
               >
-                <MenuItem value="all">All Orders</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="confirmed">Confirmed</MenuItem>
-                <MenuItem value="preparing">Preparing</MenuItem>
-                <MenuItem value="ready">Ready</MenuItem>
-                <MenuItem value="served">Served</MenuItem>
-                <MenuItem value="cancelled">Cancelled</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
+                {isOperator() ? 'Kitchen Dashboard' : 'Orders Management'}
+              </Typography>
+              <Typography 
+                variant={isMobile ? "body2" : "body1"} 
+                color="text.secondary"
+              >
+                {isOperator() 
+                  ? `View and update order status for ${getVenueDisplayName()}` 
+                  : `Manage and track all orders for ${getVenueDisplayName()}`
+                }
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <IconButton 
+                onClick={handleRefreshOrders}
+                className="btn-responsive"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
+                <Refresh />
+              </IconButton>
+            </Box>
+          </Stack>
+        </Box>
+
+        {/* Kitchen Statistics */}
+        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 3, md: 4 } }}>
+          {[
+            { label: 'Total Orders Today', value: orders.length, color: '#2196F3', icon: <Assignment /> },
+            { label: 'Active Orders', value: getActiveOrders().length, color: '#FF9800', icon: <Restaurant /> },
+            { label: 'Ready to Serve', value: orders.filter(o => o.status === 'ready').length, color: '#4CAF50', icon: <CheckCircle /> },
+            { 
+              label: 'Avg Prep Time', 
+              value: orders.length > 0 ? '25 min' : '0 min', // Would calculate from actual data
+              color: '#9C27B0', 
+              icon: <Timer /> 
+            },
+          ].map((stat, index) => (
+            <Grid item xs={6} md={3} key={index}>
+              <Paper 
+                elevation={1} 
+                className="card-responsive"
+                sx={{ p: { xs: 2, sm: 3 }, border: '1px solid', borderColor: 'divider' }}
+              >
+                <Stack 
+                  direction={{ xs: 'column', sm: 'row' }}
+                  alignItems={{ xs: 'center', sm: 'flex-start' }}
+                  spacing={{ xs: 1, sm: 2 }}
+                  textAlign={{ xs: 'center', sm: 'left' }}
+                >
+                  <Avatar sx={{ 
+                    backgroundColor: stat.color, 
+                    width: { xs: 40, sm: 48 }, 
+                    height: { xs: 40, sm: 48 } 
+                  }}>
+                    {React.cloneElement(stat.icon, { 
+                      fontSize: isMobile ? 'medium' : 'large' 
+                    })}
+                  </Avatar>
+                  <Box>
+                    <Typography 
+                      variant={isMobile ? "h6" : "h5"} 
+                      fontWeight="bold" 
+                      color="text.primary"
+                      sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
+                    >
+                      {typeof stat.value === 'string' ? stat.value : stat.value}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                    >
+                      {stat.label}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Paper>
+            </Grid>
+          ))}
         </Grid>
-      </Paper>
 
-      {/* Tabs */}
-      <Paper elevation={1} sx={{ border: '1px solid', borderColor: 'divider' }}>
-        <Tabs 
-          value={tabValue} 
-          onChange={(e, newValue) => setTabValue(newValue)}
-          sx={{ borderBottom: '1px solid', borderColor: 'divider' }}
+        {/* Controls */}
+        <Paper 
+          elevation={1} 
+          className="card-responsive"
+          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
         >
-          <Tab 
-            icon={<Badge badgeContent={getActiveOrders().length} color="warning"><Restaurant /></Badge>} 
-            label="Active Orders" 
-          />
-          <Tab 
-            icon={<Badge badgeContent={getServedOrders().length} color="success"><CheckCircle /></Badge>} 
-            label="Served Orders" 
-          />
-        </Tabs>
-
-        {/* Active Orders Tab */}
-        <TabPanel value={tabValue} index={0}>
-          <Box sx={{ p: 3 }}>
-            {getActiveOrders().length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 8 }}>
-                <Restaurant sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No Active Orders
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  All orders have been served or there are no new orders.
-                </Typography>
-              </Box>
-            ) : (
-              <Grid container spacing={3}>
-                {getActiveOrders().map(order => (
-                  <Grid item xs={12} md={6} lg={4} key={order.id}>
-                    {renderOrderCard(order)}
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </Box>
-        </TabPanel>
-
-        {/* Served Orders Tab */}
-        <TabPanel value={tabValue} index={1}>
-          <Box sx={{ p: 3 }}>
-            {getServedOrders().length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 8 }}>
-                <CheckCircle sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No Served Orders
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Completed orders will appear here.
-                </Typography>
-              </Box>
-            ) : (
-              <Grid container spacing={3}>
-                {getServedOrders().map(order => (
-                  <Grid item xs={12} md={6} lg={4} key={order.id}>
-                    {renderOrderCard(order)}
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </Box>
-        </TabPanel>
-      </Paper>
-
-      {/* Order Details Dialog */}
-      <Dialog open={openOrderDialog} onClose={() => setOpenOrderDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Order Details - {selectedOrder?.order_number || selectedOrder?.id}</Typography>
-            {selectedOrder && (
-              <Chip 
-                icon={getStatusIcon(selectedOrder.status)}
-                label={orderService.formatOrderStatus(selectedOrder.status)}
-                sx={{ 
-                  backgroundColor: getStatusColor(selectedOrder.status),
-                  color: 'white',
-                  '& .MuiChip-icon': { color: 'white' }
+          <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                className="input-responsive"
+                placeholder={isMobile ? "Search orders..." : "Search orders by ID, table, or items..."}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                size={isMobile ? "medium" : "medium"}
+                InputProps={{
+                  startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
                 }}
               />
-            )}
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          {selectedOrder && (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={8}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  Order Information
-                </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemText primary="Order ID" secondary={selectedOrder.order_number || selectedOrder.id} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Table" secondary={getTableNumber(selectedOrder)} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Order Time" secondary={formatTime(selectedOrder.created_at)} />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Status" secondary={orderService.formatOrderStatus(selectedOrder.status)} />
-                  </ListItem>
-                  {selectedOrder.estimated_ready_time && (
-                    <ListItem>
-                      <ListItemText primary="Estimated Ready Time" secondary={formatTime(selectedOrder.estimated_ready_time)} />
-                    </ListItem>
-                  )}
-                </List>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  Payment Information
-                </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemText primary="Payment Status" secondary={orderService.formatPaymentStatus(selectedOrder.payment_status)} />
-                  </ListItem>
-                  {selectedOrder.payment_method && (
-                    <ListItem>
-                      <ListItemText primary="Payment Method" secondary={selectedOrder.payment_method.toUpperCase()} />
-                    </ListItem>
-                  )}
-                </List>
-              </Grid>
-              <Grid item xs={12}>
-                <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                  Order Items
-                </Typography>
-                <List>
-                  {selectedOrder.items.map((item, index) => (
-                    <ListItem key={index}>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <FormControl fullWidth className="input-responsive">
+                <InputLabel>Filter by Status</InputLabel>
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  label="Filter by Status"
+                  size={isMobile ? "medium" : "medium"}
+                >
+                  <MenuItem value="all">All Orders</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="confirmed">Confirmed</MenuItem>
+                  <MenuItem value="preparing">Preparing</MenuItem>
+                  <MenuItem value="ready">Ready</MenuItem>
+                  <MenuItem value="served">Served</MenuItem>
+                  <MenuItem value="cancelled">Cancelled</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Tabs */}
+        <Paper elevation={1} className="card-responsive" sx={{ border: '1px solid', borderColor: 'divider' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={(e, newValue) => setTabValue(newValue)}
+            variant={isMobile ? "fullWidth" : "standard"}
+            sx={{ 
+              borderBottom: '1px solid', 
+              borderColor: 'divider',
+              '& .MuiTab-root': {
+                minHeight: { xs: 48, sm: 48 },
+                fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                fontWeight: 500,
+                textTransform: 'none',
+                minWidth: { xs: 'auto', sm: 160 },
+                px: { xs: 1, sm: 2 }
+              }
+            }}
+          >
+            <Tab 
+              icon={
+                <Badge badgeContent={getActiveOrders().length} color="warning">
+                  <Restaurant fontSize={isMobile ? "small" : "medium"} />
+                </Badge>
+              } 
+              label={isMobile ? "Active" : "Active Orders"}
+              iconPosition={isMobile ? "top" : "start"}
+            />
+            <Tab 
+              icon={
+                <Badge badgeContent={getServedOrders().length} color="success">
+                  <CheckCircle fontSize={isMobile ? "small" : "medium"} />
+                </Badge>
+              } 
+              label={isMobile ? "Served" : "Served Orders"}
+              iconPosition={isMobile ? "top" : "start"}
+            />
+          </Tabs>
+
+          {/* Active Orders Tab */}
+          <TabPanel value={tabValue} index={0}>
+            <Box sx={{ p: { xs: 2, sm: 3 } }}>
+              {getActiveOrders().length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
+                  <Restaurant sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.secondary', mb: 2 }} />
+                  <Typography 
+                    variant={isMobile ? "body1" : "h6"} 
+                    color="text.secondary" 
+                    fontWeight="600"
+                    gutterBottom
+                  >
+                    No Active Orders
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ maxWidth: 400, mx: 'auto' }}
+                  >
+                    All orders have been served or there are no new orders.
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                  {getActiveOrders().map(order => (
+                    <Grid item xs={12} md={6} lg={4} key={order.id}>
+                      {renderOrderCard(order)}
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Box>
+          </TabPanel>
+
+          {/* Served Orders Tab */}
+          <TabPanel value={tabValue} index={1}>
+            <Box sx={{ p: { xs: 2, sm: 3 } }}>
+              {getServedOrders().length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
+                  <CheckCircle sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.secondary', mb: 2 }} />
+                  <Typography 
+                    variant={isMobile ? "body1" : "h6"} 
+                    color="text.secondary" 
+                    fontWeight="600"
+                    gutterBottom
+                  >
+                    No Served Orders
+                  </Typography>
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ maxWidth: 400, mx: 'auto' }}
+                  >
+                    Completed orders will appear here.
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                  {getServedOrders().map(order => (
+                    <Grid item xs={12} md={6} lg={4} key={order.id}>
+                      {renderOrderCard(order)}
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Box>
+          </TabPanel>
+        </Paper>
+
+        {/* Order Details Dialog */}
+        <Dialog 
+          open={openOrderDialog} 
+          onClose={() => setOpenOrderDialog(false)} 
+          maxWidth="md" 
+          fullWidth
+          fullScreen={isMobile}
+          PaperProps={{
+            sx: {
+              m: isMobile ? 0 : 2,
+              maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)'
+            }
+          }}
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }}
+              justifyContent="space-between" 
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              spacing={{ xs: 1, sm: 0 }}
+            >
+              <Typography 
+                variant={isMobile ? "h6" : "h5"} 
+                fontWeight="600"
+                sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
+              >
+                Order Details - {selectedOrder?.order_number || selectedOrder?.id}
+              </Typography>
+              {selectedOrder && (
+                <Chip 
+                  icon={getStatusIcon(selectedOrder.status)}
+                  label={orderService.formatOrderStatus(selectedOrder.status)}
+                  sx={{ 
+                    backgroundColor: getStatusColor(selectedOrder.status),
+                    color: 'white',
+                    '& .MuiChip-icon': { color: 'white' },
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' }
+                  }}
+                />
+              )}
+            </Stack>
+          </DialogTitle>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+            {selectedOrder && (
+              <Grid container spacing={{ xs: 2, sm: 3 }}>
+                <Grid item xs={12} md={8}>
+                  <Typography 
+                    variant={isMobile ? "body1" : "subtitle1"} 
+                    fontWeight="600" 
+                    gutterBottom
+                  >
+                    Order Information
+                  </Typography>
+                  <List dense={isMobile}>
+                    <ListItem sx={{ px: 0 }}>
                       <ListItemText 
-                        primary={`${item.quantity}x ${item.menu_item_name}`}
-                        secondary={`${formatCurrency(item.unit_price)} each - Total: ${formatCurrency(item.total_price)}`}
+                        primary="Order ID" 
+                        secondary={selectedOrder.order_number || selectedOrder.id}
+                        primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                       />
                     </ListItem>
-                  ))}
-                </List>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemText 
+                        primary="Table" 
+                        secondary={getTableNumber(selectedOrder)}
+                        primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                      />
+                    </ListItem>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemText 
+                        primary="Order Time" 
+                        secondary={formatTime(selectedOrder.created_at)}
+                        primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                      />
+                    </ListItem>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemText 
+                        primary="Status" 
+                        secondary={orderService.formatOrderStatus(selectedOrder.status)}
+                        primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                      />
+                    </ListItem>
+                    {selectedOrder.estimated_ready_time && (
+                      <ListItem sx={{ px: 0 }}>
+                        <ListItemText 
+                          primary="Estimated Ready Time" 
+                          secondary={formatTime(selectedOrder.estimated_ready_time)}
+                          primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                          secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                        />
+                      </ListItem>
+                    )}
+                  </List>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Typography 
+                    variant={isMobile ? "body1" : "subtitle1"} 
+                    fontWeight="600" 
+                    gutterBottom
+                  >
+                    Payment Information
+                  </Typography>
+                  <List dense={isMobile}>
+                    <ListItem sx={{ px: 0 }}>
+                      <ListItemText 
+                        primary="Payment Status" 
+                        secondary={orderService.formatPaymentStatus(selectedOrder.payment_status)}
+                        primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                        secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                      />
+                    </ListItem>
+                    {selectedOrder.payment_method && (
+                      <ListItem sx={{ px: 0 }}>
+                        <ListItemText 
+                          primary="Payment Method" 
+                          secondary={selectedOrder.payment_method.toUpperCase()}
+                          primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                          secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                        />
+                      </ListItem>
+                    )}
+                  </List>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography 
+                    variant={isMobile ? "body1" : "subtitle1"} 
+                    fontWeight="600" 
+                    gutterBottom
+                  >
+                    Order Items
+                  </Typography>
+                  <List dense={isMobile}>
+                    {selectedOrder.items.map((item, index) => (
+                      <ListItem key={index} sx={{ px: 0 }}>
+                        <ListItemText 
+                          primary={`${item.quantity}x ${item.menu_item_name}`}
+                          secondary={`${formatCurrency(item.unit_price)} each - Total: ${formatCurrency(item.total_price)}`}
+                          primaryTypographyProps={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                          secondaryTypographyProps={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Grid>
               </Grid>
-            </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenOrderDialog(false)}>Close</Button>
-          {selectedOrder && selectedOrder.status !== 'served' && selectedOrder.status !== 'cancelled' && (
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <Select
-                value={selectedOrder.status}
-                onChange={(e) => handleStatusUpdate(selectedOrder.id, e.target.value as OrderStatus)}
-                size="small"
-                disabled={!hasPermission(PERMISSIONS.ORDERS_UPDATE)}
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1}
+              width={{ xs: '100%', sm: 'auto' }}
+              alignItems="center"
+            >
+              <Button 
+                onClick={() => setOpenOrderDialog(false)}
+                className="btn-responsive"
+                fullWidth={isMobile}
               >
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="confirmed">Confirmed</MenuItem>
-                <MenuItem value="preparing">Preparing</MenuItem>
-                <MenuItem value="ready">Ready</MenuItem>
-                <MenuItem value="served">Served</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-        </DialogActions>
-      </Dialog>
+                Close
+              </Button>
+              {selectedOrder && selectedOrder.status !== 'served' && selectedOrder.status !== 'cancelled' && (
+                <FormControl 
+                  size="small" 
+                  className="input-responsive"
+                  sx={{ minWidth: { xs: '100%', sm: 120 } }}
+                >
+                  <Select
+                    value={selectedOrder.status}
+                    onChange={(e) => handleStatusUpdate(selectedOrder.id, e.target.value as OrderStatus)}
+                    size="small"
+                    disabled={!hasPermission(PERMISSIONS.ORDERS_UPDATE)}
+                  >
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="confirmed">Confirmed</MenuItem>
+                    <MenuItem value="preparing">Preparing</MenuItem>
+                    <MenuItem value="ready">Ready</MenuItem>
+                    <MenuItem value="served">Served</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
+            </Stack>
+          </DialogActions>
+        </Dialog>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert 
-          onClose={() => setSnackbar({ ...snackbar, open: false })} 
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+          <Alert 
+            onClose={() => setSnackbar({ ...snackbar, open: false })} 
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Box>
     </Container>
   );
 };

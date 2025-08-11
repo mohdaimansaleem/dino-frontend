@@ -34,6 +34,9 @@ import {
   Tooltip,
   LinearProgress,
   Badge,
+  useTheme,
+  useMediaQuery,
+  Stack,
 } from '@mui/material';
 import {
   Restaurant,
@@ -125,10 +128,13 @@ interface TabPanelProps {
 }
 
 const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
   return (
     <div hidden={value !== index}>
       {value === index && (
-        <Box sx={{ p: 3 }}>{children}</Box>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>{children}</Box>
       )}
     </div>
   );
@@ -139,6 +145,10 @@ const VenueSettings: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   const [settings, setSettings] = useState<VenueSettings>({
     name: 'Dino Venue',
     description: 'Authentic Indian flavors with modern digital ordering experience',
@@ -453,15 +463,17 @@ const VenueSettings: React.FC = () => {
 
   return (
     <Box>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Box sx={{ mb: 4 }}>
-          <Paper 
-            elevation={2} 
-            sx={{ 
-              p: 4, 
-              mb: 4
-            }}
-          >
+      <Container maxWidth="xl" className="container-responsive">
+        <Box sx={{ py: { xs: 2, sm: 4 } }}>
+          <Box sx={{ mb: { xs: 3, md: 4 } }}>
+            <Paper 
+              elevation={2} 
+              className="card-responsive"
+              sx={{ 
+                p: { xs: 2, sm: 4 }, 
+                mb: { xs: 3, md: 4 }
+              }}
+            >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Avatar
@@ -567,25 +579,62 @@ const VenueSettings: React.FC = () => {
           </Paper>
         )}
 
-        <Paper elevation={2}>
-          <Tabs 
-            value={tabValue} 
-            onChange={(e, newValue) => setTabValue(newValue)}
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{ 
-              borderBottom: '1px solid', 
-              borderColor: 'divider'
-            }}
-          >
-            <Tab icon={<Restaurant />} label="Basic Info" iconPosition="top" />
-            <Tab icon={<Schedule />} label="Hours" iconPosition="top" />
-            <Tab icon={<Palette />} label="Appearance" iconPosition="top" />
-            <Tab icon={<Settings />} label="Features" iconPosition="top" />
-            <Tab icon={<Payment />} label="Payment" iconPosition="top" />
-            <Tab icon={<Notifications />} label="Notifications" iconPosition="top" />
-            <Tab icon={<Security />} label="Advanced" iconPosition="top" />
-          </Tabs>
+          <Paper elevation={2} className="card-responsive">
+            <Tabs 
+              value={tabValue} 
+              onChange={(e, newValue) => setTabValue(newValue)}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
+              sx={{ 
+                borderBottom: '1px solid', 
+                borderColor: 'divider',
+                '& .MuiTab-root': {
+                  minHeight: { xs: 48, sm: 72 },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  minWidth: { xs: 'auto', sm: 120 },
+                  px: { xs: 1, sm: 2 }
+                }
+              }}
+            >
+              <Tab 
+                icon={<Restaurant fontSize={isMobile ? "small" : "medium"} />} 
+                label="Basic Info" 
+                iconPosition={isMobile ? "start" : "top"} 
+              />
+              <Tab 
+                icon={<Schedule fontSize={isMobile ? "small" : "medium"} />} 
+                label="Hours" 
+                iconPosition={isMobile ? "start" : "top"} 
+              />
+              <Tab 
+                icon={<Palette fontSize={isMobile ? "small" : "medium"} />} 
+                label="Theme" 
+                iconPosition={isMobile ? "start" : "top"} 
+              />
+              <Tab 
+                icon={<Settings fontSize={isMobile ? "small" : "medium"} />} 
+                label="Features" 
+                iconPosition={isMobile ? "start" : "top"} 
+              />
+              <Tab 
+                icon={<Payment fontSize={isMobile ? "small" : "medium"} />} 
+                label="Payment" 
+                iconPosition={isMobile ? "start" : "top"} 
+              />
+              <Tab 
+                icon={<Notifications fontSize={isMobile ? "small" : "medium"} />} 
+                label={isMobile ? "Alerts" : "Notifications"} 
+                iconPosition={isMobile ? "start" : "top"} 
+              />
+              <Tab 
+                icon={<Security fontSize={isMobile ? "small" : "medium"} />} 
+                label="Advanced" 
+                iconPosition={isMobile ? "start" : "top"} 
+              />
+            </Tabs>
 
           <TabPanel value={tabValue} index={0}>
             <Grid container spacing={3}>
@@ -1250,28 +1299,34 @@ const VenueSettings: React.FC = () => {
               </Card>
             </Fade>
           </TabPanel>
-        </Paper>
+          </Paper>
 
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={6000}
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert 
-            severity={snackbar.severity} 
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={6000}
             onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-            sx={{
-              borderRadius: 2,
-              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
-              '& .MuiAlert-icon': {
-                fontSize: '1.5rem'
-              }
+            anchorOrigin={{ 
+              vertical: 'bottom', 
+              horizontal: isMobile ? 'center' : 'right' 
             }}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
+            <Alert 
+              severity={snackbar.severity} 
+              onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+              sx={{
+                borderRadius: 2,
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                '& .MuiAlert-icon': {
+                  fontSize: '1.5rem'
+                },
+                width: { xs: '90vw', sm: 'auto' },
+                maxWidth: { xs: '400px', sm: 'none' }
+              }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </Box>
       </Container>
     </Box>
   );

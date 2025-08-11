@@ -601,14 +601,36 @@ const MenuPage: React.FC = () => {
         borderColor: theme.palette.divider,
       }}>
         <MenuAnimatedBackground />
-        <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 10 }}>
-          <Typography variant="h3" fontWeight="bold" sx={{ color: theme.palette.text.primary }}>
+        <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 4 }, px: { xs: 2, sm: 3 }, position: 'relative', zIndex: 10 }}>
+          <Typography 
+            variant="h3" 
+            fontWeight="bold" 
+            sx={{ 
+              color: theme.palette.text.primary,
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
+              lineHeight: { xs: 1.2, md: 1.3 }
+            }}
+          >
             {restaurant?.name}
           </Typography>
-          <Typography variant="body1" sx={{ mt: 1, color: theme.palette.text.secondary }}>
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              mt: 1, 
+              color: theme.palette.text.secondary,
+              fontSize: { xs: '0.875rem', sm: '1rem' }
+            }}
+          >
             {restaurant?.cuisine_types?.join(' • ')}
           </Typography>
-          <Typography variant="body2" sx={{ mt: 0.5, color: theme.palette.text.secondary }}>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              mt: 0.5, 
+              color: theme.palette.text.secondary,
+              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+            }}
+          >
             {restaurant?.location.address}, {restaurant?.location.city}
           </Typography>
           <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }}>
@@ -639,8 +661,8 @@ const MenuPage: React.FC = () => {
         py: 2,
         boxShadow: theme.shadows[2],
       }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={3} alignItems="center">
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+          <Grid container spacing={{ xs: 2, md: 3 }} alignItems="center">
             {/* Search Section */}
             <Grid item xs={12} md={8}>
               <TextField
@@ -695,22 +717,26 @@ const MenuPage: React.FC = () => {
                   variant={vegFilter === VEG_FILTERS.ALL ? 'contained' : 'outlined'}
                   onClick={() => setVegFilter(VEG_FILTERS.ALL)}
                   size="small"
-                  startIcon={<Restaurant sx={{ fontSize: 14 }} />}
+                  startIcon={<Restaurant sx={{ fontSize: { xs: 12, sm: 14 } }} />}
                   sx={{
                     backgroundColor: vegFilter === VEG_FILTERS.ALL ? '#d0c6c6ff' : 'transparent',
                     borderColor: vegFilter === VEG_FILTERS.ALL ? "#d0c6c6ff" : theme.palette.divider,
                     color: vegFilter === VEG_FILTERS.ALL ? "#ffffffff" : theme.palette.text.secondary,
                     textTransform: 'none',
                     fontWeight: 500,
-                    fontSize: '0.75rem',
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
                     minWidth: 'auto',
-                    px: 1.5,
-                    py: 0.1,
-                    height: 20,
+                    px: { xs: 1, sm: 1.5 },
+                    py: { xs: 0.5, sm: 0.1 },
+                    minHeight: { xs: 32, sm: 28 },
                     '&:hover': {
                       backgroundColor: vegFilter === VEG_FILTERS.ALL ? "#d0c6c6ff" : alpha(theme.palette.primary.main, 0.04),
                       borderColor: theme.palette.primary.main,
                     },
+                    '&:active': {
+                      transform: 'scale(0.98)',
+                    },
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   All
@@ -749,15 +775,19 @@ const MenuPage: React.FC = () => {
                     color: vegFilter === VEG_FILTERS.VEG ? 'white' : '#65a368ff',
                     textTransform: 'none',
                     fontWeight: 500,
-                    fontSize: '0.75rem',
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
                     minWidth: 'auto',
-                    px: 1.5,
-                    py: 0.1,
-                    height: 20,
+                    px: { xs: 1, sm: 1.5 },
+                    py: { xs: 0.5, sm: 0.1 },
+                    minHeight: { xs: 32, sm: 28 },
                     '&:hover': {
                       backgroundColor: vegFilter === VEG_FILTERS.VEG ? '#65a368ff' : 'rgba(76, 175, 80, 0.04)',
                       borderColor: '#4CAF50',
                     },
+                    '&:active': {
+                      transform: 'scale(0.98)',
+                    },
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   Veg
@@ -796,15 +826,19 @@ const MenuPage: React.FC = () => {
                     color: vegFilter === VEG_FILTERS.NON_VEG ? 'white' : '#b47c78ff',
                     textTransform: 'none',
                     fontWeight: 500,
-                    fontSize: '0.75rem',
+                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
                     minWidth: 'auto',
-                    px: 1.5,
-                    py: 0.1,
-                    height: 20,
+                    px: { xs: 1, sm: 1.5 },
+                    py: { xs: 0.5, sm: 0.1 },
+                    minHeight: { xs: 32, sm: 28 },
                     '&:hover': {
                       backgroundColor: vegFilter === VEG_FILTERS.NON_VEG ? '#b47c78ff' : 'rgba(244, 67, 54, 0.04)',
                       borderColor: '#F44336',
                     },
+                    '&:active': {
+                      transform: 'scale(0.98)',
+                    },
+                    transition: 'all 0.2s ease',
                   }}
                 >
                   Non-Veg
@@ -816,8 +850,8 @@ const MenuPage: React.FC = () => {
       </Box>
 
       {/* Horizontal Category Scroll Section */}
-      <Box sx={{ py: 1.5, borderBottom: '1px solid', borderColor: theme.palette.divider, overflow: 'visible', backgroundColor: theme.palette.background.paper }}>
-        <Container maxWidth="lg" sx={{ px: 0 }}>
+      <Box sx={{ py: { xs: 1, sm: 1.5 }, borderBottom: '1px solid', borderColor: theme.palette.divider, overflow: 'visible', backgroundColor: theme.palette.background.paper }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 0 } }}>
           <Box
             sx={{
               display: 'flex',
@@ -875,18 +909,22 @@ const MenuPage: React.FC = () => {
                     minWidth: 'fit-content',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    px: 0.5, // Minimal horizontal padding
-                    py: 0.5, // Minimal vertical padding
+                    px: { xs: 0.75, sm: 0.5 },
+                    py: { xs: 0.75, sm: 0.5 },
+                    minHeight: { xs: 44, sm: 'auto' }, // Touch target
                     '&:hover': {
                       transform: 'translateY(-3px)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(-1px) scale(0.98)',
                     },
                   }}
                 >
                   {/* Category Image/Icon */}
                   <Box
                     sx={{
-                      width: 48,
-                      height: 48,
+                      width: { xs: 44, sm: 48 },
+                      height: { xs: 44, sm: 48 },
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
@@ -894,12 +932,12 @@ const MenuPage: React.FC = () => {
                       backgroundColor: isActive ? 'primary.main' : 'grey.100',
                       border: '2px solid',
                       borderColor: isActive ? 'primary.main' : 'transparent',
-                      fontSize: '20px',
+                      fontSize: { xs: '18px', sm: '20px' },
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       boxShadow: isActive ? '0 2px 8px rgba(25, 118, 210, 0.3)' : '0 1px 3px rgba(0,0,0,0.1)',
                       transformOrigin: 'center',
                       '&:hover': {
-                        transform: 'scale(1.2)',
+                        transform: { xs: 'scale(1.1)', sm: 'scale(1.2)' },
                         backgroundColor: isActive ? 'primary.dark' : 'grey.200',
                         boxShadow: isActive ? '0 6px 20px rgba(25, 118, 210, 0.4)' : '0 4px 16px rgba(0,0,0,0.2)',
                         zIndex: 10,
@@ -939,12 +977,12 @@ const MenuPage: React.FC = () => {
                   <Typography
                     variant="caption"
                     sx={{
-                      mt: 0.5,
-                      fontSize: '0.7rem',
+                      mt: { xs: 0.25, sm: 0.5 },
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
                       fontWeight: isActive ? 600 : 500,
                       color: isActive ? 'primary.main' : theme.palette.text.secondary,
                       textAlign: 'center',
-                      maxWidth: 60,
+                      maxWidth: { xs: 50, sm: 60 },
                       lineHeight: 1.2,
                       transition: 'all 0.3s ease',
                       whiteSpace: 'nowrap',
@@ -961,8 +999,8 @@ const MenuPage: React.FC = () => {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ pt: 0 }}>
-        <Grid container spacing={4}>
+      <Container maxWidth="lg" sx={{ pt: 0, px: { xs: 2, sm: 3 } }}>
+        <Grid container spacing={{ xs: 2, md: 4 }}>
           {/* Left: Category List (Desktop) */}
           {isDesktop && (
             <Grid item md={4} lg={3}>
@@ -1197,7 +1235,10 @@ const MenuPage: React.FC = () => {
                 <Typography 
                   variant="h6" 
                   fontWeight="700"
-                  sx={{ fontSize: { xs: '1rem', sm: '1.1rem' } }}
+                  sx={{ 
+                    fontSize: { xs: '0.9rem', sm: '1.1rem' },
+                    lineHeight: 1.2
+                  }}
                 >
                   {getTotalItems()} item{getTotalItems() > 1 ? 's' : ''} • {formatPrice(getTotalAmount())}
                 </Typography>
@@ -1323,7 +1364,7 @@ const MenuItemCard: React.FC<{ item: MenuItemType; isLast?: boolean }> = React.m
         transition: 'transform 0.3s ease',
       },
     }}>
-      <Grid container spacing={2} sx={{ py: 2.5 }}>
+      <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ py: { xs: 2, sm: 2.5 } }}>
         {/* Left side: Item details */}
         <Grid item xs={8} sm={9}>
           <Stack spacing={1}>
@@ -1335,7 +1376,7 @@ const MenuItemCard: React.FC<{ item: MenuItemType; isLast?: boolean }> = React.m
                 component="h3" 
                 sx={{ 
                   fontWeight: 700, 
-                  fontSize: '1.1rem', 
+                  fontSize: { xs: '1rem', sm: '1.1rem' }, 
                   lineHeight: 1.3,
                   color: 'text.primary'
                 }}
@@ -1367,7 +1408,7 @@ const MenuItemCard: React.FC<{ item: MenuItemType; isLast?: boolean }> = React.m
               variant="h6" 
               sx={{ 
                 fontWeight: 600, 
-                fontSize: '1rem',
+                fontSize: { xs: '0.9rem', sm: '1rem' },
                 color: 'text.primary'
               }}
             >
@@ -1391,7 +1432,7 @@ const MenuItemCard: React.FC<{ item: MenuItemType; isLast?: boolean }> = React.m
                 color="text.secondary" 
                 sx={{ 
                   lineHeight: 1.4,
-                  fontSize: '0.85rem',
+                  fontSize: { xs: '0.8rem', sm: '0.85rem' },
                   pr: 1
                 }}
               >
