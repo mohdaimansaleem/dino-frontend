@@ -11,8 +11,6 @@ import { validatePasswordHashingSetup } from './utils/passwordValidation';
 
 // Public Pages
 import HomePage from './pages/HomePage';
-import FeaturesPage from './pages/FeaturesPage';
-import PricingPage from './pages/PricingPage';
 import ContactPage from './pages/ContactPage';
 import TestimonialsPage from './pages/TestimonialsPage';
 
@@ -104,8 +102,6 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<HomePage />} />
                 <Route path="/home" element={<HomePage />} />
-                <Route path="/features" element={<FeaturesPage />} />
-                <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/testimonials" element={<TestimonialsPage />} />
                 <Route path="/register" element={<RegistrationPage />} />
