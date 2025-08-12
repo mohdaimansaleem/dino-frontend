@@ -436,3 +436,7 @@ export const SimpleBarChart: React.FC<{ data: Array<{ name: string; value: numbe
     </div>
   );
 };
+
+// Export individual chart components
+// These should be imported directly where needed:
+// import { WeeklyRevenueChart, StatusPieChart } from '../components/charts/ChartComponents'

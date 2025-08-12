@@ -12,7 +12,6 @@ import { validatePasswordHashingSetup } from './utils/passwordValidation';
 // Public Pages
 import HomePage from './pages/HomePage';
 import ContactPage from './pages/ContactPage';
-import TestimonialsPage from './pages/TestimonialsPage';
 
 // RegistrationPage now imported from LazyComponents
 import LoginPage from './pages/LoginPage';
@@ -20,21 +19,7 @@ import LoginPage from './pages/LoginPage';
 // MenuPage, CheckoutPage, OrderTrackingPage now imported from LazyComponents
 
 // Lazy-loaded components for better performance
-import {
-  AdminDashboard,
-  OrdersManagement,
-  MenuManagement,
-  TableManagement,
-  VenueSettings,
-  UserManagement,
-  WorkspaceManagement,
-  UserPermissionsDashboard,
-  MenuPage,
-  CheckoutPage,
-  OrderTrackingPage,
-  RegistrationPage,
-
-} from './components/LazyComponents';
+import { LazyComponents } from './components/LazyLoadingComponents';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -103,13 +88,12 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/contact" element={<ContactPage />} />
-                <Route path="/testimonials" element={<TestimonialsPage />} />
-                <Route path="/register" element={<RegistrationPage />} />
+                <Route path="/register" element={<LazyComponents.RegistrationPage.component />} />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/menu/:venueId/:tableId" element={<MenuPage />} />
-                <Route path="/checkout/:venueId/:tableId" element={<CheckoutPage />} />
-                <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
-                <Route path="/order/:orderId" element={<OrderTrackingPage />} />
+                <Route path="/menu/:venueId/:tableId" element={<LazyComponents.MenuPage.component />} />
+                <Route path="/checkout/:venueId/:tableId" element={<LazyComponents.CheckoutPage.component />} />
+                <Route path="/order-tracking/:orderId" element={<LazyComponents.OrderTrackingPage.component />} />
+                <Route path="/order/:orderId" element={<LazyComponents.OrderTrackingPage.component />} />
                 
                 {/* Development/Testing Routes - Only available in development */}
                 {isDevelopment() && (
@@ -126,42 +110,42 @@ function App() {
                 {/* Admin Routes - Role-based access control */}
                 <Route path="/admin" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.DASHBOARD_VIEW]}>
-                    <AdminDashboard />
+                    <LazyComponents.AdminDashboard.component />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/orders" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.ORDERS_VIEW]}>
-                    <OrdersManagement />
+                    <LazyComponents.OrdersManagement.component />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/menu" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.MENU_VIEW]}>
-                    <MenuManagement />
+                    <LazyComponents.MenuManagement.component />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/tables" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.TABLES_VIEW]}>
-                    <TableManagement />
+                    <LazyComponents.TableManagement.component />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/settings" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.SETTINGS_VIEW]}>
-                    <VenueSettings />
+                    <LazyComponents.VenueSettings.component />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/users" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
-                    <UserManagement />
+                    <LazyComponents.UserManagement.component />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/workspace" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.WORKSPACE_VIEW]}>
-                    <WorkspaceManagement />
+                    <LazyComponents.WorkspaceManagement.component />
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/permissions" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
-                    <UserPermissionsDashboard />
+                    <LazyComponents.UserPermissionsDashboard.component />
                   </RoleProtectedRoute>
                 } />
                 

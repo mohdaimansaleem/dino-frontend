@@ -6,6 +6,7 @@ import PermissionService from '../services/permissionService';
 import { userCache, CacheKeys, cacheUtils } from '../services/cacheService';
 import { preloadCriticalComponents } from '../components/LazyComponents';
 import { STORAGE_KEYS } from '../constants/storage';
+import StorageManager from '../utils/storageManager';
 import { ROLE_NAMES } from '../constants/roles';
 import { tokenRefreshScheduler } from '../utils/tokenRefreshScheduler';
 import { API_CONFIG } from '../config/api';
@@ -52,9 +53,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for existing token on app load
     const initializeAuth = async () => {
       try {
-        const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-        const savedUser = localStorage.getItem(STORAGE_KEYS.USER);
-        const savedPermissions = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+        const token = StorageManager.getItem(STORAGE_KEYS.TOKEN);
+        const savedUser = StorageManager.getUserData();
+        const savedPermissions = StorageManager.getPermissions();
         
 
         
@@ -64,17 +65,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         if (token && savedUser) {
           // Check if token is expired
-          if (isTokenExpired(token)) {
-            localStorage.removeItem(STORAGE_KEYS.TOKEN);
-            localStorage.removeItem(STORAGE_KEYS.USER);
-            localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
+          if (typeof token === 'string' && isTokenExpired(token)) {
+            StorageManager.removeItem(STORAGE_KEYS.TOKEN);
+            StorageManager.removeItem(STORAGE_KEYS.USER);
+            StorageManager.removeItem(STORAGE_KEYS.PERMISSIONS);
             setUser(null);
             setUserPermissions(null);
             return;
           }
 
           try {
-            const savedUserData = JSON.parse(savedUser);
+            const savedUserData = savedUser;
             // Ensure firstName is available for display consistency
             if (savedUserData && !savedUserData.firstName && savedUserData.first_name) {
               savedUserData.firstName = savedUserData.first_name;
@@ -87,16 +88,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Also restore permissions if available
             if (savedPermissions) {
               try {
-                const permissionsData = JSON.parse(savedPermissions);
-                setUserPermissions(permissionsData);
+                setUserPermissions(savedPermissions);
                 } catch (permError) {
                 }
             }
           } catch (error) {
             // Invalid user data, clear storage
-            localStorage.removeItem(STORAGE_KEYS.TOKEN);
-            localStorage.removeItem(STORAGE_KEYS.USER);
-            localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
+            StorageManager.removeItem(STORAGE_KEYS.TOKEN);
+            StorageManager.removeItem(STORAGE_KEYS.USER);
+            StorageManager.removeItem(STORAGE_KEYS.PERMISSIONS);
             setUser(null);
             setUserPermissions(null);
           }
@@ -105,9 +105,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUserPermissions(null);
         }
       } catch (error) {
-        localStorage.removeItem(STORAGE_KEYS.TOKEN);
-        localStorage.removeItem(STORAGE_KEYS.USER);
-        localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
+        StorageManager.removeItem(STORAGE_KEYS.TOKEN);
+        StorageManager.removeItem(STORAGE_KEYS.USER);
+        StorageManager.removeItem(STORAGE_KEYS.PERMISSIONS);
         setUser(null);
         setUserPermissions(null);
       } finally {
@@ -141,7 +141,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authService.login(email, password);
       
       // Store token
-      localStorage.setItem(STORAGE_KEYS.TOKEN, response.access_token);
+      StorageManager.setItem(STORAGE_KEYS.TOKEN, response.access_token);
       
       // Enhanced user data mapping with proper fallbacks
       const localUser: UserProfile = {
@@ -168,7 +168,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       setUser(localUser);
       // Store the converted user data
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
+      StorageManager.setUserData(localUser);
       
       // Fetch and store user permissions with enhanced error handling
       try {
@@ -185,7 +185,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           10 * 60 * 1000 // 10 minutes TTL
         );
         setUserPermissions(permissionsData);
-        localStorage.setItem(STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissionsData));
+        StorageManager.setPermissions(permissionsData);
       } catch (permError: any) {
         console.warn('Failed to fetch user permissions:', permError);
         console.error('Permissions error details:', {
@@ -217,9 +217,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Login error:', error);
       
       // Clear any partial authentication state
-      localStorage.removeItem(STORAGE_KEYS.TOKEN);
-      localStorage.removeItem(STORAGE_KEYS.USER);
-      localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
+      StorageManager.removeItem(STORAGE_KEYS.TOKEN);
+      StorageManager.removeItem(STORAGE_KEYS.USER);
+      StorageManager.removeItem(STORAGE_KEYS.PERMISSIONS);
       setUser(null);
       setUserPermissions(null);
       
@@ -266,7 +266,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     // Clear all authentication data
     authService.logout(); // This clears tokens including expiry
-    localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
+    StorageManager.clearAuthData();
     setUser(null);
     setUserPermissions(null);
   };
@@ -319,7 +319,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
       
       setUser(localUser);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
+      StorageManager.setUserData(localUser);
     } catch (error) {
       throw error;
     }
@@ -353,7 +353,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
       
       setUser(localUser);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(localUser));
+      StorageManager.setUserData(localUser);
     } catch (error) {
       // If refresh fails, user might need to login again
       logout();
@@ -482,7 +482,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const permissionsData = await authService.refreshUserPermissions();
       setUserPermissions(permissionsData);
-      localStorage.setItem(STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissionsData));
+      StorageManager.setPermissions(permissionsData);
     } catch (error) {
       throw error;
     }
@@ -502,20 +502,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializePermissions = async () => {
       try {
-        const savedPermissions = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+        const savedPermissions = StorageManager.getPermissions();
         if (savedPermissions) {
-          const parsed = JSON.parse(savedPermissions);
-          setUserPermissions(parsed);
+          setUserPermissions(savedPermissions);
         }
         
         // If user is logged in but no permissions cached, fetch them (but only if token is valid)
         if (user && !savedPermissions) {
-          const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
-          if (token && !isTokenExpired(token)) {
+          const token = StorageManager.getItem(STORAGE_KEYS.TOKEN);
+          if (token && typeof token === 'string' && !isTokenExpired(token)) {
             try {
               const permissionsData = await authService.getUserPermissions();
               setUserPermissions(permissionsData);
-              localStorage.setItem(STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissionsData));
+              StorageManager.setPermissions(permissionsData);
               } catch (error) {
               // Don't logout on permission fetch failure
             }

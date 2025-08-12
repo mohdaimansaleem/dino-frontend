@@ -48,14 +48,23 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ className }) => {
     );
   }
 
-  // Check user roles
+  // Check user roles and render appropriate dashboard
   const superAdminCheck = isSuperAdmin();
   const adminCheck = isAdmin();
   const operatorCheck = isOperator();
 
-  // Always use the new UserDataDashboard - it handles empty states gracefully
-  // The old dashboards are kept for reference but no longer used
-  return <UserDataDashboard className={className} />;
+  // Route to appropriate dashboard based on user role
+  if (superAdminCheck) {
+    return <SuperAdminDashboard className={className} />;
+  }
+  
+  if (adminCheck) {
+    return <AdminDashboard className={className} />;
+  }
+  
+  if (operatorCheck) {
+    return <OperatorDashboard className={className} />;
+  }
 
   // Fallback for users without recognized roles
   return (
