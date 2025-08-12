@@ -161,12 +161,17 @@ class LazyComponentManager {
       return Promise.race([
         importFn().then(module => {
           const loadTime = Date.now() - startTime;
-          performanceService.addMetric(
-            'component_lazy_load',
-            loadTime,
-            'render',
-            { component: name }
-          );
+          try {
+            performanceService.addMetric(
+              'component_lazy_load',
+              loadTime,
+              'render',
+              { component: name }
+            );
+          } catch (error) {
+            // Ignore performance service errors
+            console.warn('Performance service error:', error);
+          }
           this.loadedComponents.add(name);
           return module;
         }),
@@ -254,15 +259,19 @@ export const LazyWrapper: React.FC<{
   const [retryKey, setRetryKey] = React.useState(0);
 
   const handleRetry = React.useCallback(() => {
+    try {
+      performanceService.trackUserInteraction('component_retry', 0);
+    } catch (error) {
+      // Ignore performance service errors
+    }
     setRetryKey(prev => prev + 1);
-    performanceService.trackUserInteraction('component_retry', 0);
   }, []);
 
   return (
     <SimpleErrorBoundary
       key={retryKey}
       fallback={(error: Error, retry: () => void) => (
-        <ErrorFallback error={error} retry={retry} />
+        <ErrorFallback error={error} retry={handleRetry} />
       )}
     >
       <Suspense fallback={<Fallback />}>

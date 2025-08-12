@@ -393,29 +393,40 @@ const TableManagement: React.FC = () => {
   return (
     <Container maxWidth="xl" className="container-responsive">
       <Box sx={{ py: { xs: 2, sm: 4 } }}>
-        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+        <Box sx={{ mb: 4 }}>
           <Typography 
-            variant={isMobile ? "h5" : "h4"} 
+            variant="h4" 
             component="h1"
-            gutterBottom 
-            fontWeight="600" 
-            color="text.primary"
-            sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+            sx={{ 
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+              fontWeight: 600,
+              color: 'text.primary',
+              mb: 1,
+              letterSpacing: '-0.01em'
+            }}
           >
             Table Management
           </Typography>
           <Typography 
-            variant={isMobile ? "body2" : "body1"} 
+            variant="body1" 
             color="text.secondary"
+            sx={{ 
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              fontWeight: 400
+            }}
           >
             Manage your restaurant's tables, seating areas, and QR codes
           </Typography>
         </Box>
 
         <Paper 
-          elevation={1} 
-          className="card-responsive"
-          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
+          sx={{ 
+            p: 3, 
+            mb: 4, 
+            border: '1px solid', 
+            borderColor: 'divider',
+            backgroundColor: 'background.paper'
+          }}
         >
           <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
             <Grid item xs={12} md={4}>
@@ -496,9 +507,12 @@ const TableManagement: React.FC = () => {
           ].map((stat, index) => (
             <Grid item xs={6} md={3} key={index}>
               <Paper 
-                elevation={1} 
-                className="card-responsive"
-                sx={{ p: { xs: 2, sm: 3 }, border: '1px solid', borderColor: 'divider' }}
+                sx={{ 
+                  p: 3, 
+                  border: '1px solid', 
+                  borderColor: 'divider',
+                  backgroundColor: 'background.paper'
+                }}
               >
                 <Stack 
                   direction={{ xs: 'column', sm: 'row' }}
@@ -539,9 +553,13 @@ const TableManagement: React.FC = () => {
         </Grid>
 
         <Paper 
-          elevation={1} 
-          className="card-responsive"
-          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
+          sx={{ 
+            p: 3, 
+            mb: 4, 
+            border: '1px solid', 
+            borderColor: 'divider',
+            backgroundColor: 'background.paper'
+          }}
         >
           <Typography 
             variant={isMobile ? "body1" : "h6"} 
@@ -555,12 +573,16 @@ const TableManagement: React.FC = () => {
             {areas.map(area => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={area.id}>
                 <Card 
-                  className="card-responsive"
                   sx={{ 
                     border: '1px solid', 
                     borderColor: 'divider',
+                    backgroundColor: 'background.paper',
                     borderLeft: `4px solid ${area.color}`,
-                    '&:hover': { boxShadow: 2 },
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': { 
+                      borderColor: 'primary.main',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    },
                     height: '100%'
                   }}
                 >
@@ -653,16 +675,20 @@ const TableManagement: React.FC = () => {
             {filteredTables.map(table => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={table.id}>
                 <Card 
-                  className="card-responsive"
                   sx={{ 
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
                     border: '1px solid', 
                     borderColor: 'divider',
+                    backgroundColor: 'background.paper',
                     borderLeft: `4px solid ${getAreaColor(table.location || '')}`,
                     opacity: table.is_active ? 1 : 0.6,
-                    '&:hover': { boxShadow: 2 }
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': { 
+                      borderColor: 'primary.main',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    }
                   }}
                 >
                   <CardContent sx={{ 

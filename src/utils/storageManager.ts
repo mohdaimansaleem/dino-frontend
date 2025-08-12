@@ -14,16 +14,17 @@ export class StorageManager {
   private static readonly PREFIX = 'dino_';
   private static readonly VERSION = '2.0.0';
   
-  // Storage keys
+  // Storage keys - aligned with STORAGE_KEYS constants
   static readonly KEYS = {
-    TOKEN: 'dino_auth_token',
-    USER: 'dino_user_profile',
-    PERMISSIONS: 'dino_user_permissions',
+    TOKEN: 'dino_token',
+    REFRESH_TOKEN: 'dino_refresh_token',
+    USER: 'dino_user',
+    PERMISSIONS: 'dino_permissions',
     WORKSPACE: 'dino_workspace_data',
     VENUE: 'dino_venue_data',
     MENU_CACHE: 'dino_menu_cache',
     SETTINGS: 'dino_user_settings',
-    THEME: 'dino_theme_preference',
+    THEME: 'dino_theme',
     LAST_ACTIVITY: 'dino_last_activity',
   } as const;
 
@@ -222,10 +223,12 @@ export class StorageManager {
    */
   static clearAuthData(): void {
     this.removeItem(this.KEYS.TOKEN);
+    this.removeItem(this.KEYS.REFRESH_TOKEN);
     this.removeItem(this.KEYS.USER);
     this.removeItem(this.KEYS.PERMISSIONS);
     this.removeItem(this.KEYS.WORKSPACE);
     this.removeItem(this.KEYS.VENUE);
+    this.removeItem('dino_token_expiry');
   }
 
   /**

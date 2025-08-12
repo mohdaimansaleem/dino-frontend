@@ -594,21 +594,19 @@ const MenuPage: React.FC = () => {
 
       {/* Hero Section */}
       <Box sx={{ 
-        position: 'relative', 
-        overflow: 'hidden',
-        backgroundColor: theme.palette.background.paper,
+        backgroundColor: 'background.paper',
         borderBottom: '1px solid',
-        borderColor: theme.palette.divider,
+        borderColor: 'divider',
       }}>
-        <MenuAnimatedBackground />
-        <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 4 }, px: { xs: 2, sm: 3 }, position: 'relative', zIndex: 10 }}>
+        <Container maxWidth="lg" sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
           <Typography 
-            variant="h3" 
-            fontWeight="bold" 
+            variant="h4" 
             sx={{ 
-              color: theme.palette.text.primary,
-              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' },
-              lineHeight: { xs: 1.2, md: 1.3 }
+              color: 'text.primary',
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+              fontWeight: 600,
+              mb: 1,
+              letterSpacing: '-0.01em'
             }}
           >
             {restaurant?.name}
@@ -616,9 +614,9 @@ const MenuPage: React.FC = () => {
           <Typography 
             variant="body1" 
             sx={{ 
-              mt: 1, 
-              color: theme.palette.text.secondary,
-              fontSize: { xs: '0.875rem', sm: '1rem' }
+              color: 'text.secondary',
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              mb: 0.5
             }}
           >
             {restaurant?.cuisine_types?.join(' • ')}
@@ -626,24 +624,29 @@ const MenuPage: React.FC = () => {
           <Typography 
             variant="body2" 
             sx={{ 
-              mt: 0.5, 
-              color: theme.palette.text.secondary,
-              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+              color: 'text.secondary',
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              mb: 2
             }}
           >
             {restaurant?.location.address}, {restaurant?.location.city}
           </Typography>
-          <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }}>
+          <Stack direction="row" spacing={2} alignItems="center">
             <Chip
-              icon={<Star sx={{ color: 'white !important' }} />}
+              icon={<Star sx={{ color: 'white !important', fontSize: 16 }} />}
               label={`${restaurant?.rating?.toFixed(1) || '4.2'}`}
-              sx={{ bgcolor: 'success.main', color: 'white', fontWeight: 'bold' }}
+              sx={{ 
+                bgcolor: 'success.main', 
+                color: 'white', 
+                fontWeight: 600,
+                fontSize: '0.875rem'
+              }}
             />
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {restaurant?.total_reviews || 0}+ ratings
             </Typography>
-            <Divider orientation="vertical" flexItem sx={{ borderColor: theme.palette.divider }} />
-            <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+            <Divider orientation="vertical" flexItem />
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {formatPrice((restaurant as any)?.average_cost_for_two || 500)} for two
             </Typography>
           </Stack>
@@ -655,11 +658,11 @@ const MenuPage: React.FC = () => {
         position: 'sticky', 
         top: 64, 
         zIndex: 10, 
-        bgcolor: theme.palette.background.paper, 
+        bgcolor: 'background.paper', 
         borderBottom: '1px solid',
-        borderColor: theme.palette.divider,
+        borderColor: 'divider',
         py: 2,
-        boxShadow: theme.shadows[2],
+        boxShadow: 1,
       }}>
         <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
           <Grid container spacing={{ xs: 2, md: 3 }} alignItems="center">
@@ -680,11 +683,10 @@ const MenuPage: React.FC = () => {
                 }}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    backgroundColor: theme.palette.background.default,
-                    color: theme.palette.text.primary,
-                    borderRadius: 2,
+                    backgroundColor: 'background.default',
+                    borderRadius: 1,
                     '& fieldset': { 
-                      borderColor: theme.palette.divider,
+                      borderColor: 'divider',
                     },
                     '&:hover fieldset': { 
                       borderColor: 'primary.main',
@@ -692,14 +694,7 @@ const MenuPage: React.FC = () => {
                     '&.Mui-focused fieldset': { 
                       borderColor: 'primary.main',
                     },
-                  },
-                  '& .MuiInputBase-input': {
-                    color: theme.palette.text.primary,
-                    '&::placeholder': {
-                      color: theme.palette.text.secondary,
-                      opacity: 1,
-                    },
-                  },
+                  }
                 }}
               />
             </Grid>

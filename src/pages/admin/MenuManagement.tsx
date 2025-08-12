@@ -543,20 +543,27 @@ const MenuManagement: React.FC = () => {
     <Container maxWidth="xl" className="container-responsive" sx={{ pt: { xs: '56px', sm: '64px' } }}>
       <Box sx={{ py: { xs: 2, sm: 4 } }}>
         {/* Header */}
-        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+        <Box sx={{ mb: 4 }}>
           <Typography 
-            variant={isMobile ? "h5" : "h4"} 
+            variant="h4" 
             component="h1"
-            gutterBottom 
-            fontWeight="600" 
-            color="text.primary"
-            sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+            sx={{ 
+              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+              fontWeight: 600,
+              color: 'text.primary',
+              mb: 1,
+              letterSpacing: '-0.01em'
+            }}
           >
             Menu Management
           </Typography>
           <Typography 
-            variant={isMobile ? "body2" : "body1"} 
+            variant="body1" 
             color="text.secondary"
+            sx={{ 
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              fontWeight: 400
+            }}
           >
             Manage your restaurant's menu items and categories for {getVenueDisplayName()}
           </Typography>
@@ -564,9 +571,13 @@ const MenuManagement: React.FC = () => {
 
         {/* Enhanced Controls */}
         <Paper 
-          elevation={1} 
-          className="card-responsive"
-          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
+          sx={{ 
+            p: 3, 
+            mb: 4, 
+            border: '1px solid', 
+            borderColor: 'divider',
+            backgroundColor: 'background.paper'
+          }}
         >
           <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
             <Grid item xs={12} md={3}>
@@ -669,15 +680,20 @@ const MenuManagement: React.FC = () => {
 
         {/* Categories Overview */}
         <Paper 
-          elevation={1} 
-          className="card-responsive"
-          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
+          sx={{ 
+            p: 3, 
+            mb: 4, 
+            border: '1px solid', 
+            borderColor: 'divider',
+            backgroundColor: 'background.paper'
+          }}
         >
           <Typography 
-            variant={isMobile ? "body1" : "h6"} 
+            variant="h6" 
             gutterBottom 
             fontWeight="600" 
             color="text.primary"
+            sx={{ fontSize: '1.125rem', mb: 2 }}
           >
             Categories
           </Typography>
@@ -685,12 +701,16 @@ const MenuManagement: React.FC = () => {
             {categories.map(category => (
               <Grid item xs={6} sm={6} md={4} lg={3} key={category.id}>
                 <Card 
-                  className="card-responsive"
                   sx={{ 
                     border: '1px solid', 
                     borderColor: 'divider',
+                    backgroundColor: 'background.paper',
                     opacity: category.active ? 1 : 0.6,
-                    '&:hover': { boxShadow: 2 },
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': { 
+                      borderColor: 'primary.main',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    },
                     height: '100%'
                   }}
                 >
@@ -739,15 +759,19 @@ const MenuManagement: React.FC = () => {
           {filteredItems.map(item => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
             <Card 
-              className="card-responsive"
               sx={{ 
                 height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 border: '1px solid', 
                 borderColor: 'divider',
+                backgroundColor: 'background.paper',
                 opacity: (item.available ?? item.isAvailable) ? 1 : 0.6,
-                '&:hover': { boxShadow: 2 }
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': { 
+                  borderColor: 'primary.main',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                }
               }}
             >
               {item.image && (

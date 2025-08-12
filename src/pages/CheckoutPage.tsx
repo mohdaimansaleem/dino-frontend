@@ -353,7 +353,7 @@ const CheckoutPage: React.FC = () => {
     return (
       <Box sx={{ 
         minHeight: '100vh', 
-        backgroundColor: '#F8F9FA', 
+        backgroundColor: theme.palette.background.default, 
         display: 'flex', 
         flexDirection: 'column',
         pt: { xs: '56px', sm: '64px' },
@@ -376,7 +376,9 @@ const CheckoutPage: React.FC = () => {
             textAlign: 'center', 
             width: '100%',
             borderRadius: 2,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+            boxShadow: theme.shadows[2],
+            border: '1px solid',
+            borderColor: 'divider'
           }}>
             <ShoppingCart sx={{ 
               fontSize: { xs: 48, sm: 64 }, 
@@ -407,7 +409,13 @@ const CheckoutPage: React.FC = () => {
                 px: { xs: 3, sm: 4 },
                 py: { xs: 1, sm: 1.5 },
                 fontSize: { xs: '0.875rem', sm: '1rem' },
-                borderRadius: 2
+                borderRadius: 1,
+                fontWeight: 600,
+                textTransform: 'none',
+                boxShadow: 'none',
+                '&:hover': {
+                  boxShadow: theme.shadows[2]
+                }
               }}
             >
               Back to Menu
@@ -457,7 +465,7 @@ const CheckoutPage: React.FC = () => {
     return (
       <Box sx={{ 
         minHeight: '100vh', 
-        backgroundColor: '#F8F9FA', 
+        backgroundColor: theme.palette.background.default, 
         display: 'flex', 
         flexDirection: 'column',
         pt: { xs: '56px', sm: '64px' },
@@ -480,7 +488,9 @@ const CheckoutPage: React.FC = () => {
             textAlign: 'center', 
             width: '100%',
             borderRadius: 2,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+            boxShadow: theme.shadows[2],
+            border: '1px solid',
+            borderColor: 'divider'
           }}>
             <CheckCircle sx={{ 
               fontSize: { xs: 60, sm: 80 }, 
@@ -632,7 +642,7 @@ const CheckoutPage: React.FC = () => {
   return (
     <Box sx={{ 
       minHeight: '100vh', 
-      backgroundColor: '#F8F9FA', 
+      backgroundColor: theme.palette.background.default, 
       display: 'flex', 
       flexDirection: 'column',
       pt: { xs: '56px', sm: '64px' },
@@ -658,8 +668,11 @@ const CheckoutPage: React.FC = () => {
           <Grid item xs={12} md={8}>
             <Paper sx={{ 
               borderRadius: 2,
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden'
+              boxShadow: theme.shadows[1],
+              border: '1px solid',
+              borderColor: 'divider',
+              overflow: 'hidden',
+              backgroundColor: 'background.paper'
             }}>
               {/* Step 0: Review Order */}
               <Collapse in={activeStep === 0}>
@@ -670,7 +683,9 @@ const CheckoutPage: React.FC = () => {
                     sx={{ 
                       fontSize: { xs: '1.25rem', sm: '1.5rem' },
                       fontWeight: 600,
-                      mb: 3
+                      mb: 3,
+                      color: 'text.primary',
+                      letterSpacing: '-0.01em'
                     }}
                   >
                     Review Your Order ({items.length} items)
@@ -683,14 +698,15 @@ const CheckoutPage: React.FC = () => {
                         sx={{ 
                           px: 0, 
                           py: 0, 
-                          border: '1px solid #E0E0E0',
+                          border: '1px solid',
+                          borderColor: 'divider',
                           borderRight: `4px solid ${item.menuItem.isVeg ? '#4CAF50' : '#F44336'}`,
-                          borderRadius: 2,
+                          borderRadius: 1,
                           mb: 2,
-                          backgroundColor: 'white',
+                          backgroundColor: 'background.paper',
                           '&:hover': {
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
-                            borderColor: '#1976D2',
+                            boxShadow: theme.shadows[2],
+                            borderColor: 'primary.main',
                             borderRightColor: item.menuItem.isVeg ? '#4CAF50' : '#F44336'
                           },
                           transition: 'all 0.2s ease'
@@ -902,7 +918,9 @@ const CheckoutPage: React.FC = () => {
                     sx={{ 
                       fontSize: { xs: '1.25rem', sm: '1.5rem' },
                       fontWeight: 600,
-                      mb: 3
+                      mb: 3,
+                      color: 'text.primary',
+                      letterSpacing: '-0.01em'
                     }}
                   >
                     Customer Information
@@ -1032,7 +1050,9 @@ const CheckoutPage: React.FC = () => {
                     sx={{ 
                       fontSize: { xs: '1.25rem', sm: '1.5rem' },
                       fontWeight: 600,
-                      mb: 3
+                      mb: 3,
+                      color: 'text.primary',
+                      letterSpacing: '-0.01em'
                     }}
                   >
                     Payment Method

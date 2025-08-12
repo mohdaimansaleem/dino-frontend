@@ -9,7 +9,15 @@ import {
   LinearProgress,
   Snackbar,
   Alert,
+  Chip,
+  useTheme,
 } from '@mui/material';
+import {
+  Store as StoreIcon,
+  CheckCircle as CheckCircleIcon,
+  Cancel as CancelIcon,
+  Schedule as ScheduleIcon,
+} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserData } from '../contexts/UserDataContext';
 import { PERMISSIONS } from '../types/auth';
@@ -18,6 +26,7 @@ import { venueService } from '../services/venueService';
 const VenueStatusControl: React.FC = () => {
   const { hasPermission, hasBackendPermission } = useAuth();
   const { userData } = useUserData();
+  const theme = useTheme();
   const currentVenue = userData?.venue;
   const [venueActive, setVenueActive] = useState(true);
   const [venueOpen, setVenueOpen] = useState(true);
@@ -80,42 +89,107 @@ const VenueStatusControl: React.FC = () => {
 
   return (
     <>
-      <Card sx={{ mb: 2 }}>
-        <CardContent sx={{ p: 1.5 }}>
-          <Box>
-            <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 0.5 }}>
-              {currentVenue.name || 'Current Venue'}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-              Status: {venueActive ? (venueOpen ? 'Open for Orders' : 'Closed for Orders') : 'Inactive'}
-            </Typography>
-            
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={venueOpen}
-                  onChange={handleToggleVenueOpen}
-                  disabled={statusLoading || !venueActive}
-                  color="success"
-                  size="small"
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="caption" fontWeight="500">
-                    {venueOpen ? 'Open' : 'Closed'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.65rem' }}>
-                    {venueOpen ? 'Accepting orders' : 'Orders disabled'}
-                  </Typography>
-                </Box>
-              }
-              sx={{ m: 0 }}
+      <Card sx={{ 
+        mb: 2,
+        borderRadius: 2,
+        boxShadow: theme.shadows[1],
+        border: '1px solid',
+        borderColor: 'divider',
+        overflow: 'hidden'
+      }}>
+        <CardContent sx={{ p: 0 }}>
+          {/* Header Section */}
+          <Box sx={{ 
+            p: 2, 
+            backgroundColor: venueOpen ? 'success.main' : 'error.main',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <StoreIcon sx={{ fontSize: 20 }} />
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle2" fontWeight="600" sx={{ color: 'white' }}>
+                {currentVenue.name || 'Current Venue'}
+              </Typography>
+              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.75rem' }}>
+                {venueActive ? 'Venue Active' : 'Venue Inactive'}
+              </Typography>
+            </Box>
+            <Chip
+              icon={venueOpen ? <CheckCircleIcon sx={{ fontSize: 16 }} /> : <CancelIcon sx={{ fontSize: 16 }} />}
+              label={venueOpen ? 'OPEN' : 'CLOSED'}
+              size="small"
+              sx={{
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.7rem',
+                '& .MuiChip-icon': {
+                  color: 'white'
+                }
+              }}
             />
+          </Box>
+
+          {/* Content Section */}
+          <Box sx={{ p: 2 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              mb: 1
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography variant="body2" fontWeight="500">
+                  Order Status
+                </Typography>
+              </Box>
+              <Switch
+                checked={venueOpen}
+                onChange={handleToggleVenueOpen}
+                disabled={statusLoading || !venueActive}
+                color="success"
+                size="small"
+              />
+            </Box>
+            
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              sx={{ 
+                fontSize: '0.875rem',
+                fontStyle: venueOpen ? 'normal' : 'italic'
+              }}
+            >
+              {venueOpen 
+                ? '✅ Currently accepting new orders from customers' 
+                : '🚫 Orders are temporarily disabled - customers cannot place new orders'
+              }
+            </Typography>
+
+            {!venueActive && (
+              <Alert 
+                severity="warning" 
+                sx={{ 
+                  mt: 2, 
+                  fontSize: '0.75rem',
+                  '& .MuiAlert-message': {
+                    fontSize: '0.75rem'
+                  }
+                }}
+              >
+                Venue is inactive. Contact administrator to activate.
+              </Alert>
+            )}
 
             {statusLoading && (
-              <Box sx={{ mt: 1 }}>
-                <LinearProgress />
+              <Box sx={{ mt: 2 }}>
+                <LinearProgress sx={{ borderRadius: 1 }} />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  Updating venue status...
+                </Typography>
               </Box>
             )}
           </Box>

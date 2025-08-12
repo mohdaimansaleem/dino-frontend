@@ -16,10 +16,15 @@ import ContactPage from './pages/ContactPage';
 // RegistrationPage now imported from LazyComponents
 import LoginPage from './pages/LoginPage';
 
-// MenuPage, CheckoutPage, OrderTrackingPage now imported from LazyComponents
+// Import customer pages directly to test
+import MenuPage from './pages/MenuPage';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderTrackingPage from './pages/OrderTrackingPage';
 
 // Lazy-loaded components for better performance
 import { LazyComponents } from './components/LazyLoadingComponents';
+import { Suspense } from 'react';
+import { CircularProgress, Box } from '@mui/material';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -39,6 +44,20 @@ import { apiService } from './services/api';
 if (isDevelopment()) {
   console.log('🔧 Development mode enabled');
 }
+
+// Simple loading fallback for lazy components
+const LoadingFallback = () => (
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    minHeight="200px"
+    flexDirection="column"
+    gap={2}
+  >
+    <CircularProgress size={40} />
+  </Box>
+);
 
 function App() {
   // Validate password hashing setup and cleanup storage on app startup
@@ -88,12 +107,16 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/home" element={<HomePage />} />
                 <Route path="/contact" element={<ContactPage />} />
-                <Route path="/register" element={<LazyComponents.RegistrationPage.component />} />
+                <Route path="/register" element={
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LazyComponents.RegistrationPage.component />
+                  </Suspense>
+                } />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/menu/:venueId/:tableId" element={<LazyComponents.MenuPage.component />} />
-                <Route path="/checkout/:venueId/:tableId" element={<LazyComponents.CheckoutPage.component />} />
-                <Route path="/order-tracking/:orderId" element={<LazyComponents.OrderTrackingPage.component />} />
-                <Route path="/order/:orderId" element={<LazyComponents.OrderTrackingPage.component />} />
+                <Route path="/menu/:venueId/:tableId" element={<MenuPage />} />
+                <Route path="/checkout/:venueId/:tableId" element={<CheckoutPage />} />
+                <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
+                <Route path="/order/:orderId" element={<OrderTrackingPage />} />
                 
                 {/* Development/Testing Routes - Only available in development */}
                 {isDevelopment() && (
@@ -110,42 +133,58 @@ function App() {
                 {/* Admin Routes - Role-based access control */}
                 <Route path="/admin" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.DASHBOARD_VIEW]}>
-                    <LazyComponents.AdminDashboard.component />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyComponents.AdminDashboard.component />
+                    </Suspense>
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/orders" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.ORDERS_VIEW]}>
-                    <LazyComponents.OrdersManagement.component />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyComponents.OrdersManagement.component />
+                    </Suspense>
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/menu" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.MENU_VIEW]}>
-                    <LazyComponents.MenuManagement.component />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyComponents.MenuManagement.component />
+                    </Suspense>
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/tables" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.TABLES_VIEW]}>
-                    <LazyComponents.TableManagement.component />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyComponents.TableManagement.component />
+                    </Suspense>
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/settings" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.SETTINGS_VIEW]}>
-                    <LazyComponents.VenueSettings.component />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyComponents.VenueSettings.component />
+                    </Suspense>
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/users" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
-                    <LazyComponents.UserManagement.component />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyComponents.UserManagement.component />
+                    </Suspense>
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/workspace" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.WORKSPACE_VIEW]}>
-                    <LazyComponents.WorkspaceManagement.component />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyComponents.WorkspaceManagement.component />
+                    </Suspense>
                   </RoleProtectedRoute>
                 } />
                 <Route path="/admin/permissions" element={
                   <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
-                    <LazyComponents.UserPermissionsDashboard.component />
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LazyComponents.UserPermissionsDashboard.component />
+                    </Suspense>
                   </RoleProtectedRoute>
                 } />
                 

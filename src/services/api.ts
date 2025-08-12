@@ -126,6 +126,9 @@ class ApiService {
         const token = authService.getToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('🔑 Added auth token to request:', config.url);
+        } else {
+          console.warn('⚠️ No auth token available for request:', config.url);
         }
 
         // Convert request data to snake_case
@@ -445,6 +448,19 @@ class ApiService {
       }
     } else {
       console.warn('⚠️ No runtime config found or API_BASE_URL not set');
+    }
+  }
+
+  /**
+   * Set authorization header manually (useful for app initialization)
+   */
+  setAuthorizationHeader(token: string | null): void {
+    if (token) {
+      this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      console.log('✅ Authorization header set for all future requests');
+    } else {
+      delete this.axiosInstance.defaults.headers.common['Authorization'];
+      console.log('🗑️ Authorization header removed');
     }
   }
 

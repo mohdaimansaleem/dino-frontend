@@ -53,9 +53,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for existing token on app load
     const initializeAuth = async () => {
       try {
-        const token = StorageManager.getItem(STORAGE_KEYS.TOKEN);
+        const token = StorageManager.getItem<string>(STORAGE_KEYS.TOKEN);
         const savedUser = StorageManager.getUserData();
         const savedPermissions = StorageManager.getPermissions();
+        
+        console.log('🔄 AuthContext initialization:', {
+          hasToken: !!token,
+          hasUser: !!savedUser,
+          hasPermissions: !!savedPermissions,
+          currentPath: window.location.pathname
+        });
         
 
         
@@ -66,13 +73,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (token && savedUser) {
           // Check if token is expired
           if (typeof token === 'string' && isTokenExpired(token)) {
+            console.warn('🚨 Token expired during initialization, clearing auth data');
             StorageManager.removeItem(STORAGE_KEYS.TOKEN);
             StorageManager.removeItem(STORAGE_KEYS.USER);
             StorageManager.removeItem(STORAGE_KEYS.PERMISSIONS);
             setUser(null);
             setUserPermissions(null);
+            // Clear API authorization header
+            apiService.setAuthorizationHeader(null);
             return;
           }
+
+          // Set authorization header for API requests
+          apiService.setAuthorizationHeader(token);
+          console.log('✅ Authorization header set from stored token');
 
           try {
             const savedUserData = savedUser;
@@ -101,15 +115,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUserPermissions(null);
           }
         } else {
+          console.log('🔍 No stored token or user found during initialization');
           setUser(null);
           setUserPermissions(null);
+          // Ensure authorization header is cleared
+          apiService.setAuthorizationHeader(null);
         }
       } catch (error) {
+        console.error('❌ Error during auth initialization:', error);
         StorageManager.removeItem(STORAGE_KEYS.TOKEN);
         StorageManager.removeItem(STORAGE_KEYS.USER);
         StorageManager.removeItem(STORAGE_KEYS.PERMISSIONS);
         setUser(null);
         setUserPermissions(null);
+        // Clear authorization header
+        apiService.setAuthorizationHeader(null);
       } finally {
         setLoading(false);
       }
@@ -142,6 +162,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Store token
       StorageManager.setItem(STORAGE_KEYS.TOKEN, response.access_token);
+      
+      // Set authorization header for immediate API requests
+      apiService.setAuthorizationHeader(response.access_token);
       
       // Enhanced user data mapping with proper fallbacks
       const localUser: UserProfile = {
@@ -263,6 +286,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = (): void => {
     // Stop token refresh scheduler
     tokenRefreshScheduler.stop();
+    
+    // Clear authorization header
+    apiService.setAuthorizationHeader(null);
     
     // Clear all authentication data
     authService.logout(); // This clears tokens including expiry

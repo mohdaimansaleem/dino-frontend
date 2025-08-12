@@ -195,6 +195,23 @@ class DashboardService {
     return this.getDashboardStats();
   }
 
+  async getVenueDashboard(venueId: string): Promise<any> {
+    try {
+      const response = await apiService.get<any>(`/dashboard/venue/${venueId}`);
+      
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      // Return empty data if API fails - no mock data
+      return {};
+    } catch (error) {
+      console.warn('Venue dashboard API failed, using mock data for development');
+      // Return empty object to let component use its mock data
+      return {};
+    }
+  }
+
   async getLiveOrderStatus(venueId: string): Promise<any> {
     try {
       const response = await apiService.get<any>(`/dashboard/live-orders/${venueId}`);

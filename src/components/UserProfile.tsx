@@ -203,7 +203,8 @@ const UserProfile: React.FC = () => {
   return (
     <Box sx={{ 
       minHeight: '100vh',
-      py: { xs: 4, sm: 6, md: 8 },
+      pt: { xs: '80px', sm: '88px', md: '96px' }, // Add top padding to avoid navbar
+      pb: { xs: 4, sm: 6, md: 8 },
       backgroundColor: 'background.default'
     }}>
       <Container maxWidth="md">

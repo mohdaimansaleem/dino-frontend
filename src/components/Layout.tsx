@@ -400,11 +400,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   },
                 }}
               >
-                {/* Venue Status Control */}
-                <VenueStatusControl />
-                
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, pb: 1, pt: 0.5 }}>
                   {renderNavigation()}
+                </Box>
+                
+                {/* Venue Status Control - Moved to bottom */}
+                <Box sx={{ mt: 'auto', pt: 1 }}>
+                  <VenueStatusControl />
                 </Box>
               </Box>
             </Box>

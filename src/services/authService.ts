@@ -7,11 +7,13 @@ import {
   registerWithHashedPassword
 } from '../utils/passwordHashing';
 import { logger } from '../utils/logger';
+import StorageManager from '../utils/storageManager';
 
 class AuthService {
-  private readonly TOKEN_KEY = 'dino_token';
-  private readonly USER_KEY = 'dino_user';
-  private readonly REFRESH_TOKEN_KEY = 'dino_refresh_token';
+  // Use StorageManager keys for consistency
+  private readonly TOKEN_KEY = StorageManager.KEYS.TOKEN;
+  private readonly USER_KEY = StorageManager.KEYS.USER;
+  private readonly REFRESH_TOKEN_KEY = StorageManager.KEYS.REFRESH_TOKEN;
 
   async login(email: string, password: string, rememberMe: boolean = false): Promise<AuthToken> {
     try {
@@ -77,7 +79,7 @@ class AuthService {
       
       if (response.success && response.data) {
         // Update stored user data
-        localStorage.setItem(this.USER_KEY, JSON.stringify(response.data));
+        StorageManager.setUserData(response.data);
         return response.data;
       }
       
@@ -136,7 +138,7 @@ class AuthService {
       
       if (response.success && response.data) {
         // Update stored user data
-        localStorage.setItem(this.USER_KEY, JSON.stringify(response.data));
+        StorageManager.setUserData(response.data);
         return response.data;
       }
       
@@ -318,11 +320,12 @@ class AuthService {
       expiresIn: tokenData.expires_in
     });
     
-    localStorage.setItem(this.TOKEN_KEY, tokenData.access_token);
-    localStorage.setItem(this.USER_KEY, JSON.stringify(tokenData.user));
+    // Use StorageManager for consistent storage
+    StorageManager.setItem(this.TOKEN_KEY, tokenData.access_token);
+    StorageManager.setUserData(tokenData.user);
     
     if (tokenData.refresh_token) {
-      localStorage.setItem(this.REFRESH_TOKEN_KEY, tokenData.refresh_token);
+      StorageManager.setItem(this.REFRESH_TOKEN_KEY, tokenData.refresh_token);
       console.log('✅ Refresh token stored successfully');
     } else {
       console.warn('⚠️ No refresh token provided in response');
@@ -331,16 +334,16 @@ class AuthService {
     // Store token expiry time for proactive refresh
     if (tokenData.expires_in) {
       const expiryTime = Date.now() + (tokenData.expires_in * 1000);
-      localStorage.setItem('dino_token_expiry', expiryTime.toString());
+      StorageManager.setItem('dino_token_expiry', expiryTime.toString());
     }
   }
 
   private clearTokens(): void {
     console.log('🗑️ Clearing all authentication tokens');
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem('dino_token_expiry');
+    StorageManager.removeItem(this.TOKEN_KEY);
+    StorageManager.removeItem(this.USER_KEY);
+    StorageManager.removeItem(this.REFRESH_TOKEN_KEY);
+    StorageManager.removeItem('dino_token_expiry');
   }
 
   isAuthenticated(): boolean {
@@ -348,7 +351,7 @@ class AuthService {
     if (!token) return false;
     
     // Check if token is expired
-    const expiryTime = localStorage.getItem('dino_token_expiry');
+    const expiryTime = StorageManager.getItem<string>('dino_token_expiry');
     if (expiryTime) {
       const expiry = parseInt(expiryTime);
       const now = Date.now();
@@ -374,20 +377,15 @@ class AuthService {
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+    return StorageManager.getItem<string>(this.TOKEN_KEY);
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+    return StorageManager.getItem<string>(this.REFRESH_TOKEN_KEY);
   }
 
   getStoredUser(): UserProfile | null {
-    try {
-      const userData = localStorage.getItem(this.USER_KEY);
-      return userData ? JSON.parse(userData) : null;
-    } catch {
-      return null;
-    }
+    return StorageManager.getUserData();
   }
 
   logout(): void {
@@ -398,7 +396,7 @@ class AuthService {
    * Get token expiry information
    */
   getTokenExpiryInfo(): { isExpired: boolean; expiresIn: number; expiryTime: number | null } {
-    const expiryTime = localStorage.getItem('dino_token_expiry');
+    const expiryTime = StorageManager.getItem<string>('dino_token_expiry');
     if (!expiryTime) {
       return { isExpired: true, expiresIn: 0, expiryTime: null };
     }
@@ -421,6 +419,33 @@ class AuthService {
     const { expiresIn } = this.getTokenExpiryInfo();
     return expiresIn > 0 && expiresIn < 10 * 60 * 1000; // Less than 10 minutes
   }
+
+  /**
+   * Debug method to check authentication state
+   */
+  debugAuthState(): void {
+    const token = this.getToken();
+    const user = this.getStoredUser();
+    const refreshToken = this.getRefreshToken();
+    const expiryInfo = this.getTokenExpiryInfo();
+    
+    console.group('🔍 Authentication State Debug');
+    console.log('Has Token:', !!token);
+    console.log('Has User:', !!user);
+    console.log('Has Refresh Token:', !!refreshToken);
+    console.log('Token Expiry Info:', expiryInfo);
+    console.log('Is Authenticated:', this.isAuthenticated());
+    if (user) {
+      console.log('User Role:', user.role);
+      console.log('User Email:', user.email);
+    }
+    console.groupEnd();
+  }
 }
 
 export const authService = new AuthService();
+
+// Make authService available globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).authService = authService;
+}

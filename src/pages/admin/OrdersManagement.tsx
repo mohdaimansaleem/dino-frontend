@@ -313,7 +313,6 @@ const OrdersManagement: React.FC = () => {
   const renderOrderCard = (order: Order) => (
     <Card 
       key={order.id}
-      className="card-responsive"
       sx={{ 
         mb: 2, 
         height: '100%',
@@ -321,8 +320,13 @@ const OrdersManagement: React.FC = () => {
         flexDirection: 'column',
         border: '1px solid', 
         borderColor: 'divider',
+        backgroundColor: 'background.paper',
         borderLeft: `4px solid ${getStatusColor(order.status)}`,
-        '&:hover': { boxShadow: 2 }
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': { 
+          borderColor: 'primary.main',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+        }
       }}
     >
       <CardContent sx={{ 
@@ -605,28 +609,34 @@ const OrdersManagement: React.FC = () => {
     <Container maxWidth="xl" className="container-responsive">
       <Box sx={{ py: { xs: 2, sm: 4 } }}>
         {/* Header */}
-        <Box sx={{ mb: { xs: 3, md: 4 } }}>
-          <Stack 
-            direction={{ xs: 'column', sm: 'row' }}
-            justifyContent="space-between" 
-            alignItems={{ xs: 'flex-start', sm: 'flex-start' }}
-            spacing={{ xs: 2, sm: 0 }}
-            sx={{ mb: 2 }}
-          >
+        <Box sx={{ mb: 4 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-start', 
+            mb: 2
+          }}>
             <Box sx={{ flex: 1 }}>
               <Typography 
-                variant={isMobile ? "h5" : "h4"} 
+                variant="h4" 
                 component="h1"
-                gutterBottom 
-                fontWeight="600" 
-                color="text.primary"
-                sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+                sx={{ 
+                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  mb: 1,
+                  letterSpacing: '-0.01em'
+                }}
               >
                 {isOperator() ? 'Kitchen Dashboard' : 'Orders Management'}
               </Typography>
               <Typography 
-                variant={isMobile ? "body2" : "body1"} 
+                variant="body1" 
                 color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontWeight: 400
+                }}
               >
                 {isOperator() 
                   ? `View and update order status for ${getVenueDisplayName()}` 
@@ -634,16 +644,22 @@ const OrdersManagement: React.FC = () => {
                 }
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <IconButton 
-                onClick={handleRefreshOrders}
-                className="btn-responsive"
-                sx={{ minWidth: 44, minHeight: 44 }}
-              >
-                <Refresh />
-              </IconButton>
-            </Box>
-          </Stack>
+            <Button
+              onClick={handleRefreshOrders}
+              variant="outlined"
+              startIcon={<Refresh />}
+              sx={{ 
+                borderColor: 'divider',
+                color: 'text.secondary',
+                '&:hover': { 
+                  borderColor: 'primary.main',
+                  backgroundColor: 'primary.50'
+                }
+              }}
+            >
+              Refresh
+            </Button>
+          </Box>
         </Box>
 
         {/* Kitchen Statistics */}
@@ -661,9 +677,12 @@ const OrdersManagement: React.FC = () => {
           ].map((stat, index) => (
             <Grid item xs={6} md={3} key={index}>
               <Paper 
-                elevation={1} 
-                className="card-responsive"
-                sx={{ p: { xs: 2, sm: 3 }, border: '1px solid', borderColor: 'divider' }}
+                sx={{ 
+                  p: 3, 
+                  border: '1px solid', 
+                  borderColor: 'divider',
+                  backgroundColor: 'background.paper'
+                }}
               >
                 <Stack 
                   direction={{ xs: 'column', sm: 'row' }}
@@ -705,9 +724,13 @@ const OrdersManagement: React.FC = () => {
 
         {/* Controls */}
         <Paper 
-          elevation={1} 
-          className="card-responsive"
-          sx={{ p: { xs: 2, sm: 3 }, mb: { xs: 3, md: 4 }, border: '1px solid', borderColor: 'divider' }}
+          sx={{ 
+            p: 3, 
+            mb: 4, 
+            border: '1px solid', 
+            borderColor: 'divider',
+            backgroundColor: 'background.paper'
+          }}
         >
           <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
             <Grid item xs={12} md={4}>
@@ -746,7 +769,11 @@ const OrdersManagement: React.FC = () => {
         </Paper>
 
         {/* Tabs */}
-        <Paper elevation={1} className="card-responsive" sx={{ border: '1px solid', borderColor: 'divider' }}>
+        <Paper sx={{ 
+          border: '1px solid', 
+          borderColor: 'divider',
+          backgroundColor: 'background.paper'
+        }}>
           <Tabs 
             value={tabValue} 
             onChange={(e, newValue) => setTabValue(newValue)}
