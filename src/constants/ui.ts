@@ -1,16 +1,27 @@
-// UI Layout Constants
+// Professional UI Layout Constants
 export const UI_LAYOUT = {
   HEADER_HEIGHT: 64,
   SIDEBAR_WIDTH: 240,
   CONTAINER_MAX_WIDTH: 'xl' as const,
-  CARD_BORDER_RADIUS: 2,
-  BUTTON_BORDER_RADIUS: 1,
+  CARD_BORDER_RADIUS: 12,
+  BUTTON_BORDER_RADIUS: 8,
+  INPUT_BORDER_RADIUS: 8,
+  CHIP_BORDER_RADIUS: 6,
   SPACING: {
-    XS: 1,
-    SM: 2,
-    MD: 3,
-    LG: 4,
-    XL: 6,
+    XS: 4,
+    SM: 8,
+    MD: 16,
+    LG: 24,
+    XL: 32,
+    XXL: 48,
+    XXXL: 64,
+  },
+  SHADOWS: {
+    SUBTLE: '0 1px 3px rgba(0, 0, 0, 0.08)',
+    SOFT: '0 2px 8px rgba(0, 0, 0, 0.1)',
+    MEDIUM: '0 4px 16px rgba(0, 0, 0, 0.12)',
+    STRONG: '0 8px 24px rgba(0, 0, 0, 0.15)',
+    INTENSE: '0 12px 32px rgba(0, 0, 0, 0.18)',
   },
 } as const;
 
@@ -23,14 +34,23 @@ export const BREAKPOINTS = {
   XL: 'xl' as const,
 } as const;
 
-// Animation Durations (in milliseconds)
+// Professional Animation Durations (in milliseconds)
 export const ANIMATION = {
-  FAST: 200,
-  NORMAL: 300,
+  FAST: 150,
+  NORMAL: 200,
+  SMOOTH: 300,
   SLOW: 500,
   CHART_REFRESH: 10000, // 10 seconds
   LOADING_DELAY: 800,
   NAVIGATION_DELAY: 100,
+  HOVER: 200,
+  FOCUS: 150,
+  EASING: {
+    STANDARD: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    PROFESSIONAL: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+    ENTER: 'cubic-bezier(0.0, 0, 0.2, 1)',
+    EXIT: 'cubic-bezier(0.4, 0, 1, 1)',
+  },
 } as const;
 
 // Z-Index Layers

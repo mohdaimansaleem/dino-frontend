@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -9,8 +9,10 @@ import {
   Alert,
   Divider,
   CircularProgress,
+  InputAdornment,
+  IconButton,
 } from '@mui/material';
-import { Email, Lock } from '@mui/icons-material';
+import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DinoLogo from '../components/DinoLogo';
@@ -22,6 +24,7 @@ const LoginPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -30,14 +33,18 @@ const LoginPage: React.FC = () => {
 
   const from = location.state?.from?.pathname || '/admin';
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value,
     }));
     setError('');
-  };
+  }, []);
+
+  const togglePasswordVisibility = useCallback(() => {
+    setShowPassword(prev => !prev);
+  }, []);
 
   const validateForm = () => {
     if (!formData.email || !formData.password) {
@@ -94,7 +101,7 @@ const LoginPage: React.FC = () => {
           elevation={8}
           sx={{
             p: { xs: 3, sm: 4 },
-            borderRadius: 2,
+            borderRadius: 3,
             backgroundColor: 'background.paper',
             border: '1px solid',
             borderColor: 'divider',
@@ -104,6 +111,8 @@ const LoginPage: React.FC = () => {
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+            transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           }}
         >
           {/* Header */}
@@ -166,7 +175,7 @@ const LoginPage: React.FC = () => {
               fullWidth
               label="Password"
               name="password"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={handleInputChange}
               margin="normal"
@@ -175,6 +184,18 @@ const LoginPage: React.FC = () => {
               size="small"
               InputProps={{
                 startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={togglePasswordVisibility}
+                      edge="end"
+                      size="small"
+                      sx={{ color: 'text.secondary' }}
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
               }}
               sx={{ mb: 2 }}
             />
@@ -185,7 +206,20 @@ const LoginPage: React.FC = () => {
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{ mt: 1, mb: 1.5, py: 1.2 }}
+              sx={{ 
+                mt: 1, 
+                mb: 1.5, 
+                py: 1.2,
+                fontWeight: 600,
+                borderRadius: 2,
+                transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                },
+                '&:active': {
+                  transform: 'translateY(0)',
+                },
+              }}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
@@ -209,12 +243,18 @@ const LoginPage: React.FC = () => {
                 size="medium"
                 onClick={() => navigate('/register')}
                 sx={{ 
-                  fontWeight: 'bold',
+                  fontWeight: 600,
                   backgroundColor: 'secondary.main',
                   py: 1,
+                  borderRadius: 2,
+                  transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                   '&:hover': {
                     backgroundColor: 'secondary.dark',
-                  }
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  },
                 }}
               >
                 Create Restaurant Account

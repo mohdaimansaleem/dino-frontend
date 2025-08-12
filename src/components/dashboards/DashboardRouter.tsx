@@ -25,7 +25,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ className }) => {
   if (isLoading || userDataLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner size="large" />
         <span className="ml-3 text-gray-600">Loading dashboard...</span>
       </div>
     );

@@ -1,11 +1,11 @@
-// Brand Colors
+// Professional Brand Colors
 export const BRAND_COLORS = {
-  PRIMARY: '#1976d2',
-  SECONDARY: '#dc004e',
-  SUCCESS: '#4caf50',
-  WARNING: '#ff9800',
-  ERROR: '#f44336',
-  INFO: '#2196f3',
+  PRIMARY: '#1565c0', // Professional blue
+  SECONDARY: '#c62828', // Professional red
+  SUCCESS: '#2e7d32', // Professional green
+  WARNING: '#f57c00', // Professional orange
+  ERROR: '#d32f2f', // Professional red
+  INFO: '#0288d1', // Professional cyan
 } as const;
 
 // Status Colors
@@ -18,14 +18,14 @@ export const STATUS_COLORS = {
   INACTIVE: '#757575',
 } as const;
 
-// Chart Colors (Blue Theme)
+// Professional Chart Colors
 export const CHART_COLORS = {
-  PRIMARY: '#1976d2',
-  SECONDARY: '#42a5f5',
-  TERTIARY: '#64b5f6',
-  QUATERNARY: '#90caf9',
-  GRADIENT_START: '#1976d2',
-  GRADIENT_END: '#42a5f5',
+  PRIMARY: '#1565c0',
+  SECONDARY: '#1976d2',
+  TERTIARY: '#42a5f5',
+  QUATERNARY: '#64b5f6',
+  GRADIENT_START: '#1565c0',
+  GRADIENT_END: '#1976d2',
 } as const;
 
 // Background Colors
@@ -68,9 +68,10 @@ export const FOOD_INDICATOR_COLORS = {
   NON_VEG: '#F44336',
 } as const;
 
-// Gradient Definitions
+// Professional Gradient Definitions (Minimal Usage)
 export const GRADIENTS = {
-  HEADER: 'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)',
-  CARD: 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 100%)',
-  BUTTON: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+  HEADER: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
+  CARD: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+  BUTTON: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+  SUBTLE: 'linear-gradient(180deg, rgba(21, 101, 192, 0.02) 0%, rgba(21, 101, 192, 0.04) 100%)',
 } as const;

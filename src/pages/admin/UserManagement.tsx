@@ -382,7 +382,7 @@ const UserManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 4, pt: { xs: '56px', sm: '64px' } }}>
         <Grid container spacing={3}>
           {[...Array(6)].map((_, index) => (
             <Grid item xs={12} key={index}>
@@ -402,7 +402,7 @@ const UserManagement: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 4, pt: { xs: '56px', sm: '64px' } }}>
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
@@ -422,7 +422,7 @@ const UserManagement: React.FC = () => {
   
   if (!venue && !currentWorkspace?.id) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ py: 4, pt: { xs: '56px', sm: '64px' } }}>
         {/* Header */}
         <Box sx={{ mb: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
@@ -466,7 +466,7 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" className="container-responsive">
+    <Container maxWidth="xl" className="container-responsive" sx={{ pt: { xs: '56px', sm: '64px' } }}>
       <Box sx={{ py: { xs: 2, sm: 4 } }}>
         {/* Header */}
         <Box sx={{ mb: { xs: 3, md: 4 } }}>

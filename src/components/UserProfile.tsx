@@ -201,7 +201,12 @@ const UserProfile: React.FC = () => {
 
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
+    <Box sx={{ 
+      minHeight: '100vh',
+      py: { xs: 4, sm: 6, md: 8 },
+      backgroundColor: 'background.default'
+    }}>
+      <Container maxWidth="md">
       {/* Header */}
       <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={3} alignItems="center">
@@ -502,9 +507,8 @@ const UserProfile: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-
-    </Container>
+      </Container>
+    </Box>
   );
 };
 

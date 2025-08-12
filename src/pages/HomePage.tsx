@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -69,50 +69,59 @@ const HomePage: React.FC = () => {
     threshold: 100,
   });
 
-  // Smooth scroll function
-  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+  // Optimized scroll functions with useCallback
+  const scrollToSection = useCallback((ref: React.RefObject<HTMLDivElement>) => {
     ref.current?.scrollIntoView({
       behavior: 'smooth',
       block: 'start',
     });
-  };
+  }, []);
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, []);
 
-  // Transform features data for display
-  const features = CORE_FEATURES.map(feature => ({
-    icon: React.createElement(feature.icon, { sx: { fontSize: 40, color: feature.color } }),
+  // Memoized data transformations for better performance
+  const features = useMemo(() => CORE_FEATURES.map(feature => ({
+    icon: React.createElement(feature.icon, { 
+      sx: { 
+        fontSize: 40, 
+        color: feature.color,
+        transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      } 
+    }),
     title: feature.title,
     description: feature.description,
     stats: feature.stats,
-  }));
+  })), []);
 
-  // Transform pricing plans for display
-  const pricingPlans = PRICING_PLANS.map(plan => ({
+  const pricingPlans = useMemo(() => PRICING_PLANS.map(plan => ({
     name: plan.name,
     price: plan.monthlyPrice,
     period: 'month',
     description: plan.description,
-    icon: React.createElement(plan.icon, { sx: { fontSize: 40, color: `${plan.color}.main` } }),
+    icon: React.createElement(plan.icon, { 
+      sx: { 
+        fontSize: 40, 
+        color: `${plan.color}.main`,
+        transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      } 
+    }),
     features: plan.features.slice(0, 6), // Take first 6 features for home page
     popular: plan.popular,
     color: plan.color,
-  }));
+  })), []);
 
-  // Transform testimonials for display
-  const testimonials = TESTIMONIALS.slice(0, 6).map(testimonial => ({
+  const testimonials = useMemo(() => TESTIMONIALS.slice(0, 6).map(testimonial => ({
     name: testimonial.name,
     role: testimonial.role,
     restaurant: testimonial.restaurant,
     rating: testimonial.rating,
     comment: testimonial.comment,
     avatar: testimonial.avatar,
-  }));
+  })), []);
 
-  // Transform stats for display
-  const stats = COMPANY_STATS.map(stat => ({
+  const stats = useMemo(() => COMPANY_STATS.map(stat => ({
     number: stat.number,
     suffix: stat.suffix,
     label: stat.label,
@@ -120,9 +129,9 @@ const HomePage: React.FC = () => {
     color: stat.color,
     bgColor: stat.bgColor,
     decimals: stat.decimals,
-  }));
+  })), []);
 
-  const benefits = BENEFITS;
+  const benefits = useMemo(() => BENEFITS, []);
 
   return (
     <Box>

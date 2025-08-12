@@ -349,7 +349,7 @@ const TableManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" className="container-responsive">
+      <Container maxWidth="xl" className="container-responsive" sx={{ pt: { xs: '56px', sm: '64px' } }}>
         <Box sx={{ 
           display: 'flex', 
           flexDirection: 'column',
@@ -371,7 +371,7 @@ const TableManagement: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth="xl" className="container-responsive">
+      <Container maxWidth="xl" className="container-responsive" sx={{ pt: { xs: '56px', sm: '64px' } }}>
         <Box sx={{ py: { xs: 2, sm: 4 } }}>
           <Alert severity="error" sx={{ mb: 4 }}>
             <Typography variant={isMobile ? "body2" : "body1"}>

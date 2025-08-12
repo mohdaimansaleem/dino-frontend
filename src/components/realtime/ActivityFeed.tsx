@@ -198,16 +198,16 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({
           <div className="flex items-center space-x-2">
             {unreadCount > 0 && (
               <Button
-                variant="ghost"
-                size="sm"
+                variant="text"
+                size="small"
                 onClick={markAllAsRead}
               >
                 Mark all read
               </Button>
             )}
             <Button
-              variant="ghost"
-              size="sm"
+              variant="text"
+              size="small"
               onClick={clearAll}
             >
               Clear

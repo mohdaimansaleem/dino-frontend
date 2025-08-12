@@ -8,13 +8,6 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Divider,
 } from '@mui/material';
 import { 
   ShoppingCart, 
@@ -40,7 +33,7 @@ import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import AppHeader from './layout/AppHeader';
 import MobileMenu from './layout/MobileMenu';
 import VenueStatusControl from './VenueStatusControl';
-import DinoLogo from './DinoLogo';
+// import DinoLogo from './DinoLogo'; // Unused
 import { getUserFirstName } from '../utils/userUtils';
 
 interface LayoutProps {
@@ -53,7 +46,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.between('md', 'lg'));
-  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm')); // Unused
   const { user, logout, hasPermission, isOperator } = useAuth();
   const { getTotalItems } = useCart();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -215,7 +208,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
 
       return (
-        <>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
           {adminNavItems.map((item) => (
             <Button
               key={item.label}
@@ -225,33 +218,42 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               sx={{
                 justifyContent: 'flex-start',
                 textAlign: 'left',
-                py: 1,
-                px: 1.5,
+                py: 1.25,
+                px: 2,
                 borderRadius: 2,
+                minHeight: 44,
+                fontSize: '0.875rem',
+                fontWeight: location.pathname === item.path ? 600 : 500,
                 color: location.pathname === item.path ? 'primary.main' : 'text.primary',
                 backgroundColor: location.pathname === item.path ? 'primary.50' : 'transparent',
-                fontWeight: location.pathname === item.path ? 600 : 400,
+                border: location.pathname === item.path ? '1px solid' : '1px solid transparent',
+                borderColor: location.pathname === item.path ? 'primary.200' : 'transparent',
+                transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                 '&:hover': {
                   backgroundColor: location.pathname === item.path ? 'primary.100' : 'action.hover',
-                  transform: 'translateX(4px)',
+                  borderColor: location.pathname === item.path ? 'primary.300' : 'divider',
+                  transform: 'translateX(2px)',
                 },
-                transition: 'all 0.2s ease-in-out',
+                '&:active': {
+                  transform: 'translateX(0px)',
+                },
                 '& .MuiButton-startIcon': {
-                  mr: 2,
+                  mr: 1.5,
                   color: location.pathname === item.path ? 'primary.main' : 'text.secondary',
+                  fontSize: '1.125rem',
                 },
               }}
             >
               {item.label}
             </Button>
           ))}
-        </>
+        </Box>
       );
     }
 
     if (isHomePage) {
       return (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           {isThemeToggleEnabled && <ThemeToggle variant="switch" size="small" />}
           {user ? (
             <>
@@ -262,8 +264,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 startIcon={<AccountCircle />}
                 sx={{
                   color: 'text.primary',
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  px: 2,
+                  py: 1,
+                  transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                   '&:hover': {
                     backgroundColor: 'primary.50',
+                    transform: 'translateY(-1px)',
                   },
                 }}
               >
@@ -274,8 +282,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 onClick={handleLogout}
                 sx={{
                   color: 'error.main',
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  px: 2,
+                  py: 1,
+                  transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                   '&:hover': {
                     backgroundColor: 'error.50',
+                    transform: 'translateY(-1px)',
                   },
                 }}
               >
@@ -287,7 +301,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Button
                 color="inherit"
                 onClick={() => navigate('/register')}
-                sx={{ mr: 1 }}
+                sx={{ 
+                  mr: 1,
+                  fontWeight: 500,
+                  borderRadius: 2,
+                  px: 2,
+                  py: 1,
+                  transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                    transform: 'translateY(-1px)',
+                  },
+                }}
               >
                 Create Account
               </Button>
@@ -295,7 +320,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 variant="contained"
                 onClick={() => navigate('/login')}
                 sx={{
-                  fontWeight: 500,
+                  fontWeight: 600,
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1,
+                  transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                  },
                 }}
               >
                 Sign In

@@ -97,7 +97,7 @@ const ContactPage: React.FC = () => {
   const isFormValid = formData.name && formData.email && formData.message;
 
   return (
-    <Box>
+    <Box sx={{ pt: { xs: '56px', sm: '64px' } }}>
       {/* Hero Section */}
       <Box
         sx={{

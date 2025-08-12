@@ -121,7 +121,7 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
   const users = getUsers();
 
   return (
-    <Container maxWidth="xl" className={`container-responsive ${className || ''}`}>
+    <Container maxWidth="xl" className={`container-responsive ${className || ''}`} sx={{ pt: { xs: '56px', sm: '64px' } }}>
       <Box sx={{ py: { xs: 2, sm: 3 } }}>
         {/* Header */}
         <Box sx={{ mb: { xs: 3, md: 4 } }}>

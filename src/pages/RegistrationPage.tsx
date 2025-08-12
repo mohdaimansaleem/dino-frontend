@@ -1860,8 +1860,13 @@ const RegistrationPage: React.FC = () => {
   };
 
   return (
-    <ResponsiveContainer maxWidth="md">
-      <ResponsivePaper elevation={3}>
+    <Box sx={{ 
+      minHeight: '100vh',
+      py: { xs: 4, sm: 6, md: 8 },
+      backgroundColor: 'background.default'
+    }}>
+      <ResponsiveContainer maxWidth="md">
+        <ResponsivePaper elevation={3}>
         <Typography 
           variant={isMobile ? "h5" : "h4"} 
           align="center" 
@@ -2254,8 +2259,9 @@ const RegistrationPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </ResponsiveContainer>
-  );
+        </ResponsiveContainer>
+      </Box>
+    );
 };
 
 export default RegistrationPage;

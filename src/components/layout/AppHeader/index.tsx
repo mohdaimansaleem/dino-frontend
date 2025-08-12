@@ -342,11 +342,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
               minHeight: { xs: 36, sm: 40 },
               borderRadius: 2,
               fontSize: { xs: '0.875rem', sm: '1rem' },
+              transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
               '&:hover': {
-                backgroundColor: 'rgba(25, 118, 210, 0.08)',
+                backgroundColor: 'primary.50',
                 transform: 'translateY(-1px)',
               },
-              transition: 'all 0.3s ease',
+              '&:active': {
+                transform: 'translateY(0)',
+              },
             }}
           >
             {getUserFirstName(user) || user.email}
@@ -364,11 +367,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
               minHeight: { xs: 36, sm: 40 },
               borderRadius: 2,
               fontSize: { xs: '0.875rem', sm: '1rem' },
+              transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
               '&:hover': {
-                backgroundColor: 'rgba(211, 47, 47, 0.08)',
+                backgroundColor: 'error.50',
                 transform: 'translateY(-1px)',
               },
-              transition: 'all 0.3s ease',
+              '&:active': {
+                transform: 'translateY(0)',
+              },
             }}
           >
             Logout
@@ -392,11 +398,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
             minHeight: { xs: 36, sm: 40 },
             borderRadius: 2,
             fontSize: { xs: '0.875rem', sm: '1rem' },
+            transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             '&:hover': {
-              backgroundColor: 'rgba(25, 118, 210, 0.08)',
+              backgroundColor: 'action.hover',
               transform: 'translateY(-1px)',
             },
-            transition: 'all 0.3s ease',
+            '&:active': {
+              transform: 'translateY(0)',
+            },
           }}
         >
           Create Account
@@ -413,12 +422,16 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
             minHeight: { xs: 36, sm: 40 },
             borderRadius: 2,
             fontSize: { xs: '0.875rem', sm: '1rem' },
-            boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)',
+            boxShadow: '0 2px 8px rgba(21, 101, 192, 0.25)',
+            transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             '&:hover': {
-              boxShadow: '0 6px 16px rgba(25, 118, 210, 0.4)',
-              transform: 'translateY(-2px)',
+              boxShadow: '0 4px 16px rgba(21, 101, 192, 0.35)',
+              transform: 'translateY(-1px)',
             },
-            transition: 'all 0.3s ease',
+            '&:active': {
+              transform: 'translateY(0)',
+              boxShadow: '0 1px 4px rgba(21, 101, 192, 0.2)',
+            },
           }}
         >
           Sign In

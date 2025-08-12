@@ -8,8 +8,8 @@ interface ActionButtonProps {
   roles?: string[];
   onClick: () => void;
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'contained' | 'outlined' | 'text' | 'soft' | 'gradient';
+  size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
   loading?: boolean;
   className?: string;
@@ -23,8 +23,8 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   roles,
   onClick,
   children,
-  variant = 'primary',
-  size = 'md',
+  variant = 'contained',
+  size = 'medium',
   disabled = false,
   loading = false,
   className = ''
