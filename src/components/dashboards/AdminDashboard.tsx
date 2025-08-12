@@ -254,20 +254,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     ]);
   };
 
-  const loadVenueStatus = useCallback(async () => {
-    if (!currentVenue?.id) return;
-    
-    try {
-      const venue = await venueService.getVenue(currentVenue.id);
-      if (venue) {
-        setVenueActive(venue.is_active || false);
-        // Check venue status or fall back to currentVenue isOpen
-        setVenueOpen(venue.status === 'active' || venue.is_open || false);
-      }
-    } catch (error) {
-      console.error('Error loading venue status:', error);
+  // REMOVED: Unnecessary API call to load venue status
+  // The venue status is already available in UserDataContext from /auth/user-data
+  const loadVenueStatus = useCallback(() => {
+    if (currentVenue) {
+      setVenueActive(currentVenue.is_active || false);
+      setVenueOpen(currentVenue.is_open || false);
+      console.log('Using venue status from UserDataContext:', {
+        isActive: currentVenue.is_active,
+        isOpen: currentVenue.is_open
+      });
     }
-  }, []);
+  }, [currentVenue]);
 
   useEffect(() => {
     if (currentVenue?.id) {

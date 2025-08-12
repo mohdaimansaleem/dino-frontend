@@ -89,48 +89,34 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
     };
   }, []);
 
-  // Load venue status for admin users
+  // REMOVED: Unnecessary API call to load venue status
+  // The venue status is already available in UserDataContext from /auth/user-data
   useEffect(() => {
-    const loadVenueStatus = async () => {
-      const userIsAdmin = isAdmin() || isSuperAdmin();
-      
-      if (!user || !userIsAdmin) {
-        setVenueStatus(null);
-        return;
-      }
+    const userIsAdmin = isAdmin() || isSuperAdmin();
+    
+    if (!user || !userIsAdmin) {
+      setVenueStatus(null);
+      return;
+    }
 
-      if (!userData?.venue?.id) {
-        setVenueStatus({
-          isActive: false,
-          isOpen: false,
-          venueName: userData?.venue?.name || 'No Venue Selected'
-        });
-        return;
-      }
+    if (!userData?.venue) {
+      setVenueStatus({
+        isActive: false,
+        isOpen: false,
+        venueName: 'No Venue Selected'
+      });
+      return;
+    }
 
-      try {
-        const venue = await venueService.getVenue(userData.venue.id);
-        
-        if (venue) {
-          const statusData = {
-            isActive: venue.is_active || false,
-            isOpen: venue.status === 'active' || venue.is_open || false,
-            venueName: venue.name || userData.venue.name || 'Current Venue'
-          };
-          setVenueStatus(statusData);
-        }
-      } catch (error) {
-        console.error('❌ AppHeader - Error loading venue status:', error);
-        setVenueStatus({
-          isActive: false,
-          isOpen: false,
-          venueName: userData?.venue?.name || 'Error Loading Venue'
-        });
-      }
+    // Use venue data from UserDataContext
+    const statusData = {
+      isActive: userData.venue.is_active || false,
+      isOpen: userData.venue.is_open || false,
+      venueName: userData.venue.name || 'Current Venue'
     };
-
-    loadVenueStatus();
-  }, [user, userData?.venue?.id, isAdmin, isSuperAdmin]);
+    setVenueStatus(statusData);
+    console.log('✅ AppHeader - Using venue status from UserDataContext:', statusData);
+  }, [user, userData?.venue, isAdmin, isSuperAdmin]);
 
   // Handle venue status toggle
   const handleToggleVenueOpen = async () => {
@@ -341,7 +327,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                     borderColor: 'primary.main'
                   }}
                 >
-                  🦕
+                  <DinoLogo size={16} animated={false} />
                 </Avatar>
               ) : (
                 <AccountCircle sx={{ fontSize: { xs: 20, sm: 24 } }} />
@@ -467,10 +453,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
           top: 0,
           left: 0,
           right: 0,
+          margin: 0,
+          padding: 0,
           boxShadow: isAdminRoute ? 'none' : undefined,
         }}
       >
-          <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 } }}>
+          <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2 }, pr: { xs: 1, sm: 2 }, mr: 0 }}>
             <Toolbar sx={{ px: 0, minHeight: { xs: 56, sm: 64, md: 70 } }}>
               {/* Logo and Title */}
               <Box

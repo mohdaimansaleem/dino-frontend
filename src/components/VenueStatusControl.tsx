@@ -24,23 +24,18 @@ const VenueStatusControl: React.FC = () => {
   const [statusLoading, setStatusLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
-  const loadVenueStatus = useCallback(async () => {
-    if (!currentVenue?.id) return;
-    
-    try {
-      const venue = await venueService.getVenue(currentVenue.id);
-      if (venue) {
-        setVenueActive(venue.is_active || false);
-        setVenueOpen(venue.status === 'active' || venue.is_open || false);
-      }
-    } catch (error) {
-      console.error('Error loading venue status:', error);
-    }
-  }, [currentVenue?.id]);
-
+  // REMOVED: Unnecessary API call to load venue status
+  // The venue status is already available in UserDataContext from /auth/user-data
   useEffect(() => {
-    loadVenueStatus();
-  }, [loadVenueStatus]);
+    if (currentVenue) {
+      setVenueActive(currentVenue.is_active || false);
+      setVenueOpen(currentVenue.is_open || false);
+      console.log('Using venue status from UserDataContext:', {
+        isActive: currentVenue.is_active,
+        isOpen: currentVenue.is_open
+      });
+    }
+  }, [currentVenue]);
 
   const handleToggleVenueOpen = async () => {
     if (!currentVenue?.id || statusLoading) return;

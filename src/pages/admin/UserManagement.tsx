@@ -63,6 +63,7 @@ import PermissionService from '../../services/permissionService';
 import { ROLES, PERMISSIONS } from '../../types/auth';
 import PasswordUpdateDialog from '../../components/PasswordUpdateDialog';
 import { userService, User, UserCreate, UserUpdate } from '../../services/userService';
+import { VenueUser } from '../../types/api';
 import { STORAGE_KEYS } from '../../constants/storage';
 import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
 
@@ -71,6 +72,7 @@ const UserManagement: React.FC = () => {
   const { currentWorkspace, currentVenue, venues } = useWorkspace();
   const { 
     userData, 
+    loading: userDataLoading,
     hasPermission: hasUserDataPermission, 
     getUsers: getUserDataUsers,
     getVenue,
@@ -82,7 +84,7 @@ const UserManagement: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<VenueUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
@@ -104,40 +106,80 @@ const UserManagement: React.FC = () => {
     is_active: true,
   });
 
+  // Track if users have been loaded to prevent duplicate API calls
+  const [usersLoaded, setUsersLoaded] = useState(false);
+
   useEffect(() => {
-    loadUsers();
+    console.log('🎯 UserManagement component mounted or dependencies changed');
+    
+    // Reset loaded state when workspace/venue changes
+    setUsersLoaded(false);
+    
+    // Only load if userData is available (navigation scenario)
+    if (userData && !userDataLoading) {
+      console.log('📡 Navigation detected - userData available, loading users');
+      loadUsers();
+    } else {
+      console.log('🔄 Page refresh detected - waiting for userData...');
+    }
   }, [currentWorkspace, currentVenue]);
 
-  const loadUsers = async () => {
-    // Try to use userData first
-    if (userData) {
-      const venueUsers = getUserDataUsers();
-      setUsers(venueUsers);
-      setLoading(false);
-      return;
+  // Load users when userData becomes available (page refresh scenario)
+  useEffect(() => {
+    console.log('🔄 UserManagement userData effect triggered');
+    console.log('- userData:', !!userData);
+    console.log('- userDataLoading:', userDataLoading);
+    console.log('- usersLoaded:', usersLoaded);
+    
+    // Only load if:
+    // 1. We have userData (context is ready)
+    // 2. Not currently loading userData
+    // 3. Users haven't been loaded yet
+    if (userData && !userDataLoading && !usersLoaded) {
+      console.log('📡 UserData became available, loading users');
+      loadUsers();
     }
+  }, [userData, userDataLoading, usersLoaded]);
 
-    // Fallback to old method
-    if (!currentWorkspace?.id) {
+  const loadUsers = async () => {
+    console.log('🔄 Loading users...');
+    
+    // Get venue from userData first, then fallback to context
+    const venue = getVenue() || currentVenue;
+    
+    if (!venue?.id) {
+      console.log('❌ No venue ID available for loading users');
       setUsers([]);
       setLoading(false);
+      setError('No venue selected. Please select a venue to view users.');
+      setUsersLoaded(true); // Mark as loaded even if no venue
       return;
     }
 
     setLoading(true);
     setError(null);
+    
     try {
-      const filters = {
-        workspace_id: currentWorkspace.id,
-        venue_id: currentVenue?.id,
-      };
+      console.log('📡 Making API call to load users for venue:', venue.id);
       
-      const usersData = await userService.getUsers(filters);
-      setUsers(usersData.data || []);
-    } catch (error) {
+      // Use the new venue-specific API
+      const response = await userService.getUsersByVenueId(venue.id);
+      
+      if (response.success && response.data) {
+        console.log('✅ Users loaded successfully:', response.data);
+        setUsers(response.data);
+      } else {
+        console.log('⚠️ API call succeeded but no data:', response);
+        setUsers([]);
+        setError(response.error || 'No users found for this venue.');
+      }
+    } catch (error: any) {
+      console.error('❌ Error loading users:', error);
       setError('Failed to load users. Please try again.');
+      setUsers([]);
     } finally {
       setLoading(false);
+      setUsersLoaded(true); // Mark as loaded after API call completes
     }
   };
 
@@ -218,6 +260,7 @@ const UserManagement: React.FC = () => {
       }
       
       // Reload users after successful operation
+      setUsersLoaded(false);
       await loadUsers();
       handleCloseDialog();
     } catch (error: any) {
@@ -240,6 +283,7 @@ const UserManagement: React.FC = () => {
             message: 'User deleted successfully', 
             severity: 'success' 
           });
+          setUsersLoaded(false);
           await loadUsers(); // Reload users after deletion
         }
       } catch (error: any) {
@@ -262,6 +306,7 @@ const UserManagement: React.FC = () => {
           message: `User ${!currentStatus ? 'activated' : 'deactivated'} successfully`, 
           severity: 'success' 
         });
+        setUsersLoaded(false);
         await loadUsers(); // Reload users after status change
       }
     } catch (error: any) {
@@ -361,7 +406,10 @@ const UserManagement: React.FC = () => {
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
-        <Button variant="contained" onClick={loadUsers}>
+        <Button variant="contained" onClick={() => {
+          setUsersLoaded(false);
+          loadUsers();
+        }}>
           Retry
         </Button>
       </Container>
@@ -526,119 +574,119 @@ const UserManagement: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   </TableHead>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <Avatar>
-                            {user.first_name.charAt(0)}{user.last_name.charAt(0)}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="subtitle2" fontWeight="600">
-                              {user.first_name} {user.last_name}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {user.email}
-                            </Typography>
-                            {user.phone && (
-                              <Typography variant="body2" color="text.secondary">
-                                {user.phone}
+                  <TableBody>
+                    {users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Avatar>
+                              {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle2" fontWeight="600">
+                                {user.user_name || `${user.first_name} ${user.last_name}`}
                               </Typography>
-                            )}
+                              <Typography variant="body2" color="text.secondary">
+                                {user.email}
+                              </Typography>
+                              {user.phone && (
+                                <Typography variant="body2" color="text.secondary">
+                                  {user.phone}
+                                </Typography>
+                              )}
+                            </Box>
                           </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={getDisplayName(user.role)}
-                          color={getRoleColor(user.role) as any}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={user.is_active ? 'Active' : 'Inactive'}
-                          color={user.is_active ? 'success' : 'default'}
-                          size="small"
-                          icon={user.is_active ? <CheckCircle /> : <Cancel />}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {formatLastLogin(user.updated_at || user.created_at)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          onClick={(e) => handleMenuClick(e, user)}
-                          size="small"
-                        >
-                          <MoreVert />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </CardContent>
-      </Card>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={user.role_display_name || getDisplayName(user.role)}
+                            color={getRoleColor(user.role) as any}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={user.status === 'active' ? 'Active' : 'Inactive'}
+                            color={user.status === 'active' ? 'success' : 'default'}
+                            size="small"
+                            icon={user.status === 'active' ? <CheckCircle /> : <Cancel />}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                          <Typography variant="body2">
+                            {formatLastLogin(user.last_logged_in || user.updated_at || user.created_at)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            onClick={(e) => handleMenuClick(e, user)}
+                            size="small"
+                          >
+                            <MoreVert />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* User Actions Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-        {canEditUsers && (
-          <MenuItem onClick={() => {
-            handleOpenDialog(selectedUser!);
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              <Edit fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Edit User</ListItemText>
-          </MenuItem>
-        )}
-        {canUpdatePasswords && selectedUser && (
-          <MenuItem onClick={() => {
-            setPasswordDialogOpen(true);
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              <Lock fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Update Password</ListItemText>
-          </MenuItem>
-        )}
-        {selectedUser && (
-          <MenuItem onClick={() => {
-            handleToggleUserStatus(selectedUser.id, selectedUser.is_active);
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              {selectedUser.is_active ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
-            </ListItemIcon>
-            <ListItemText>
-              {selectedUser.is_active ? 'Deactivate' : 'Activate'}
-            </ListItemText>
-          </MenuItem>
-        )}
-        {canDeleteUsers && selectedUser && (
-          <MenuItem onClick={() => {
-            handleDeleteUser(selectedUser.id);
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              <Delete fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Delete User</ListItemText>
-          </MenuItem>
-        )}
-      </Menu>
+        {/* User Actions Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+        >
+          {canEditUsers && (
+            <MenuItem onClick={() => {
+              handleOpenDialog(selectedUser!);
+              handleMenuClose();
+            }}>
+              <ListItemIcon>
+                <Edit fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Edit User</ListItemText>
+            </MenuItem>
+          )}
+          {canUpdatePasswords && selectedUser && (
+            <MenuItem onClick={() => {
+              setPasswordDialogOpen(true);
+              handleMenuClose();
+            }}>
+              <ListItemIcon>
+                <Lock fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Update Password</ListItemText>
+            </MenuItem>
+          )}
+          {selectedUser && (
+            <MenuItem onClick={() => {
+              handleToggleUserStatus(selectedUser.id, selectedUser.is_active);
+              handleMenuClose();
+            }}>
+              <ListItemIcon>
+                {selectedUser.is_active ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
+              </ListItemIcon>
+              <ListItemText>
+                {selectedUser.is_active ? 'Deactivate' : 'Activate'}
+              </ListItemText>
+            </MenuItem>
+          )}
+          {canDeleteUsers && selectedUser && (
+            <MenuItem onClick={() => {
+              handleDeleteUser(selectedUser.id);
+              handleMenuClose();
+            }}>
+              <ListItemIcon>
+                <Delete fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Delete User</ListItemText>
+            </MenuItem>
+          )}
+        </Menu>
 
         {/* User Create/Edit Dialog */}
         <Dialog 
@@ -659,91 +707,91 @@ const UserManagement: React.FC = () => {
               {editingUser ? 'Edit User' : 'Create New User'}
             </Typography>
           </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="First Name"
-                value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                required
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Last Name"
-                value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                disabled={!!editingUser}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Role</InputLabel>
-                <Select
-                  value={formData.role_name}
-                  onChange={(e) => setFormData({ ...formData, role_name: e.target.value })}
-                  label="Role"
-                >
-                  <MenuItem value={ROLES.OPERATOR}>Operator</MenuItem>
-                  {isAdmin() && <MenuItem value={ROLES.ADMIN}>Admin</MenuItem>}
-                  {isSuperAdmin() && <MenuItem value={ROLES.SUPERADMIN}>Super Admin</MenuItem>}
-                </Select>
-              </FormControl>
-            </Grid>
-            {venues.length > 1 && (
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  value={formData.first_name}
+                  onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  value={formData.last_name}
+                  onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                  required
+                />
+              </Grid>
               <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Venue</InputLabel>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  disabled={!!editingUser}
+                  required
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <FormControl fullWidth required>
+                  <InputLabel>Role</InputLabel>
                   <Select
-                    value={formData.venue_id}
-                    onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
-                    label="Venue"
+                    value={formData.role_name}
+                    onChange={(e) => setFormData({ ...formData, role_name: e.target.value })}
+                    label="Role"
                   >
-                    <MenuItem value="">All Venues</MenuItem>
-                    {venues.map((venue) => (
-                      <MenuItem key={venue.id} value={venue.id}>
-                        {venue.name}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value={ROLES.OPERATOR}>Operator</MenuItem>
+                    {isAdmin() && <MenuItem value={ROLES.ADMIN}>Admin</MenuItem>}
+                    {isSuperAdmin() && <MenuItem value={ROLES.SUPERADMIN}>Super Admin</MenuItem>}
                   </Select>
                 </FormControl>
               </Grid>
-            )}
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.is_active}
-                    onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  />
-                }
-                label="Active User"
-              />
+              {venues.length > 1 && (
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Venue</InputLabel>
+                    <Select
+                      value={formData.venue_id}
+                      onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
+                      label="Venue"
+                    >
+                      <MenuItem value="">All Venues</MenuItem>
+                      {venues.map((venue) => (
+                        <MenuItem key={venue.id} value={venue.id}>
+                          {venue.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              )}
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.is_active}
+                      onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                    />
+                  }
+                  label="Active User"
+                />
+              </Grid>
             </Grid>
-          </Grid>
-        </DialogContent>
+          </DialogContent>
           <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
             <Stack 
               direction={{ xs: 'column', sm: 'row' }}
@@ -769,31 +817,31 @@ const UserManagement: React.FC = () => {
           </DialogActions>
         </Dialog>
 
-      {/* Password Update Dialog */}
-      {selectedUser && (
-        <PasswordUpdateDialog
-          open={passwordDialogOpen}
-          onClose={() => setPasswordDialogOpen(false)}
-          onUpdate={(userId, newPassword) => handlePasswordUpdate(userId, newPassword)}
-          user={{
-            id: selectedUser.id,
-            email: selectedUser.email,
-            firstName: selectedUser.first_name,
-            lastName: selectedUser.last_name,
-            role: selectedUser.role
-          }}
-        />
-      )}
+        {/* Password Update Dialog */}
+        {selectedUser && (
+          <PasswordUpdateDialog
+            open={passwordDialogOpen}
+            onClose={() => setPasswordDialogOpen(false)}
+            onUpdate={(userId, newPassword) => handlePasswordUpdate(userId, newPassword)}
+            user={{
+              id: selectedUser.id,
+              email: selectedUser.email,
+              firstName: selectedUser.first_name,
+              lastName: selectedUser.last_name,
+              role: selectedUser.role
+            }}
+          />
+        )}
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-      >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
-          {snackbar.message}
-        </Alert>
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        >
+          <Alert severity={snackbar.severity} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}>
+            {snackbar.message}
+          </Alert>
         </Snackbar>
       </Box>
     </Container>

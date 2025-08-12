@@ -493,32 +493,6 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
           <Typography variant="body2" sx={{ opacity: 0.8 }}>
             {COMPANY_INFO.legal.copyright.replace('2024', currentYear.toString())}
           </Typography>
-          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-            <Link
-              href="#"
-              color="inherit"
-              underline="hover"
-              sx={{ 
-                opacity: 0.8, 
-                transition: 'all 0.3s ease',
-                '&:hover': { opacity: 1, transform: 'translateY(-2px)' } 
-              }}
-            >
-              {COMPANY_INFO.legal.privacyPolicy}
-            </Link>
-            <Link
-              href="#"
-              color="inherit"
-              underline="hover"
-              sx={{ 
-                opacity: 0.8, 
-                transition: 'all 0.3s ease',
-                '&:hover': { opacity: 1, transform: 'translateY(-2px)' } 
-              }}
-            >
-              {COMPANY_INFO.legal.termsOfService}
-            </Link>
-          </Box>
         </Box>
       </Container>
     </Box>

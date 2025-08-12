@@ -225,8 +225,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               sx={{
                 justifyContent: 'flex-start',
                 textAlign: 'left',
-                py: 1.5,
-                px: 2,
+                py: 1,
+                px: 1.5,
                 borderRadius: 2,
                 color: location.pathname === item.path ? 'primary.main' : 'text.primary',
                 backgroundColor: location.pathname === item.path ? 'primary.50' : 'transparent',
@@ -321,7 +321,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', margin: 0, padding: 0, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
       {/* Enhanced AppHeader - Hidden for customer facing pages and mobile admin routes */}
       {!isCustomerFacingRoute && !(isAdminRoute && isMobile) && (
         <AppHeader />
@@ -329,7 +329,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Admin Layout with Responsive Sidebar */}
       {isAdminRoute && user ? (
-        <Box sx={{ display: 'flex', minHeight: isMobile ? 'calc(100vh - 64px)' : 'calc(100vh - 70px)', position: 'relative', height: isMobile ? 'auto' : 'calc(100vh - 70px)' }}>
+        <Box sx={{ display: 'flex', minHeight: isMobile ? 'calc(100vh - 64px)' : 'calc(100vh - 70px)', position: 'relative', height: isMobile ? 'auto' : 'calc(100vh - 70px)', margin: 0, padding: 0, width: '100%', maxWidth: '100%' }}>
           {/* Desktop Sidebar Navigation - Fixed */}
           {!isMobile && (
             <Box sx={{ 
@@ -347,7 +347,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }}>
               <Box 
                 sx={{ 
-                  p: 2,
+                  p: 1.5,
+                  pt: 1,
                   flex: 1,
                   overflow: 'auto',
                   display: 'flex',
@@ -367,22 +368,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   },
                 }}
               >
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    mb: 2, 
-                    fontWeight: 600, 
-                    color: 'text.primary',
-                    fontSize: { md: '1rem', lg: '1.25rem' }
-                  }}
-                >
-                  Control Panel
-                </Typography>
-                
                 {/* Venue Status Control */}
                 <VenueStatusControl />
                 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pb: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, pb: 1, pt: 0.5 }}>
                   {renderNavigation()}
                 </Box>
               </Box>
@@ -402,10 +391,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               height: isMobile ? 'auto' : 'calc(100vh - 70px)',
               marginLeft: isMobile ? 0 : (isTablet ? '200px' : '240px'),
               marginTop: isMobile ? 0 : '70px',
+              marginRight: 0,
+              paddingRight: 0,
               display: 'flex',
               flexDirection: 'column',
               position: 'relative',
               overflow: 'auto', // Allow scrolling on main container
+              width: isMobile ? '100%' : `calc(100% - ${isTablet ? '200px' : '240px'})`,
+              maxWidth: '100%',
             }}
           >
             {/* Mobile Header for Admin - Now uses MobileMenu */}
@@ -427,11 +420,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   maxHeight: '64px',
                 }}
               >
-                {/* Logo on the left */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <DinoLogo size={30} animated={true} />
+                {/* Title only */}
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
-                    {isOperator() ? 'Dino Operator' : 'Dino Admin'}
+                    {isOperator() ? 'Operator Panel' : 'Admin Panel'}
                   </Typography>
                 </Box>
                 

@@ -5,6 +5,7 @@ import {
   VenueUpdate, 
   VenueAnalytics,
   VenueStatus,
+  WorkspaceVenue,
   OperatingHours,
   PaginatedResponse,
   ApiResponse,
@@ -125,6 +126,24 @@ class VenueService {
     } catch (error) {
       console.error('Error fetching venue:', error);
       return null;
+    }
+  }
+
+  /**
+   * Get venues by workspace ID (Venus API)
+   */
+  async getVenuesByWorkspace(workspaceId: string): Promise<WorkspaceVenue[]> {
+    try {
+      const response = await apiService.get<WorkspaceVenue[]>(`/venues/workspace/${workspaceId}/venues`);
+      
+      if (response.success && response.data) {
+        return response.data;
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error fetching workspace venues:', error);
+      return [];
     }
   }
 

@@ -7,13 +7,13 @@ import {
   Button,
   Typography,
   Alert,
-
   Divider,
   CircularProgress,
 } from '@mui/material';
-import { Restaurant, Email, Lock } from '@mui/icons-material';
+import { Email, Lock } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import DinoLogo from '../components/DinoLogo';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -66,46 +66,85 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
+    <Box
+      sx={{
+        height: '90vh',
+        width: '100vw',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        backgroundColor: 'background.default',
+      }}
+    >
+      <Container 
+        component="main" 
+        maxWidth="sm"
         sx={{
-          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
+          alignItems: 'center',
           justifyContent: 'center',
-          py: 4,
+          px: { xs: 2, sm: 3 },
+          height: '100%',
+          overflow: 'hidden',
         }}
       >
         <Paper
           elevation={8}
           sx={{
-            p: 4,
+            p: { xs: 3, sm: 4 },
             borderRadius: 2,
             backgroundColor: 'background.paper',
             border: '1px solid',
             borderColor: 'divider',
+            width: '100%',
+            maxWidth: '100%',
+            maxHeight: { xs: 'calc(100vh - 32px)', sm: 'calc(100vh - 48px)' },
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Restaurant sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-              🦕 Dino
+          <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 3 }, flexShrink: 0 }}>
+            <DinoLogo size={40} animated={true} sx={{ mb: { xs: 1, sm: 1.5 } }} />
+            <Typography 
+              variant="h4" 
+              component="h1" 
+              gutterBottom 
+              fontWeight="bold"
+              sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}
+            >
+              Dino
             </Typography>
-            <Typography variant="h6" color="text.secondary">
+            <Typography 
+              variant="h6" 
+              color="text.secondary"
+              sx={{ fontSize: { xs: '0.9rem', sm: '1.1rem' } }}
+            >
               Welcome Back!
             </Typography>
           </Box>
 
           {/* Alerts */}
           {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
+            <Alert severity="error" sx={{ mb: 2, flexShrink: 0 }}>
               {error}
             </Alert>
           )}
 
           {/* Form */}
-          <Box component="form" onSubmit={handleSubmit}>
+          <Box 
+            component="form" 
+            onSubmit={handleSubmit}
+            sx={{ 
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
             <TextField
               fullWidth
               label="Email Address"
@@ -116,9 +155,11 @@ const LoginPage: React.FC = () => {
               margin="normal"
               required
               autoComplete="email"
+              size="small"
               InputProps={{
                 startAdornment: <Email sx={{ mr: 1, color: 'text.secondary' }} />,
               }}
+              sx={{ mb: 1 }}
             />
 
             <TextField
@@ -131,9 +172,11 @@ const LoginPage: React.FC = () => {
               margin="normal"
               required
               autoComplete="current-password"
+              size="small"
               InputProps={{
                 startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
               }}
+              sx={{ mb: 2 }}
             />
 
             <Button
@@ -142,7 +185,7 @@ const LoginPage: React.FC = () => {
               variant="contained"
               size="large"
               disabled={loading}
-              sx={{ mt: 3, mb: 2, py: 1.5 }}
+              sx={{ mt: 1, mb: 1.5, py: 1.2 }}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
@@ -151,23 +194,24 @@ const LoginPage: React.FC = () => {
               )}
             </Button>
 
-            <Divider sx={{ my: 3 }}>
-              <Typography variant="body2" color="text.secondary">
+            <Divider sx={{ my: 1.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 OR
               </Typography>
             </Divider>
 
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            <Box sx={{ textAlign: 'center', mt: 'auto' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.85rem' }}>
                 Don't have an account?
               </Typography>
               <Button
                 variant="contained"
-                size="large"
+                size="medium"
                 onClick={() => navigate('/register')}
                 sx={{ 
                   fontWeight: 'bold',
                   backgroundColor: 'secondary.main',
+                  py: 1,
                   '&:hover': {
                     backgroundColor: 'secondary.dark',
                   }
@@ -177,16 +221,20 @@ const LoginPage: React.FC = () => {
               </Button>
             </Box>
           </Box>
-        </Paper>
 
-        {/* Footer */}
-        <Box sx={{ textAlign: 'center', mt: 4 }}>
-          <Typography variant="body2" color="text.secondary">
-            © 2024 Dino. All rights reserved.
-          </Typography>
-        </Box>
-      </Box>
-    </Container>
+          {/* Footer */}
+          <Box sx={{ textAlign: 'center', mt: 2, flexShrink: 0 }}>
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem' } }}
+            >
+              © 2024 Dino. All rights reserved.
+            </Typography>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 

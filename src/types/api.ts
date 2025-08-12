@@ -265,6 +265,26 @@ export interface VenueStatus {
   message?: string;
 }
 
+export interface WorkspaceVenue {
+  id: string;
+  name: string;
+  description?: string;
+  location: {
+    city: string;
+    state: string;
+    country: string;
+    address: string;
+  };
+  phone?: string;
+  email?: string;
+  is_active: boolean;
+  is_open: boolean;
+  status: string;
+  subscription_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // =============================================================================
 // MENU TYPES
 // =============================================================================
@@ -592,6 +612,24 @@ export interface User {
   workspace_id: string;
   venue_id?: string;
   is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface VenueUser {
+  id: string;
+  email: string;
+  phone?: string;
+  user_name: string; // Combined first_name + last_name
+  first_name: string;
+  last_name: string;
+  role: UserRole;
+  role_display_name: string; // Human readable role name
+  last_logged_in?: string; // ISO date string
+  status: 'active' | 'inactive'; // User status
+  is_active: boolean;
+  venue_id: string;
+  workspace_id: string;
   created_at: string;
   updated_at?: string;
 }

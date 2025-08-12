@@ -114,63 +114,46 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     };
   }, []);
 
-  // Load venue status for admin users
+  // REMOVED: Unnecessary API call to load venue status
+  // The venue status is already available in UserDataContext from /auth/user-data
   useEffect(() => {
-    const loadVenueStatus = async () => {
-      const userIsAdmin = isAdmin() || isSuperAdmin();
-      
-      console.log('🔍 MobileMenu - Checking venue status conditions:', {
-        hasUser: !!user,
-        userRole: user?.role,
-        isAdminFromContext: userIsAdmin,
-        isAdminMethod: isAdmin(),
-        isSuperAdminMethod: isSuperAdmin(),
-        venueId: userData?.venue?.id,
-        venueName: userData?.venue?.name
+    const userIsAdmin = isAdmin() || isSuperAdmin();
+    
+    console.log('🔍 MobileMenu - Checking venue status conditions:', {
+      hasUser: !!user,
+      userRole: user?.role,
+      isAdminFromContext: userIsAdmin,
+      isAdminMethod: isAdmin(),
+      isSuperAdminMethod: isSuperAdmin(),
+      venueId: userData?.venue?.id,
+      venueName: userData?.venue?.name
+    });
+
+    if (!user || !userIsAdmin) {
+      console.log('❌ MobileMenu - User not admin level, hiding venue status');
+      setVenueStatus(null);
+      return;
+    }
+
+    if (!userData?.venue) {
+      console.log('⚠️ MobileMenu - No venue found, setting fallback status');
+      setVenueStatus({
+        isActive: false,
+        isOpen: false,
+        venueName: 'No Venue Selected'
       });
+      return;
+    }
 
-      if (!user || !userIsAdmin) {
-        console.log('❌ MobileMenu - User not admin level, hiding venue status');
-        setVenueStatus(null);
-        return;
-      }
-
-      if (!userData?.venue?.id) {
-        console.log('⚠️ MobileMenu - No venue ID found, setting fallback status');
-        setVenueStatus({
-          isActive: false,
-          isOpen: false,
-          venueName: userData?.venue?.name || 'No Venue Selected'
-        });
-        return;
-      }
-
-      try {
-        console.log('🔄 MobileMenu - Loading venue status for ID:', userData.venue.id);
-        const venue = await venueService.getVenue(userData.venue.id);
-        console.log('✅ MobileMenu - Venue data loaded:', venue);
-        
-        if (venue) {
-          const statusData = {
-            isActive: venue.is_active || false,
-            isOpen: venue.status === 'active' || venue.is_open || false,
-            venueName: venue.name || userData.venue.name || 'Current Venue'
-          };
-          console.log('📊 MobileMenu - Setting venue status:', statusData);
-          setVenueStatus(statusData);
-        }
-      } catch (error) {
-        console.error('❌ MobileMenu - Error loading venue status:', error);
-        setVenueStatus({
-          isActive: false,
-          isOpen: false,
-          venueName: userData?.venue?.name || 'Error Loading Venue'
-        });
-      }
+    // Use venue data from UserDataContext
+    const statusData = {
+      isActive: userData.venue.is_active || false,
+      isOpen: userData.venue.is_open || false,
+      venueName: userData.venue.name || 'Current Venue'
     };
-
-    loadVenueStatus();
-  }, [user, userData?.venue?.id]);
+    console.log('✅ MobileMenu - Using venue status from UserDataContext:', statusData);
+    setVenueStatus(statusData);
+  }, [user, userData?.venue, isAdmin, isSuperAdmin]);
 
   // Handle venue status toggle
   const handleToggleVenueOpen = async () => {

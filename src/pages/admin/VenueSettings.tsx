@@ -229,29 +229,13 @@ const VenueSettings: React.FC = () => {
       try {
         setLoading(true);
         
-        // Try to get fresh venue data from API if needed
+        // Use venue data from UserDataContext - it already contains all necessary information
         let venueData = venue;
         
-        // If venue data seems incomplete, try to fetch fresh data
-        if (!venue.name || !venue.location) {
-          console.log('Venue data incomplete, fetching fresh data...');
-          try {
-            const freshVenueData = await venueService.getVenue(venue.id);
-            if (freshVenueData) {
-              // Ensure postal_code is always a string for compatibility
-              venueData = {
-                ...freshVenueData,
-                location: {
-                  ...freshVenueData.location,
-                  postal_code: freshVenueData.location?.postal_code || ''
-                }
-              };
-              console.log('Fresh venue data loaded:', venueData);
-            }
-          } catch (fetchError) {
-            console.warn('Could not fetch fresh venue data, using context data:', fetchError);
-          }
-        }
+        // REMOVED: Unnecessary API call to /venues/{venueId}
+        // The /auth/user-data endpoint already provides complete venue information
+        // This eliminates the duplicate API call that was happening
+        console.log('Using venue data from UserDataContext:', venueData);
         
         if (venueData) {
           console.log('Mapping venue data to settings:', venueData);

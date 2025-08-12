@@ -65,7 +65,9 @@ class AuthService {
       };
     } catch (error: any) {
       logger.error('Registration failed:', error);
-      throw new Error(error.response?.data?.detail || error.message || 'Workspace registration failed');
+      
+      // Re-throw the original error to preserve the response structure
+      throw error;
     }
   }
 

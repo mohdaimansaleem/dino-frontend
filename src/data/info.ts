@@ -37,7 +37,7 @@ import {
 // Company Information
 export const COMPANY_INFO = {
   name: 'Dino',
-  fullName: 'Dino E-Menu',
+  fullName: 'Dino',
   tagline: 'Digital Menu Revolution',
   description: 'Transform your restaurant with our cutting-edge digital menu system. Enhance customer experience, boost efficiency, and increase revenue with our innovative QR-based ordering platform.',
   
@@ -82,9 +82,7 @@ export const COMPANY_INFO = {
 
   // Legal
   legal: {
-    copyright: '© 2024 Dino Digital Menu Revolution. All rights reserved.',
-    privacyPolicy: 'Privacy Policy',
-    termsOfService: 'Terms of Service'
+    copyright: '© 2024 Dino Digital Menu Revolution. All rights reserved.'
   }
 } as const;
 
@@ -437,7 +435,7 @@ export const TESTIMONIALS = [
     restaurant: "Spice Garden",
     location: "Mumbai, India",
     rating: 5,
-    comment: "Dino E-Menu transformed our restaurant completely! Revenue increased by 45% in just 3 months. The QR ordering system is perfect for Indian customers.",
+    comment: "Dino transformed our restaurant completely! Revenue increased by 45% in just 3 months. The QR ordering system is perfect for Indian customers.",
     quote: "Dino transformed our restaurant completely. We saw a 45% increase in orders within the first month. The QR code ordering system is a game-changer!",
     avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
     metrics: {
@@ -788,15 +786,15 @@ export const CONTENT = {
   },
   testimonials: {
     title: 'Loved by Restaurant Owners',
-    subtitle: 'See what our customers are saying about their experience with Dino E-Menu'
+    subtitle: 'See what our customers are saying about their experience with Dino'
   },
   contact: {
     title: 'Ready to Transform Your Restaurant?',
-    subtitle: 'Join thousands of successful restaurants using Dino E-Menu'
+    subtitle: 'Join thousands of successful restaurants using Dino'
   },
   benefits: {
     title: 'Boost Your Restaurant\'s Efficiency',
-    subtitle: 'Join hundreds of restaurants that have transformed their operations with Dino E-Menu.',
+    subtitle: 'Join hundreds of restaurants that have transformed their operations with Dino.',
     stats: {
       processing: { value: '60%', label: 'Faster Order Processing' },
       satisfaction: { value: '95%', label: 'Customer Satisfaction' },

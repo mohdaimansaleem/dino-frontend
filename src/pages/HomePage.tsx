@@ -290,61 +290,6 @@ const HomePage: React.FC = () => {
                     </>
                   )}
                 </Box>
-                
-                {/* Quick Action Buttons */}
-                <Box sx={{ 
-                  display: 'flex', 
-                  gap: { xs: 1, sm: 2 }, 
-                  flexWrap: 'wrap', 
-                  mt: { xs: 2, sm: 3 },
-                  flexDirection: { xs: 'column', sm: 'row' },
-                  alignItems: { xs: 'stretch', sm: 'flex-start' }
-                }}>
-                  <Button
-                    variant="text"
-                    onClick={() => navigate('/features')}
-                    sx={{ 
-                      textTransform: 'none',
-                      color: 'text.secondary',
-                      fontWeight: 500,
-                      fontSize: { xs: '0.875rem', sm: '1rem' },
-                      px: { xs: 2, sm: 3 },
-                      py: { xs: 1, sm: 1.5 },
-                      width: { xs: '100%', sm: 'auto' },
-                      justifyContent: { xs: 'flex-start', sm: 'center' },
-                      '&:hover': {
-                        color: 'primary.main',
-                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                        transform: 'translateY(-1px)',
-                      },
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    {CONTENT.hero.quickActions.learnMore}
-                  </Button>
-                  <Button
-                    variant="text"
-                    onClick={() => navigate('/pricing')}
-                    sx={{ 
-                      textTransform: 'none',
-                      color: 'text.secondary',
-                      fontWeight: 500,
-                      fontSize: { xs: '0.875rem', sm: '1rem' },
-                      px: { xs: 2, sm: 3 },
-                      py: { xs: 1, sm: 1.5 },
-                      width: { xs: '100%', sm: 'auto' },
-                      justifyContent: { xs: 'flex-start', sm: 'center' },
-                      '&:hover': {
-                        color: 'primary.main',
-                        backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                        transform: 'translateY(-1px)',
-                      },
-                      transition: 'all 0.3s ease',
-                    }}
-                  >
-                    {CONTENT.hero.quickActions.viewPricing}
-                  </Button>
-                </Box>
               </Box>
             </Grid>
             
@@ -615,7 +560,7 @@ const HomePage: React.FC = () => {
                       color={plan.color as any}
                       fullWidth
                       size="large"
-                      onClick={() => navigate('/login')}
+                      onClick={() => navigate('/register')}
                       sx={{ 
                         py: { xs: 1.2, sm: 1.5 },
                         minHeight: { xs: 44, sm: 48 },

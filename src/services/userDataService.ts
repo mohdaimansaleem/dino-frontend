@@ -78,12 +78,49 @@ export interface VenueData {
 // REMOVED: AvailableVenues interface - no longer needed for security reasons
 
 class UserDataService {
+  private lastCallTime: number = 0;
+  private debounceDelay: number = 1000; // 1 second debounce
+  private currentRequest: Promise<UserData | null> | null = null;
+
   /**
    * Get comprehensive user data including venue, workspace, and related information
+   * Includes debouncing to prevent duplicate rapid calls
    */
   async getUserData(): Promise<UserData | null> {
+    const now = Date.now();
+    
+    // If there's already a request in progress, return it
+    if (this.currentRequest) {
+      console.log('🔄 UserDataService: Request already in progress, returning existing promise');
+      return this.currentRequest;
+    }
+    
+    // If called too soon after last call, debounce
+    if (now - this.lastCallTime < this.debounceDelay) {
+      console.log('🔄 UserDataService: Debouncing rapid call');
+      await new Promise(resolve => setTimeout(resolve, this.debounceDelay - (now - this.lastCallTime)));
+    }
+    
+    this.lastCallTime = Date.now();
+    
+    // Create and store the request promise
+    this.currentRequest = this._fetchUserData();
+    
     try {
-      console.log('🔄 Fetching user data from /auth/user-data...');
+      const result = await this.currentRequest;
+      return result;
+    } finally {
+      // Clear the current request when done
+      this.currentRequest = null;
+    }
+  }
+
+  /**
+   * Internal method to actually fetch user data
+   */
+  private async _fetchUserData(): Promise<UserData | null> {
+    try {
+      console.log('🔄 UserDataService: Fetching user data from /auth/user-data...');
       const response = await apiService.get<{data: UserData, timestamp: string}>('/auth/user-data');
       
       if (response.success && response.data) {
@@ -141,7 +178,7 @@ class UserDataService {
       
       return null;
     } catch (error: any) {
-      console.error('❌ Error fetching user data:', error);
+      console.error('❌ UserDataService: Error fetching user data:', error);
       console.error('Error details:', {
         status: error.response?.status,
         message: error.message,
@@ -201,9 +238,21 @@ class UserDataService {
 
   /**
    * Refresh user data (useful after venue switching or data updates)
+   * Forces a fresh call by clearing debounce state
    */
   async refreshUserData(): Promise<UserData | null> {
+    // Clear debounce state to force fresh call
+    this.lastCallTime = 0;
+    this.currentRequest = null;
     return this.getUserData();
+  }
+
+  /**
+   * Clear any pending requests and debounce state
+   */
+  clearPendingRequests(): void {
+    this.currentRequest = null;
+    this.lastCallTime = 0;
   }
 
   /**

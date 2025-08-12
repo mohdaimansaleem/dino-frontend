@@ -3,6 +3,7 @@ import {
   User, 
   UserCreate, 
   UserUpdate,
+  VenueUser,
   PaginatedResponse,
   ApiResponse,
   UserFilters
@@ -63,6 +64,35 @@ class UserService {
       return response.data || null;
     } catch (error) {
       return null;
+    }
+  }
+
+  /**
+   * Get users by venue ID with name, role, last login, and status
+   * This API is specifically designed for the Users module in admin dashboard
+   */
+  async getUsersByVenueId(venueId: string): Promise<ApiResponse<VenueUser[]>> {
+    try {
+      console.log('📡 Making API call to get users by venue ID:', venueId);
+      
+      const response = await apiService.get<VenueUser[]>(`/venues/${venueId}/users`);
+      
+      console.log('✅ Users by venue ID API response:', response);
+      
+      return {
+        success: true,
+        data: response.data || [],
+        message: 'Users loaded successfully'
+      };
+    } catch (error: any) {
+      console.error('❌ Error fetching users by venue ID:', error);
+      
+      return {
+        success: false,
+        data: [],
+        error: error.response?.data?.detail || error.message || 'Failed to load users',
+        message: 'Failed to load users for venue'
+      };
     }
   }
 
@@ -555,4 +585,4 @@ class UserService {
 export const userService = new UserService();
 
 // Export types for components
-export type { User, UserCreate, UserUpdate } from '../types/api';
+export type { User, UserCreate, UserUpdate, VenueUser } from '../types/api';

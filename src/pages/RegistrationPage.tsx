@@ -47,10 +47,12 @@ import {
   Restaurant,
   AttachMoney,
   Category,
+  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { WorkspaceRegistration, VenueLocation, PriceRange } from '../types/api';
+import DinoLogo from '../components/DinoLogo';
 
 interface RegistrationFormData {
   // Workspace Information
@@ -235,6 +237,8 @@ const RegistrationPage: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [successDialog, setSuccessDialog] = useState(false);
   const [successData, setSuccessData] = useState<any>(null);
+  const [errorDialog, setErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>('');
   
   const [formData, setFormData] = useState<RegistrationFormData>({
     // Workspace Information
@@ -268,6 +272,17 @@ const RegistrationPage: React.FC = () => {
   });
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [backendErrors, setBackendErrors] = useState<Record<string, string>>({});
+
+  // Helper function to get error message for a field (backend errors take priority)
+  const getFieldError = (fieldName: string): string => {
+    return backendErrors[fieldName] || validationErrors[fieldName] || '';
+  };
+
+  // Helper function to check if field has any error
+  const hasFieldError = (fieldName: string): boolean => {
+    return !!(backendErrors[fieldName] || validationErrors[fieldName]);
+  };
 
   const validateStep = (step: number): boolean => {
     const errors: Record<string, string> = {};
@@ -325,8 +340,13 @@ const RegistrationPage: React.FC = () => {
           errors.state = 'State must have at least 1 character';
         }
 
-        // Postal code validation (optional)
-        // No validation required for postal code
+        // Postal code validation (required, min 3 characters based on backend error)
+        const postalCode = formData.venueLocation.postal_code || '';
+        if (!postalCode.trim()) {
+          errors.postal_code = 'Postal code is required';
+        } else if (postalCode.length < 3) {
+          errors.postal_code = 'Postal code must have at least 3 characters';
+        }
 
         // Landmark validation (optional, max length check)
         if (formData.venueLocation.landmark && formData.venueLocation.landmark.length > 100) {
@@ -340,8 +360,10 @@ const RegistrationPage: React.FC = () => {
           errors.venuePhone = 'Phone number must be exactly 10 digits';
         }
 
-        // Venue email validation (optional, but must be valid if provided)
-        if (formData.venueEmail && formData.venueEmail.trim()) {
+        // Venue email validation (required)
+        if (!formData.venueEmail.trim()) {
+          errors.venueEmail = 'Venue email is required';
+        } else {
           // More strict email validation to match backend
           const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
           if (!emailRegex.test(formData.venueEmail)) {
@@ -435,15 +457,32 @@ const RegistrationPage: React.FC = () => {
     if (validateStep(activeStep)) {
       setActiveStep((prevStep) => prevStep + 1);
       setError(null);
+      setBackendErrors({}); // Clear backend errors when moving to next step
     }
   };
 
   const handleBack = () => {
     setActiveStep((prevStep) => prevStep - 1);
     setError(null);
+    setBackendErrors({}); // Clear backend errors when moving back
   };
 
   const handleInputChange = (field: string, value: any) => {
+    // Convert email fields to lowercase
+    if (field === 'ownerEmail' || field === 'venueEmail') {
+      value = typeof value === 'string' ? value.toLowerCase() : value;
+    }
+    
+    // Restrict phone numbers to digits only (max 10 digits)
+    if (field === 'venuePhone' || field === 'ownerPhone') {
+      value = typeof value === 'string' ? value.replace(/\D/g, '').slice(0, 10) : value;
+    }
+    
+    // Restrict postal code to digits only (max 6 digits for Indian postal codes)
+    if (field === 'venueLocation.postal_code') {
+      value = typeof value === 'string' ? value.replace(/\D/g, '').slice(0, 6) : value;
+    }
+    
     if (field.startsWith('venueLocation.')) {
       const locationField = field.split('.')[1];
       setFormData(prev => ({
@@ -464,6 +503,14 @@ const RegistrationPage: React.FC = () => {
     const errorKey = field.startsWith('venueLocation.') ? field.split('.')[1] : field;
     if (validationErrors[errorKey]) {
       setValidationErrors(prev => ({
+        ...prev,
+        [errorKey]: ''
+      }));
+    }
+    
+    // Clear backend error for this field
+    if (backendErrors[errorKey]) {
+      setBackendErrors(prev => ({
         ...prev,
         [errorKey]: ''
       }));
@@ -506,6 +553,18 @@ const RegistrationPage: React.FC = () => {
       case 'venueLocation.address':
         if (value && value.length > 0 && value.length < 5) {
           errors.address = 'Address must have at least 5 characters';
+        }
+        break;
+
+      case 'venueLocation.postal_code':
+        if (value && typeof value === 'string') {
+          if (value.length > 0 && value.length < 3) {
+            errors.postal_code = 'Postal code must have at least 3 characters';
+          } else if (value.length > 6) {
+            errors.postal_code = 'Postal code must not exceed 6 digits';
+          } else if (!/^\d*$/.test(value)) {
+            errors.postal_code = 'Postal code must contain only numbers';
+          }
         }
         break;
 
@@ -584,13 +643,85 @@ const RegistrationPage: React.FC = () => {
     }));
   };
 
+  // Helper function to parse backend validation errors
+  const parseBackendErrors = (error: any): Record<string, string> => {
+    const errors: Record<string, string> = {};
+    
+    // Check both direct response and preserved response from apiService
+    const errorData = error.response?.data || (error as any).response?.data;
+    
+    if (errorData?.detail && Array.isArray(errorData.detail)) {
+      errorData.detail.forEach((validationError: any) => {
+        if (validationError.loc && validationError.msg) {
+          // Extract field name from location array
+          const fieldPath = validationError.loc;
+          let fieldName = '';
+          
+          // Handle nested field paths like ["body", "venue_location", "postal_code"]
+          if (fieldPath.length >= 2) {
+            if (fieldPath[1] === 'venue_location' && fieldPath[2]) {
+              fieldName = fieldPath[2]; // postal_code, address, etc.
+            } else if (fieldPath[1]) {
+              fieldName = fieldPath[1]; // venue_email, owner_email, etc.
+            }
+          }
+          
+          if (fieldName) {
+            // Convert backend field names to frontend field names
+            const fieldMapping: Record<string, string> = {
+              'venue_email': 'venueEmail',
+              'venue_phone': 'venuePhone',
+              'venue_name': 'venueName',
+              'venue_description': 'venueDescription',
+              'workspace_name': 'workspaceName',
+              'workspace_description': 'workspaceDescription',
+              'owner_email': 'ownerEmail',
+              'owner_phone': 'ownerPhone',
+              'owner_first_name': 'ownerFirstName',
+              'owner_last_name': 'ownerLastName',
+              'owner_password': 'ownerPassword',
+              'postal_code': 'postal_code',
+              'address': 'address',
+              'city': 'city',
+              'state': 'state',
+              'landmark': 'landmark'
+            };
+            
+            const frontendFieldName = fieldMapping[fieldName] || fieldName;
+            
+            // Convert technical error messages to user-friendly ones
+            let userFriendlyMessage = validationError.msg;
+            
+            if (validationError.type === 'string_too_short') {
+              const minLength = validationError.ctx?.min_length || 1;
+              userFriendlyMessage = `This field must have at least ${minLength} character${minLength > 1 ? 's' : ''}`;
+            } else if (validationError.type === 'string_too_long') {
+              const maxLength = validationError.ctx?.max_length || 100;
+              userFriendlyMessage = `This field must not exceed ${maxLength} characters`;
+            } else if (validationError.type === 'value_error' && validationError.msg.includes('email')) {
+              userFriendlyMessage = 'Please enter a valid email address';
+            } else if (validationError.type === 'missing') {
+              userFriendlyMessage = 'This field is required';
+            }
+            
+            errors[frontendFieldName] = userFriendlyMessage;
+          }
+        }
+      });
+    }
+    
+    return errors;
+  };
+
   const handleSubmit = async () => {
     if (!validateStep(2)) return; // Validate owner account step
 
     setLoading(true);
     setError(null);
+    setBackendErrors({});
 
     try {
+
       const registrationData: WorkspaceRegistration = {
         workspace_name: formData.workspaceName,
         workspace_description: formData.workspaceDescription,
@@ -611,10 +742,98 @@ const RegistrationPage: React.FC = () => {
       };
 
       const response = await authService.registerWorkspace(registrationData);
-      setSuccessData(response.data);
+      
+      // Handle success case - authService.registerWorkspace always returns success: true with data
+      setSuccessData(response);
       setSuccessDialog(true);
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      console.error('Registration error:', err);
+      
+      // Parse backend validation errors
+      const parsedErrors = parseBackendErrors(err);
+      
+      if (Object.keys(parsedErrors).length > 0) {
+        setBackendErrors(parsedErrors);
+        setError('Please fix the highlighted errors and try again.');
+        
+        // Go back to the step with errors
+        const errorFields = Object.keys(parsedErrors);
+        if (errorFields.some(field => ['workspaceName', 'workspaceDescription'].includes(field))) {
+          setActiveStep(0);
+        } else if (errorFields.some(field => 
+          ['venueName', 'venueDescription', 'venueEmail', 'venuePhone', 'address', 'city', 'state', 'postal_code', 'landmark'].includes(field)
+        )) {
+          setActiveStep(1);
+        } else if (errorFields.some(field => 
+          ['ownerFirstName', 'ownerLastName', 'ownerEmail', 'ownerPhone', 'ownerPassword'].includes(field)
+        )) {
+          setActiveStep(2);
+        }
+      } else {
+        // Handle general error messages - show detailed error popup
+        let displayErrorMessage = 'Registration failed. Please try again.';
+        
+        // Check for backend error response (err.response is preserved by apiService.handleError)
+        const errorResponse = err.response?.data || (err as any).response?.data;
+        if (errorResponse) {
+          const errorData = errorResponse;
+          
+          // Handle direct message
+          if (errorData.message) {
+            displayErrorMessage = errorData.message;
+          }
+          // Handle detail field (string or array)
+          else if (errorData.detail) {
+            if (typeof errorData.detail === 'string') {
+              displayErrorMessage = errorData.detail;
+            } else if (Array.isArray(errorData.detail)) {
+              // Create detailed error messages from validation errors
+              const errorMessages = errorData.detail.map((error: any) => {
+                let message = '';
+                
+                // Extract field name for context
+                let fieldName = 'Field';
+                if (error.loc && Array.isArray(error.loc)) {
+                  if (error.loc.length >= 2) {
+                    if (error.loc[1] === 'venue_location' && error.loc[2]) {
+                      fieldName = error.loc[2].replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+                    } else if (error.loc[1]) {
+                      fieldName = error.loc[1].replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+                    }
+                  }
+                }
+                
+                // Create user-friendly error message
+                if (error.type === 'string_too_short') {
+                  const minLength = error.ctx?.min_length || 1;
+                  message = `${fieldName}: Must have at least ${minLength} character${minLength > 1 ? 's' : ''}`;
+                } else if (error.type === 'string_too_long') {
+                  const maxLength = error.ctx?.max_length || 100;
+                  message = `${fieldName}: Must not exceed ${maxLength} characters`;
+                } else if (error.type === 'value_error' && error.msg.includes('email')) {
+                  message = `${fieldName}: Please enter a valid email address`;
+                } else if (error.type === 'missing') {
+                  message = `${fieldName}: This field is required`;
+                } else if (error.msg) {
+                  message = `${fieldName}: ${error.msg}`;
+                } else {
+                  message = `${fieldName}: Invalid input`;
+                }
+                
+                return message;
+              });
+              
+              displayErrorMessage = 'Please fix the following errors:\n\n• ' + errorMessages.join('\n• ');
+            }
+          }
+        }
+        // Handle network or other errors
+        else if (err.message && err.message !== '[object Object]') {
+          displayErrorMessage = err.message;
+        }
+        setErrorMessage(displayErrorMessage);
+        setErrorDialog(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -623,6 +842,11 @@ const RegistrationPage: React.FC = () => {
   const handleSuccessClose = () => {
     setSuccessDialog(false);
     navigate('/login');
+  };
+
+  const handleErrorClose = () => {
+    setErrorDialog(false);
+    setErrorMessage('');
   };
 
   const renderStepContent = (step: number) => {
@@ -662,8 +886,8 @@ const RegistrationPage: React.FC = () => {
                 label="Workspace Name"
                 value={formData.workspaceName}
                 onChange={(e) => handleInputChange('workspaceName', e.target.value)}
-                error={!!validationErrors.workspaceName}
-                helperText={validationErrors.workspaceName || `This will be your main business identifier (${formData.workspaceName.length}/100)`}
+                error={hasFieldError('workspaceName')}
+                helperText={getFieldError('workspaceName') || `This will be your main business identifier (${formData.workspaceName.length}/100)`}
                 required
                 size={isMobile ? "medium" : "medium"}
                 sx={{
@@ -682,7 +906,8 @@ const RegistrationPage: React.FC = () => {
                 onChange={(e) => handleInputChange('workspaceDescription', e.target.value)}
                 multiline
                 rows={isMobile ? 2 : 3}
-                helperText={validationErrors.workspaceDescription || `Brief description of your business (optional) (${formData.workspaceDescription.length}/500)`}
+                error={hasFieldError('workspaceDescription')}
+                helperText={getFieldError('workspaceDescription') || `Brief description of your business (optional) (${formData.workspaceDescription.length}/500)`}
                 size={isMobile ? "medium" : "medium"}
                 sx={{
                   '& .MuiInputBase-root': {
@@ -729,8 +954,8 @@ const RegistrationPage: React.FC = () => {
                 label="Venue Name"
                 value={formData.venueName}
                 onChange={(e) => handleInputChange('venueName', e.target.value)}
-                error={!!validationErrors.venueName}
-                helperText={validationErrors.venueName}
+                error={hasFieldError('venueName')}
+                helperText={getFieldError('venueName')}
                 required
                 size={isMobile ? "medium" : "medium"}
                 sx={{
@@ -771,7 +996,8 @@ const RegistrationPage: React.FC = () => {
                 onChange={(e) => handleInputChange('venueDescription', e.target.value)}
                 multiline
                 rows={isMobile ? 2 : 2}
-                helperText={validationErrors.venueDescription || `Describe your venue's atmosphere and specialties (${formData.venueDescription.length}/1000)`}
+                error={hasFieldError('venueDescription')}
+                helperText={getFieldError('venueDescription') || `Describe your venue's atmosphere and specialties (${formData.venueDescription.length}/1000)`}
                 size={isMobile ? "medium" : "medium"}
                 sx={{
                   '& .MuiInputBase-root': {
@@ -805,8 +1031,8 @@ const RegistrationPage: React.FC = () => {
                 label="Address"
                 value={formData.venueLocation.address}
                 onChange={(e) => handleInputChange('venueLocation.address', e.target.value)}
-                error={!!validationErrors.address}
-                helperText={validationErrors.address}
+                error={hasFieldError('address')}
+                helperText={getFieldError('address')}
                 required
                 size={isMobile ? "medium" : "medium"}
                 sx={{
@@ -823,8 +1049,8 @@ const RegistrationPage: React.FC = () => {
                 label="City"
                 value={formData.venueLocation.city}
                 onChange={(e) => handleInputChange('venueLocation.city', e.target.value)}
-                error={!!validationErrors.city}
-                helperText={validationErrors.city}
+                error={hasFieldError('city')}
+                helperText={getFieldError('city')}
                 required
                 size={isMobile ? "medium" : "medium"}
                 sx={{
@@ -841,8 +1067,8 @@ const RegistrationPage: React.FC = () => {
                 label="State"
                 value={formData.venueLocation.state}
                 onChange={(e) => handleInputChange('venueLocation.state', e.target.value)}
-                error={!!validationErrors.state}
-                helperText={validationErrors.state}
+                error={hasFieldError('state')}
+                helperText={getFieldError('state')}
                 required
                 size={isMobile ? "medium" : "medium"}
                 sx={{
@@ -856,12 +1082,18 @@ const RegistrationPage: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Postal Code (Optional)"
+                label="Postal Code"
                 value={formData.venueLocation.postal_code}
                 onChange={(e) => handleInputChange('venueLocation.postal_code', e.target.value)}
-                error={!!validationErrors.postal_code}
-                helperText={validationErrors.postal_code}
+                error={hasFieldError('postal_code')}
+                required
+                helperText={getFieldError('postal_code') || 'Enter 6-digit postal code'}
                 size={isMobile ? "medium" : "medium"}
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                  maxLength: 6
+                }}
                 sx={{
                   '& .MuiInputBase-root': {
                     fontSize: { xs: '1rem', sm: '1rem' }
@@ -922,10 +1154,15 @@ const RegistrationPage: React.FC = () => {
                 label="Venue Phone"
                 value={formData.venuePhone}
                 onChange={(e) => handleInputChange('venuePhone', e.target.value)}
-                error={!!validationErrors.venuePhone}
-                helperText={validationErrors.venuePhone || 'Required: Exactly 10 digits'}
+                error={hasFieldError('venuePhone')}
+                helperText={getFieldError('venuePhone') || 'Required: Exactly 10 digits'}
                 required
                 size={isMobile ? "medium" : "medium"}
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                  maxLength: 10
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -944,12 +1181,13 @@ const RegistrationPage: React.FC = () => {
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
-                label="Venue Email (Optional)"
+                label="Venue Email"
                 value={formData.venueEmail}
                 onChange={(e) => handleInputChange('venueEmail', e.target.value)}
-                error={!!validationErrors.venueEmail}
-                helperText={validationErrors.venueEmail}
+                error={hasFieldError('venueEmail')}
+                helperText={getFieldError('venueEmail') || 'Required: Business email address'}
                 size={isMobile ? "medium" : "medium"}
+                required
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -1029,8 +1267,8 @@ const RegistrationPage: React.FC = () => {
                 label="First Name"
                 value={formData.ownerFirstName}
                 onChange={(e) => handleInputChange('ownerFirstName', e.target.value)}
-                error={!!validationErrors.ownerFirstName}
-                helperText={validationErrors.ownerFirstName}
+                error={hasFieldError('ownerFirstName')}
+                helperText={getFieldError('ownerFirstName')}
                 required
                 size={isMobile ? "medium" : "medium"}
                 sx={{
@@ -1047,8 +1285,8 @@ const RegistrationPage: React.FC = () => {
                 label="Last Name"
                 value={formData.ownerLastName}
                 onChange={(e) => handleInputChange('ownerLastName', e.target.value)}
-                error={!!validationErrors.ownerLastName}
-                helperText={validationErrors.ownerLastName}
+                error={hasFieldError('ownerLastName')}
+                helperText={getFieldError('ownerLastName')}
                 required
                 size={isMobile ? "medium" : "medium"}
                 sx={{
@@ -1066,8 +1304,8 @@ const RegistrationPage: React.FC = () => {
                 type="email"
                 value={formData.ownerEmail}
                 onChange={(e) => handleInputChange('ownerEmail', e.target.value)}
-                error={!!validationErrors.ownerEmail}
-                helperText={validationErrors.ownerEmail}
+                error={hasFieldError('ownerEmail')}
+                helperText={getFieldError('ownerEmail')}
                 required
                 size={isMobile ? "medium" : "medium"}
                 InputProps={{
@@ -1091,10 +1329,15 @@ const RegistrationPage: React.FC = () => {
                 label="Phone Number"
                 value={formData.ownerPhone}
                 onChange={(e) => handleInputChange('ownerPhone', e.target.value)}
-                error={!!validationErrors.ownerPhone}
-                helperText={validationErrors.ownerPhone || 'Required: Exactly 10 digits'}
+                error={hasFieldError('ownerPhone')}
+                helperText={getFieldError('ownerPhone') || 'Required: Exactly 10 digits'}
                 required
                 size={isMobile ? "medium" : "medium"}
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                  maxLength: 10
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -1117,8 +1360,8 @@ const RegistrationPage: React.FC = () => {
                 type={showPassword ? 'text' : 'password'}
                 value={formData.ownerPassword}
                 onChange={(e) => handleInputChange('ownerPassword', e.target.value)}
-                error={!!validationErrors.ownerPassword}
-                helperText={validationErrors.ownerPassword || 'Required: 8-128 characters with uppercase, lowercase, digit, and special character (!@#$%^&*()_+-=[]{}|;:,.<>?)'}
+                error={hasFieldError('ownerPassword')}
+                helperText={getFieldError('ownerPassword') || 'Required: 8-128 characters with uppercase, lowercase, digit, and special character (!@#$%^&*()_+-=[]{}|;:,.<>?)'}
                 required
                 size={isMobile ? "medium" : "medium"}
                 InputProps={{
@@ -1149,8 +1392,8 @@ const RegistrationPage: React.FC = () => {
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                error={!!validationErrors.confirmPassword}
-                helperText={validationErrors.confirmPassword}
+                error={hasFieldError('confirmPassword')}
+                helperText={getFieldError('confirmPassword')}
                 required
                 size={isMobile ? "medium" : "medium"}
                 InputProps={{
@@ -1224,9 +1467,9 @@ const RegistrationPage: React.FC = () => {
               </Typography>
             </Box>
 
-            <Grid container spacing={3}>
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
               {/* Workspace Information Card */}
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} lg={4}>
                 <Paper 
                   elevation={2}
                   sx={{ 
@@ -1306,7 +1549,7 @@ const RegistrationPage: React.FC = () => {
               </Grid>
 
               {/* Venue Information Card */}
-              <Grid item xs={12} md={8}>
+              <Grid item xs={12} lg={8}>
                 <Paper 
                   elevation={2}
                   sx={{ 
@@ -1362,8 +1605,8 @@ const RegistrationPage: React.FC = () => {
                   
                   {/* Card Content */}
                   <Box sx={{ p: 3 }}>
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
+                    <Grid container spacing={{ xs: 2, sm: 3 }}>
+                      <Grid item xs={12} sm={6} md={12} lg={6}>
                         <Box sx={{ mb: 2.5 }}>
                           <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1, fontWeight: 500 }}>
                             Venue Name
@@ -1398,7 +1641,7 @@ const RegistrationPage: React.FC = () => {
                         </Box>
                       </Grid>
                       
-                      <Grid item xs={12} sm={6}>
+                      <Grid item xs={12} sm={6} md={12} lg={6}>
                         <Box sx={{ mb: 2.5 }}>
                           <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1, fontWeight: 500 }}>
                             Address
@@ -1589,7 +1832,6 @@ const RegistrationPage: React.FC = () => {
                 </Paper>
               </Grid>
             </Grid>
-
             {/* Summary Footer */}
             <Box sx={{ 
               mt: 4, 
@@ -1600,7 +1842,10 @@ const RegistrationPage: React.FC = () => {
               textAlign: 'center'
             }}>
               <Typography variant="h6" fontWeight="600" gutterBottom color="text.primary">
-                🦕 Ready to Launch Your Digital Restaurant
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <DinoLogo size={24} animated={true} />
+                  Ready to Launch Your Digital Restaurant
+                </Box>
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Click "Create Workspace" to set up your complete restaurant management system
@@ -1627,7 +1872,10 @@ const RegistrationPage: React.FC = () => {
             mb: { xs: 2, sm: 3 }
           }}
         >
-          🦕 Create Your Dino Workspace
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <DinoLogo size={isMobile ? 28 : 32} animated={true} />
+            Create Your Dino Workspace
+          </Box>
         </Typography>
         
         <Typography 
@@ -1839,43 +2087,51 @@ const RegistrationPage: React.FC = () => {
           <Typography 
             align="center" 
             sx={{ 
-              mb: 2,
+              mb: 3,
               fontSize: { xs: '0.875rem', sm: '1rem' }
             }}
           >
-            Your workspace and venue have been created successfully. You can now sign in and start managing your restaurant.
+            {successData?.message || 'Your workspace and venue have been created successfully. You can now sign in and start managing your restaurant.'}
           </Typography>
           
           {successData && (
-            <Paper 
-              elevation={1} 
-              sx={{ 
-                p: { xs: 1.5, sm: 2 }, 
-                bgcolor: 'grey.50',
-                borderRadius: { xs: 2, sm: 3 }
-              }}
-            >
-              <Typography 
-                variant="subtitle2" 
-                gutterBottom
-                sx={{
-                  fontSize: { xs: '0.875rem', sm: '1rem' }
-                }}
-              >
-                What's Next:
+            <Box sx={{ 
+              background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+              borderRadius: 2,
+              p: 2,
+              border: '1px solid rgba(0, 0, 0, 0.08)'
+            }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
+                Account Details:
               </Typography>
-              <Typography 
-                variant="body2" 
-                component="div"
-                sx={{
-                  fontSize: { xs: '0.8125rem', sm: '0.875rem' }
-                }}
-              >
-                {successData.next_steps?.map((step: string, index: number) => (
-                  <div key={index}>• {step}</div>
-                ))}
-              </Typography>
-            </Paper>
+              
+              {successData.data?.workspace && (
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                    Workspace: <strong>{successData.data.workspace.name}</strong>
+                  </Typography>
+                </Box>
+              )}
+              
+              {successData.data?.venue && (
+                <Box sx={{ mb: 1.5 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                    Venue: <strong>{successData.data.venue.name}</strong>
+                  </Typography>
+                </Box>
+              )}
+              
+              {successData.data?.owner && (
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                    Owner: <strong>{successData.data.owner.first_name} {successData.data.owner.last_name}</strong>
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Role: <strong>{successData.data.owner.role_name}</strong>
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           )}
         </DialogContent>
         <DialogActions sx={{ 
@@ -1893,6 +2149,108 @@ const RegistrationPage: React.FC = () => {
             }}
           >
             Continue to Login
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog 
+        open={errorDialog} 
+        onClose={handleErrorClose} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            margin: { xs: 2, sm: 3 },
+            width: { xs: 'calc(100% - 32px)', sm: 'auto' },
+            maxHeight: { xs: 'calc(100% - 64px)', sm: 'auto' }
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          textAlign: 'center',
+          p: { xs: 2, sm: 3 }
+        }}>
+          <ErrorIcon 
+            color="error" 
+            sx={{ 
+              fontSize: { xs: 48, sm: 60 }, 
+              mb: { xs: 1, sm: 2 } 
+            }} 
+          />
+          <Typography 
+            variant={isMobile ? "h6" : "h5"}
+            sx={{
+              fontSize: { xs: '1.25rem', sm: '1.5rem' }
+            }}
+          >
+            Registration Failed
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
+          {errorMessage.includes('\n•') ? (
+            <Box>
+              <Typography 
+                sx={{ 
+                  mb: 2,
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontWeight: 500
+                }}
+              >
+                {errorMessage.split('\n\n')[0]}
+              </Typography>
+              <Box 
+                sx={{ 
+                  backgroundColor: '#fafafa',
+                  borderRadius: 1,
+                  p: 2,
+                  border: '1px solid #e0e0e0'
+                }}
+              >
+                <Typography 
+                  component="div"
+                  sx={{ 
+                    fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                    whiteSpace: 'pre-line',
+                    lineHeight: 1.6,
+                    '& > div': {
+                      mb: 0.5
+                    }
+                  }}
+                >
+                  {errorMessage.split('\n\n')[1]?.split('\n').map((line: string, index: number) => (
+                    <div key={index}>{line}</div>
+                  ))}
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            <Typography 
+              align="center"
+              sx={{ 
+                mb: 2,
+                fontSize: { xs: '0.875rem', sm: '1rem' }
+              }}
+            >
+              {errorMessage}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ 
+          justifyContent: 'center', 
+          p: { xs: 2, sm: 3 },
+          pt: { xs: 1, sm: 2 }
+        }}>
+          <Button 
+            variant="contained" 
+            onClick={handleErrorClose} 
+            size={isMobile ? "medium" : "large"}
+            sx={{
+              minWidth: { xs: 140, sm: 160 },
+              fontSize: { xs: '0.875rem', sm: '1rem' }
+            }}
+          >
+            Try Again
           </Button>
         </DialogActions>
       </Dialog>

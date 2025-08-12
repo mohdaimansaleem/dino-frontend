@@ -186,6 +186,8 @@ export async function registerWithHashedPassword(registrationData: any): Promise
     return response.data as any;
   } catch (error) {
     console.error('❌ Hashed registration failed:', error);
+    
+    // Re-throw the original error to preserve response structure
     throw error;
   }
 }

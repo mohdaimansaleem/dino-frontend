@@ -47,6 +47,11 @@ body {
 #root {
   background-color: white !important;
   min-height: 100vh;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
 }
 
 /* Fix any potential blue backgrounds from Material-UI */
@@ -528,6 +533,20 @@ select:focus-visible {
 /* Stable app bar */
 .MuiAppBar-root {
   box-sizing: border-box;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+/* Ensure Container in AppBar has no unwanted margins */
+.MuiAppBar-root .MuiContainer-root {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-right: 16px !important;
+  max-width: 100% !important;
 }
 
 /* Prevent badge position shifts */
