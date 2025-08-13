@@ -55,10 +55,14 @@ import {
   Cancel,
   Lock,
   People,
+  Refresh,
+  ArrowBack,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useUserData } from '../../contexts/UserDataContext';
+import { useErrorHandler } from '../../hooks/useErrorHandler';
+import { useNavigate } from 'react-router-dom';
 import PermissionService from '../../services/permissionService';
 import { ROLES, PERMISSIONS } from '../../types/auth';
 import PasswordUpdateDialog from '../../components/PasswordUpdateDialog';
@@ -94,6 +98,8 @@ const UserManagement: React.FC = () => {
   const [showPermissions, setShowPermissions] = useState<string | null>(null);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const { handleError } = useErrorHandler();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -175,7 +181,26 @@ const UserManagement: React.FC = () => {
       }
     } catch (error: any) {
       console.error('❌ Error loading users:', error);
-      setError('Failed to load users. Please try again.');
+      
+      // Use the error handler to analyze and handle the error
+      const errorInfo = handleError(error, { 
+        logError: true,
+        showToast: false // We'll handle the error display ourselves
+      });
+      
+      // Set appropriate error message based on error type
+      if (errorInfo.type === 'network') {
+        setError('Unable to connect to the server. Please check your internet connection and try again.');
+      } else if (errorInfo.code === 404 || errorInfo.code === '404') {
+        setError('User management is not available for this venue. Please contact your administrator.');
+      } else if (errorInfo.type === 'auth') {
+        setError('Your session has expired. Please log in again.');
+      } else if (errorInfo.type === 'permission') {
+        setError('You don\'t have permission to view users for this venue.');
+      } else {
+        setError(errorInfo.userFriendlyMessage);
+      }
+      
       setUsers([]);
     } finally {
       setLoading(false);
@@ -403,15 +428,53 @@ const UserManagement: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="xl" sx={{ py: 4, pt: { xs: '56px', sm: '64px' } }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-        <Button variant="contained" onClick={() => {
-          setUsersLoaded(false);
-          loadUsers();
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+            User Management
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Manage users and their permissions
+          </Typography>
+        </Box>
+        
+        <Card sx={{ 
+          borderRadius: 3,
+          boxShadow: theme.shadows[2],
+          border: '1px solid',
+          borderColor: 'divider'
         }}>
-          Retry
-        </Button>
+          <CardContent sx={{ p: 4, textAlign: 'center' }}>
+            <People sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
+            <Typography variant="h5" fontWeight="600" gutterBottom color="error.main">
+              Unable to Load Users
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 500, mx: 'auto' }}>
+              {error}
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+              <Button 
+                variant="contained" 
+                startIcon={<Refresh />}
+                onClick={() => {
+                  setUsersLoaded(false);
+                  setError(null);
+                  loadUsers();
+                }}
+                size="large"
+              >
+                Try Again
+              </Button>
+              <Button 
+                variant="outlined" 
+                startIcon={<ArrowBack />}
+                onClick={() => navigate('/admin')}
+                size="large"
+              >
+                Back to Dashboard
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
       </Container>
     );
   }

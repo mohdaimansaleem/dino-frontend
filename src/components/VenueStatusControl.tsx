@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
   CardContent,
   Typography,
   Switch,
-  FormControlLabel,
   LinearProgress,
   Snackbar,
   Alert,
@@ -23,18 +22,26 @@ import { useUserData } from '../contexts/UserDataContext';
 import { PERMISSIONS } from '../types/auth';
 import { venueService } from '../services/venueService';
 
-const VenueStatusControl: React.FC = () => {
+interface VenueStatusControlProps {}
+
+const VenueStatusControl: React.FC<VenueStatusControlProps> = () => {
   const { hasPermission, hasBackendPermission } = useAuth();
   const { userData } = useUserData();
   const theme = useTheme();
   const currentVenue = userData?.venue;
-  const [venueActive, setVenueActive] = useState(true);
-  const [venueOpen, setVenueOpen] = useState(true);
-  const [statusLoading, setStatusLoading] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [venueActive, setVenueActive] = useState<boolean>(true);
+  const [venueOpen, setVenueOpen] = useState<boolean>(true);
+  const [statusLoading, setStatusLoading] = useState<boolean>(false);
+  const [snackbar, setSnackbar] = useState<{ 
+    open: boolean; 
+    message: string; 
+    severity: 'success' | 'error';
+  }>({ 
+    open: false, 
+    message: '', 
+    severity: 'success'
+  });
 
-  // REMOVED: Unnecessary API call to load venue status
-  // The venue status is already available in UserDataContext from /auth/user-data
   useEffect(() => {
     if (currentVenue) {
       setVenueActive(currentVenue.is_active || false);
@@ -46,7 +53,7 @@ const VenueStatusControl: React.FC = () => {
     }
   }, [currentVenue]);
 
-  const handleToggleVenueOpen = async () => {
+  const handleToggleVenueOpen = async (): Promise<void> => {
     if (!currentVenue?.id || statusLoading) return;
 
     try {
@@ -75,14 +82,12 @@ const VenueStatusControl: React.FC = () => {
     }
   };
 
-  // Dynamic permission checks
-  const canManageVenue = () => {
+  const canManageVenue = (): boolean => {
     return hasPermission(PERMISSIONS.VENUE_ACTIVATE) || 
            hasBackendPermission('venue.update') ||
            hasBackendPermission('venue.manage');
   };
 
-  // Don't show if no venue or no permissions
   if (!currentVenue || !canManageVenue()) {
     return null;
   }
@@ -91,68 +96,67 @@ const VenueStatusControl: React.FC = () => {
     <>
       <Card sx={{ 
         mb: 2,
-        borderRadius: 2,
+        borderRadius: 0,
         boxShadow: theme.shadows[1],
         border: '1px solid',
         borderColor: 'divider',
         overflow: 'hidden'
       }}>
         <CardContent sx={{ p: 0 }}>
-          {/* Header Section */}
           <Box sx={{ 
             p: 2, 
-            backgroundColor: venueOpen ? 'success.main' : 'error.main',
-            color: 'white',
+            backgroundColor: 'background.paper',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             display: 'flex',
             alignItems: 'center',
-            gap: 1
+            justifyContent: 'space-between'
           }}>
-            <StoreIcon sx={{ fontSize: 20 }} />
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle2" fontWeight="600" sx={{ color: 'white' }}>
-                {currentVenue.name || 'Current Venue'}
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.9)', fontSize: '0.75rem' }}>
-                {venueActive ? 'Venue Active' : 'Venue Inactive'}
-              </Typography>
-            </Box>
-            <Chip
-              icon={venueOpen ? <CheckCircleIcon sx={{ fontSize: 16 }} /> : <CancelIcon sx={{ fontSize: 16 }} />}
-              label={venueOpen ? 'OPEN' : 'CLOSED'}
-              size="small"
-              sx={{
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                color: 'white',
-                fontWeight: 600,
-                fontSize: '0.7rem',
-                '& .MuiChip-icon': {
-                  color: 'white'
-                }
-              }}
-            />
-          </Box>
-
-          {/* Content Section */}
-          <Box sx={{ p: 2 }}>
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              mb: 1
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                <Typography variant="body2" fontWeight="500">
-                  Order Status
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <StoreIcon sx={{ fontSize: 20, color: 'text.primary' }} />
+              <Box>
+                <Typography variant="subtitle2" fontWeight="600">
+                  {currentVenue.name || 'Current Venue'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+                  {venueActive ? 'Venue Active' : 'Venue Inactive'}
                 </Typography>
               </Box>
+            </Box>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Switch
                 checked={venueOpen}
                 onChange={handleToggleVenueOpen}
                 disabled={statusLoading || !venueActive}
                 color="success"
-                size="small"
+                size="medium"
               />
+              <Chip
+                icon={venueOpen ? <CheckCircleIcon sx={{ fontSize: 16 }} /> : <CancelIcon sx={{ fontSize: 16 }} />}
+                label={venueOpen ? 'OPEN' : 'CLOSED'}
+                size="small"
+                color={venueOpen ? 'success' : 'error'}
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
+                  minWidth: 80
+                }}
+              />
+            </Box>
+          </Box>
+
+          <Box sx={{ p: 2 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              mb: 1
+            }}>
+              <ScheduleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography variant="body2" fontWeight="500">
+                Order Status
+              </Typography>
             </Box>
             
             <Typography 
@@ -160,7 +164,8 @@ const VenueStatusControl: React.FC = () => {
               color="text.secondary" 
               sx={{ 
                 fontSize: '0.875rem',
-                fontStyle: venueOpen ? 'normal' : 'italic'
+                fontStyle: venueOpen ? 'normal' : 'italic',
+                mb: 2
               }}
             >
               {venueOpen 
@@ -173,8 +178,9 @@ const VenueStatusControl: React.FC = () => {
               <Alert 
                 severity="warning" 
                 sx={{ 
-                  mt: 2, 
+                  mb: 2, 
                   fontSize: '0.75rem',
+                  borderRadius: 0,
                   '& .MuiAlert-message': {
                     fontSize: '0.75rem'
                   }
@@ -185,18 +191,23 @@ const VenueStatusControl: React.FC = () => {
             )}
 
             {statusLoading && (
-              <Box sx={{ mt: 2 }}>
-                <LinearProgress sx={{ borderRadius: 1 }} />
+              <Box sx={{ mb: 2 }}>
+                <LinearProgress sx={{ borderRadius: 0 }} />
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
                   Updating venue status...
                 </Typography>
               </Box>
             )}
           </Box>
+
+          <Box sx={{ 
+            height: 4,
+            backgroundColor: venueOpen ? 'success.main' : 'error.main',
+            width: '100%'
+          }} />
         </CardContent>
       </Card>
 
-      {/* Status Update Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -206,7 +217,7 @@ const VenueStatusControl: React.FC = () => {
         <Alert 
           severity={snackbar.severity} 
           onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-          sx={{ width: '100%' }}
+          sx={{ width: '100%', borderRadius: 0 }}
         >
           {snackbar.message}
         </Alert>

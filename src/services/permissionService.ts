@@ -1,6 +1,7 @@
 import { User, Permission, UserRole, PERMISSIONS, ROLES, PermissionName, RoleName } from '../types/auth';
 import { STORAGE_KEYS } from '../constants/storage';
 import { ROLE_NAMES } from '../constants/roles';
+import StorageManager from '../utils/storageManager';
 
 class PermissionService {
   // Role definitions - these should be loaded from API in production
@@ -170,10 +171,9 @@ class PermissionService {
    */
   static getBackendPermissions(): any[] {
     try {
-      const permissionsData = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+      const permissionsData = StorageManager.getPermissions();
       if (permissionsData) {
-        const parsed = JSON.parse(permissionsData);
-        return parsed.permissions || [];
+        return permissionsData.permissions || [];
       }
     } catch (error) {
       }
@@ -185,10 +185,9 @@ class PermissionService {
    */
   static getBackendRole(): any | null {
     try {
-      const permissionsData = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+      const permissionsData = StorageManager.getPermissions();
       if (permissionsData) {
-        const parsed = JSON.parse(permissionsData);
-        return parsed.role || null;
+        return permissionsData.role || null;
       }
     } catch (error) {
       }

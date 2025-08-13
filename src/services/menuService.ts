@@ -93,14 +93,26 @@ class MenuService {
     }
   }
 
-  async getVenueCategories(venueId: string): Promise<MenuCategory[]> {
+  async getVenueCategories(venueId: string, tableId?: string): Promise<MenuCategory[]> {
     try {
-      // Try public endpoint first
-      const response = await apiService.get<MenuCategory[]>(`/menu/public/venues/${venueId}/categories`);
+      // Try public endpoint with validation
+      const params = tableId ? `?table_id=${tableId}` : '';
+      const response = await apiService.get<MenuCategory[]>(`/menu/public/venues/${venueId}/categories${params}`);
       return response.data || [];
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load venue categories:', error);
-      return [];
+      
+      // Check if it's a venue not accepting orders error
+      if (error.response?.status === 503 && error.response?.data?.detail?.error === 'venue_not_accepting_orders') {
+        throw {
+          type: 'venue_not_accepting_orders',
+          message: error.response.data.detail.message,
+          venueName: error.response.data.detail.venue_name,
+          showErrorPage: error.response.data.detail.show_error_page
+        };
+      }
+      
+      throw error;
     }
   }
 
@@ -210,15 +222,30 @@ class MenuService {
     }
   }
 
-  async getVenueMenuItems(venueId: string, categoryId?: string): Promise<MenuItem[]> {
+  async getVenueMenuItems(venueId: string, categoryId?: string, tableId?: string): Promise<MenuItem[]> {
     try {
-      // Try public endpoint first
-      const params = categoryId ? `?category_id=${categoryId}` : '';
-      const response = await apiService.get<MenuItem[]>(`/menu/public/venues/${venueId}/items${params}`);
+      // Try public endpoint with validation
+      const params = new URLSearchParams();
+      if (categoryId) params.append('category_id', categoryId);
+      if (tableId) params.append('table_id', tableId);
+      
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const response = await apiService.get<MenuItem[]>(`/menu/public/venues/${venueId}/items${queryString}`);
       return response.data || [];
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load venue menu items:', error);
-      return [];
+      
+      // Check if it's a venue not accepting orders error
+      if (error.response?.status === 503 && error.response?.data?.detail?.error === 'venue_not_accepting_orders') {
+        throw {
+          type: 'venue_not_accepting_orders',
+          message: error.response.data.detail.message,
+          venueName: error.response.data.detail.venue_name,
+          showErrorPage: error.response.data.detail.show_error_page
+        };
+      }
+      
+      throw error;
     }
   }
 
@@ -263,6 +290,101 @@ class MenuService {
       return response.data || [];
     } catch (error) {
       return [];
+    }
+  }
+
+  // New validation methods
+  async validateQRCodeAccess(qrCode: string): Promise<{
+    success: boolean;
+    data?: {
+      venue: any;
+      table: any;
+      validation_timestamp: string;
+    };
+    error?: {
+      type: string;
+      message: string;
+      venueName?: string;
+    };
+  }> {
+    try {
+      const response = await apiService.get<any>(`/menu/public/validate-qr-access?qr_code=${encodeURIComponent(qrCode)}`);
+      return {
+        success: true,
+        data: response.data
+      };
+    } catch (error: any) {
+      console.error('QR code validation failed:', error);
+      
+      // Check if it's a venue not accepting orders error
+      if (error.response?.status === 503 && error.response?.data?.detail?.error === 'venue_not_accepting_orders') {
+        return {
+          success: false,
+          error: {
+            type: 'venue_not_accepting_orders',
+            message: error.response.data.detail.message,
+            venueName: error.response.data.detail.venue_name
+          }
+        };
+      }
+      
+      return {
+        success: false,
+        error: {
+          type: error.response?.data?.detail?.error || 'validation_failed',
+          message: error.response?.data?.detail?.message || 'QR code validation failed'
+        }
+      };
+    }
+  }
+
+  async getVenueMenuWithValidation(venueId: string, tableId?: string): Promise<{
+    success: boolean;
+    venue?: any;
+    table?: any;
+    categories?: MenuCategory[];
+    items?: MenuItem[];
+    items_by_category?: Record<string, MenuItem[]>;
+    error?: {
+      type: string;
+      message: string;
+      venueName?: string;
+    };
+  }> {
+    try {
+      const params = tableId ? `?table_id=${tableId}` : '';
+      const response = await apiService.get<any>(`/menu/public/venues/${venueId}/menu-with-validation${params}`);
+      
+      return {
+        success: true,
+        venue: response.data.venue,
+        table: response.data.table,
+        categories: response.data.categories,
+        items: response.data.items,
+        items_by_category: response.data.items_by_category
+      };
+    } catch (error: any) {
+      console.error('Menu validation failed:', error);
+      
+      // Check if it's a venue not accepting orders error
+      if (error.response?.status === 503 && error.response?.data?.detail?.error === 'venue_not_accepting_orders') {
+        return {
+          success: false,
+          error: {
+            type: 'venue_not_accepting_orders',
+            message: error.response.data.detail.message,
+            venueName: error.response.data.detail.venue_name
+          }
+        };
+      }
+      
+      return {
+        success: false,
+        error: {
+          type: error.response?.data?.detail?.error || 'validation_failed',
+          message: error.response?.data?.detail?.message || 'Menu validation failed'
+        }
+      };
     }
   }
 

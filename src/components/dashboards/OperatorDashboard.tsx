@@ -33,37 +33,20 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardService } from '../../services/dashboardService';
+import { OperatorDashboardResponse, RecentOrder } from '../../types/dashboard';
 
 interface OperatorDashboardProps {
   className?: string;
 }
 
-interface DashboardStats {
-  active_orders: number;
-  pending_orders: number;
-  preparing_orders: number;
-  ready_orders: number;
-  occupied_tables: number;
-  total_tables: number;
-}
-
-interface ActiveOrder {
-  id: string;
-  order_number: string;
-  table_number: number;
-  total_amount: number;
-  status: string;
-  created_at: string;
-  estimated_ready_time?: string;
-  items_count: number;
-}
+// DashboardStats interface removed - now using OperatorDashboardResponse directly
 
 const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [activeOrders, setActiveOrders] = useState<ActiveOrder[]>([]);
+  const [dashboardData, setDashboardData] = useState<OperatorDashboardResponse | null>(null);
+  const [activeOrders, setActiveOrders] = useState<RecentOrder[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -79,12 +62,30 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
       setLoading(true);
       setError(null);
       
-      // Load dashboard stats
-      const dashboardData = await dashboardService.getOperatorDashboard();
-      setStats(dashboardData.summary);
-      setActiveOrders(dashboardData.active_orders || []);
+      console.log('🔄 Loading operator dashboard data...');
+      
+      // Load comprehensive operator dashboard data
+      const data = await dashboardService.getOperatorDashboard();
+      
+      if (data) {
+        console.log('✅ Operator dashboard data loaded:', {
+          venue: data.venue_name,
+          activeOrders: data.stats.active_orders,
+          pendingOrders: data.stats.pending_orders,
+          occupiedTables: data.stats.tables_occupied
+        });
+        
+        setDashboardData(data);
+        setActiveOrders(data.active_orders || []);
+      } else {
+        setDashboardData(null);
+        setActiveOrders([]);
+      }
     } catch (err: any) {
+      console.error('❌ Operator dashboard loading failed:', err.message);
       setError(err.message || 'Failed to load dashboard data');
+      setDashboardData(null);
+      setActiveOrders([]);
     } finally {
       setLoading(false);
     }
@@ -190,12 +191,12 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
           <Card sx={{ bgcolor: 'warning.50', border: '1px solid', borderColor: 'warning.200' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Badge badgeContent={stats?.pending_orders || 0} color="warning">
+                <Badge badgeContent={dashboardData?.stats.pending_orders || 0} color="warning">
                   <Pending color="warning" sx={{ fontSize: 40 }} />
                 </Badge>
                 <Box>
                   <Typography variant="h4" fontWeight="bold" color="warning.dark">
-                    {stats?.pending_orders || 0}
+                    {dashboardData?.stats.pending_orders || 0}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Pending Orders
@@ -210,12 +211,12 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
           <Card sx={{ bgcolor: 'primary.50', border: '1px solid', borderColor: 'primary.200' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Badge badgeContent={stats?.preparing_orders || 0} color="primary">
+                <Badge badgeContent={dashboardData?.stats.preparing_orders || 0} color="primary">
                   <Kitchen color="primary" sx={{ fontSize: 40 }} />
                 </Badge>
                 <Box>
                   <Typography variant="h4" fontWeight="bold" color="primary.dark">
-                    {stats?.preparing_orders || 0}
+                    {dashboardData?.stats.preparing_orders || 0}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Preparing
@@ -230,12 +231,12 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
           <Card sx={{ bgcolor: 'success.50', border: '1px solid', borderColor: 'success.200' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Badge badgeContent={stats?.ready_orders || 0} color="success">
+                <Badge badgeContent={dashboardData?.stats.ready_orders || 0} color="success">
                   <CheckCircle color="success" sx={{ fontSize: 40 }} />
                 </Badge>
                 <Box>
                   <Typography variant="h4" fontWeight="bold" color="success.dark">
-                    {stats?.ready_orders || 0}
+                    {dashboardData?.stats.ready_orders || 0}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Ready to Serve
@@ -253,7 +254,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
                 <TableRestaurant color="info" sx={{ fontSize: 40 }} />
                 <Box>
                   <Typography variant="h4" fontWeight="bold">
-                    {stats?.occupied_tables || 0}/{stats?.total_tables || 0}
+                    {dashboardData?.stats.tables_occupied || 0}/{(dashboardData?.stats.tables_occupied || 0) + (dashboardData?.stats.tables_available || 0) || 0}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Tables Occupied
@@ -372,7 +373,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
           // Show notifications or alerts
         }}
       >
-        <Badge badgeContent={stats?.pending_orders || 0} color="error">
+        <Badge badgeContent={dashboardData?.stats.pending_orders || 0} color="error">
           <Notifications />
         </Badge>
       </Fab>

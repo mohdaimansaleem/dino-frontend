@@ -45,8 +45,7 @@ import { useUserData } from '../../contexts/UserDataContext';
 import { useNavigate } from 'react-router-dom';
 import { PERMISSIONS } from '../../types/auth';
 import { dashboardService } from '../../services/dashboardService';
-import { analyticsService } from '../../services/analyticsService';
-import { venueService } from '../../services/venueService';
+import { AdminDashboardResponse } from '../../types/dashboard';
 import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
 import { getUserFirstName } from '../../utils/userUtils';
 
@@ -71,45 +70,11 @@ interface AdminDashboardProps {
   className?: string;
 }
 
-interface DashboardStats {
-  today_orders: number;
-  today_revenue: number;
-  total_tables: number;
-  occupied_tables: number;
-  total_menu_items: number;
-  active_menu_items: number;
-  total_staff: number;
-}
-
-interface RecentOrder {
-  id: string;
-  order_number: string;
-  table_number: number;
-  total_amount: number;
-  status: string;
-  created_at: string;
-}
-
-interface TopMenuItem {
-  id: string;
-  name: string;
-  category: string;
-  order_count: number;
-  total_revenue: number;
-  price: number;
-}
-
 interface ChartData {
   weeklyRevenue: Array<{ day: string; revenue: number; orders: number }>;
   tableStatus: Array<{ name: string; value: number; color: string }>;
   menuStatus: Array<{ name: string; value: number; color: string }>;
   orderStatus: Array<{ name: string; value: number; color: string }>;
-}
-
-interface AdminDashboardResponse {
-  summary: DashboardStats;
-  recent_orders: RecentOrder[];
-  top_menu_items: TopMenuItem[];
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
@@ -122,10 +87,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const currentVenue = userData?.venue;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [dashboardData, setDashboardData] = useState<AdminDashboardResponse | null>(null);
   const [chartData, setChartData] = useState<ChartData | null>(null);
-  const [topMenuItems, setTopMenuItems] = useState<TopMenuItem[]>([]);
   const [chartLoading, setChartLoading] = useState(false);
   const [venueActive, setVenueActive] = useState(true);
   const [venueOpen, setVenueOpen] = useState(true);
@@ -137,99 +100,72 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       setLoading(true);
       setError(null);
       
-      // Load dashboard stats from API
-      const dashboardData = await dashboardService.getAdminDashboard() as AdminDashboardResponse;
+      console.log('🔄 Loading comprehensive dashboard data...');
       
-      if (dashboardData && dashboardData.summary) {
-        setStats(dashboardData.summary);
-        setRecentOrders(dashboardData.recent_orders || []);
-        setTopMenuItems(dashboardData.top_menu_items || []);
+      // Load comprehensive dashboard data from single API endpoint
+      const data = await dashboardService.getAdminDashboard();
+      
+      if (data) {
+        console.log('✅ Dashboard data loaded successfully:', {
+          venue: data.venue_name,
+          todayOrders: data.stats.today.orders_count,
+          todayRevenue: data.stats.today.revenue,
+          recentOrdersCount: data.recent_orders.length,
+          topMenuItemsCount: data.top_menu_items.length
+        });
+        
+        setDashboardData(data);
+        
+        // Process chart data from the comprehensive response
+        const processedChartData: ChartData = {
+          weeklyRevenue: data.revenue_trend.map(item => ({
+            day: item.day_name.substring(0, 3), // Mon, Tue, etc.
+            revenue: item.revenue,
+            orders: item.orders_count
+          })),
+          tableStatus: data.table_status_breakdown.map(item => ({
+            name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+            value: item.count,
+            color: item.color
+          })),
+          menuStatus: [], // Will be calculated from current stats
+          orderStatus: data.order_status_breakdown.map(item => ({
+            name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+            value: item.count,
+            color: item.color
+          }))
+        };
+        
+        setChartData(processedChartData);
       } else {
-        setStats(null);
-        setRecentOrders([]);
-        setTopMenuItems([]);
+        setDashboardData(null);
+        setChartData(null);
       }
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to load dashboard data';
+      console.error('❌ Dashboard loading failed:', errorMessage);
       
       // Check if it's a venue assignment error
       if (errorMessage.includes('No venue assigned')) {
         // Don't set this as a general error, let the venue check handle it
         setError(null);
-        setStats(null);
-        setRecentOrders([]);
-        setTopMenuItems([]);
+        setDashboardData(null);
       } else {
         setError(errorMessage);
-        setStats(null);
-        setRecentOrders([]);
-        setTopMenuItems([]);
+        setDashboardData(null);
       }
+      setChartData(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Chart data is now loaded as part of the comprehensive dashboard data
+  // This function is kept for compatibility but no longer makes separate API calls
   const loadChartData = useCallback(async () => {
-    if (!currentVenue?.id) return;
-
-    try {
-      setChartLoading(true);
-      // Get analytics data for charts with proper error handling
-      const [dashboardAnalytics, revenueTrend] = await Promise.allSettled([
-        analyticsService.getDashboardAnalytics(currentVenue.id),
-        analyticsService.getRevenueTrend(currentVenue.id, analyticsService.generateDateRange(7))
-      ]);
-
-      // Extract successful results and log any failures
-      const analyticsData = dashboardAnalytics.status === 'fulfilled' ? dashboardAnalytics.value : null;
-      const trendData = revenueTrend.status === 'fulfilled' ? revenueTrend.value : null;
-
-      // Log specific API failures for debugging
-      if (dashboardAnalytics.status === 'rejected') {
-        console.warn('Dashboard analytics API failed:', dashboardAnalytics.reason);
-      }
-      if (revenueTrend.status === 'rejected') {
-        console.warn('Revenue trend API failed:', revenueTrend.reason);
-      }
-
-      // Process revenue trend data - only use real data
-      const weeklyRevenue = trendData && trendData.length > 0 
-        ? trendData.map(item => ({
-            day: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
-            revenue: item.revenue,
-            orders: item.orders
-          }))
-        : [];
-
-      // Process order status data from dashboard analytics - only use real data
-      const orderStatus = analyticsData?.order_status_breakdown && 
-                         analyticsData.order_status_breakdown.length > 0
-        ? analyticsData.order_status_breakdown.map(item => ({
-            name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-            value: item.count,
-            color: item.color || getDefaultStatusColor(item.status)
-          }))
-        : [];
-
-      setChartData({
-        weeklyRevenue,
-        tableStatus: [], // Will be generated from stats
-        menuStatus: [], // Will be generated from stats
-        orderStatus
-      });
-    } catch (error) {
-      console.warn('Failed to load chart data:', error);
-      
-      setChartData({
-        weeklyRevenue: [],
-        tableStatus: [],
-        menuStatus: [],
-        orderStatus: []
-      });
-    } finally {
-      setChartLoading(false);
-    }
+    // Chart data is now included in the main dashboard response
+    // No separate API calls needed
+    console.log('📊 Chart data loaded from comprehensive dashboard response');
   }, []);
 
 
@@ -377,15 +313,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
            hasBackendPermission('order.manage');
   };
 
+  // Extract stats from comprehensive dashboard data
+  const stats = dashboardData?.stats;
+  const recentOrders = dashboardData?.recent_orders || [];
+  const topMenuItems = dashboardData?.top_menu_items || [];
+  
   // Set default zero values when no data is available
-  const displayStats = stats || {
-    today_orders: 0,
-    today_revenue: 0,
-    total_tables: 0,
-    occupied_tables: 0,
-    total_menu_items: 0,
-    active_menu_items: 0,
-    total_staff: 0,
+  const displayStats = {
+    today_orders: stats?.today.orders_count || 0,
+    today_revenue: stats?.today.revenue || 0,
+    total_tables: stats?.current.tables_total || 0,
+    occupied_tables: stats?.current.tables_occupied || 0,
+    total_menu_items: stats?.current.menu_items_total || 0,
+    active_menu_items: stats?.current.menu_items_active || 0,
+    total_staff: stats?.current.staff_total || 0,
   };
 
   const tableOccupancyPercentage = displayStats.total_tables > 0 ? 
@@ -1107,7 +1048,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                                 fontSize: '0.75rem'
                               }}
                             >
-                              {item.category} • ₹{item.price}
+                              {item.category_name} • ₹{item.price}
                             </Typography>
                           </Box>
                           <Box sx={{ textAlign: 'right', ml: 2 }}>
@@ -1120,7 +1061,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                                 lineHeight: 1
                               }}
                             >
-                              {item.order_count}
+                              {item.orders_count}
                             </Typography>
                             <Typography 
                               variant="caption" 

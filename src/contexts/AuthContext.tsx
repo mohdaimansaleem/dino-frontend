@@ -59,7 +59,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         console.log('🔄 AuthContext initialization:', {
           hasToken: !!token,
+          tokenLength: token?.length,
           hasUser: !!savedUser,
+          userEmail: savedUser?.email,
           hasPermissions: !!savedPermissions,
           currentPath: window.location.pathname
         });

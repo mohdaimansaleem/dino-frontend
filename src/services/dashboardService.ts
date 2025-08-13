@@ -1,6 +1,12 @@
 import { apiService } from './api';
 import { ApiResponse } from '../types';
 import { dashboardCache, CacheKeys } from './cacheService';
+import { 
+  ComprehensiveDashboardData, 
+  AdminDashboardResponse, 
+  OperatorDashboardResponse, 
+  SuperAdminDashboardResponse 
+} from '../types/dashboard';
 
 interface DashboardStats {
   [key: string]: number | string;
@@ -69,107 +75,97 @@ interface OperatorDashboard {
 class DashboardService {
 
 
-  async getSuperAdminDashboard(): Promise<SuperAdminDashboard> {
+  async getSuperAdminDashboard(): Promise<SuperAdminDashboardResponse> {
     return dashboardCache.getOrSet(
       CacheKeys.dashboardData('superadmin'),
       async () => {
         try {
-          const response = await apiService.get<SuperAdminDashboard>('/dashboard/superadmin');
+          const response = await apiService.get<SuperAdminDashboardResponse>('/dashboard/superadmin/comprehensive');
           
           if (response.success && response.data) {
+            console.log('✅ SuperAdmin dashboard data loaded:', {
+              totalWorkspaces: response.data.system_stats.total_workspaces,
+              totalVenues: response.data.system_stats.total_venues,
+              todayOrders: response.data.system_stats.total_orders_today,
+              todayRevenue: response.data.system_stats.total_revenue_today
+            });
             return response.data;
           }
           
-          // Throw error if API fails - no mock data
-          throw new Error('Failed to load SuperAdmin dashboard data');
-        } catch (error) {
-          throw error;
+          throw new Error('Invalid SuperAdmin dashboard response format');
+        } catch (error: any) {
+          console.error('❌ SuperAdmin dashboard API failed:', error);
+          throw new Error(error.message || 'Failed to load SuperAdmin dashboard data');
         }
       },
       2 * 60 * 1000 // 2 minutes TTL for dashboard data
     );
   }
 
-  async getAdminDashboard(): Promise<AdminDashboard> {
-    try {
-      // Check if user has venue assigned first
-      const userData = localStorage.getItem('dino_user');
-      if (userData) {
-        const user = JSON.parse(userData);
-        if (!user.venue_id && !user.cafeId && user.role !== 'superadmin') {
-          throw new Error('No venue assigned to your account. Please contact your administrator to assign you to a venue.');
-        }
-      }
-
-      // Try multiple possible endpoints in order of preference
-      const endpoints = [
-        '/dashboard/admin',
-        '/dashboard',
-        '/venues/dashboard',
-        '/admin/dashboard'
-      ];
-      
-      let lastError;
-      
-      for (const endpoint of endpoints) {
+  /**
+   * Get comprehensive admin dashboard data from a single API endpoint
+   * This endpoint should return all dashboard data based on real database records
+   */
+  async getAdminDashboard(): Promise<AdminDashboardResponse> {
+    return dashboardCache.getOrSet(
+      CacheKeys.dashboardData('admin'),
+      async () => {
         try {
-          const response = await apiService.get<AdminDashboard>(endpoint);
+          // Single comprehensive endpoint that returns all dashboard data
+          const response = await apiService.get<AdminDashboardResponse>('/dashboard/comprehensive');
+          
           if (response.success && response.data) {
+            console.log('✅ Dashboard data loaded successfully:', {
+              venue: response.data.venue_name,
+              todayOrders: response.data.stats.today.orders_count,
+              todayRevenue: response.data.stats.today.revenue,
+              recentOrdersCount: response.data.recent_orders.length,
+              topMenuItemsCount: response.data.top_menu_items.length
+            });
             return response.data;
           }
+          
+          throw new Error('Invalid dashboard response format');
         } catch (error: any) {
-          lastError = error;
-          // Check if it's a venue assignment error
-          if (error.response?.status === 400 && error.response?.data?.detail?.includes('venue')) {
-            throw new Error('No venue assigned. Please contact your administrator to assign you to a venue.');
-          }
-          // For 404s, continue to try next endpoint
+          console.error('❌ Dashboard API failed:', error);
+          
+          // Check for specific error types
           if (error.response?.status === 404) {
-            continue;
+            throw new Error('Dashboard endpoint not found. Please ensure the backend API is properly configured.');
+          } else if (error.response?.status === 403) {
+            throw new Error('Access denied. You may not have permission to view dashboard data.');
+          } else if (error.response?.status === 400 && error.response?.data?.detail?.includes('venue')) {
+            throw new Error('No venue assigned to your account. Please contact your administrator.');
           }
-          // For other errors, break and handle below
-          break;
+          
+          throw new Error(error.message || 'Failed to load dashboard data. Please try again.');
         }
-      }
-      
-      // If all endpoints failed with 404s, it might be a venue assignment issue
-      if (lastError?.response?.status === 404) {
-        console.warn('All dashboard endpoints returned 404. This might indicate a venue assignment issue or backend configuration problem.');
-        // Check user data again for venue assignment
-        const userData = localStorage.getItem('dino_user');
-        if (userData) {
-          const user = JSON.parse(userData);
-          if (!user.venue_id && !user.cafeId) {
-            throw new Error('Dashboard endpoints not found. This appears to be related to missing venue assignment. Please contact your administrator.');
-          }
-        }
-        throw new Error('Dashboard endpoints not found. Please check your permissions or contact support.');
-      }
-      
-      // For other errors, throw the error - no mock data
-      console.error('Dashboard API failed:', lastError?.message);
-      throw new Error('Failed to load dashboard data. Please check your connection and try again.');
-    } catch (error: any) {
-      // Re-throw all errors - no fallback to mock data
-      throw error;
-    }
+      },
+      2 * 60 * 1000 // 2 minutes cache
+    );
   }
 
-  async getOperatorDashboard(): Promise<OperatorDashboard> {
+  async getOperatorDashboard(): Promise<OperatorDashboardResponse> {
     return dashboardCache.getOrSet(
       CacheKeys.dashboardData('operator'),
       async () => {
         try {
-          const response = await apiService.get<OperatorDashboard>('/dashboard/operator');
+          const response = await apiService.get<OperatorDashboardResponse>('/dashboard/operator/comprehensive');
           
           if (response.success && response.data) {
+            console.log('✅ Operator dashboard data loaded:', {
+              venue: response.data.venue_name,
+              activeOrders: response.data.stats.active_orders,
+              pendingOrders: response.data.stats.pending_orders,
+              occupiedTables: response.data.stats.tables_occupied
+            });
             return response.data;
           }
           
-          // Throw error if API fails - no mock data
-          throw new Error('Failed to load Operator dashboard data');
-        } catch (error) {
-          throw error;
+          throw new Error('Invalid Operator dashboard response format');
+        } catch (error: any) {
+          console.error('❌ Operator dashboard API failed:', error);
+          throw new Error(error.message || 'Failed to load Operator dashboard data');
         }
       },
       1 * 60 * 1000 // 1 minute TTL for operator dashboard (more real-time)

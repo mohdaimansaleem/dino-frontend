@@ -162,6 +162,20 @@ const UserProfile: React.FC = () => {
       setLoading(true);
       setError(null);
       
+      // Validate phone number
+      if (profileData.phone && profileData.phone.length !== 10) {
+        setError('Phone number must be exactly 10 digits');
+        setLoading(false);
+        return;
+      }
+      
+      // Validate phone number contains only digits
+      if (profileData.phone && !/^\d{10}$/.test(profileData.phone)) {
+        setError('Phone number must contain only digits');
+        setLoading(false);
+        return;
+      }
+      
       await updateUser(profileData);
       setSuccess('Profile updated successfully');
       setEditing(false);
@@ -339,8 +353,22 @@ const UserProfile: React.FC = () => {
                 fullWidth
                 label="Phone"
                 value={profileData.phone || ''}
-                onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Only allow digits and limit to 10 characters
+                  const digitsOnly = value.replace(/\D/g, '');
+                  if (digitsOnly.length <= 10) {
+                    setProfileData(prev => ({ ...prev, phone: digitsOnly }));
+                  }
+                }}
                 disabled={!editing}
+                inputProps={{
+                  maxLength: 10,
+                  pattern: '[0-9]*',
+                  inputMode: 'numeric'
+                }}
+                helperText={editing ? "Enter 10-digit phone number (digits only)" : ""}
+                error={editing && profileData.phone && profileData.phone.length !== 10}
               />
             </Grid>
           </Grid>

@@ -134,6 +134,7 @@ class VenueService {
    */
   async getVenuesByWorkspace(workspaceId: string): Promise<WorkspaceVenue[]> {
     try {
+      // Try the specific workspace endpoint first
       const response = await apiService.get<WorkspaceVenue[]>(`/venues/workspace/${workspaceId}/venues`);
       
       if (response.success && response.data) {
@@ -142,7 +143,44 @@ class VenueService {
       
       return [];
     } catch (error) {
-      console.error('Error fetching workspace venues:', error);
+      console.error('Error fetching workspace venues from specific endpoint:', error);
+      
+      // Fallback: Try getting all venues and filter by workspace
+      try {
+        console.log('🔄 Trying fallback: getting all venues and filtering by workspace');
+        const allVenuesResponse = await this.getVenues({ page_size: 100 });
+        
+        if (allVenuesResponse.success && allVenuesResponse.data) {
+          // Filter venues by workspace_id and convert to WorkspaceVenue format
+          const workspaceVenues = allVenuesResponse.data
+            .filter(venue => venue.workspace_id === workspaceId)
+            .map(venue => ({
+              id: venue.id,
+              name: venue.name,
+              description: venue.description,
+              location: {
+                city: venue.location.city,
+                state: venue.location.state,
+                country: venue.location.country,
+                address: venue.location.address
+              },
+              phone: venue.phone,
+              email: venue.email,
+              is_active: venue.is_active,
+              is_open: venue.is_open,
+              status: venue.status || (venue.is_active ? 'active' : 'inactive'),
+              subscription_status: venue.subscription_status || 'active',
+              created_at: venue.created_at,
+              updated_at: venue.updated_at || venue.created_at
+            } as WorkspaceVenue));
+          
+          console.log('✅ Fallback successful, found venues:', workspaceVenues);
+          return workspaceVenues;
+        }
+      } catch (fallbackError) {
+        console.error('Error in fallback venue fetching:', fallbackError);
+      }
+      
       return [];
     }
   }

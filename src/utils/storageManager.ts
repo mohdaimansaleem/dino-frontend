@@ -385,9 +385,46 @@ export class StorageManager {
   }
 
   /**
+   * Migrate data from old storage keys to new ones
+   */
+  private static migrateOldStorageKeys(): void {
+    try {
+      // Migration mapping: old key -> new key
+      const migrations = [
+        { old: 'dino_auth_token', new: this.KEYS.TOKEN },
+        { old: 'dino_user_profile', new: this.KEYS.USER },
+        { old: 'dino_user_permissions', new: this.KEYS.PERMISSIONS },
+        { old: 'dino_theme_preference', new: this.KEYS.THEME },
+      ];
+
+      let migrated = 0;
+      
+      migrations.forEach(({ old, new: newKey }) => {
+        const oldData = localStorage.getItem(old);
+        if (oldData && !localStorage.getItem(newKey)) {
+          // Only migrate if new key doesn't exist
+          localStorage.setItem(newKey, oldData);
+          localStorage.removeItem(old);
+          migrated++;
+          console.log(`✅ Migrated storage key: ${old} -> ${newKey}`);
+        }
+      });
+
+      if (migrated > 0) {
+        console.log(`🔄 Storage migration completed: ${migrated} keys migrated`);
+      }
+    } catch (error) {
+      console.warn('⚠️ Storage migration failed:', error);
+    }
+  }
+
+  /**
    * Initialize storage manager
    */
   static initialize(): void {
+    // Migrate old storage keys first
+    this.migrateOldStorageKeys();
+    
     // Perform initial cleanup
     this.performCleanup();
     

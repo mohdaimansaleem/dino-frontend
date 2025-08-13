@@ -32,6 +32,8 @@ import RoleProtectedRoute from './components/RoleProtectedRoute';
 import Layout from './components/Layout';
 import UserProfile from './components/UserProfile';
 import PermissionSync from './components/PermissionSync';
+import ErrorBoundary from './components/ErrorBoundary';
+import NotFoundPage from './pages/NotFoundPage';
 import { PERMISSIONS } from './types/auth';
 import AppInitializer from './components/AppInitializer';
 import { logger } from './utils/logger';
@@ -92,16 +94,17 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <PermissionSync autoRefreshInterval={0} showSyncStatus={false}>
-            <UserDataProvider>
-              <AppInitializer>
-                <WorkspaceProvider>
-                  <NotificationProvider>
-                    <CartProvider>
-                      <Layout>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <PermissionSync autoRefreshInterval={0} showSyncStatus={false}>
+              <UserDataProvider>
+                <AppInitializer>
+                  <WorkspaceProvider>
+                    <NotificationProvider>
+                      <CartProvider>
+                        <Layout>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<HomePage />} />
@@ -188,19 +191,20 @@ function App() {
                   </RoleProtectedRoute>
                 } />
                 
-                {/* Catch all route */}
-                <Route path="*" element={<Navigate to="/" replace />} />
+                {/* Catch all route - 404 Page */}
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
-                      </Layout>
-                    </CartProvider>
-                  </NotificationProvider>
-                </WorkspaceProvider>
-              </AppInitializer>
-            </UserDataProvider>
-          </PermissionSync>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
+                        </Layout>
+                      </CartProvider>
+                    </NotificationProvider>
+                  </WorkspaceProvider>
+                </AppInitializer>
+              </UserDataProvider>
+            </PermissionSync>
+          </AuthProvider>
+        </ToastProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 

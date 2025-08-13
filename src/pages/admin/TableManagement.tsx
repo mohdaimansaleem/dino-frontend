@@ -81,6 +81,66 @@ const TableManagement: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
+  // Function to refresh both areas and tables data
+  const refreshData = async () => {
+    const venue = getVenue();
+    if (!venue?.id) {
+      console.log('No venue ID available for refresh');
+      return;
+    }
+
+    try {
+      console.log('Refreshing table data for venue:', venue.id);
+
+      // Load areas and tables from API directly
+      const [areasData, tablesData] = await Promise.all([
+        tableService.getAreas(venue.id),
+        tableService.getTables({ venue_id: venue.id })
+      ]);
+
+      console.log('Areas refreshed:', areasData?.length || 0);
+      console.log('Raw areas data:', areasData);
+      console.log('Raw tables response:', tablesData);
+      
+      // Extract tables array from the response
+      let validTables: Table[] = [];
+      
+      // The tableService.getTables() should return PaginatedResponse<Table>
+      if (tablesData && tablesData.data && Array.isArray(tablesData.data)) {
+        validTables = tablesData.data;
+        console.log('✅ Extracted tables from PaginatedResponse:', validTables.length);
+      } else {
+        console.log('❌ Could not extract tables from response');
+        console.log('tablesData structure:', {
+          type: typeof tablesData,
+          hasData: tablesData && 'data' in tablesData,
+          dataType: tablesData && typeof tablesData.data,
+          isDataArray: tablesData && Array.isArray(tablesData.data),
+          keys: tablesData && Object.keys(tablesData)
+        });
+        validTables = [];
+      }
+      
+      const validAreas = Array.isArray(areasData) ? areasData : [];
+
+      console.log('Final data to set:');
+      console.log('- Areas:', validAreas.length, validAreas);
+      console.log('- Tables:', validTables.length, validTables);
+
+      setAreas(validAreas);
+      setTables(validTables);
+
+      console.log('State updated - Areas:', validAreas.length, 'Tables:', validTables.length);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to refresh data. Please check your connection.', 
+        severity: 'error' 
+      });
+    }
+  };
+
   useEffect(() => {
     const loadData = async () => {
       // Wait for UserDataContext to finish loading
@@ -109,11 +169,24 @@ const TableManagement: React.FC = () => {
           tableService.getTables({ venue_id: venue.id })
         ]);
 
-        console.log('Areas loaded:', areasData?.length || 0);
-        console.log('Tables loaded:', tablesData.data?.length || 0);
+        console.log('Initial load - Areas:', areasData?.length || 0);
+        console.log('Initial load - Tables response:', tablesData);
+        console.log('Initial load - Tables data:', tablesData.data?.length || 0);
+
+        // Handle tables data structure consistently
+        let initialTables: Table[] = [];
+        if (Array.isArray(tablesData?.data)) {
+          initialTables = tablesData.data;
+        } else if (Array.isArray(tablesData)) {
+          initialTables = tablesData;
+        } else {
+          initialTables = [];
+        }
+
+        console.log('Initial load - Final tables:', initialTables.length, initialTables);
 
         setAreas(areasData);
-        setTables(tablesData.data || []);
+        setTables(initialTables);
       } catch (error) {
         setError('Failed to load table data. Please try again.');
         setSnackbar({ 
@@ -129,6 +202,14 @@ const TableManagement: React.FC = () => {
     loadData();
   }, [userDataLoading, getVenue]);
 
+  // Debug effect to track state changes
+  useEffect(() => {
+    console.log('=== STATE CHANGE DEBUG ===');
+    console.log('Areas state updated:', areas.length, areas);
+    console.log('Tables state updated:', tables.length, tables);
+    console.log('========================');
+  }, [areas, tables]);
+
   const handleAddTable = () => {
     setEditingTable(null);
     setOpenTableDialog(true);
@@ -141,9 +222,13 @@ const TableManagement: React.FC = () => {
 
   const handleDeleteTable = async (tableId: string) => {
     try {
+      console.log('Deleting table:', tableId);
       const response = await tableService.deleteTable(tableId);
       if (response.success) {
-        setTables(prev => prev.filter(table => table.id !== tableId));
+        console.log('Table deleted, refreshing data...');
+        // Refresh both areas and tables data to update area table counts
+        await refreshData();
+        console.log('Data refreshed after table deletion');
         setSnackbar({ open: true, message: 'Table deleted successfully', severity: 'success' });
       }
     } catch (error: any) {
@@ -168,9 +253,8 @@ const TableManagement: React.FC = () => {
           is_active: tableData.is_active !== undefined ? tableData.is_active : editingTable.is_active,
         });
         if (response.success && response.data) {
-          setTables(prev => prev.map(table => 
-            table.id === editingTable.id ? response.data! : table
-          ));
+          // Refresh both areas and tables data to update area table counts
+          await refreshData();
           setSnackbar({ open: true, message: 'Table updated successfully', severity: 'success' });
         }
       } else {
@@ -203,7 +287,8 @@ const TableManagement: React.FC = () => {
         
         const response = await tableService.createTable(createData);
         if (response.success && response.data) {
-          setTables(prev => [...prev, response.data!]);
+          // Refresh both areas and tables data to update area table counts
+          await refreshData();
           setSnackbar({ open: true, message: 'Table added successfully', severity: 'success' });
         }
       }
@@ -256,6 +341,40 @@ const TableManagement: React.FC = () => {
     setOpenAreaDialog(true);
   };
 
+  const handleDeleteArea = async (areaId: string) => {
+    try {
+      const area = areas.find(a => a.id === areaId);
+      
+      // Check if area has tables assigned to it
+      const tablesInArea = tables.filter(table => (table.location || '') === areaId);
+      if (tablesInArea.length > 0) {
+        setSnackbar({ 
+          open: true, 
+          message: `Cannot delete area "${area?.name}": ${tablesInArea.length} tables are assigned to this area. Please reassign or delete tables first.`, 
+          severity: 'error' 
+        });
+        return;
+      }
+      
+      console.log('Deleting area:', areaId);
+      await tableService.deleteArea(areaId);
+      console.log('Area deleted, refreshing data...');
+      
+      // Refresh both areas and tables data
+      await refreshData();
+      console.log('Data refreshed after area deletion');
+      
+      setSnackbar({ open: true, message: `Area "${area?.name}" deleted successfully`, severity: 'success' });
+    } catch (error: any) {
+      console.error('Error deleting area:', error);
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to delete area', 
+        severity: 'error' 
+      });
+    }
+  };
+
   const handleSaveArea = async (areaData: Partial<TableArea>) => {
     try {
       const venue = getVenue();
@@ -265,25 +384,29 @@ const TableManagement: React.FC = () => {
 
       if (editingArea) {
         // Update existing area
-        const updatedArea = await tableService.updateArea({
+        console.log('Updating area:', editingArea.id, areaData);
+        await tableService.updateArea({
           id: editingArea.id,
           ...areaData,
         });
-        setAreas(prev => prev.map(area => 
-          area.id === editingArea.id ? updatedArea : area
-        ));
         setSnackbar({ open: true, message: 'Area updated successfully', severity: 'success' });
       } else {
         // Create new area
-        const newArea = await tableService.createArea({
+        console.log('Creating new area:', areaData);
+        await tableService.createArea({
           name: areaData.name || '',
           description: areaData.description || '',
           color: areaData.color || '#2196F3',
           active: areaData.active ?? true,
         }, venue.id);
-        setAreas(prev => [...prev, newArea]);
         setSnackbar({ open: true, message: 'Area added successfully', severity: 'success' });
       }
+      
+      console.log('Area operation completed, refreshing data...');
+      // Refresh both areas and tables data
+      await refreshData();
+      console.log('Data refreshed after area save');
+      
       setOpenAreaDialog(false);
     } catch (error: any) {
       console.error('Error saving area:', error);
@@ -484,6 +607,15 @@ const TableManagement: React.FC = () => {
                   {isMobile ? "QR Manager" : "Bulk QR Manager"}
                 </Button>
                 <Button
+                  variant="outlined"
+                  onClick={refreshData}
+                  className="btn-responsive"
+                  size={isMobile ? "medium" : "medium"}
+                  fullWidth={isMobile}
+                >
+                  Refresh
+                </Button>
+                <Button
                   variant="contained"
                   startIcon={<Add />}
                   onClick={handleAddTable}
@@ -619,14 +751,24 @@ const TableManagement: React.FC = () => {
                           {tables.filter(table => (table.location || '') === area.id).length} tables
                         </Typography>
                       </Box>
-                      <IconButton 
-                        size="small" 
-                        onClick={() => handleEditArea(area)}
-                        className="btn-responsive"
-                        sx={{ minWidth: 44, minHeight: 44 }}
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleEditArea(area)}
+                          className="btn-responsive"
+                          sx={{ minWidth: 44, minHeight: 44 }}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleDeleteArea(area.id)}
+                          className="btn-responsive"
+                          sx={{ minWidth: 44, minHeight: 44, color: 'error.main' }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
                     </Stack>
                   </CardContent>
                 </Card>

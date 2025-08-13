@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { userDataService, UserData } from '../services/userDataService';
 import { useAuth } from './AuthContext';
 import { validateVenueAccess, getVenueDisplayName as getVenueDisplayNameUtil } from '../utils/venueUtils';
+import StorageManager from '../utils/storageManager';
 
 interface UserDataContextType {
   // Current data
@@ -59,7 +60,7 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
     }
 
     // Check if we have a token
-    const token = localStorage.getItem('dino_token');
+    const token = StorageManager.getItem<string>(StorageManager.KEYS.TOKEN);
     if (!token) {
       setUserData(null);
       setInitialized(true);

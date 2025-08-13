@@ -74,27 +74,55 @@ const DefaultLoadingFallback: React.FC = () => (
 );
 
 // Default error fallback
-const DefaultErrorFallback: React.FC<{ error: Error; retry: () => void }> = ({ error, retry }) => (
-  <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    minHeight="200px"
-    flexDirection="column"
-    gap={2}
-    p={3}
-  >
-    <Typography variant="h6" color="error" gutterBottom>
-      Failed to load component
-    </Typography>
-    <Typography variant="body2" color="text.secondary" textAlign="center">
-      {error.message}
-    </Typography>
-    <Button variant="outlined" onClick={retry} size="small">
-      Retry
-    </Button>
-  </Box>
-);
+const DefaultErrorFallback: React.FC<{ error: Error; retry: () => void }> = ({ error, retry }) => {
+  // Import ErrorPage dynamically to avoid circular dependencies
+  const [ErrorPageComponent, setErrorPageComponent] = React.useState<React.ComponentType<any> | null>(null);
+
+  React.useEffect(() => {
+    import('./ErrorPage').then(module => {
+      setErrorPageComponent(() => module.default);
+    }).catch(() => {
+      // Fallback to simple error display if ErrorPage fails to load
+      setErrorPageComponent(null);
+    });
+  }, []);
+
+  if (ErrorPageComponent) {
+    return (
+      <ErrorPageComponent
+        error={error}
+        title="Component Loading Error"
+        message="Failed to load this component. This might be due to a network issue or a temporary problem."
+        onRetry={retry}
+        showGoBack={false}
+        showGoHome={true}
+      />
+    );
+  }
+
+  // Simple fallback if ErrorPage is not available
+  return (
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      minHeight="200px"
+      flexDirection="column"
+      gap={2}
+      p={3}
+    >
+      <Typography variant="h6" color="error" gutterBottom>
+        Failed to load component
+      </Typography>
+      <Typography variant="body2" color="text.secondary" textAlign="center">
+        {error.message}
+      </Typography>
+      <Button variant="outlined" onClick={retry} size="small">
+        Retry
+      </Button>
+    </Box>
+  );
+};
 
 // Skeleton components for different layouts
 export const PageSkeleton: React.FC = () => (

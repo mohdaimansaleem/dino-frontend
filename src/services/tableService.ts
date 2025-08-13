@@ -31,7 +31,41 @@ class TableService {
 
       const response = await apiService.get<PaginatedResponse<Table>>(`/tables?${params.toString()}`);
       
-      return response.data || {
+      console.log('🔍 tableService.getTables() - Raw response:', response);
+      console.log('🔍 tableService.getTables() - Response.data:', response.data);
+      console.log('🔍 tableService.getTables() - Response structure:', {
+        hasSuccess: 'success' in response,
+        hasData: 'data' in response,
+        responseKeys: Object.keys(response),
+        dataType: typeof response.data,
+        isDataArray: Array.isArray(response.data)
+      });
+      
+      // Handle different response structures from apiService
+      if (response.data && typeof response.data === 'object') {
+        // Case 1: response.data is already the PaginatedResponse
+        if ('data' in response.data && Array.isArray(response.data.data)) {
+          console.log('✅ Case 1: response.data is PaginatedResponse');
+          return response.data;
+        }
+        // Case 2: response.data is the array directly
+        else if (Array.isArray(response.data)) {
+          console.log('✅ Case 2: response.data is array, wrapping in PaginatedResponse');
+          return {
+            success: true,
+            data: response.data,
+            total: response.data.length,
+            page: 1,
+            page_size: response.data.length,
+            total_pages: 1,
+            has_next: false,
+            has_prev: false
+          };
+        }
+      }
+      
+      console.log('⚠️ Fallback: Using empty PaginatedResponse');
+      return {
         success: true,
         data: [],
         total: 0,
@@ -520,6 +554,18 @@ class TableService {
       return response.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update area');
+    }
+  }
+
+  /**
+   * Delete area (for backward compatibility)
+   */
+  async deleteArea(areaId: string): Promise<any> {
+    try {
+      const response = await apiService.delete<any>(`/table-areas/areas/${areaId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to delete area');
     }
   }
 }

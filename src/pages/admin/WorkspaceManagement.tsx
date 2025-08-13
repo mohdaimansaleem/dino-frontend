@@ -53,6 +53,7 @@ import { useUserData } from '../../contexts/UserDataContext';
 import PermissionService from '../../services/permissionService';
 import { PERMISSIONS } from '../../types/auth';
 import { venueService } from '../../services/venueService';
+import { PriceRange } from '../../types/api';
 import StorageManager from '../../utils/storageManager';
 
 const priceRangeOptions = [
@@ -216,6 +217,7 @@ const WorkspaceManagement: React.FC = () => {
 
   // Form validation
   const validateVenueForm = useCallback((): boolean => {
+    console.log('🔍 Validating venue form...');
     const errors: Record<string, string> = {};
 
     if (!venueFormData.name.trim()) {
@@ -261,8 +263,11 @@ const WorkspaceManagement: React.FC = () => {
       }
     }
 
+    console.log('🔍 Validation errors found:', errors);
     setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+    const isValid = Object.keys(errors).length === 0;
+    console.log('✅ Form is valid:', isValid);
+    return isValid;
   }, [venueFormData]);
 
   // Helper functions
@@ -452,6 +457,536 @@ const WorkspaceManagement: React.FC = () => {
           )}
         </Box>
       )}
+
+      {/* Venue Creation/Edit Dialog */}
+      <Dialog
+        open={openVenueDialog}
+        onClose={() => {
+          setOpenVenueDialog(false);
+          setEditingVenue(null);
+          setValidationErrors({});
+          // Reset form data
+          setVenueFormData({
+            name: '',
+            description: '',
+            venueType: 'restaurant',
+            location: {
+              address: '',
+              city: '',
+              state: '',
+              country: 'India',
+              postal_code: '',
+              landmark: ''
+            },
+            phone: '',
+            email: '',
+            priceRange: 'mid_range',
+            isActive: true,
+            isOpen: true,
+          });
+        }}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            maxHeight: '90vh'
+          }
+        }}
+      >
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Restaurant color="primary" />
+            <Typography variant="h6" fontWeight="600">
+              {editingVenue ? 'Edit Venue' : 'Add New Venue'}
+            </Typography>
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent dividers>
+          <Grid container spacing={3}>
+            {/* Basic Information */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                Basic Information
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Venue Name"
+                value={venueFormData.name}
+                onChange={(e) => setVenueFormData(prev => ({ ...prev, name: e.target.value }))}
+                error={hasFieldError('name')}
+                helperText={getFieldError('name')}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Store />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Venue Type</InputLabel>
+                <Select
+                  value={venueFormData.venueType}
+                  label="Venue Type"
+                  onChange={(e) => setVenueFormData(prev => ({ ...prev, venueType: e.target.value }))}
+                >
+                  {venueTypeOptions.map((type) => (
+                    <MenuItem key={type} value={type}>
+                      {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Description"
+                value={venueFormData.description}
+                onChange={(e) => setVenueFormData(prev => ({ ...prev, description: e.target.value }))}
+                multiline
+                rows={3}
+                placeholder="Brief description of your venue..."
+              />
+            </Grid>
+            
+            {/* Location Information */}
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                Location Details
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address"
+                value={venueFormData.location.address}
+                onChange={(e) => setVenueFormData(prev => ({
+                  ...prev,
+                  location: { ...prev.location, address: e.target.value }
+                }))}
+                error={hasFieldError('address')}
+                helperText={getFieldError('address')}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LocationOn />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="City"
+                value={venueFormData.location.city}
+                onChange={(e) => setVenueFormData(prev => ({
+                  ...prev,
+                  location: { ...prev.location, city: e.target.value }
+                }))}
+                error={hasFieldError('city')}
+                helperText={getFieldError('city')}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="State"
+                value={venueFormData.location.state}
+                onChange={(e) => setVenueFormData(prev => ({
+                  ...prev,
+                  location: { ...prev.location, state: e.target.value }
+                }))}
+                error={hasFieldError('state')}
+                helperText={getFieldError('state')}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Postal Code"
+                value={venueFormData.location.postal_code}
+                onChange={(e) => setVenueFormData(prev => ({
+                  ...prev,
+                  location: { ...prev.location, postal_code: e.target.value }
+                }))}
+                error={hasFieldError('postal_code')}
+                helperText={getFieldError('postal_code')}
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Country"
+                value={venueFormData.location.country}
+                onChange={(e) => setVenueFormData(prev => ({
+                  ...prev,
+                  location: { ...prev.location, country: e.target.value }
+                }))}
+                disabled
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Landmark (Optional)"
+                value={venueFormData.location.landmark}
+                onChange={(e) => setVenueFormData(prev => ({
+                  ...prev,
+                  location: { ...prev.location, landmark: e.target.value }
+                }))}
+                placeholder="Near famous landmark or building..."
+              />
+            </Grid>
+            
+            {/* Contact Information */}
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                Contact Information
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Phone Number"
+                value={venueFormData.phone}
+                onChange={(e) => setVenueFormData(prev => ({ ...prev, phone: e.target.value }))}
+                error={hasFieldError('phone')}
+                helperText={getFieldError('phone') || 'Enter 10-digit phone number'}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Phone />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Email Address"
+                type="email"
+                value={venueFormData.email}
+                onChange={(e) => setVenueFormData(prev => ({ ...prev, email: e.target.value }))}
+                error={hasFieldError('email')}
+                helperText={getFieldError('email')}
+                required
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Email />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            
+            {/* Additional Settings */}
+            <Grid item xs={12}>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
+                Additional Settings
+              </Typography>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Price Range</InputLabel>
+                <Select
+                  value={venueFormData.priceRange}
+                  label="Price Range"
+                  onChange={(e) => setVenueFormData(prev => ({ ...prev, priceRange: e.target.value }))}
+                >
+                  {priceRangeOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+                <FormHelperText>Expected price range per person</FormHelperText>
+              </FormControl>
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={venueFormData.isActive}
+                      onChange={(e) => setVenueFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                      color="primary"
+                    />
+                  }
+                  label="Active Venue"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={venueFormData.isOpen}
+                      onChange={(e) => setVenueFormData(prev => ({ ...prev, isOpen: e.target.checked }))}
+                      color="success"
+                    />
+                  }
+                  label="Currently Open"
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 3, gap: 2 }}>
+          <Button
+            onClick={() => {
+              setOpenVenueDialog(false);
+              setEditingVenue(null);
+              setValidationErrors({});
+            }}
+            disabled={saving}
+            size="large"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              console.log('🎯 Create Venue button clicked');
+              console.log('📝 Form data:', venueFormData);
+              console.log('✏️ Editing venue:', editingVenue);
+              
+              if (!validateVenueForm()) {
+                console.log('❌ Form validation failed');
+                setSnackbar({
+                  open: true,
+                  message: 'Please fix the validation errors before saving',
+                  severity: 'error'
+                });
+                return;
+              }
+
+              try {
+                setSaving(true);
+                console.log('💾 Starting save process...');
+                
+                // Ensure workspace ID exists
+                const workspaceId = userData?.workspace?.id;
+                console.log('🏢 Workspace ID:', workspaceId);
+                if (!workspaceId) {
+                  throw new Error('No workspace selected. Please select a workspace first.');
+                }
+                
+                const venueData = {
+                  name: venueFormData.name,
+                  description: venueFormData.description,
+                  venue_type: venueFormData.venueType,
+                  location: venueFormData.location,
+                  phone: venueFormData.phone,
+                  email: venueFormData.email,
+                  price_range: venueFormData.priceRange as PriceRange,
+                  cuisine_types: [venueFormData.venueType], // Default to venue type as cuisine
+                  is_active: venueFormData.isActive,
+                  is_open: venueFormData.isOpen,
+                  workspace_id: workspaceId
+                };
+
+                console.log('📦 Venue data to send:', venueData);
+
+                if (editingVenue) {
+                  console.log('✏️ Updating existing venue...');
+                  // Update existing venue - only send updatable fields
+                  const updateData = {
+                    name: venueFormData.name,
+                    description: venueFormData.description,
+                    location: venueFormData.location,
+                    phone: venueFormData.phone,
+                    email: venueFormData.email,
+                    price_range: venueFormData.priceRange as PriceRange,
+                    is_active: venueFormData.isActive,
+                    is_open: venueFormData.isOpen,
+                  };
+                  console.log('📦 Update data:', updateData);
+                  const result = await venueService.updateVenue(editingVenue.id, updateData);
+                  console.log('✅ Update result:', result);
+                  setSnackbar({
+                    open: true,
+                    message: 'Venue updated successfully!',
+                    severity: 'success'
+                  });
+                } else {
+                  console.log('🆕 Creating new venue...');
+                  // Create new venue
+                  const result = await venueService.createVenue(venueData);
+                  console.log('✅ Create result:', result);
+                  setSnackbar({
+                    open: true,
+                    message: 'Venue created successfully!',
+                    severity: 'success'
+                  });
+                }
+
+                // Refresh venues list
+                await refreshWorkspaceVenues();
+                
+                // Refresh user data to get updated venue info
+                await refreshUserData();
+                
+                // Reset form data
+                setVenueFormData({
+                  name: '',
+                  description: '',
+                  venueType: 'restaurant',
+                  location: {
+                    address: '',
+                    city: '',
+                    state: '',
+                    country: 'India',
+                    postal_code: '',
+                    landmark: ''
+                  },
+                  phone: '',
+                  email: '',
+                  priceRange: 'mid_range',
+                  isActive: true,
+                  isOpen: true,
+                });
+                
+                // Close dialog
+                setOpenVenueDialog(false);
+                setEditingVenue(null);
+                setValidationErrors({});
+                
+              } catch (error: any) {
+                console.error('Error saving venue:', error);
+                setSnackbar({
+                  open: true,
+                  message: error.message || 'Failed to save venue',
+                  severity: 'error'
+                });
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving}
+            startIcon={saving ? <CircularProgress size={20} /> : <Add />}
+            size="large"
+          >
+            {saving ? 'Saving...' : (editingVenue ? 'Update Venue' : 'Create Venue')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Action Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => {
+          setAnchorEl(null);
+          setSelectedItem(null);
+        }}
+        PaperProps={{
+          sx: { minWidth: 200 }
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (selectedItem) {
+              // Populate form with existing venue data
+              setVenueFormData({
+                name: selectedItem.name || '',
+                description: selectedItem.description || '',
+                venueType: selectedItem.venue_type || 'restaurant',
+                location: {
+                  address: selectedItem.location?.address || '',
+                  city: selectedItem.location?.city || '',
+                  state: selectedItem.location?.state || '',
+                  country: selectedItem.location?.country || 'India',
+                  postal_code: selectedItem.location?.postal_code || '',
+                  landmark: selectedItem.location?.landmark || ''
+                },
+                phone: selectedItem.phone || '',
+                email: selectedItem.email || '',
+                priceRange: selectedItem.price_range || 'mid_range',
+                isActive: selectedItem.is_active ?? true,
+                isOpen: selectedItem.is_open ?? true,
+              });
+              setEditingVenue(selectedItem);
+              setOpenVenueDialog(true);
+            }
+            setAnchorEl(null);
+            setSelectedItem(null);
+          }}
+        >
+          <ListItemIcon>
+            <Edit fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit Venue</ListItemText>
+        </MenuItem>
+        
+        <MenuItem
+          onClick={() => {
+            // Toggle venue status
+            if (selectedItem) {
+              // Implementation for toggling venue status
+              console.log('Toggle venue status:', selectedItem);
+            }
+            setAnchorEl(null);
+            setSelectedItem(null);
+          }}
+        >
+          <ListItemIcon>
+            {selectedItem?.is_open ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+          </ListItemIcon>
+          <ListItemText>
+            {selectedItem?.is_open ? 'Close Venue' : 'Open Venue'}
+          </ListItemText>
+        </MenuItem>
+        
+        {canDeleteItems && (
+          <MenuItem
+            onClick={() => {
+              // Delete venue
+              if (selectedItem) {
+                // Implementation for deleting venue
+                console.log('Delete venue:', selectedItem);
+              }
+              setAnchorEl(null);
+              setSelectedItem(null);
+            }}
+            sx={{ color: 'error.main' }}
+          >
+            <ListItemIcon>
+              <Delete fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Delete Venue</ListItemText>
+          </MenuItem>
+        )}
+      </Menu>
 
       {/* Snackbar for notifications */}
       <Snackbar

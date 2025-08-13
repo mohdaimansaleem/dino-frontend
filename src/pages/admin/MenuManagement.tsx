@@ -352,6 +352,29 @@ const MenuManagement: React.FC = () => {
     setOpenCategoryDialog(true);
   };
 
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      const category = categories.find(cat => cat.id === categoryId);
+      
+      // Check if category has menu items
+      const itemsInCategory = menuItems.filter(item => item.category === categoryId);
+      if (itemsInCategory.length > 0) {
+        setSnackbar({ 
+          open: true, 
+          message: `Cannot delete category "${category?.name}": ${itemsInCategory.length} menu items are assigned to this category. Please reassign or delete items first.`, 
+          severity: 'error' 
+        });
+        return;
+      }
+      
+      await menuService.deleteMenuCategory(categoryId);
+      setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+      setSnackbar({ open: true, message: `Category "${category?.name}" deleted successfully`, severity: 'success' });
+    } catch (error) {
+      setSnackbar({ open: true, message: 'Failed to delete category', severity: 'error' });
+    }
+  };
+
   const handleSaveCategory = async (categoryData: Partial<CategoryType>) => {
     try {
       if (editingCategory) {
@@ -738,14 +761,24 @@ const MenuManagement: React.FC = () => {
                           {menuItems.filter(item => item.category === category.id).length} items
                         </Typography>
                       </Box>
-                      <IconButton 
-                        size="small" 
-                        onClick={() => handleEditCategory(category)}
-                        className="btn-responsive"
-                        sx={{ minWidth: 44, minHeight: 44 }}
-                      >
-                        <Edit fontSize="small" />
-                      </IconButton>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleEditCategory(category)}
+                          className="btn-responsive"
+                          sx={{ minWidth: 44, minHeight: 44 }}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleDeleteCategory(category.id)}
+                          className="btn-responsive"
+                          sx={{ minWidth: 44, minHeight: 44, color: 'error.main' }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
                     </Stack>
                   </CardContent>
                 </Card>
