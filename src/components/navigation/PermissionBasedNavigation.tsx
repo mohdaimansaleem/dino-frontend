@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import PermissionService from '../../services/permissionService';
 import PermissionGate from '../PermissionGate';
 import { usePermissions } from '../RoleBasedComponent';
+import { PERMISSIONS } from '../../types/auth';
 
 interface NavigationItem {
   id: string;
@@ -41,7 +42,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
       id: 'dashboard',
       label: 'Dashboard',
       path: '/admin',
-      permission: 'dashboard:view',
+      permission: PERMISSIONS.DASHBOARD_VIEW,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
@@ -53,7 +54,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
       id: 'orders',
       label: 'Orders',
       path: '/admin/orders',
-      permission: 'orders:view',
+      permission: PERMISSIONS.ORDERS_VIEW,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -64,7 +65,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'orders-active',
           label: 'Active Orders',
           path: '/admin/orders/active',
-          permission: 'orders:view',
+          permission: PERMISSIONS.ORDERS_VIEW,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -75,7 +76,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'orders-history',
           label: 'Order History',
           path: '/admin/orders/history',
-          permission: 'orders:view',
+          permission: PERMISSIONS.ORDERS_VIEW,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -86,7 +87,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'orders-create',
           label: 'New Order',
           path: '/admin/orders/create',
-          permission: 'orders:create',
+          permission: PERMISSIONS.ORDERS_CREATE,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -99,7 +100,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
       id: 'menu',
       label: 'Menu',
       path: '/admin/menu',
-      permission: 'menu:view',
+      permission: PERMISSIONS.MENU_VIEW,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -110,7 +111,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'menu-items',
           label: 'Menu Items',
           path: '/admin/menu/items',
-          permission: 'menu:view',
+          permission: PERMISSIONS.MENU_VIEW,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -121,7 +122,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'menu-categories',
           label: 'Categories',
           path: '/admin/menu/categories',
-          permission: 'menu:update',
+          permission: PERMISSIONS.MENU_UPDATE,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -134,7 +135,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
       id: 'tables',
       label: 'Tables',
       path: '/admin/tables',
-      permission: 'tables:view',
+      permission: PERMISSIONS.TABLES_VIEW,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -145,7 +146,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'tables-management',
           label: 'Table Management',
           path: '/admin/tables/management',
-          permission: 'tables:view',
+          permission: PERMISSIONS.TABLES_VIEW,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -156,7 +157,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'tables-qr',
           label: 'QR Codes',
           path: '/admin/tables/qr',
-          permission: 'tables:update',
+          permission: PERMISSIONS.TABLES_UPDATE,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
@@ -169,8 +170,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
       id: 'users',
       label: 'Users',
       path: '/admin/users',
-      permission: 'users:view',
-      roles: ['admin', 'superadmin'],
+      permission: PERMISSIONS.USERS_VIEW,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -181,7 +181,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'users-management',
           label: 'User Management',
           path: '/admin/users/management',
-          permission: 'users:view',
+          permission: PERMISSIONS.USERS_VIEW,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -192,8 +192,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'users-permissions',
           label: 'Permissions',
           path: '/admin/users/permissions',
-          permission: 'users:update',
-          roles: ['admin', 'superadmin'],
+          permission: PERMISSIONS.USERS_UPDATE,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -206,7 +205,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
       id: 'settings',
       label: 'Settings',
       path: '/admin/settings',
-      permission: 'settings:view',
+      permission: PERMISSIONS.SETTINGS_VIEW,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -218,7 +217,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'settings-general',
           label: 'General',
           path: '/admin/settings/general',
-          permission: 'settings:view',
+          permission: PERMISSIONS.SETTINGS_VIEW,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
@@ -229,7 +228,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
           id: 'settings-cafe',
           label: 'Restaurant Settings',
           path: '/admin/settings/cafe',
-          permission: 'settings:update',
+          permission: PERMISSIONS.SETTINGS_UPDATE,
           icon: (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -242,7 +241,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
       id: 'workspaces',
       label: 'Workspaces',
       path: '/admin/workspaces',
-      roles: ['superadmin'],
+      permission: PERMISSIONS.WORKSPACE_VIEW,
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />

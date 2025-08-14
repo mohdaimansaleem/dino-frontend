@@ -870,19 +870,6 @@ const MenuManagement: React.FC = () => {
             >
               Menu Categories
             </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<Add />}
-              onClick={handleAddCategory}
-              sx={{ 
-                minWidth: 'auto',
-                px: 2,
-                fontSize: '0.875rem'
-              }}
-            >
-              Add Category
-            </Button>
           </Box>
           
           {categories.length === 0 ? (

@@ -43,6 +43,8 @@ import { useAuth } from '../../../contexts/AuthContext';
 import PermissionService from '../../../services/permissionService';
 import { useUserData } from '../../../contexts/UserDataContext';
 import { venueService } from '../../../services/venueService';
+import { usePermissionCheck } from '../../PermissionGate';
+import { PERMISSIONS } from '../../../types/auth';
 
 interface MobileMenuProps {
   open: boolean;
@@ -76,6 +78,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   const [dinoAvatar, setDinoAvatar] = useState<string>('');
   const { userData } = useUserData();
   const { isAdmin, isSuperAdmin } = useAuth();
+  const { checkPermission } = usePermissionCheck();
   const [venueStatus, setVenueStatus] = useState<{
     isActive: boolean;
     isOpen: boolean;
@@ -565,216 +568,232 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               Quick Actions
             </Typography>
             <List sx={{ p: 0 }}>
-              {/* Admin Menu Items - Only show when logged in */}
+              {/* Admin Menu Items - Permission-based rendering */}
               {user && (
                 <>
                   {/* Dashboard */}
-                  <ListItem disablePadding sx={{ mb: 0.5 }}>
-                    <ListItemButton
-                      onClick={() => handleNavigate('/admin')}
-                      sx={{
-                        borderRadius: 1,
-                        minHeight: 44,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                        <Dashboard />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Dashboard"
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                          color: 'text.primary',
-                          fontSize: '0.875rem',
+                  {checkPermission(PERMISSIONS.DASHBOARD_VIEW) && (
+                    <ListItem disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => handleNavigate('/admin')}
+                        sx={{
+                          borderRadius: 1,
+                          minHeight: 44,
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
                         }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
+                      >
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                          <Dashboard />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Dashboard"
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontSize: '0.875rem',
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
 
                   {/* Orders */}
-                  <ListItem disablePadding sx={{ mb: 0.5 }}>
-                    <ListItemButton
-                      onClick={() => handleNavigate('/admin/orders')}
-                      sx={{
-                        borderRadius: 1,
-                        minHeight: 44,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                        <Assignment />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Orders"
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                          color: 'text.primary',
-                          fontSize: '0.875rem',
+                  {checkPermission(PERMISSIONS.ORDERS_VIEW) && (
+                    <ListItem disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => handleNavigate('/admin/orders')}
+                        sx={{
+                          borderRadius: 1,
+                          minHeight: 44,
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
                         }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
+                      >
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                          <Assignment />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Orders"
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontSize: '0.875rem',
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
 
                   {/* Menu */}
-                  <ListItem disablePadding sx={{ mb: 0.5 }}>
-                    <ListItemButton
-                      onClick={() => handleNavigate('/admin/menu')}
-                      sx={{
-                        borderRadius: 1,
-                        minHeight: 44,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                        <Restaurant />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Menu"
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                          color: 'text.primary',
-                          fontSize: '0.875rem',
+                  {checkPermission(PERMISSIONS.MENU_VIEW) && (
+                    <ListItem disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => handleNavigate('/admin/menu')}
+                        sx={{
+                          borderRadius: 1,
+                          minHeight: 44,
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
                         }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
+                      >
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                          <Restaurant />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Menu"
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontSize: '0.875rem',
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
 
                   {/* Tables */}
-                  <ListItem disablePadding sx={{ mb: 0.5 }}>
-                    <ListItemButton
-                      onClick={() => handleNavigate('/admin/tables')}
-                      sx={{
-                        borderRadius: 1,
-                        minHeight: 44,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                        <TableRestaurant />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Tables"
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                          color: 'text.primary',
-                          fontSize: '0.875rem',
+                  {checkPermission(PERMISSIONS.TABLES_VIEW) && (
+                    <ListItem disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => handleNavigate('/admin/tables')}
+                        sx={{
+                          borderRadius: 1,
+                          minHeight: 44,
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
                         }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
+                      >
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                          <TableRestaurant />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Tables"
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontSize: '0.875rem',
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
 
                   {/* Users */}
-                  <ListItem disablePadding sx={{ mb: 0.5 }}>
-                    <ListItemButton
-                      onClick={() => handleNavigate('/admin/users')}
-                      sx={{
-                        borderRadius: 1,
-                        minHeight: 44,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                        <People />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Users"
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                          color: 'text.primary',
-                          fontSize: '0.875rem',
+                  {checkPermission(PERMISSIONS.USERS_VIEW) && (
+                    <ListItem disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => handleNavigate('/admin/users')}
+                        sx={{
+                          borderRadius: 1,
+                          minHeight: 44,
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
                         }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
+                      >
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                          <People />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Users"
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontSize: '0.875rem',
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
 
                   {/* Permissions */}
-                  <ListItem disablePadding sx={{ mb: 0.5 }}>
-                    <ListItemButton
-                      onClick={() => handleNavigate('/admin/permissions')}
-                      sx={{
-                        borderRadius: 1,
-                        minHeight: 44,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                        <Security />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Permissions"
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                          color: 'text.primary',
-                          fontSize: '0.875rem',
+                  {checkPermission(PERMISSIONS.USERS_UPDATE) && (
+                    <ListItem disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => handleNavigate('/admin/permissions')}
+                        sx={{
+                          borderRadius: 1,
+                          minHeight: 44,
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
                         }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
+                      >
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                          <Security />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Permissions"
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontSize: '0.875rem',
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
 
                   {/* Settings */}
-                  <ListItem disablePadding sx={{ mb: 0.5 }}>
-                    <ListItemButton
-                      onClick={() => handleNavigate('/admin/settings')}
-                      sx={{
-                        borderRadius: 1,
-                        minHeight: 44,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                        <Settings />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Settings"
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                          color: 'text.primary',
-                          fontSize: '0.875rem',
+                  {checkPermission(PERMISSIONS.SETTINGS_VIEW) && (
+                    <ListItem disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => handleNavigate('/admin/settings')}
+                        sx={{
+                          borderRadius: 1,
+                          minHeight: 44,
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
                         }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
+                      >
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                          <Settings />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Settings"
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontSize: '0.875rem',
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
 
                   {/* Workspace */}
-                  <ListItem disablePadding sx={{ mb: 0.5 }}>
-                    <ListItemButton
-                      onClick={() => handleNavigate('/admin/workspace')}
-                      sx={{
-                        borderRadius: 1,
-                        minHeight: 44,
-                        '&:hover': {
-                          backgroundColor: 'action.hover',
-                        },
-                      }}
-                    >
-                      <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
-                        <Business />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Workspace"
-                        primaryTypographyProps={{
-                          fontWeight: 500,
-                          color: 'text.primary',
-                          fontSize: '0.875rem',
+                  {checkPermission(PERMISSIONS.WORKSPACE_VIEW) && (
+                    <ListItem disablePadding sx={{ mb: 0.5 }}>
+                      <ListItemButton
+                        onClick={() => handleNavigate('/admin/workspace')}
+                        sx={{
+                          borderRadius: 1,
+                          minHeight: 44,
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
                         }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
+                      >
+                        <ListItemIcon sx={{ color: 'text.secondary', minWidth: 36 }}>
+                          <Business />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Workspace"
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            color: 'text.primary',
+                            fontSize: '0.875rem',
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
                 </>
               )}
 
