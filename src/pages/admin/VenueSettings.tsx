@@ -67,6 +67,7 @@ import {
   Phone,
   Email,
   Web,
+  Refresh,
 } from '@mui/icons-material';
 import { venueService } from '../../services/venueService';
 import { useUserData } from '../../contexts/UserDataContext';
@@ -405,6 +406,31 @@ const VenueSettings: React.FC = () => {
         message: `Failed to update venue status: ${error instanceof Error ? error.message : 'Unknown error'}`, 
         severity: 'error' 
       });
+    }
+  };
+
+  const handleRefreshSettings = async () => {
+    try {
+      setLoading(true);
+      console.log('Refreshing venue settings...');
+      
+      // Refresh user data to get latest venue information
+      await refreshUserData();
+      
+      setSnackbar({
+        open: true,
+        message: 'Settings refreshed successfully',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error refreshing settings:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to refresh settings. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 

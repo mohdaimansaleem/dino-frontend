@@ -114,8 +114,25 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       // Example: Send to error reporting service
       // Sentry.captureException(error, { extra: errorDetails });
       
-      // For now, just log to console
-      console.error('Error reported:', errorDetails);
+      // Send to analytics or error reporting endpoint
+      try {
+        fetch('/api/errors', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...errorDetails,
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            url: window.location.href,
+          }),
+        }).catch(() => {
+          // Silently fail if error reporting fails
+        });
+      } catch {
+        // Silently fail if error reporting fails
+      }
     }
   };
 

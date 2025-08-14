@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
@@ -7,11 +7,11 @@ import { UserDataProvider } from './contexts/UserDataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { TourProvider } from './contexts/TourContext';
 import { validatePasswordHashingSetup } from './utils/passwordValidation';
 
 // Public Pages
 import HomePage from './pages/HomePage';
-import ContactPage from './pages/ContactPage';
 
 // RegistrationPage now imported from LazyComponents
 import LoginPage from './pages/LoginPage';
@@ -20,6 +20,8 @@ import LoginPage from './pages/LoginPage';
 import MenuPage from './pages/MenuPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
+
+
 
 // Lazy-loaded components for better performance
 import { LazyComponents } from './components/LazyLoadingComponents';
@@ -41,10 +43,11 @@ import { config, isDevelopment } from './config/environment';
 import { StorageCleanup } from './utils/storageCleanup';
 import { tokenRefreshScheduler } from './utils/tokenRefreshScheduler';
 import { apiService } from './services/api';
+import { initializePerformanceMonitoring } from './utils/performance';
 
 // Debug configuration in development
 if (isDevelopment()) {
-  console.log('🔧 Development mode enabled');
+  logger.debug('Development mode enabled');
 }
 
 // Simple loading fallback for lazy components
@@ -65,7 +68,7 @@ function App() {
   // Validate password hashing setup and cleanup storage on app startup
   useEffect(() => {
     try {
-      // Clean up demo and legacy data from localStorage
+      // Clean up legacy data from localStorage
       StorageCleanup.performCompleteCleanup();
       logger.info('Storage cleanup completed successfully');
       
@@ -83,6 +86,10 @@ function App() {
         
         tokenRefreshScheduler.start();
         logger.info('Token refresh scheduler initialized');
+        
+        // Initialize performance monitoring
+        initializePerformanceMonitoring();
+        logger.info('Performance monitoring initialized');
       }
     } catch (error) {
       logger.error('CRITICAL: App initialization failed:', error);
@@ -98,109 +105,127 @@ function App() {
       <ThemeProvider>
         <ToastProvider>
           <AuthProvider>
-            <PermissionSync autoRefreshInterval={0} showSyncStatus={false}>
-              <UserDataProvider>
-                <AppInitializer>
-                  <WorkspaceProvider>
-                    <NotificationProvider>
-                      <CartProvider>
-                        <Layout>
+            <TourProvider>
+              <PermissionSync autoRefreshInterval={0} showSyncStatus={false}>
+                <UserDataProvider>
+                  <AppInitializer>
+                    <WorkspaceProvider>
+                      <NotificationProvider>
+                        <CartProvider>
               <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<HomePage />} />
-                <Route path="/home" element={<HomePage />} />
-                <Route path="/contact" element={<ContactPage />} />
+                {/* Routes with Layout */}
+                <Route path="/" element={<Layout><HomePage /></Layout>} />
+                <Route path="/home" element={<Layout><HomePage /></Layout>} />
+
                 <Route path="/register" element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    <LazyComponents.RegistrationPage.component />
-                  </Suspense>
+                  <Layout>
+                    <Suspense fallback={<LoadingFallback />}>
+                      {React.createElement(LazyComponents.RegistrationPage.component)}
+                    </Suspense>
+                  </Layout>
                 } />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/menu/:venueId/:tableId" element={<MenuPage />} />
-                <Route path="/checkout/:venueId/:tableId" element={<CheckoutPage />} />
-                <Route path="/order-tracking/:orderId" element={<OrderTrackingPage />} />
-                <Route path="/order/:orderId" element={<OrderTrackingPage />} />
+                <Route path="/login" element={<Layout><LoginPage /></Layout>} />
+                <Route path="/menu/:venueId/:tableId" element={<Layout><MenuPage /></Layout>} />
+                <Route path="/checkout/:venueId/:tableId" element={<Layout><CheckoutPage /></Layout>} />
+                <Route path="/order-tracking/:orderId" element={<Layout><OrderTrackingPage /></Layout>} />
+                <Route path="/order/:orderId" element={<Layout><OrderTrackingPage /></Layout>} />
                 
-                {/* Development/Testing Routes - Only available in development */}
-                {isDevelopment() && (
-                  <Route path="/test-password-hashing" element={<div>Test route only available in development</div>} />
-                )}
+
+
                 
                 {/* Protected User Routes */}
                 <Route path="/profile" element={
-                  <ProtectedRoute>
-                    <UserProfile />
-                  </ProtectedRoute>
+                  <Layout>
+                    <ProtectedRoute>
+                      <UserProfile />
+                    </ProtectedRoute>
+                  </Layout>
                 } />
                 
                 {/* Admin Routes - Role-based access control */}
                 <Route path="/admin" element={
-                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.DASHBOARD_VIEW]}>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LazyComponents.AdminDashboard.component />
-                    </Suspense>
-                  </RoleProtectedRoute>
+                  <Layout>
+                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.DASHBOARD_VIEW]}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        {React.createElement(LazyComponents.AdminDashboard.component)}
+                      </Suspense>
+                    </RoleProtectedRoute>
+                  </Layout>
                 } />
                 <Route path="/admin/orders" element={
-                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.ORDERS_VIEW]}>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LazyComponents.OrdersManagement.component />
-                    </Suspense>
-                  </RoleProtectedRoute>
+                  <Layout>
+                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.ORDERS_VIEW]}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        {React.createElement(LazyComponents.OrdersManagement.component)}
+                      </Suspense>
+                    </RoleProtectedRoute>
+                  </Layout>
                 } />
                 <Route path="/admin/menu" element={
-                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.MENU_VIEW]}>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LazyComponents.MenuManagement.component />
-                    </Suspense>
-                  </RoleProtectedRoute>
+                  <Layout>
+                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.MENU_VIEW]}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        {React.createElement(LazyComponents.MenuManagement.component)}
+                      </Suspense>
+                    </RoleProtectedRoute>
+                  </Layout>
                 } />
                 <Route path="/admin/tables" element={
-                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.TABLES_VIEW]}>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LazyComponents.TableManagement.component />
-                    </Suspense>
-                  </RoleProtectedRoute>
+                  <Layout>
+                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.TABLES_VIEW]}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        {React.createElement(LazyComponents.TableManagement.component)}
+                      </Suspense>
+                    </RoleProtectedRoute>
+                  </Layout>
                 } />
                 <Route path="/admin/settings" element={
-                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.SETTINGS_VIEW]}>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LazyComponents.VenueSettings.component />
-                    </Suspense>
-                  </RoleProtectedRoute>
+                  <Layout>
+                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.SETTINGS_VIEW]}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        {React.createElement(LazyComponents.VenueSettings.component)}
+                      </Suspense>
+                    </RoleProtectedRoute>
+                  </Layout>
                 } />
                 <Route path="/admin/users" element={
-                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LazyComponents.UserManagement.component />
-                    </Suspense>
-                  </RoleProtectedRoute>
+                  <Layout>
+                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        {React.createElement(LazyComponents.UserManagement.component)}
+                      </Suspense>
+                    </RoleProtectedRoute>
+                  </Layout>
                 } />
                 <Route path="/admin/workspace" element={
-                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.WORKSPACE_VIEW]}>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LazyComponents.WorkspaceManagement.component />
-                    </Suspense>
-                  </RoleProtectedRoute>
+                  <Layout>
+                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.WORKSPACE_VIEW]}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        {React.createElement(LazyComponents.WorkspaceManagement.component)}
+                      </Suspense>
+                    </RoleProtectedRoute>
+                  </Layout>
                 } />
                 <Route path="/admin/permissions" element={
-                  <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <LazyComponents.UserPermissionsDashboard.component />
-                    </Suspense>
-                  </RoleProtectedRoute>
+                  <Layout>
+                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        {React.createElement(LazyComponents.UserPermissionsDashboard.component)}
+                      </Suspense>
+                    </RoleProtectedRoute>
+                  </Layout>
                 } />
                 
-                {/* Catch all route - 404 Page */}
+                {/* Standalone 404 Page - No Layout */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
-                        </Layout>
-                      </CartProvider>
-                    </NotificationProvider>
-                  </WorkspaceProvider>
-                </AppInitializer>
-              </UserDataProvider>
-            </PermissionSync>
+                        </CartProvider>
+                      </NotificationProvider>
+                    </WorkspaceProvider>
+                  </AppInitializer>
+                </UserDataProvider>
+              </PermissionSync>
+            </TourProvider>
           </AuthProvider>
         </ToastProvider>
       </ThemeProvider>

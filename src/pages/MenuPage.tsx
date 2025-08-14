@@ -11,8 +11,6 @@ import {
   TextField,
   IconButton,
   Paper,
-  Alert,
-  Skeleton,
   Rating,
   Badge,
   useMediaQuery,
@@ -43,68 +41,21 @@ import {
   NewReleases,
   LocalOffer,
   Timer,
-  TrendingUp,
-  CheckCircle,
-  ExpandMore,
-  ExpandLess,
   FilterList,
   Clear,
-  Info,
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useTheme } from '@mui/material/styles';
-import { useAuth } from '../contexts/AuthContext';
-import { canUserAccessVenue, debugVenueAssignment } from '../utils/venueUtils';
-import { useUserData } from '../contexts/UserDataContext';
+
 import { MenuItem } from '../types';
 import CustomerNavbar from '../components/CustomerNavbar';
-import { menuService } from '../services/menuService';
-import { Venue } from '../types/api';
-import { venueService } from '../services/venueService';
-import { tableService } from '../services/tableService';
 import VenueNotAcceptingOrdersPage from '../components/VenueNotAcceptingOrdersPage';
+import { SmartLoading } from '../components/ui/LoadingStates';
+import { MenuError } from '../components/ErrorStates';
+import { useMenuData, type MenuItemType } from '../hooks/useMenuData';
 
-// Enhanced interfaces
-interface MenuItemType {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  category: string;
-  image: string;
-  calories?: number;
-  spicyLevel?: number;
-  isVeg?: boolean;
-  rating?: number;
-  reviewCount?: number;
-  originalPrice?: number;
-  discount?: number;
-  preparationTime: number;
-  isAvailable: boolean;
-  isPopular?: boolean;
-  isNew?: boolean;
-  isTrending?: boolean;
-  nutritionInfo?: {
-    protein?: number;
-    carbs?: number;
-    fat?: number;
-  };
-  allergens?: string[];
-  customizations?: string[];
-}
-
-interface CategoryType {
-  id: string;
-  name: string;
-  description: string;
-  order: number;
-  active: boolean;
-  icon?: string;
-  color?: string;
-  image?: string;
-  itemCount?: number;
-}
+// Enhanced interfaces - now imported from the hook
 
 // Constants
 const VEG_FILTERS = {
@@ -192,25 +143,25 @@ const MenuPage: React.FC = () => {
   const { venueId, tableId } = useParams<{ venueId: string; tableId: string }>();
   const navigate = useNavigate();
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { addItem, removeItem, updateQuantity, items: cartItems, getTotalItems, getTotalAmount } = useCart();
-  const { user } = useAuth();
-  const { userData } = useUserData();
+  const { addItem, items: cartItems, getTotalItems } = useCart();
 
-  // State management
-  const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
-  const [categories, setCategories] = useState<CategoryType[]>([]);
-  const [restaurant, setRestaurant] = useState<Venue | null>(null);
-  const [tableName, setTableName] = useState<string>('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [venueNotAcceptingOrders, setVenueNotAcceptingOrders] = useState<{
-    show: boolean;
-    venueName?: string;
-    venueStatus?: string;
-    message?: string;
-  }>({ show: false });
+  // Use the new menu data hook
+  const {
+    menuItems,
+    categories,
+    restaurant,
+    tableName,
+    loading,
+    error,
+    venueNotAcceptingOrders,
+    refetch,
+  } = useMenuData({
+    venueId,
+    tableId,
+    enableAutoRefresh: true,
+    refreshInterval: 60000, // 1 minute auto-refresh
+  });
 
   // UI state
   const [searchQuery, setSearchQuery] = useState('');
@@ -224,236 +175,123 @@ const MenuPage: React.FC = () => {
   const categoryRefs = useRef<Record<string, HTMLElement | null>>({});
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Desktop restriction check
-  const isDesktopRestricted = useMediaQuery(theme.breakpoints.up('lg'));
+  // Desktop restriction check - more lenient for tablets
+  const isDesktopRestricted = useMediaQuery(theme.breakpoints.up('xl')); // Only restrict on very large screens
 
-  // Desktop restriction component
-  const DesktopRestrictionOverlay = () => (
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: alpha('#000000', 0.8),
-        backdropFilter: 'blur(10px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: 3,
-      }}
-    >
-      <Paper
+  // Enhanced Desktop restriction component with better mobile detection
+  const DesktopRestrictionOverlay = () => {
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
+    // Don't show restriction if it's a touch device (tablet/touch laptop)
+    if (isTouchDevice) return null;
+
+    return (
+      <Box
         sx={{
-          maxWidth: 480,
-          p: 4,
-          textAlign: 'center',
-          borderRadius: 0,
-          background: theme.palette.background.paper,
-          boxShadow: theme.shadows[24],
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: alpha('#000000', 0.85),
+          backdropFilter: 'blur(10px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: { xs: 2, sm: 3 },
         }}
       >
-        <Box sx={{ mb: 3 }}>
-          <Avatar
-            sx={{
-              width: 64,
-              height: 64,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              mx: 'auto',
-              mb: 2,
-            }}
-          >
-            <Restaurant sx={{ fontSize: 32 }} />
-          </Avatar>
-          <Typography variant="h5" fontWeight="600" sx={{ mb: 2 }}>
-            Mobile Ordering Only
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-            For the best dining experience, please use your mobile device to browse our menu and place orders.
-          </Typography>
-        </Box>
-
-        <Box
+        <Paper
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
-            p: 2,
-            backgroundColor: alpha(theme.palette.primary.main, 0.04),
-            borderRadius: 0,
-            mb: 3,
+            maxWidth: { xs: '100%', sm: 480 },
+            p: { xs: 3, sm: 4 },
+            textAlign: 'center',
+            borderRadius: 2,
+            background: theme.palette.background.paper,
+            boxShadow: theme.shadows[24],
           }}
         >
+          <Box sx={{ mb: 3 }}>
+            <Avatar
+              sx={{
+                width: { xs: 56, sm: 64 },
+                height: { xs: 56, sm: 64 },
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                mx: 'auto',
+                mb: 2,
+              }}
+            >
+              <Restaurant sx={{ fontSize: { xs: 28, sm: 32 } }} />
+            </Avatar>
+            <Typography variant="h5" fontWeight="600" sx={{ mb: 2, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+              Mobile Ordering Experience
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+              Our menu is optimized for mobile devices to provide the best ordering experience. 
+              Please use your smartphone or tablet to browse and order.
+            </Typography>
+          </Box>
+
           <Box
             sx={{
-              width: 32,
-              height: 48,
-              borderRadius: 0,
-              border: `2px solid ${theme.palette.primary.main}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              position: 'relative',
+              gap: 2,
+              p: 2,
+              backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              borderRadius: 2,
+              mb: 3,
             }}
           >
             <Box
               sx={{
-                width: 16,
-                height: 24,
-                backgroundColor: theme.palette.primary.main,
-                borderRadius: 0,
+                width: 28,
+                height: 42,
+                borderRadius: 1,
+                border: `2px solid ${theme.palette.primary.main}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
               }}
-            />
+            >
+              <Box
+                sx={{
+                  width: 14,
+                  height: 20,
+                  backgroundColor: theme.palette.primary.main,
+                  borderRadius: 0.5,
+                }}
+              />
+            </Box>
+            <Typography variant="body2" color="primary" fontWeight="500">
+              Scan QR code or visit on mobile device
+            </Typography>
           </Box>
-          <Typography variant="body2" color="primary" fontWeight="500">
-            Scan QR code or visit on mobile
+
+          <Stack spacing={1} sx={{ textAlign: 'left', mb: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              • Faster ordering process
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              • Touch-optimized interface
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              • Real-time order updates
+            </Typography>
+          </Stack>
+
+          <Typography variant="caption" color="text.secondary">
+            Need assistance? Please ask your server for help
           </Typography>
-        </Box>
-
-        <Typography variant="caption" color="text.secondary">
-          Need help? Ask your server for assistance
-        </Typography>
-      </Paper>
-    </Box>
-  );
-
-  // Data loading
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        if (!venueId) {
-          throw new Error('Venue ID is required');
-        }
-
-        // Validate venue access
-        debugVenueAssignment(userData, user, 'MenuPage');
-        
-        if (user && !canUserAccessVenue(userData, user, venueId)) {
-          console.warn('⚠️ User may not have access to this venue, but continuing with public access');
-        }
-
-        // Load table information
-        if (tableId) {
-          try {
-            const tableData = await tableService.getTable(tableId);
-            if (tableData) {
-              setTableName(tableData.table_number || tableData.id);
-            } else {
-              setTableName(tableId);
-            }
-          } catch (tableError) {
-            console.warn('Failed to load table data:', tableError);
-            setTableName(tableId);
-          }
-        }
-
-        // Load venue data
-        console.log('🔄 Loading venue data for ID:', venueId);
-        const venueData = await venueService.getPublicVenue(venueId);
-        if (venueData) {
-          setRestaurant(venueData);
-          console.log('✅ Venue loaded successfully:', venueData.name);
-        } else {
-          console.error('❌ Venue not found for ID:', venueId);
-          throw new Error('Restaurant not found. Please check the QR code or link.');
-        }
-
-        // Load categories and menu items with validation
-        try {
-          const categoriesData = await menuService.getVenueCategories(venueId, tableId);
-          const menuData = await menuService.getVenueMenuItems(venueId, undefined, tableId);
-
-          if (categoriesData.length > 0 && menuData.length > 0) {
-            const mappedMenuItems: MenuItemType[] = menuData.map((item) => ({
-              id: item.id,
-              name: item.name,
-              description: item.description || '',
-              price: item.base_price,
-              category: item.category_id,
-              image: item.image_urls?.[0] || '',
-              isAvailable: item.is_available,
-              preparationTime: item.preparation_time_minutes || Math.floor(Math.random() * 20) + 10,
-              calories: Math.floor(Math.random() * 400) + 200,
-              spicyLevel: !item.is_vegetarian ? Math.floor(Math.random() * 4) : Math.floor(Math.random() * 3),
-              isVeg: item.is_vegetarian || false,
-              rating: Math.round((Math.random() * 1.5 + 3.5) * 10) / 10,
-              reviewCount: Math.floor(Math.random() * 200) + 10,
-              isPopular: Math.random() > 0.7,
-              isNew: Math.random() > 0.85,
-              isTrending: Math.random() > 0.8,
-              originalPrice: Math.random() > 0.8 ? Math.floor(item.base_price * 1.2) : undefined,
-              discount: Math.random() > 0.8 ? Math.floor(Math.random() * 20) + 10 : undefined,
-              nutritionInfo: {
-                protein: Math.floor(Math.random() * 30) + 5,
-                carbs: Math.floor(Math.random() * 50) + 10,
-                fat: Math.floor(Math.random() * 20) + 2,
-              },
-              allergens: Math.random() > 0.7 ? ['Nuts', 'Dairy'].slice(0, Math.floor(Math.random() * 2) + 1) : [],
-              customizations: Math.random() > 0.6 ? ['Extra Spicy', 'Less Oil', 'No Onion'].slice(0, Math.floor(Math.random() * 3) + 1) : [],
-            }));
-
-            const mappedCategories: CategoryType[] = categoriesData.map((cat, index) => ({
-              id: cat.id,
-              name: cat.name,
-              description: cat.description || '',
-              order: index + 1,
-              active: cat.is_active,
-              icon: getCategoryIcon(cat.name),
-              itemCount: mappedMenuItems.filter(item => item.category === cat.id).length,
-            }));
-
-            setCategories(mappedCategories);
-            setMenuItems(mappedMenuItems);
-          } else {
-            setCategories([]);
-            setMenuItems([]);
-          }
-        } catch (menuError: any) {
-          console.warn('Failed to load menu data from API:', menuError);
-          
-          // Check if it's a venue not accepting orders error
-          if (menuError.type === 'venue_not_accepting_orders') {
-            setVenueNotAcceptingOrders({
-              show: true,
-              venueName: menuError.venueName,
-              message: menuError.message
-            });
-            return; // Don't set error, show the special page instead
-          }
-          
-          setCategories([]);
-          setMenuItems([]);
-        }
-
-      } catch (err: any) {
-        console.error('Error loading menu data:', err);
-        setError(`Failed to load menu: ${err.message || 'Please try again.'}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, [venueId, tableId]);
-
-  // Helper functions
-  const getCategoryIcon = (categoryName: string): string => {
-    const name = categoryName.toLowerCase();
-    if (name.includes('starter') || name.includes('appetizer')) return '🥗';
-    if (name.includes('main') || name.includes('curry')) return '🍛';
-    if (name.includes('dessert') || name.includes('sweet')) return '🍰';
-    if (name.includes('drink') || name.includes('beverage')) return '🥤';
-    if (name.includes('pizza')) return '🍕';
-    if (name.includes('burger')) return '🍔';
-    if (name.includes('noodle') || name.includes('pasta')) return '🍜';
-    if (name.includes('rice')) return '🍚';
-    if (name.includes('bread') || name.includes('roti')) return '🍞';
-    return '🍽️';
+        </Paper>
+      </Box>
+    );
   };
+
+  // Data loading is now handled by the useMenuData hook
 
   const sortMenuItems = (items: MenuItemType[]) => {
     return [...items].sort((a, b) => {
@@ -555,8 +393,6 @@ const MenuPage: React.FC = () => {
     setSortBy(SORT_OPTIONS.POPULAR);
   };
 
-  const formatPrice = (price: number) => `₹${price}`;
-
   // Loading state
   if (loading) {
     return (
@@ -573,23 +409,10 @@ const MenuPage: React.FC = () => {
         />
         
         <Container maxWidth="lg" sx={{ py: 3 }}>
-          <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 0, mb: 3 }} />
-          <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 0, mb: 3 }} />
-          
-          <Grid container spacing={3}>
-            {[...Array(6)].map((_, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
-                <Card sx={{ height: 320 }}>
-                  <Skeleton variant="rectangular" height={180} />
-                  <CardContent>
-                    <Skeleton variant="text" height={24} />
-                    <Skeleton variant="text" height={20} width="60%" />
-                    <Skeleton variant="text" height={20} width="40%" />
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+          <SmartLoading 
+            type="menu" 
+            message="Loading delicious menu items for you..."
+          />
         </Container>
       </Box>
     );
@@ -603,8 +426,7 @@ const MenuPage: React.FC = () => {
         venueStatus={venueNotAcceptingOrders.venueStatus}
         message={venueNotAcceptingOrders.message}
         onRetry={() => {
-          setVenueNotAcceptingOrders({ show: false });
-          window.location.reload();
+          refetch();
         }}
         showRetry={true}
       />
@@ -617,43 +439,33 @@ const MenuPage: React.FC = () => {
       <Box sx={{ 
         minHeight: '100vh', 
         backgroundColor: theme.palette.background.default,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         pt: { xs: '56px', sm: '64px' },
-        px: { xs: 2, sm: 3 }
       }}>
         <CustomerNavbar 
-          restaurantName="Error"
+          restaurantName="Menu Error"
           tableId={tableId}
           showBackButton={false}
           showCart={false}
         />
-        <Paper sx={{ p: 4, textAlign: 'center', maxWidth: 500 }}>
-          <Restaurant sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
-          <Typography variant="h5" gutterBottom fontWeight="600">
-            Oops! Something went wrong
-          </Typography>
-          <Alert severity="error" sx={{ mb: 3, textAlign: 'left' }}>
-            {error}
-          </Alert>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
-            <Button 
-              variant="contained" 
-              onClick={() => window.location.reload()}
-              sx={{ minWidth: 120 }}
-            >
-              Try Again
-            </Button>
-            <Button 
-              variant="outlined" 
-              onClick={() => navigate('/')}
-              sx={{ minWidth: 120 }}
-            >
-              Go Home
-            </Button>
-          </Stack>
-        </Paper>
+        
+        <Container maxWidth="lg" sx={{ py: 3 }}>
+          <Box sx={{ 
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '60vh',
+          }}>
+            <MenuError
+              venueId={venueId}
+              tableId={tableId}
+              message={error}
+              onRetry={refetch}
+              onGoHome={() => navigate('/')}
+              showRetry={true}
+              showGoHome={true}
+            />
+          </Box>
+        </Container>
       </Box>
     );
   }
@@ -731,38 +543,48 @@ const MenuPage: React.FC = () => {
       <Container maxWidth="lg" sx={{ mt: 3, mb: 2 }}>
         <SearchCard>
           <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={8}>
-                <TextField
-                  fullWidth
-                  size="medium"
-                  placeholder="Search dishes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search sx={{ color: 'text.secondary' }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: searchQuery && (
-                      <InputAdornment position="end">
-                        <IconButton size="small" onClick={() => setSearchQuery('')}>
-                          <Clear />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
+            {/* Mobile-first layout */}
+            <Stack spacing={2}>
+              {/* Search Bar */}
+              <TextField
+                fullWidth
+                size={isMobile ? "small" : "medium"}
+                placeholder="Search dishes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ color: 'text.secondary' }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: searchQuery && (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setSearchQuery('')}>
+                        <Clear />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
               
-              <Grid item xs={12} md={4}>
-                <Stack direction="row" spacing={1} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
+              {/* Filter Buttons */}
+              <Box sx={{ 
+                display: 'flex', 
+                flexWrap: 'wrap',
+                gap: 1,
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <Stack direction="row" spacing={1} sx={{ flex: 1, minWidth: 0 }}>
                   <Button
                     variant={vegFilter === VEG_FILTERS.ALL ? 'contained' : 'outlined'}
                     onClick={() => setVegFilter(VEG_FILTERS.ALL)}
-                    size="small"
-                    sx={{ minWidth: 60 }}
+                    size={isMobile ? "small" : "medium"}
+                    sx={{ 
+                      minWidth: { xs: 50, sm: 60 },
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                    }}
                   >
                     All
                   </Button>
@@ -770,17 +592,18 @@ const MenuPage: React.FC = () => {
                   <Button
                     variant={vegFilter === VEG_FILTERS.VEG ? 'contained' : 'outlined'}
                     onClick={() => setVegFilter(VEG_FILTERS.VEG)}
-                    size="small"
+                    size={isMobile ? "small" : "medium"}
                     startIcon={
                       <Box sx={{ 
-                        width: 6, 
-                        height: 6, 
+                        width: { xs: 4, sm: 6 }, 
+                        height: { xs: 4, sm: 6 }, 
                         borderRadius: '50%', 
                         backgroundColor: '#4CAF50',
                       }} />
                     }
                     sx={{ 
-                      minWidth: 60,
+                      minWidth: { xs: 50, sm: 60 },
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
                       color: vegFilter === VEG_FILTERS.VEG ? 'white' : '#4CAF50',
                       borderColor: '#4CAF50',
                       backgroundColor: vegFilter === VEG_FILTERS.VEG ? '#4CAF50' : 'transparent',
@@ -796,16 +619,17 @@ const MenuPage: React.FC = () => {
                   <Button
                     variant={vegFilter === VEG_FILTERS.NON_VEG ? 'contained' : 'outlined'}
                     onClick={() => setVegFilter(VEG_FILTERS.NON_VEG)}
-                    size="small"
+                    size={isMobile ? "small" : "medium"}
                     startIcon={
                       <Box sx={{ 
-                        width: 6, 
-                        height: 6, 
+                        width: { xs: 4, sm: 6 }, 
+                        height: { xs: 4, sm: 6 }, 
                         backgroundColor: '#F44336',
                       }} />
                     }
                     sx={{ 
-                      minWidth: 80,
+                      minWidth: { xs: 60, sm: 80 },
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
                       color: vegFilter === VEG_FILTERS.NON_VEG ? 'white' : '#F44336',
                       borderColor: '#F44336',
                       backgroundColor: vegFilter === VEG_FILTERS.NON_VEG ? '#F44336' : 'transparent',
@@ -815,21 +639,23 @@ const MenuPage: React.FC = () => {
                       }
                     }}
                   >
-                    Non-Veg
+                    {isMobile ? 'Non-Veg' : 'Non-Veg'}
                   </Button>
-
-                  <IconButton 
-                    onClick={() => setShowFilters(!showFilters)}
-                    sx={{ 
-                      border: `1px solid ${theme.palette.grey[300]}`,
-                      borderRadius: 0,
-                    }}
-                  >
-                    <FilterList />
-                  </IconButton>
                 </Stack>
-              </Grid>
-            </Grid>
+
+                <IconButton 
+                  onClick={() => setShowFilters(!showFilters)}
+                  size={isMobile ? "small" : "medium"}
+                  sx={{ 
+                    border: `1px solid ${theme.palette.grey[300]}`,
+                    borderRadius: 1,
+                    flexShrink: 0,
+                  }}
+                >
+                  <FilterList fontSize={isMobile ? "small" : "medium"} />
+                </IconButton>
+              </Box>
+            </Stack>
 
             {/* Advanced Filters */}
             <Collapse in={showFilters}>
@@ -874,24 +700,30 @@ const MenuPage: React.FC = () => {
 
       {/* Category Navigation */}
       <Box sx={{ 
-        py: 2, 
+        py: { xs: 1.5, sm: 2 }, 
         borderBottom: `1px solid ${theme.palette.grey[200]}`,
         backgroundColor: theme.palette.background.paper,
         position: 'sticky',
-        top: 64,
+        top: { xs: 56, sm: 64 },
         zIndex: 10,
       }}>
         <Container maxWidth="lg">
           <Box sx={{
             display: 'flex',
             overflowX: 'auto',
-            gap: 2,
+            gap: { xs: 1, sm: 2 },
             pb: 1,
-            '&::-webkit-scrollbar': { height: 4 },
+            px: { xs: 0.5, sm: 0 },
+            '&::-webkit-scrollbar': { height: { xs: 2, sm: 4 } },
             '&::-webkit-scrollbar-track': { backgroundColor: theme.palette.grey[100] },
             '&::-webkit-scrollbar-thumb': { 
               backgroundColor: theme.palette.grey[400],
-              borderRadius: 0,
+              borderRadius: 2,
+            },
+            // Add scroll snap for better mobile experience
+            scrollSnapType: 'x mandatory',
+            '& > *': {
+              scrollSnapAlign: 'start',
             },
           }}>
             {groupedMenuItems.map((category) => (
@@ -899,15 +731,19 @@ const MenuPage: React.FC = () => {
                 key={category.id}
                 active={activeCategory === category.id}
                 onClick={() => handleCategoryClick(category.id)}
+                sx={{
+                  minWidth: { xs: 70, sm: 80 },
+                  p: { xs: 1, sm: 1.5 },
+                }}
               >
                 <Avatar
                   sx={{
-                    width: 40,
-                    height: 40,
+                    width: { xs: 32, sm: 40 },
+                    height: { xs: 32, sm: 40 },
                     backgroundColor: activeCategory === category.id ? 'primary.main' : 'grey.100',
                     color: activeCategory === category.id ? 'white' : 'text.secondary',
-                    fontSize: '1.2rem',
-                    mb: 1,
+                    fontSize: { xs: '1rem', sm: '1.2rem' },
+                    mb: { xs: 0.5, sm: 1 },
                   }}
                 >
                   {category.icon}
@@ -918,8 +754,13 @@ const MenuPage: React.FC = () => {
                     fontWeight: activeCategory === category.id ? 600 : 500,
                     color: activeCategory === category.id ? 'primary.main' : 'text.secondary',
                     textAlign: 'center',
-                    maxWidth: 60,
+                    maxWidth: { xs: 50, sm: 60 },
                     lineHeight: 1.2,
+                    fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
                   }}
                 >
                   {category.name}
@@ -927,9 +768,10 @@ const MenuPage: React.FC = () => {
                 <Typography
                   variant="caption"
                   sx={{
-                    fontSize: '0.65rem',
+                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
                     color: 'text.disabled',
                     mt: 0.5,
+                    display: { xs: 'none', sm: 'block' }, // Hide item count on very small screens
                   }}
                 >
                   {category.itemCount} items
@@ -960,16 +802,17 @@ const MenuPage: React.FC = () => {
               <Divider sx={{ mt: 2 }} />
             </Box>
 
-            {/* Menu Items Grid */}
-            <Grid container spacing={3}>
+            {/* Menu Items Grid - Responsive layout */}
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
               {group.items.map((item) => (
-                <Grid item xs={12} sm={6} md={4} key={item.id}>
+                <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
                   <EnhancedMenuItemCard 
                     item={item} 
                     onAddToCart={handleAddToCart}
                     onToggleFavorite={toggleFavorite}
                     isFavorite={favorites.has(item.id)}
                     quantityInCart={getItemQuantityInCart(item.id)}
+                    isMobile={isMobile}
                   />
                 </Grid>
               ))}
@@ -1024,7 +867,8 @@ const EnhancedMenuItemCard: React.FC<{
   onToggleFavorite: (itemId: string) => void;
   isFavorite: boolean;
   quantityInCart: number;
-}> = React.memo(({ item, onAddToCart, onToggleFavorite, isFavorite, quantityInCart }) => {
+  isMobile?: boolean;
+}> = React.memo(({ item, onAddToCart, onToggleFavorite, isFavorite, quantityInCart, isMobile = false }) => {
   const { updateQuantity, removeItem } = useCart();
   const theme = useTheme();
 
@@ -1061,7 +905,12 @@ const EnhancedMenuItemCard: React.FC<{
   );
 
   return (
-    <MenuItemCard sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <MenuItemCard sx={{ 
+      height: '100%', 
+      display: 'flex', 
+      flexDirection: 'column',
+      borderRadius: { xs: 2, sm: 1 },
+    }}>
       {/* Image Section */}
       <Box sx={{ position: 'relative', overflow: 'hidden' }}>
         {item.image ? (
@@ -1071,7 +920,7 @@ const EnhancedMenuItemCard: React.FC<{
             alt={item.name}
             className="menu-item-image"
             sx={{ 
-              height: 180, 
+              height: { xs: 160, sm: 180 }, 
               objectFit: 'cover',
               transition: 'transform 0.2s ease',
             }}
@@ -1079,58 +928,75 @@ const EnhancedMenuItemCard: React.FC<{
         ) : (
           <Box
             sx={{
-              height: 180,
+              height: { xs: 160, sm: 180 },
               backgroundColor: 'grey.100',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Restaurant sx={{ fontSize: 48, color: 'grey.400' }} />
+            <Restaurant sx={{ fontSize: { xs: 40, sm: 48 }, color: 'grey.400' }} />
           </Box>
         )}
 
         {/* Badges */}
-        <Box sx={{ position: 'absolute', top: 8, left: 8, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+        <Box sx={{ 
+          position: 'absolute', 
+          top: { xs: 6, sm: 8 }, 
+          left: { xs: 6, sm: 8 }, 
+          display: 'flex', 
+          gap: 0.5, 
+          flexWrap: 'wrap',
+          maxWidth: '70%', // Prevent overlap with favorite button
+        }}>
           {item.isNew && (
             <Chip
-              icon={<NewReleases sx={{ fontSize: 12 }} />}
+              icon={<NewReleases sx={{ fontSize: { xs: 10, sm: 12 } }} />}
               label="New"
               size="small"
               sx={{ 
                 backgroundColor: theme.palette.success.main, 
                 color: 'white', 
                 fontWeight: 500,
-                fontSize: '0.7rem',
-                height: 20,
+                fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                height: { xs: 18, sm: 20 },
+                '& .MuiChip-label': {
+                  px: { xs: 0.5, sm: 1 },
+                },
               }}
             />
           )}
           {item.isPopular && (
             <Chip
-              icon={<Whatshot sx={{ fontSize: 12 }} />}
+              icon={<Whatshot sx={{ fontSize: { xs: 10, sm: 12 } }} />}
               label="Popular"
               size="small"
               sx={{ 
                 backgroundColor: theme.palette.warning.main, 
                 color: 'white', 
                 fontWeight: 500,
-                fontSize: '0.7rem',
-                height: 20,
+                fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                height: { xs: 18, sm: 20 },
+                '& .MuiChip-label': {
+                  px: { xs: 0.5, sm: 1 },
+                },
               }}
             />
           )}
           {item.discount && (
             <Chip
-              icon={<LocalOffer sx={{ fontSize: 12 }} />}
+              icon={<LocalOffer sx={{ fontSize: { xs: 10, sm: 12 } }} />}
               label={`${item.discount}% OFF`}
               size="small"
               sx={{ 
                 backgroundColor: theme.palette.error.main, 
                 color: 'white', 
                 fontWeight: 500,
-                fontSize: '0.7rem',
-                height: 20,
+                fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                height: { xs: 18, sm: 20 },
+                '& .MuiChip-label': {
+                  px: { xs: 0.5, sm: 1 },
+                },
               }}
             />
           )}
@@ -1141,20 +1007,26 @@ const EnhancedMenuItemCard: React.FC<{
           onClick={() => onToggleFavorite(item.id)}
           sx={{
             position: 'absolute',
-            top: 8,
-            right: 8,
+            top: { xs: 6, sm: 8 },
+            right: { xs: 6, sm: 8 },
             backgroundColor: alpha(theme.palette.background.paper, 0.9),
             '&:hover': {
               backgroundColor: theme.palette.background.paper,
             },
-            width: 32,
-            height: 32,
+            width: { xs: 28, sm: 32 },
+            height: { xs: 28, sm: 32 },
           }}
         >
           {isFavorite ? (
-            <Favorite sx={{ color: theme.palette.error.main, fontSize: 18 }} />
+            <Favorite sx={{ 
+              color: theme.palette.error.main, 
+              fontSize: { xs: 16, sm: 18 } 
+            }} />
           ) : (
-            <FavoriteBorder sx={{ color: 'text.secondary', fontSize: 18 }} />
+            <FavoriteBorder sx={{ 
+              color: 'text.secondary', 
+              fontSize: { xs: 16, sm: 18 } 
+            }} />
           )}
         </IconButton>
 
@@ -1182,7 +1054,12 @@ const EnhancedMenuItemCard: React.FC<{
       </Box>
 
       {/* Content Section */}
-      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', p: 2 }}>
+      <CardContent sx={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        p: { xs: 1.5, sm: 2 } 
+      }}>
         {/* Header */}
         <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mb: 1 }}>
           <VegNonVegIcon isVeg={item.isVeg || false} />
@@ -1190,9 +1067,13 @@ const EnhancedMenuItemCard: React.FC<{
             variant="h6" 
             sx={{ 
               fontWeight: 600, 
-              fontSize: '1rem',
+              fontSize: { xs: '0.9rem', sm: '1rem' },
               lineHeight: 1.3,
               flex: 1,
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
             }}
           >
             {item.name}

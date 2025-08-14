@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Box,
@@ -31,6 +31,7 @@ import {
   Alert,
   CircularProgress,
   Skeleton,
+  keyframes,
 } from '@mui/material';
 import {
   Add,
@@ -39,7 +40,6 @@ import {
   MoreVert,
   Visibility,
   VisibilityOff,
-  SwapHoriz,
   Restaurant,
   LocationOn,
   Email,
@@ -50,11 +50,20 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
-import PermissionService from '../../services/permissionService';
 import { PERMISSIONS } from '../../types/auth';
 import { venueService } from '../../services/venueService';
 import { PriceRange } from '../../types/api';
 import StorageManager from '../../utils/storageManager';
+
+// Animation for refresh icon
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
 
 const priceRangeOptions = [
   { value: 'budget', label: 'Budget (₹ - Under ₹500 per person)' },
@@ -95,13 +104,13 @@ interface VenueFormData {
 }
 
 const WorkspaceManagement: React.FC = () => {
-  const { user: currentUser, hasPermission, isSuperAdmin } = useAuth();
+  const { hasPermission, isSuperAdmin } = useAuth();
   const { userData, loading: userDataLoading, refreshUserData } = useUserData();
   const location = useLocation();
   
   // State management
   const [workspaceVenues, setWorkspaceVenues] = useState<any[]>([]);
-  const [loadingVenues, setLoadingVenues] = useState(false);
+  const [loadingVenues, setLoadingVenues] = useState(false); // Start with false, will be set to true when loading starts
   const [openVenueDialog, setOpenVenueDialog] = useState(false);
   const [editingVenue, setEditingVenue] = useState<any>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -109,7 +118,9 @@ const WorkspaceManagement: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const lastFetchTimeRef = useRef<number>(0);
 
   // Cache key for workspace venues
   const workspaceCacheKey = useMemo(() => 
@@ -120,7 +131,13 @@ const WorkspaceManagement: React.FC = () => {
   // Extract venue data with caching
   const currentVenue = userData?.venue;
   const venues = useMemo(() => {
-    return workspaceVenues.length > 0 ? workspaceVenues : (currentVenue ? [currentVenue] : []);
+    // Always prioritize workspaceVenues if available, regardless of length
+    if (workspaceVenues && Array.isArray(workspaceVenues)) {
+      return workspaceVenues;
+    }
+    // Fallback to currentVenue only if workspaceVenues is null/undefined
+    const fallback = currentVenue ? [currentVenue] : [];
+    return fallback;
   }, [workspaceVenues, currentVenue]);
 
   const [venueFormData, setVenueFormData] = useState<VenueFormData>({
@@ -146,16 +163,17 @@ const WorkspaceManagement: React.FC = () => {
   const loadWorkspaceVenues = useCallback(async (forceRefresh = false) => {
     const workspaceId = userData?.workspace?.id;
     if (!workspaceId) {
-      console.log('No workspace ID available');
       setLoadingVenues(false);
+      setWorkspaceVenues([]);
       return;
     }
 
     // Check cache first (unless force refresh)
     if (!forceRefresh && workspaceCacheKey) {
       const cachedVenues = StorageManager.getItem(workspaceCacheKey);
-      if (cachedVenues && Array.isArray(cachedVenues) && Date.now() - lastFetchTime < 5 * 60 * 1000) { // 5 minutes cache
-        console.log('📦 Using cached workspace venues');
+      const timeSinceLastFetch = Date.now() - lastFetchTimeRef.current;
+      
+      if (cachedVenues && Array.isArray(cachedVenues) && timeSinceLastFetch < 2 * 60 * 1000) { // 2 minutes cache
         setWorkspaceVenues(cachedVenues);
         setLoadingVenues(false);
         return;
@@ -164,60 +182,78 @@ const WorkspaceManagement: React.FC = () => {
 
     try {
       setLoadingVenues(true);
-      console.log('🔄 Loading venues for workspace:', workspaceId);
       
       const venues = await venueService.getVenuesByWorkspace(workspaceId);
-      console.log('✅ Loaded workspace venues:', venues);
       
-      setWorkspaceVenues(venues);
-      setLastFetchTime(Date.now());
+      setWorkspaceVenues(venues || []);
+      const now = Date.now();
+      setLastFetchTime(now);
+      lastFetchTimeRef.current = now;
       
       // Cache the results
-      if (workspaceCacheKey) {
+      if (workspaceCacheKey && venues) {
         StorageManager.setItem(workspaceCacheKey, venues, 10 * 60 * 1000); // 10 minutes TTL
       }
     } catch (error) {
-      console.error('❌ Error loading workspace venues:', error);
       setSnackbar({
         open: true,
         message: 'Failed to load workspace venues',
         severity: 'error'
       });
+      setWorkspaceVenues([]);
     } finally {
       setLoadingVenues(false);
     }
-  }, [userData?.workspace?.id, workspaceCacheKey, lastFetchTime]);
+  }, [userData?.workspace?.id, workspaceCacheKey]);
 
   // Manual refresh function
   const refreshWorkspaceVenues = useCallback(async () => {
     if (workspaceCacheKey) {
       StorageManager.removeItem(workspaceCacheKey); // Clear cache
     }
-    await loadWorkspaceVenues(true);
-  }, [loadWorkspaceVenues, workspaceCacheKey]);
+    await loadWorkspaceVenuesRef.current(true);
+  }, [workspaceCacheKey]);
 
-  // Load venues on component mount and workspace change
+  // Stable reference to avoid infinite loops
+  const loadWorkspaceVenuesRef = useRef(loadWorkspaceVenues);
+  loadWorkspaceVenuesRef.current = loadWorkspaceVenues;
+
+  // Initial load when component mounts
   useEffect(() => {
     if (userData?.workspace?.id && !userDataLoading) {
-      loadWorkspaceVenues();
+      // Always force load on initial mount to ensure venues are displayed
+      loadWorkspaceVenuesRef.current(true);
     }
-  }, [userData?.workspace?.id, userDataLoading, loadWorkspaceVenues]);
+  }, [userData?.workspace?.id, userDataLoading]);
 
-  // Route-based refresh (only when navigating to workspace page)
+  // Additional effect to ensure venues load when component first mounts
+  useEffect(() => {
+    if (userData?.workspace?.id) {
+      loadWorkspaceVenuesRef.current(true);
+    }
+  }, []); // Empty dependency array - runs only once on mount
+
+  // Fallback effect - ensure venues are loaded when workspace data becomes available
+  useEffect(() => {
+    if (userData?.workspace?.id && !userDataLoading && workspaceVenues.length === 0 && !loadingVenues) {
+      loadWorkspaceVenuesRef.current(true);
+    }
+  }, [userData?.workspace?.id, userDataLoading, workspaceVenues.length, loadingVenues]);
+
+  // Route-based refresh (when navigating to workspace page)
   useEffect(() => {
     if ((location.pathname === '/admin/workspaces' || location.pathname === '/admin/workspace') && 
-        userData?.workspace?.id && !userDataLoading && !loadingVenues) {
-      // Only refresh if cache is stale (older than 2 minutes)
-      if (Date.now() - lastFetchTime > 2 * 60 * 1000) {
-        console.log('🎯 Route navigation detected - refreshing stale data');
-        loadWorkspaceVenues(true);
+        userData?.workspace?.id && !userDataLoading) {
+      
+      // If no venues are loaded or cache is stale, load venues
+      if (workspaceVenues.length === 0 || Date.now() - lastFetchTimeRef.current > 2 * 60 * 1000) {
+        loadWorkspaceVenuesRef.current(true);
       }
     }
-  }, [location.pathname, userData?.workspace?.id, userDataLoading, loadingVenues, lastFetchTime, loadWorkspaceVenues]);
+  }, [location.pathname, userData?.workspace?.id, userDataLoading, workspaceVenues.length]);
 
   // Form validation
   const validateVenueForm = useCallback((): boolean => {
-    console.log('🔍 Validating venue form...');
     const errors: Record<string, string> = {};
 
     if (!venueFormData.name.trim()) {
@@ -263,10 +299,8 @@ const WorkspaceManagement: React.FC = () => {
       }
     }
 
-    console.log('🔍 Validation errors found:', errors);
     setValidationErrors(errors);
     const isValid = Object.keys(errors).length === 0;
-    console.log('✅ Form is valid:', isValid);
     return isValid;
   }, [venueFormData]);
 
@@ -298,9 +332,25 @@ const WorkspaceManagement: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <Container 
+      maxWidth="xl" 
+      sx={{ 
+        py: { xs: 2, sm: 3, md: 4 },
+        px: { xs: 2, sm: 3 },
+        maxWidth: '100%',
+        overflow: 'visible',
+        minHeight: { xs: 'calc(100vh - 120px)', sm: 'auto' }, // Ensure content fits in mobile
+      }}
+    >
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 4,
+        flexWrap: 'wrap',
+        gap: 2
+      }}>
         <Box>
           <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
             Workspace Venues
@@ -314,16 +364,12 @@ const WorkspaceManagement: React.FC = () => {
             </Typography>
           )}
         </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={loadingVenues ? <CachedOutlined className="animate-spin" /> : <Refresh />}
-            onClick={refreshWorkspaceVenues}
-            disabled={loadingVenues}
-            size="large"
-          >
-            {loadingVenues ? 'Refreshing...' : 'Refresh'}
-          </Button>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2,
+          flexWrap: 'wrap',
+          alignItems: 'center'
+        }}>
           {canCreateVenues && (
             <Button
               variant="contained"
@@ -331,15 +377,42 @@ const WorkspaceManagement: React.FC = () => {
               onClick={() => setOpenVenueDialog(true)}
               size="large"
             >
-              Add Venue
+              Venue
             </Button>
           )}
+
+          <IconButton
+            onClick={refreshWorkspaceVenues}
+            disabled={loadingVenues}
+            size="large"
+            sx={{
+              backgroundColor: 'background.paper',
+              border: '1px solid',
+              borderColor: 'divider',
+              color: 'text.primary',
+              '&:hover': {
+                backgroundColor: 'action.hover',
+                borderColor: 'primary.main',
+                color: 'primary.main',
+              },
+              '&:disabled': {
+                opacity: 0.5,
+              },
+            }}
+            title={loadingVenues ? 'Refreshing...' : 'Refresh venues'}
+          >
+            {loadingVenues ? (
+              <CachedOutlined sx={{ animation: `${spin} 1s linear infinite` }} />
+            ) : (
+              <Refresh />
+            )}
+          </IconButton>
         </Box>
       </Box>
 
       {/* Venues Grid */}
       {loadingVenues ? (
-        <Grid container spacing={3}>
+        <Grid container spacing={3} sx={{ width: '100%', m: 0 }}>
           {[1, 2, 3].map((i) => (
             <Grid item xs={12} sm={6} md={4} key={i}>
               <Card>
@@ -776,12 +849,7 @@ const WorkspaceManagement: React.FC = () => {
           <Button
             variant="contained"
             onClick={async () => {
-              console.log('🎯 Create Venue button clicked');
-              console.log('📝 Form data:', venueFormData);
-              console.log('✏️ Editing venue:', editingVenue);
-              
               if (!validateVenueForm()) {
-                console.log('❌ Form validation failed');
                 setSnackbar({
                   open: true,
                   message: 'Please fix the validation errors before saving',
@@ -792,11 +860,9 @@ const WorkspaceManagement: React.FC = () => {
 
               try {
                 setSaving(true);
-                console.log('💾 Starting save process...');
                 
                 // Ensure workspace ID exists
                 const workspaceId = userData?.workspace?.id;
-                console.log('🏢 Workspace ID:', workspaceId);
                 if (!workspaceId) {
                   throw new Error('No workspace selected. Please select a workspace first.');
                 }
@@ -815,10 +881,7 @@ const WorkspaceManagement: React.FC = () => {
                   workspace_id: workspaceId
                 };
 
-                console.log('📦 Venue data to send:', venueData);
-
                 if (editingVenue) {
-                  console.log('✏️ Updating existing venue...');
                   // Update existing venue - only send updatable fields
                   const updateData = {
                     name: venueFormData.name,
@@ -830,19 +893,15 @@ const WorkspaceManagement: React.FC = () => {
                     is_active: venueFormData.isActive,
                     is_open: venueFormData.isOpen,
                   };
-                  console.log('📦 Update data:', updateData);
-                  const result = await venueService.updateVenue(editingVenue.id, updateData);
-                  console.log('✅ Update result:', result);
+                  await venueService.updateVenue(editingVenue.id, updateData);
                   setSnackbar({
                     open: true,
                     message: 'Venue updated successfully!',
                     severity: 'success'
                   });
                 } else {
-                  console.log('🆕 Creating new venue...');
                   // Create new venue
-                  const result = await venueService.createVenue(venueData);
-                  console.log('✅ Create result:', result);
+                  await venueService.createVenue(venueData);
                   setSnackbar({
                     open: true,
                     message: 'Venue created successfully!',
@@ -882,7 +941,6 @@ const WorkspaceManagement: React.FC = () => {
                 setValidationErrors({});
                 
               } catch (error: any) {
-                console.error('Error saving venue:', error);
                 setSnackbar({
                   open: true,
                   message: error.message || 'Failed to save venue',
@@ -953,7 +1011,6 @@ const WorkspaceManagement: React.FC = () => {
             // Toggle venue status
             if (selectedItem) {
               // Implementation for toggling venue status
-              console.log('Toggle venue status:', selectedItem);
             }
             setAnchorEl(null);
             setSelectedItem(null);
@@ -973,7 +1030,6 @@ const WorkspaceManagement: React.FC = () => {
               // Delete venue
               if (selectedItem) {
                 // Implementation for deleting venue
-                console.log('Delete venue:', selectedItem);
               }
               setAnchorEl(null);
               setSelectedItem(null);

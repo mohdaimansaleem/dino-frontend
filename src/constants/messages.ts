@@ -65,7 +65,7 @@ export const INFO_MESSAGES = {
   NO_ORDERS: 'No orders found',
   NO_ITEMS: 'No items found',
   EMPTY_CART: 'Your cart is empty',
-  DEMO_MODE: 'Running in demo mode',
+
   ESTIMATED_TIME: 'Estimated time: 25-30 minutes',
   EXTRA_CHARGES: 'Extra charges may apply',
 } as const;
@@ -96,7 +96,7 @@ export const BUTTON_LABELS = {
   CREATE: 'Create',
   CLOSE: 'Close',
   CONFIRM: 'Confirm',
-  SKIP_LOGIN: 'Skip Login (Demo Mode)',
+
 } as const;
 
 // Placeholder Texts
@@ -147,10 +147,3 @@ export const ACCESS_MESSAGES = {
   CURRENT_ROLE: 'Current Role:',
 } as const;
 
-// Demo Mode Messages
-export const DEMO_MESSAGES = {
-  SELECT_ROLE: 'Demo Mode - Select Role:',
-  LOGIN_AS_ADMIN: 'Login as Admin (Demo)',
-  LOGIN_AS_OPERATOR: 'Login as Operator (Demo)',
-  DEMO_MODE_INDICATOR: '🧪 DEMO MODE',
-} as const;

@@ -1,4 +1,5 @@
-import { apiService } from './api';
+// import { apiService } from './api'; // Commented out as it's not used
+import QRCode from 'qrcode';
 
 export interface QRCodeData {
   id: string;
@@ -33,49 +34,71 @@ export interface QRGenerationRequest {
 }
 
 class QRService {
+  // Base URL for the application
+  private getBaseUrl(): string {
+    // Use current window location as base URL for dynamic deployment
+    if (typeof window !== 'undefined') {
+      return window.location.origin;
+    }
+    // Fallback for server-side rendering or when window is not available
+    return 'https://dino-frontend-867506203789.us-central1.run.app';
+  }
+
   // Generate QR code for a table
   async generateTableQR(request: QRGenerationRequest): Promise<QRCodeData> {
     try {
-      const response = await apiService.post<QRCodeData>('/qr/generate', request);
+      // Generate the actual menu URL
+      const menuUrl = this.createMenuUrl(request.venueId, request.tableId);
       
-      if (response.success && response.data) {
-        return response.data;
-      }
-      
-      throw new Error(response.message || 'Failed to generate QR code');
+      // Generate QR code as base64
+      const qrCodeBase64 = await QRCode.toDataURL(menuUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: request.customization?.primaryColor || '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      // Create QR code data
+      const qrData: QRCodeData = {
+        id: `qr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        tableId: request.tableId,
+        venueId: request.venueId,
+        venueName: request.venueName,
+        tableNumber: request.tableNumber,
+        qrCodeUrl: menuUrl,
+        qrCodeBase64: qrCodeBase64,
+        menuUrl: menuUrl,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        // Legacy compatibility
+        cafeId: request.cafeId,
+        cafeName: request.cafeName
+      };
+
+      return qrData;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to generate QR code');
+      throw new Error(error.message || 'Failed to generate QR code');
     }
   }
 
   // Get QR code data
   async getQRCode(qrId: string): Promise<QRCodeData> {
     try {
-      const response = await apiService.get<QRCodeData>(`/qr/${qrId}`);
-      
-      if (response.success && response.data) {
-        return response.data;
-      }
-      
-      throw new Error(response.message || 'QR code not found');
+      // This method should be implemented to fetch QR code data from the backend
+      // For now, throw an error indicating this needs to be implemented
+      throw new Error('QR code retrieval not implemented. Use generateTableQR instead.');
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to get QR code');
+      throw new Error(error.message || 'Failed to get QR code');
     }
   }
 
   // Get all QR codes for a venue
   async getVenueQRCodes(venueId: string): Promise<QRCodeData[]> {
-    try {
-      const response = await apiService.get<QRCodeData[]>(`/qr/venue/${venueId}`);
-      
-      if (response.success && response.data) {
-        return response.data;
-      }
-      
-      return [];
-    } catch (error: any) {
-      return [];
-    }
+    // This method should be implemented to fetch venue QR codes from the backend
+    // For now, return empty array - QR codes will be generated on demand
+    return [];
   }
 
   // Legacy method for backward compatibility
@@ -86,73 +109,113 @@ class QRService {
   // Regenerate QR code
   async regenerateQR(qrId: string, request: QRGenerationRequest): Promise<QRCodeData> {
     try {
-      const response = await apiService.put<QRCodeData>(`/qr/${qrId}/regenerate`, request);
+      // Generate the actual menu URL
+      const menuUrl = this.createMenuUrl(request.venueId, request.tableId);
       
-      if (response.success && response.data) {
-        return response.data;
-      }
-      
-      throw new Error(response.message || 'Failed to regenerate QR code');
+      const qrCodeBase64 = await QRCode.toDataURL(menuUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: request.customization?.primaryColor || '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      const qrData: QRCodeData = {
+        id: qrId,
+        tableId: request.tableId,
+        venueId: request.venueId,
+        venueName: request.venueName,
+        tableNumber: request.tableNumber,
+        qrCodeUrl: menuUrl,
+        qrCodeBase64: qrCodeBase64,
+        menuUrl: menuUrl,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        cafeId: request.cafeId,
+        cafeName: request.cafeName
+      };
+
+      return qrData;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to regenerate QR code');
+      throw new Error(error.message || 'Failed to regenerate QR code');
     }
   }
 
   // Delete QR code
   async deleteQR(qrId: string): Promise<void> {
     try {
-      const response = await apiService.delete(`/qr/${qrId}`);
-      
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to delete QR code');
-      }
+      // This method should be implemented to delete QR code from the backend
+      throw new Error('QR code deletion not implemented');
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to delete QR code');
+      throw new Error(error.message || 'Failed to delete QR code');
     }
   }
 
   // Generate QR code as base64 for immediate use
   async generateQRBase64(request: QRGenerationRequest): Promise<string> {
     try {
-      const response = await apiService.post<{ qrCodeBase64: string }>('/qr/generate-base64', request);
+      const menuUrl = this.createMenuUrl(request.venueId, request.tableId);
       
-      if (response.success && response.data) {
-        return response.data.qrCodeBase64;
-      }
-      
-      throw new Error(response.message || 'Failed to generate QR code');
+      const qrCodeBase64 = await QRCode.toDataURL(menuUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: request.customization?.primaryColor || '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      return qrCodeBase64;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to generate QR code');
+      throw new Error(error.message || 'Failed to generate QR code');
     }
   }
 
   // Bulk generate QR codes for multiple tables
   async bulkGenerateQR(requests: QRGenerationRequest[]): Promise<QRCodeData[]> {
     try {
-      const response = await apiService.post<QRCodeData[]>('/qr/bulk-generate', { requests });
+      const qrCodes: QRCodeData[] = [];
       
-      if (response.success && response.data) {
-        return response.data;
+      for (const request of requests) {
+        const qrData = await this.generateTableQR(request);
+        qrCodes.push(qrData);
       }
       
-      throw new Error(response.message || 'Failed to generate QR codes');
+      return qrCodes;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to generate QR codes');
+      throw new Error(error.message || 'Failed to generate QR codes');
     }
   }
 
   // Generate print-ready QR template
-  async generatePrintTemplate(qrId: string, template: 'classic' | 'modern' | 'elegant' | 'minimal' = 'classic'): Promise<string> {
+  async generatePrintTemplate(qrData: QRCodeData, template: 'classic' | 'modern' | 'elegant' | 'minimal' = 'classic'): Promise<string> {
     try {
-      const response = await apiService.get<{ templateHtml: string }>(`/qr/${qrId}/print-template?template=${template}`);
-      
-      if (response.success && response.data) {
-        return response.data.templateHtml;
-      }
-      
-      throw new Error(response.message || 'Failed to generate print template');
+      return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>QR Code - ${qrData.venueName} Table ${qrData.tableNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+            .qr-container { border: 2px solid #333; padding: 20px; margin: 20px auto; max-width: 300px; }
+            .qr-code img { max-width: 200px; height: auto; }
+          </style>
+        </head>
+        <body>
+          <div class="qr-container">
+            <h2>${qrData.venueName}</h2>
+            <h3>Table ${qrData.tableNumber}</h3>
+            <div class="qr-code">
+              <img src="${qrData.qrCodeBase64}" alt="QR Code" />
+            </div>
+            <p>Scan to view menu</p>
+          </div>
+        </body>
+        </html>
+      `;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to generate print template');
+      throw new Error(error.message || 'Failed to generate print template');
     }
   }
 
@@ -160,7 +223,7 @@ class QRService {
 
   // Utility function to create menu URL
   createMenuUrl(venueId: string, tableId: string): string {
-    const baseUrl = window.location.origin;
+    const baseUrl = this.getBaseUrl();
     return `${baseUrl}/menu/${venueId}/${tableId}`;
   }
 

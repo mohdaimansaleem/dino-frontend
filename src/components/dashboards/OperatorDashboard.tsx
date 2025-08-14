@@ -34,6 +34,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { dashboardService } from '../../services/dashboardService';
 import { OperatorDashboardResponse, RecentOrder } from '../../types/dashboard';
+import DashboardTour from '../tour/DashboardTour';
 
 interface OperatorDashboardProps {
   className?: string;
@@ -175,7 +176,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
   return (
     <Box className={className} sx={{ p: 3, position: 'relative' }}>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4 }} data-tour="dashboard-header">
         <Typography variant="h4" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <DashboardIcon color="primary" />
           Operator Dashboard
@@ -186,7 +187,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
       </Box>
 
       {/* Order Stats */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 4 }} data-tour="order-stats">
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ bgcolor: 'warning.50', border: '1px solid', borderColor: 'warning.200' }}>
             <CardContent>
@@ -267,7 +268,7 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
       </Grid>
 
       {/* Active Orders */}
-      <Card>
+      <Card data-tour="active-orders-table">
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h6">
@@ -372,11 +373,15 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
         onClick={() => {
           // Show notifications or alerts
         }}
+        data-tour="notification-fab"
       >
         <Badge badgeContent={dashboardData?.stats.pending_orders || 0} color="error">
           <Notifications />
         </Badge>
       </Fab>
+      
+      {/* Dashboard Tour */}
+      <DashboardTour />
     </Box>
   );
 };

@@ -208,13 +208,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
 
       return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }} data-tour="sidebar-navigation">
           {adminNavItems.map((item) => (
             <Button
               key={item.label}
               onClick={() => navigate(item.path)}
               startIcon={item.icon}
               fullWidth
+              data-tour={`${item.label.toLowerCase()}-nav`}
               sx={{
                 justifyContent: 'flex-start',
                 textAlign: 'left',
@@ -353,7 +354,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', margin: 0, padding: 0, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', minHeight: '100vh', margin: 0, padding: 0, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
       {/* Enhanced AppHeader - Hidden for customer facing pages and mobile admin routes */}
       {!isCustomerFacingRoute && !(isAdminRoute && isMobile) && (
         <AppHeader />
@@ -361,7 +362,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Admin Layout with Responsive Sidebar */}
       {isAdminRoute && user ? (
-        <Box sx={{ display: 'flex', minHeight: isMobile ? 'calc(100vh - 64px)' : 'calc(100vh - 70px)', position: 'relative', height: isMobile ? 'auto' : 'calc(100vh - 70px)', margin: 0, padding: 0, width: '100%', maxWidth: '100%' }}>
+        <Box sx={{ display: 'flex', minHeight: isMobile ? '100vh' : 'calc(100vh - 70px)', position: 'relative', height: isMobile ? '100vh' : 'calc(100vh - 70px)', margin: 0, padding: 0, width: '100%', maxWidth: '100%' }}>
           {/* Desktop Sidebar Navigation - Fixed */}
           {!isMobile && (
             <Box sx={{ 
@@ -421,8 +422,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             sx={{
               flex: 1,
               backgroundColor: 'background.default',
-              minHeight: isMobile ? 'calc(100vh - 64px)' : 'calc(100vh - 70px)',
-              height: isMobile ? 'auto' : 'calc(100vh - 70px)',
+              minHeight: isMobile ? '100vh' : 'calc(100vh - 70px)',
+              height: isMobile ? '100vh' : 'calc(100vh - 70px)',
               marginLeft: isMobile ? 0 : (isTablet ? '200px' : '240px'),
               marginTop: isMobile ? 0 : '70px',
               marginRight: 0,
@@ -430,7 +431,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               display: 'flex',
               flexDirection: 'column',
               position: 'relative',
-              overflow: 'auto', // Allow scrolling on main container
+              overflow: isMobile ? 'visible' : 'auto',
               width: isMobile ? '100%' : `calc(100% - ${isTablet ? '200px' : '240px'})`,
               maxWidth: '100%',
             }}
@@ -481,51 +482,45 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </Box>
             )}
 
-            <Fade in timeout={300}>
-              <Box 
-                sx={{ 
-                  flex: 1,
-                  p: { xs: 2, sm: 3, md: 4 },
-                  pt: { xs: 3, sm: 4, md: 5 },
-                  overflow: 'auto',
-                  overflowY: 'scroll', // Force vertical scrolling
-                  height: isMobile ? 'auto' : '100%', // Auto height for mobile to allow natural scrolling
-                  minHeight: 0, // Allow flex shrinking
-                  WebkitOverflowScrolling: 'touch', // Smooth scrolling on iOS
-                  maxHeight: isMobile ? 'none' : '100%', // Remove height restriction on mobile
-                  '&::-webkit-scrollbar': {
-                    width: '6px',
-                  },
-                  '&::-webkit-scrollbar-track': {
-                    backgroundColor: 'rgba(0,0,0,0.05)',
-                    borderRadius: '3px',
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: 'rgba(0,0,0,0.2)',
-                    borderRadius: '3px',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0,0,0,0.4)',
-                    },
-                  },
-                }}
-              >
-                {children}
-              </Box>
-            </Fade>
-            
-            {/* Footer for Admin Routes */}
             <Box 
               sx={{ 
-                flexShrink: 0,
-                textAlign: 'center',
-                py: { xs: 1, lg: 1 },
-                px: { xs: 2, lg: 1 },
-                borderTop: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper',
-                mt: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: isMobile ? 'visible' : 'auto',
+                height: isMobile ? 'auto' : '100%',
+                minHeight: isMobile ? 'calc(100vh - 64px)' : '100%',
               }}
             >
+              <Fade in timeout={300}>
+                <Box 
+                  sx={{ 
+                    flex: 1,
+                    p: { xs: 0, sm: 3, md: 4 },
+                    pt: { xs: 0, sm: 4, md: 5 },
+                    pb: { xs: 2, sm: 2, md: 2 },
+                    overflow: 'visible',
+                    minHeight: 'fit-content',
+                    WebkitOverflowScrolling: 'touch',
+                  }}
+                >
+                  {children}
+                </Box>
+              </Fade>
+              
+              {/* Footer for Admin Routes */}
+              <Box 
+                sx={{ 
+                  flexShrink: 0,
+                  textAlign: 'center',
+                  py: { xs: 1, lg: 1 },
+                  px: { xs: 2, lg: 1 },
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                  backgroundColor: 'background.paper',
+                  mt: 'auto',
+                }}
+              >
               <Typography 
                 variant="body2" 
                 color="text.secondary"
@@ -547,6 +542,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               >
                 Digital Menu Revolution
               </Typography>
+              </Box>
             </Box>
           </Box>
 

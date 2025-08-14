@@ -1,10 +1,10 @@
 /**
  * Storage Cleanup Utility
- * Removes demo-related and legacy data from localStorage
+ * Removes legacy and corrupted data from localStorage
  */
 
 export class StorageCleanup {
-  private static readonly DEMO_KEYS = [
+  private static readonly LEGACY_PREFIXES = [
     'demo_',
     'dino_demo_',
     'sample_',
@@ -31,9 +31,9 @@ export class StorageCleanup {
   ];
 
   /**
-   * Remove all demo-related data from localStorage
+   * Remove all legacy data from localStorage
    */
-  static cleanupDemoData(): void {
+  static cleanupLegacyData(): void {
     try {
       const keysToRemove: string[] = [];
       
@@ -41,11 +41,11 @@ export class StorageCleanup {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key) {
-          // Check if key matches demo patterns
-          const isDemoKey = this.DEMO_KEYS.some(pattern => key.includes(pattern));
+          // Check if key matches legacy patterns
+          const isLegacyPrefix = this.LEGACY_PREFIXES.some(pattern => key.includes(pattern));
           const isLegacyKey = this.LEGACY_KEYS.includes(key);
           
-          if (isDemoKey || isLegacyKey) {
+          if (isLegacyPrefix || isLegacyKey) {
             keysToRemove.push(key);
           }
         }
@@ -54,11 +54,11 @@ export class StorageCleanup {
       // Remove identified keys
       keysToRemove.forEach(key => {
         localStorage.removeItem(key);
-        console.log(`Removed demo/legacy key: ${key}`);
+        console.log(`Removed legacy key: ${key}`);
       });
 
       if (keysToRemove.length > 0) {
-        console.log(`Cleaned up ${keysToRemove.length} demo/legacy storage items`);
+        console.log(`Cleaned up ${keysToRemove.length} legacy storage items`);
       }
     } catch (error) {
       console.error('Error during storage cleanup:', error);
@@ -133,12 +133,12 @@ export class StorageCleanup {
   }
 
   /**
-   * Complete storage cleanup - removes demo data, cache, and validates remaining data
+   * Complete storage cleanup - removes legacy data, cache, and validates remaining data
    */
   static performCompleteCleanup(): void {
     console.log('Starting complete storage cleanup...');
     
-    this.cleanupDemoData();
+    this.cleanupLegacyData();
     this.cleanupCacheData();
     this.validateAndCleanStorage();
     

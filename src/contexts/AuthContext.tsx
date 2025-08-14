@@ -9,7 +9,7 @@ import { STORAGE_KEYS } from '../constants/storage';
 import StorageManager from '../utils/storageManager';
 import { ROLE_NAMES } from '../constants/roles';
 import { tokenRefreshScheduler } from '../utils/tokenRefreshScheduler';
-import { API_CONFIG } from '../config/api';
+
 import { apiService } from '../services/api';
 // Password hashing is now handled by authService
 
@@ -57,17 +57,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const savedUser = StorageManager.getUserData();
         const savedPermissions = StorageManager.getPermissions();
         
-        console.log('🔄 AuthContext initialization:', {
-          hasToken: !!token,
-          tokenLength: token?.length,
-          hasUser: !!savedUser,
-          userEmail: savedUser?.email,
-          hasPermissions: !!savedPermissions,
-          currentPath: window.location.pathname
-        });
-        
-
-        
         // Check if we're being redirected to login unexpectedly
         if (token && savedUser && window.location.pathname === '/login') {
           }
@@ -75,7 +64,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (token && savedUser) {
           // Check if token is expired
           if (typeof token === 'string' && isTokenExpired(token)) {
-            console.warn('🚨 Token expired during initialization, clearing auth data');
             StorageManager.removeItem(STORAGE_KEYS.TOKEN);
             StorageManager.removeItem(STORAGE_KEYS.USER);
             StorageManager.removeItem(STORAGE_KEYS.PERMISSIONS);
@@ -88,8 +76,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           // Set authorization header for API requests
           apiService.setAuthorizationHeader(token);
-          console.log('✅ Authorization header set from stored token');
-
           try {
             const savedUserData = savedUser;
             // Ensure firstName is available for display consistency
@@ -117,14 +103,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUserPermissions(null);
           }
         } else {
-          console.log('🔍 No stored token or user found during initialization');
           setUser(null);
           setUserPermissions(null);
           // Ensure authorization header is cleared
           apiService.setAuthorizationHeader(null);
         }
       } catch (error) {
-        console.error('❌ Error during auth initialization:', error);
         StorageManager.removeItem(STORAGE_KEYS.TOKEN);
         StorageManager.removeItem(STORAGE_KEYS.USER);
         StorageManager.removeItem(STORAGE_KEYS.PERMISSIONS);
@@ -148,10 +132,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       apiService.refreshConfiguration();
       
       // Debug API configuration before login
-      console.log('🔧 Login Debug - API Configuration:');
-      console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
-      console.log('process.env.REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
-      console.log('Current location:', window.location.href);
       console.log('window.APP_CONFIG:', (window as any).APP_CONFIG);
       
       // Call debug method if available
@@ -199,10 +179,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         // Debug API configuration before making permissions request
         if (process.env.NODE_ENV === 'development') {
-          console.log('🔧 About to fetch permissions - debugging API config...');
-          console.log('API Base URL from config:', API_CONFIG.BASE_URL);
-          console.log('Current location:', window.location.href);
-        }
+          }
         
         const permissionsData = await userCache.getOrSet(
           CacheKeys.userPermissions(localUser.id),
@@ -212,13 +189,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUserPermissions(permissionsData);
         StorageManager.setPermissions(permissionsData);
       } catch (permError: any) {
-        console.warn('Failed to fetch user permissions:', permError);
-        console.error('Permissions error details:', {
-          message: permError?.message,
-          status: permError?.response?.status,
-          data: permError?.response?.data
-        });
-        
         // Continue with login even if permissions fetch fails
         // Set basic permissions based on role
         const basicPermissions = {
@@ -239,8 +209,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }, 100);
     } catch (error: any) {
       // Enhanced error handling
-      console.error('Login error:', error);
-      
       // Clear any partial authentication state
       StorageManager.removeItem(STORAGE_KEYS.TOKEN);
       StorageManager.removeItem(STORAGE_KEYS.USER);

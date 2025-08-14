@@ -144,6 +144,64 @@ class CacheService {
   }
 
   /**
+   * Get multiple items from cache
+   */
+  getMultiple<T>(keys: string[]): Record<string, T | null> {
+    const result: Record<string, T | null> = {};
+    keys.forEach(key => {
+      result[key] = this.get<T>(key);
+    });
+    return result;
+  }
+
+  /**
+   * Set multiple items in cache
+   */
+  setMultiple<T>(items: Record<string, T>, ttl?: number): void {
+    Object.entries(items).forEach(([key, data]) => {
+      this.set(key, data, ttl);
+    });
+  }
+
+  /**
+   * Check if cache is getting full
+   */
+  isNearCapacity(threshold = 0.8): boolean {
+    return this.cache.size >= this.maxSize * threshold;
+  }
+
+  /**
+   * Get cache health metrics
+   */
+  getHealthMetrics(): {
+    size: number;
+    maxSize: number;
+    utilizationRate: number;
+    oldestItemAge: number;
+    expiredItemsCount: number;
+  } {
+    let oldestTimestamp = Date.now();
+    let expiredCount = 0;
+
+    Array.from(this.cache.values()).forEach(item => {
+      if (item.timestamp < oldestTimestamp) {
+        oldestTimestamp = item.timestamp;
+      }
+      if (this.isExpired(item)) {
+        expiredCount++;
+      }
+    });
+
+    return {
+      size: this.cache.size,
+      maxSize: this.maxSize,
+      utilizationRate: this.cache.size / this.maxSize,
+      oldestItemAge: Date.now() - oldestTimestamp,
+      expiredItemsCount: expiredCount,
+    };
+  }
+
+  /**
    * Invalidate cache items by pattern
    */
   invalidatePattern(pattern: string): void {

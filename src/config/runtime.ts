@@ -20,7 +20,7 @@ export interface RuntimeConfig {
   // Feature Flags
   DEBUG_MODE: boolean;
   ENABLE_THEME_TOGGLE: boolean;
-  ENABLE_DEMO_MODE: boolean;
+
   ENABLE_ANALYTICS: boolean;
   ENABLE_QR_CODES: boolean;
   ENABLE_NOTIFICATIONS: boolean;
@@ -66,10 +66,10 @@ declare global {
 
 // Default configuration (fallback)
 const DEFAULT_CONFIG: RuntimeConfig = {
-  // API Configuration - Use relative URLs for nginx proxy
-  API_BASE_URL: '/api/v1',
-  WS_URL: '/ws',
-  BACKEND_URL: 'https://dino-backend-api-867506203789.us-central1.run.app',
+  // API Configuration - Use full backend URLs for direct connection
+  API_BASE_URL: 'https://dino-frontend-867506203789.us-central1.run.app/api/v1',
+  WS_URL: 'wss://dino-frontend-867506203789.us-central1.run.app/ws',
+  BACKEND_URL: 'https://dino-frontend-867506203789.us-central1.run.app',
   
   // App Configuration
   APP_NAME: 'Dino',
@@ -79,7 +79,7 @@ const DEFAULT_CONFIG: RuntimeConfig = {
   // Feature Flags
   DEBUG_MODE: false,
   ENABLE_THEME_TOGGLE: false,
-  ENABLE_DEMO_MODE: false,
+
   ENABLE_ANALYTICS: true,
   ENABLE_QR_CODES: true,
   ENABLE_NOTIFICATIONS: true,
@@ -136,7 +136,7 @@ export const getRuntimeConfig = (): RuntimeConfig => {
       APP_ENV: process.env.REACT_APP_ENV || DEFAULT_CONFIG.APP_ENV,
       DEBUG_MODE: process.env.REACT_APP_DEBUG_MODE === 'true',
       ENABLE_THEME_TOGGLE: process.env.REACT_APP_ENABLE_THEME_TOGGLE === 'true',
-      ENABLE_DEMO_MODE: process.env.REACT_APP_ENABLE_DEMO_MODE === 'true',
+
       ENABLE_ANALYTICS: process.env.REACT_APP_ENABLE_ANALYTICS !== 'false',
       ENABLE_QR_CODES: process.env.REACT_APP_ENABLE_QR_CODES !== 'false',
       ENABLE_NOTIFICATIONS: process.env.REACT_APP_ENABLE_NOTIFICATIONS !== 'false',
@@ -212,7 +212,6 @@ export const logRuntimeConfig = (): void => {
     console.log('Debug Mode:', config.DEBUG_MODE);
     console.log('Feature Flags:', {
       ENABLE_THEME_TOGGLE: config.ENABLE_THEME_TOGGLE,
-      ENABLE_DEMO_MODE: config.ENABLE_DEMO_MODE,
       ENABLE_ANALYTICS: config.ENABLE_ANALYTICS,
       ENABLE_QR_CODES: config.ENABLE_QR_CODES,
       ENABLE_NOTIFICATIONS: config.ENABLE_NOTIFICATIONS,

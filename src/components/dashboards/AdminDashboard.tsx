@@ -48,6 +48,7 @@ import { dashboardService } from '../../services/dashboardService';
 import { AdminDashboardResponse } from '../../types/dashboard';
 import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
 import { getUserFirstName } from '../../utils/userUtils';
+import DashboardTour from '../tour/DashboardTour';
 
 /**
  * AdminDashboard Component
@@ -422,7 +423,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
 
 
         {/* Header */}
-        <Box sx={{ mb: 4, flexShrink: 0 }}>
+        <Box sx={{ mb: 4, flexShrink: 0 }} data-tour="dashboard-header">
           <Box sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -501,7 +502,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
         {/* Dashboard Content Container */}
         <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 2 } }}>
           {/* Row 1: Quick Stats */}
-          <Grid container spacing={3}>
+          <Grid container spacing={3} data-tour="stats-cards">
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ 
                 height: '140px',
@@ -760,7 +761,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 border: '1px solid',
                 borderColor: 'divider',
                 backgroundColor: 'background.paper'
-              }}>
+              }} data-tour="revenue-chart">
                 <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Box sx={{ 
                     display: 'flex', 
@@ -821,7 +822,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 border: '1px solid',
                 borderColor: 'divider',
                 backgroundColor: 'background.paper'
-              }}>
+              }} data-tour="order-status-chart">
                 <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Box sx={{ 
                     display: 'flex', 
@@ -885,7 +886,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 border: '1px solid',
                 borderColor: 'divider',
                 backgroundColor: 'background.paper'
-              }}>
+              }} data-tour="table-status-chart">
                 <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <Box sx={{ 
                     display: 'flex', 
@@ -1087,7 +1088,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
             border: '1px solid',
             borderColor: 'divider',
             backgroundColor: 'background.paper'
-          }}>
+          }} data-tour="recent-orders">
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -1368,7 +1369,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
             border: '1px solid',
             borderColor: 'divider',
             backgroundColor: 'background.paper'
-          }}>
+          }} data-tour="quick-actions">
             <CardContent sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
                 <Settings 
@@ -1510,6 +1511,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   return (
     <VenueAssignmentCheck showFullPage={true}>
       {renderDashboardContent()}
+      
+      {/* Dashboard Tour */}
+      <DashboardTour />
       
       {/* Status Update Snackbar */}
       <Snackbar

@@ -1,19 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
   Typography,
-  Grid,
   Card,
   CardContent,
-  Button,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Chip,
   IconButton,
   Dialog,
@@ -28,28 +24,23 @@ import {
   Switch,
   FormControlLabel,
   Alert,
-  Tooltip,
+  AlertColor,
   Avatar,
   Menu,
   ListItemIcon,
   ListItemText,
-  Skeleton,
   Snackbar,
   useTheme,
   useMediaQuery,
   Stack,
+  keyframes,
 } from '@mui/material';
 import {
   Add,
   Edit,
   Delete,
   MoreVert,
-  Person,
-  Email,
-  Phone,
   Business,
-  Security,
-  Visibility,
   Block,
   CheckCircle,
   Cancel,
@@ -57,28 +48,38 @@ import {
   People,
   Refresh,
   ArrowBack,
+  CachedOutlined,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useWorkspace } from '../../contexts/WorkspaceContext';
 import { useUserData } from '../../contexts/UserDataContext';
 import { useErrorHandler } from '../../hooks/useErrorHandler';
 import { useNavigate } from 'react-router-dom';
-import PermissionService from '../../services/permissionService';
 import { ROLES, PERMISSIONS } from '../../types/auth';
 import PasswordUpdateDialog from '../../components/PasswordUpdateDialog';
 import { userService, User, UserCreate, UserUpdate } from '../../services/userService';
 import { VenueUser } from '../../types/api';
-import { STORAGE_KEYS } from '../../constants/storage';
 import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
+import { PageLoadingSkeleton, EmptyState } from '../../components/ui/LoadingStates';
+import StandardButton from '../../components/ui/StandardButton';
+import StandardCard from '../../components/ui/StandardCard';
+
+// Animation for refresh icon
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
 
 const UserManagement: React.FC = () => {
-  const { user: currentUser, hasPermission, getUserWithRole, isSuperAdmin, isAdmin } = useAuth();
+  const { hasPermission, isSuperAdmin, isAdmin } = useAuth();
   const { currentWorkspace, currentVenue, venues } = useWorkspace();
   const { 
     userData, 
     loading: userDataLoading,
-    hasPermission: hasUserDataPermission, 
-    getUsers: getUserDataUsers,
     getVenue,
     getWorkspace,
     getVenueDisplayName
@@ -86,7 +87,6 @@ const UserManagement: React.FC = () => {
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   
   const [users, setUsers] = useState<VenueUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,9 +95,8 @@ const UserManagement: React.FC = () => {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showPermissions, setShowPermissions] = useState<string | null>(null);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as AlertColor });
   const { handleError } = useErrorHandler();
   const navigate = useNavigate();
 
@@ -115,46 +114,11 @@ const UserManagement: React.FC = () => {
   // Track if users have been loaded to prevent duplicate API calls
   const [usersLoaded, setUsersLoaded] = useState(false);
 
-  useEffect(() => {
-    console.log('🎯 UserManagement component mounted or dependencies changed');
-    
-    // Reset loaded state when workspace/venue changes
-    setUsersLoaded(false);
-    
-    // Only load if userData is available (navigation scenario)
-    if (userData && !userDataLoading) {
-      console.log('📡 Navigation detected - userData available, loading users');
-      loadUsers();
-    } else {
-      console.log('🔄 Page refresh detected - waiting for userData...');
-    }
-  }, [currentWorkspace, currentVenue]);
-
-  // Load users when userData becomes available (page refresh scenario)
-  useEffect(() => {
-    console.log('🔄 UserManagement userData effect triggered');
-    console.log('- userData:', !!userData);
-    console.log('- userDataLoading:', userDataLoading);
-    console.log('- usersLoaded:', usersLoaded);
-    
-    // Only load if:
-    // 1. We have userData (context is ready)
-    // 2. Not currently loading userData
-    // 3. Users haven't been loaded yet
-    if (userData && !userDataLoading && !usersLoaded) {
-      console.log('📡 UserData became available, loading users');
-      loadUsers();
-    }
-  }, [userData, userDataLoading, usersLoaded]);
-
-  const loadUsers = async () => {
-    console.log('🔄 Loading users...');
-    
+  const loadUsers = useCallback(async () => {
     // Get venue from userData first, then fallback to context
     const venue = getVenue() || currentVenue;
     
     if (!venue?.id) {
-      console.log('❌ No venue ID available for loading users');
       setUsers([]);
       setLoading(false);
       setError('No venue selected. Please select a venue to view users.');
@@ -166,22 +130,16 @@ const UserManagement: React.FC = () => {
     setError(null);
     
     try {
-      console.log('📡 Making API call to load users for venue:', venue.id);
-      
       // Use the new venue-specific API
       const response = await userService.getUsersByVenueId(venue.id);
       
       if (response.success && response.data) {
-        console.log('✅ Users loaded successfully:', response.data);
         setUsers(response.data);
       } else {
-        console.log('⚠️ API call succeeded but no data:', response);
         setUsers([]);
         setError(response.error || 'No users found for this venue.');
       }
     } catch (error: any) {
-      console.error('❌ Error loading users:', error);
-      
       // Use the error handler to analyze and handle the error
       const errorInfo = handleError(error, { 
         logError: true,
@@ -206,7 +164,28 @@ const UserManagement: React.FC = () => {
       setLoading(false);
       setUsersLoaded(true); // Mark as loaded after API call completes
     }
-  };
+  }, [getVenue, handleError, currentVenue]);
+
+  useEffect(() => {
+    // Reset loaded state when workspace/venue changes
+    setUsersLoaded(false);
+    
+    // Only load if userData is available (navigation scenario)
+    if (userData && !userDataLoading) {
+      loadUsers();
+    }
+  }, [currentWorkspace, currentVenue, loadUsers, userData, userDataLoading]);
+
+  // Load users when userData becomes available (page refresh scenario)
+  useEffect(() => {
+    // Only load if:
+    // 1. We have userData (context is ready)
+    // 2. Not currently loading userData
+    // 3. Users haven't been loaded yet
+    if (userData && !userDataLoading && !usersLoaded) {
+      loadUsers();
+    }
+  }, [userData, userDataLoading, usersLoaded, loadUsers]);
 
   const handleOpenDialog = (user?: User) => {
     if (user) {
@@ -289,7 +268,6 @@ const UserManagement: React.FC = () => {
       await loadUsers();
       handleCloseDialog();
     } catch (error: any) {
-      console.error('Error saving user:', error);
       setSnackbar({ 
         open: true, 
         message: error.message || 'Failed to save user', 
@@ -312,7 +290,6 @@ const UserManagement: React.FC = () => {
           await loadUsers(); // Reload users after deletion
         }
       } catch (error: any) {
-        console.error('Error deleting user:', error);
         setSnackbar({ 
           open: true, 
           message: error.message || 'Failed to delete user', 
@@ -335,7 +312,6 @@ const UserManagement: React.FC = () => {
         await loadUsers(); // Reload users after status change
       }
     } catch (error: any) {
-      console.error('Error toggling user status:', error);
       setSnackbar({ 
         open: true, 
         message: error.message || 'Failed to update user status', 
@@ -356,13 +332,53 @@ const UserManagement: React.FC = () => {
         severity: 'success' 
       });
     } catch (error: any) {
-      console.error('Error updating password:', error);
       setSnackbar({ 
         open: true, 
         message: error.message || 'Failed to update password', 
         severity: 'error' 
       });
       throw error;
+    }
+  };
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefreshUsers = async () => {
+    const venue = getVenue() || currentVenue;
+    
+    if (!venue?.id) {
+      setSnackbar({
+        open: true,
+        message: 'No venue available to refresh users',
+        severity: 'error'
+      });
+      return;
+    }
+
+    setRefreshing(true);
+    setError(null);
+    
+    try {
+      const response = await userService.getUsersByVenueId(venue.id);
+      
+      if (response.success && response.data) {
+        setUsers(response.data);
+      } else {
+        setUsers([]);
+        setSnackbar({
+          open: true,
+          message: response.error || 'No users found for this venue.',
+          severity: 'warning'
+        });
+      }
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: 'Failed to refresh users. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -407,20 +423,15 @@ const UserManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4, pt: { xs: '56px', sm: '64px' } }}>
-        <Grid container spacing={3}>
-          {[...Array(6)].map((_, index) => (
-            <Grid item xs={12} key={index}>
-              <Card>
-                <CardContent>
-                  <Skeleton variant="text" height={32} />
-                  <Skeleton variant="text" height={24} />
-                  <Skeleton variant="rectangular" height={120} sx={{ mt: 2 }} />
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+      <Container 
+        maxWidth="xl" 
+        className="container-responsive" 
+        sx={{ 
+          pt: { xs: '56px', sm: '64px' },
+          px: { xs: 1, sm: 2, md: 3 }
+        }}
+      >
+        <PageLoadingSkeleton />
       </Container>
     );
   }
@@ -452,7 +463,7 @@ const UserManagement: React.FC = () => {
               {error}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
-              <Button 
+              <StandardButton 
                 variant="contained" 
                 startIcon={<Refresh />}
                 onClick={() => {
@@ -463,15 +474,15 @@ const UserManagement: React.FC = () => {
                 size="large"
               >
                 Try Again
-              </Button>
-              <Button 
+              </StandardButton>
+              <StandardButton 
                 variant="outlined" 
                 startIcon={<ArrowBack />}
                 onClick={() => navigate('/admin')}
                 size="large"
               >
                 Back to Dashboard
-              </Button>
+              </StandardButton>
             </Stack>
           </CardContent>
         </Card>
@@ -481,7 +492,6 @@ const UserManagement: React.FC = () => {
 
   // No workspace selected state (check userData first)
   const venue = getVenue();
-  const workspace = getWorkspace();
   
   if (!venue && !currentWorkspace?.id) {
     return (
@@ -529,110 +539,192 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" className="container-responsive" sx={{ pt: { xs: '56px', sm: '64px' } }}>
+    <Container 
+      maxWidth="xl" 
+      className="container-responsive" 
+      sx={{ 
+        pt: { xs: '56px', sm: '64px' },
+        px: { xs: 1, sm: 2, md: 3 }
+      }}
+    >
       <Box sx={{ py: { xs: 2, sm: 4 } }}>
         {/* Header */}
-        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+        <Box sx={{ mb: { xs: 2, md: 3 } }}>
           <Stack 
             direction={{ xs: 'column', sm: 'row' }}
             justifyContent="space-between" 
             alignItems={{ xs: 'flex-start', sm: 'center' }}
             spacing={{ xs: 2, sm: 0 }}
-            sx={{ mb: 2 }}
+            sx={{ mb: 1 }}
           >
-            <Box sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography 
                 variant={isMobile ? "h5" : "h4"} 
                 component="h1"
                 gutterBottom 
                 fontWeight="600"
-                sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}
+                sx={{ 
+                  fontSize: { xs: '1.25rem', sm: '1.75rem', md: '2rem' },
+                  lineHeight: 1.2
+                }}
               >
                 User Management
               </Typography>
               <Typography 
                 variant={isMobile ? "body2" : "body1"} 
                 color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: { xs: 'nowrap', sm: 'normal' }
+                }}
               >
-                Manage users and their permissions for {getVenueDisplayName()}
+                Manage users and their permissions
               </Typography>
             </Box>
-            {canCreateUsers && (
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => handleOpenDialog()}
-                className="btn-responsive"
-                size={isMobile ? "medium" : "large"}
-                fullWidth={isMobile}
+            <Stack 
+              direction={{ xs: 'row', sm: 'row' }} 
+              spacing={2}
+              sx={{ 
+                width: { xs: '100%', sm: 'auto' },
+                flexShrink: 0,
+                alignItems: 'center'
+              }}
+            >
+              {canCreateUsers && (
+                <StandardButton
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => handleOpenDialog()}
+                  size="large"
+                  sx={{
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1,
+                    transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                    },
+                  }}
+                >
+                  User
+                </StandardButton>
+              )}
+
+              <IconButton
+                onClick={handleRefreshUsers}
+                disabled={refreshing}
+                size="large"
+                sx={{
+                  backgroundColor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  color: 'text.primary',
+                  borderRadius: 2,
+                  transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                  },
+                }}
+                title={refreshing ? 'Refreshing...' : 'Refresh users'}
               >
-                Add User
-              </Button>
-            )}
+                {refreshing ? (
+                  <CachedOutlined sx={{ animation: `${spin} 1s linear infinite` }} />
+                ) : (
+                  <Refresh />
+                )}
+              </IconButton>
+            </Stack>
           </Stack>
         </Box>
 
         {/* Users Table */}
-        <Card className="card-responsive">
-          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <StandardCard 
+          variant="default"
+          noPadding={true}
+          sx={{ mt: { xs: 2, sm: 3 } }}
+        >
             {users.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
-                <People sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.secondary', mb: 2 }} />
-                <Typography 
-                  variant={isMobile ? "body1" : "h6"} 
-                  color="text.secondary" 
-                  fontWeight="600"
-                  gutterBottom
-                >
-                  No Users Found
-                </Typography>
-                <Typography 
-                  variant="body2" 
-                  color="text.secondary" 
-                  sx={{ mb: 3, maxWidth: 400, mx: 'auto' }}
-                >
-                  {canCreateUsers 
-                    ? "Get started by adding your first team member to help manage your restaurant operations."
-                    : "No team members have been added yet. Contact your administrator to add users."
-                  }
-                </Typography>
-                {canCreateUsers && (
-                  <Button 
+              <EmptyState
+                icon={<People sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.secondary' }} />}
+                title="No Users Found"
+                description={canCreateUsers 
+                  ? "Get started by adding your first team member to help manage your restaurant operations."
+                  : "No team members have been added yet. Contact your administrator to add users."
+                }
+                action={canCreateUsers && (
+                  <StandardButton 
                     variant="contained" 
                     startIcon={<Add />} 
-                    className="btn-responsive"
                     size={isMobile ? "medium" : "large"}
                     onClick={() => handleOpenDialog()}
                   >
                     Add Your First User
-                  </Button>
+                  </StandardButton>
                 )}
-              </Box>
+              />
             ) : (
-              <TableContainer sx={{ 
-                '& .MuiTable-root': {
-                  minWidth: { xs: 'auto', sm: 650 }
-                }
+              <Box sx={{ 
+                overflow: 'auto',
+                maxWidth: '100%'
               }}>
-                <Table size={isMobile ? "small" : "medium"}>
+                <Table 
+                  size="small"
+                  sx={{ 
+                    minWidth: { xs: 550, sm: 600 },
+                    '& .MuiTableCell-root': {
+                      whiteSpace: 'nowrap',
+                      px: { xs: 0.75, sm: 1.5 },
+                      py: { xs: 0.75, sm: 1 },
+                      fontSize: { xs: '0.7rem', sm: '0.8rem' }
+                    }
+                  }}
+                >
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                      <TableCell sx={{ 
+                        fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                        fontWeight: 600,
+                        minWidth: { xs: 160, sm: 180 }
+                      }}>
                         User
                       </TableCell>
-                      <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                      <TableCell sx={{ 
+                        fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                        fontWeight: 600,
+                        minWidth: 70
+                      }}>
                         Role
                       </TableCell>
-                      <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                      <TableCell sx={{ 
+                        fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                        fontWeight: 600,
+                        minWidth: 70
+                      }}>
                         Status
                       </TableCell>
                       <TableCell sx={{ 
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                        display: { xs: 'none', sm: 'table-cell' }
+                        fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                        fontWeight: 600,
+                        display: { xs: 'none', sm: 'table-cell' },
+                        minWidth: 100
                       }}>
                         Last Login
                       </TableCell>
-                      <TableCell sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+                      <TableCell sx={{ 
+                        fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                        fontWeight: 600,
+                        minWidth: 50,
+                        textAlign: 'center'
+                      }}>
                         Actions
                       </TableCell>
                     </TableRow>
@@ -641,19 +733,45 @@ const UserManagement: React.FC = () => {
                     {users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
+                            <Avatar sx={{ width: { xs: 28, sm: 36 }, height: { xs: 28, sm: 36 }, fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>
                               {user.first_name.charAt(0)}{user.last_name.charAt(0)}
                             </Avatar>
-                            <Box>
-                              <Typography variant="subtitle2" fontWeight="600">
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Typography 
+                                variant="subtitle2" 
+                                fontWeight="600"
+                                sx={{ 
+                                  fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  lineHeight: 1.2
+                                }}
+                              >
                                 {user.user_name || `${user.first_name} ${user.last_name}`}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography 
+                                variant="body2" 
+                                color="text.secondary"
+                                sx={{ 
+                                  fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  lineHeight: 1.1
+                                }}
+                              >
                                 {user.email}
                               </Typography>
                               {user.phone && (
-                                <Typography variant="body2" color="text.secondary">
+                                <Typography 
+                                  variant="body2" 
+                                  color="text.secondary"
+                                  sx={{ 
+                                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                                    display: { xs: 'none', sm: 'block' },
+                                    lineHeight: 1.1
+                                  }}
+                                >
                                   {user.phone}
                                 </Typography>
                               )}
@@ -665,6 +783,13 @@ const UserManagement: React.FC = () => {
                             label={user.role_display_name || getDisplayName(user.role)}
                             color={getRoleColor(user.role) as any}
                             size="small"
+                            sx={{ 
+                              fontSize: { xs: '0.55rem', sm: '0.65rem' },
+                              height: { xs: 20, sm: 24 },
+                              '& .MuiChip-label': {
+                                px: { xs: 0.5, sm: 1 }
+                              }
+                            }}
                           />
                         </TableCell>
                         <TableCell>
@@ -672,30 +797,37 @@ const UserManagement: React.FC = () => {
                             label={user.status === 'active' ? 'Active' : 'Inactive'}
                             color={user.status === 'active' ? 'success' : 'default'}
                             size="small"
-                            icon={user.status === 'active' ? <CheckCircle /> : <Cancel />}
+                            icon={user.status === 'active' ? <CheckCircle sx={{ fontSize: '0.8rem' }} /> : <Cancel sx={{ fontSize: '0.8rem' }} />}
+                            sx={{ 
+                              fontSize: { xs: '0.55rem', sm: '0.65rem' },
+                              height: { xs: 20, sm: 24 },
+                              '& .MuiChip-label': {
+                                px: { xs: 0.5, sm: 1 }
+                              }
+                            }}
                           />
                         </TableCell>
                         <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
-                          <Typography variant="body2">
+                          <Typography variant="body2" sx={{ fontSize: { xs: '0.6rem', sm: '0.65rem' } }}>
                             {formatLastLogin(user.last_logged_in || user.updated_at || user.created_at)}
                           </Typography>
                         </TableCell>
-                        <TableCell>
+                        <TableCell sx={{ textAlign: 'center' }}>
                           <IconButton
                             onClick={(e) => handleMenuClick(e, user)}
                             size="small"
+                            sx={{ p: 0.5 }}
                           >
-                            <MoreVert />
+                            <MoreVert sx={{ fontSize: '1rem' }} />
                           </IconButton>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              </TableContainer>
+              </Box>
             )}
-          </CardContent>
-        </Card>
+        </StandardCard>
 
         {/* User Actions Menu */}
         <Menu
@@ -761,56 +893,71 @@ const UserManagement: React.FC = () => {
           PaperProps={{
             sx: {
               m: isMobile ? 0 : 2,
-              maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)'
+              maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)',
+              height: isMobile ? '100vh' : 'auto'
             }
           }}
         >
-          <DialogTitle sx={{ pb: 1 }}>
+          <DialogTitle sx={{ 
+            pb: 1, 
+            px: { xs: 2, sm: 3 },
+            pt: { xs: 2, sm: 3 },
+            borderBottom: '1px solid',
+            borderColor: 'divider'
+          }}>
             <Typography variant={isMobile ? "h6" : "h5"} fontWeight="600">
               {editingUser ? 'Edit User' : 'Create New User'}
             </Typography>
           </DialogTitle>
-          <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
+          <DialogContent sx={{ 
+            px: { xs: 2, sm: 3 },
+            py: { xs: 2, sm: 3 },
+            flex: 1,
+            overflow: 'auto'
+          }}>
+            <Stack spacing={{ xs: 2, sm: 2.5 }} sx={{ mt: 0.5 }}>
+              {/* Name Fields */}
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
                   fullWidth
                   label="First Name"
                   value={formData.first_name}
                   onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                   required
+                  size={isMobile ? "medium" : "medium"}
                 />
-              </Grid>
-              <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Last Name"
                   value={formData.last_name}
                   onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                   required
+                  size={isMobile ? "medium" : "medium"}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  disabled={!!editingUser}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
+              </Stack>
+
+              {/* Email */}
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                disabled={!!editingUser}
+                required
+                size={isMobile ? "medium" : "medium"}
+              />
+
+              {/* Phone and Role */}
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
                   fullWidth
                   label="Phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  size={isMobile ? "medium" : "medium"}
                 />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
+                <FormControl fullWidth required size={isMobile ? "medium" : "medium"}>
                   <InputLabel>Role</InputLabel>
                   <Select
                     value={formData.role_name}
@@ -822,61 +969,83 @@ const UserManagement: React.FC = () => {
                     {isSuperAdmin() && <MenuItem value={ROLES.SUPERADMIN}>Super Admin</MenuItem>}
                   </Select>
                 </FormControl>
-              </Grid>
+              </Stack>
+
+              {/* Venue Selection */}
               {venues.length > 1 && (
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Venue</InputLabel>
-                    <Select
-                      value={formData.venue_id}
-                      onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
-                      label="Venue"
-                    >
-                      <MenuItem value="">All Venues</MenuItem>
-                      {venues.map((venue) => (
-                        <MenuItem key={venue.id} value={venue.id}>
-                          {venue.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                <FormControl fullWidth size={isMobile ? "medium" : "medium"}>
+                  <InputLabel>Venue</InputLabel>
+                  <Select
+                    value={formData.venue_id}
+                    onChange={(e) => setFormData({ ...formData, venue_id: e.target.value })}
+                    label="Venue"
+                  >
+                    <MenuItem value="">All Venues</MenuItem>
+                    {venues.map((venue) => (
+                      <MenuItem key={venue.id} value={venue.id}>
+                        {venue.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               )}
-              <Grid item xs={12}>
+
+              {/* Active Status */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                py: 1,
+                borderRadius: 1,
+                backgroundColor: 'grey.50',
+                px: 2
+              }}>
                 <FormControlLabel
                   control={
                     <Switch
                       checked={formData.is_active}
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                      color="primary"
                     />
                   }
-                  label="Active User"
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight="500">
+                        Active User
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        User can log in and access the system
+                      </Typography>
+                    </Box>
+                  }
+                  sx={{ margin: 0 }}
                 />
-              </Grid>
-            </Grid>
-          </DialogContent>
-          <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={1}
-              width={{ xs: '100%', sm: 'auto' }}
-            >
-              <Button 
-                onClick={handleCloseDialog}
-                className="btn-responsive"
-                fullWidth={isMobile}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSubmit} 
-                variant="contained"
-                className="btn-responsive"
-                fullWidth={isMobile}
-              >
-                {editingUser ? 'Update' : 'Create'}
-              </Button>
+              </Box>
             </Stack>
+          </DialogContent>
+          <DialogActions sx={{ 
+            px: { xs: 2, sm: 3 }, 
+            pb: { xs: 2, sm: 3 },
+            pt: 2,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            gap: 1
+          }}>
+            <StandardButton 
+              onClick={handleCloseDialog}
+              variant="outlined"
+              fullWidth={isMobile}
+              size={isMobile ? "large" : "medium"}
+            >
+              Cancel
+            </StandardButton>
+            <StandardButton 
+              onClick={handleSubmit} 
+              variant="contained"
+              fullWidth={isMobile}
+              size={isMobile ? "large" : "medium"}
+            >
+              {editingUser ? 'Update User' : 'Create User'}
+            </StandardButton>
           </DialogActions>
         </Dialog>
 

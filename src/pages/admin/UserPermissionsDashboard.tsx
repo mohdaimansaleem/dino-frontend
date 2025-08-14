@@ -7,6 +7,7 @@ import {
   Card,
   CardContent,
   Button,
+  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -366,24 +367,14 @@ const UserPermissionsDashboard: React.FC = () => {
               Monitor and manage user permissions across your organization
             </Typography>
           </Box>
-          <Button
-            variant="outlined"
-            startIcon={<Visibility />}
-            onClick={() => handleViewPermissions({
-              ...(currentUserAuth || {}),
-              firstName: user?.first_name || user?.firstName,
-              lastName: user?.last_name || user?.lastName,
-              email: user?.email,
-              isActive: true,
-              lastLogin: new Date(),
-              cafeId: userData?.venue?.id,
-            })}
-            sx={{ 
-              minWidth: 'auto',
-              whiteSpace: 'nowrap'
-            }}
-          >
-          </Button>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 2,
+            flexWrap: 'wrap',
+            alignItems: 'center'
+          }}>
+
+          </Box>
         </Box>
       </Box>
 
@@ -436,13 +427,47 @@ const UserPermissionsDashboard: React.FC = () => {
             </Grid>
             <Grid item xs={12} md={2}>
               <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<Refresh />}
-                  size="small"
-                >
-                  Refresh
-                </Button>
+                          <Button
+              variant="outlined"
+              startIcon={<Visibility />}
+              onClick={() => handleViewPermissions({
+                ...(currentUserAuth || {}),
+                firstName: user?.first_name || user?.firstName,
+                lastName: user?.last_name || user?.lastName,
+                email: user?.email,
+                isActive: true,
+                lastLogin: new Date(),
+                cafeId: userData?.venue?.id,
+              })}
+              sx={{ 
+                minWidth: 'auto',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              My Permissions
+            </Button>
+
+            <IconButton
+              onClick={() => {
+                // Add refresh functionality here if needed
+                window.location.reload();
+              }}
+              size="large"
+              sx={{
+                backgroundColor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                color: 'text.primary',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                  borderColor: 'primary.main',
+                  color: 'primary.main',
+                },
+              }}
+              title="Refresh permissions"
+            >
+              <Refresh />
+            </IconButton>
               </Box>
             </Grid>
           </Grid>
@@ -529,15 +554,17 @@ const UserPermissionsDashboard: React.FC = () => {
                             <Typography variant="h5" color="text.secondary" gutterBottom fontWeight="600">
                               No Users Available
                             </Typography>
-                            <Typography variant="body1" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6, fontSize: '0.875rem' }}>
                               The user management system is currently being set up. User permissions and roles will be displayed here once the backend API is implemented.
                             </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ 
+                            <Typography variant="caption" color="text.secondary" sx={{ 
                               backgroundColor: 'info.50', 
                               p: 2, 
                               borderRadius: 2,
                               border: '1px solid',
-                              borderColor: 'info.200'
+                              borderColor: 'info.200',
+                              fontSize: '0.75rem',
+                              display: 'block'
                             }}>
                               💡 This feature is coming soon. Contact your system administrator for more information.
                             </Typography>

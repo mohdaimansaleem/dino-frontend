@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Grid,
@@ -12,14 +12,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   Chip,
   IconButton,
   Alert,
   CircularProgress,
   Tabs,
   Tab,
-  LinearProgress,
   Divider,
   List,
   ListItem,
@@ -37,8 +35,6 @@ import {
   Add,
   Dashboard,
   Analytics,
-  Assessment,
-  Timeline,
   MonetizationOn,
   ShoppingCart,
   Restaurant,
@@ -46,7 +42,6 @@ import {
   CheckCircle,
   Warning,
   Error,
-  TrendingDown,
   ShowChart,
   PieChart,
   BarChart,
@@ -55,8 +50,6 @@ import {
   Payment,
   Today,
   AccessTime,
-  Cancel,
-  Pending,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
@@ -134,7 +127,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
   const currentVenue = userData?.venue;
   const venueName = currentVenue?.name || 'Current Venue';
 
-  // Mock data for charts and analytics specific to the venue
+  // Sample data for charts and analytics specific to the venue
   const [revenueData] = useState([
     { day: 'Mon', revenue: 8500, orders: 28 },
     { day: 'Tue', revenue: 12200, orders: 35 },
@@ -175,11 +168,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
     { name: 'UPI', value: 67, color: '#9C27B0' },
   ]);
 
-  useEffect(() => {
-    loadVenueDashboardData();
-  }, [currentVenue?.id]);
-
-  const loadVenueDashboardData = async () => {
+  const loadVenueDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -190,9 +179,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
       }
       
       // Load venue-specific dashboard stats
-      const dashboardData = await dashboardService.getVenueDashboard(currentVenue.id);
+      await dashboardService.getVenueDashboard(currentVenue.id);
       
-      // Set mock data for demonstration - replace with actual API data
+      // Set initial data - replace with actual API data when available
       setStats({
         total_orders: 1247,
         total_revenue: 185600,
@@ -206,7 +195,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
         popular_items_count: 15,
       });
 
-      // Mock menu performance data
+      // Sample menu performance data
       setMenuPerformance([
         { id: '1', name: 'Dino Burger', orders: 89, revenue: 12650, category: 'Main Course', rating: 4.8 },
         { id: '2', name: 'Pasta Primavera', orders: 67, revenue: 9380, category: 'Main Course', rating: 4.6 },
@@ -215,7 +204,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
         { id: '5', name: 'Chocolate Cake', orders: 42, revenue: 3360, category: 'Desserts', rating: 4.9 },
       ]);
 
-      // Mock table status data
+      // Sample table status data
       setTableStatuses([
         { id: '1', table_number: 'T01', status: 'occupied', current_order_id: 'ORD001', occupancy_time: 45 },
         { id: '2', table_number: 'T02', status: 'available' },
@@ -229,7 +218,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentVenue?.id]);
+
+  useEffect(() => {
+    loadVenueDashboardData();
+  }, [currentVenue?.id, loadVenueDashboardData]);
 
   const getTableStatusColor = (status: string) => {
     switch (status) {

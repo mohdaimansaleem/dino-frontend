@@ -6,7 +6,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Divider,
   Box,
   Typography,
   IconButton,
@@ -17,6 +16,8 @@ import {
   Switch,
   FormControlLabel,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Close,
@@ -27,15 +28,9 @@ import {
   Dashboard,
   TableRestaurant,
   Restaurant,
-  Receipt,
   People,
   Settings,
-  Analytics,
-  QrCode,
-  Notifications,
-  TrendingUp,
   Assignment,
-  MenuBook,
   Business,
   Security,
   Store,
@@ -44,10 +39,8 @@ import {
 } from '@mui/icons-material';
 import DinoLogo from '../../DinoLogo';
 import { getUserFirstName } from '../../../utils/userUtils';
-import { ROLE_NAMES, isAdminLevel, getRoleDisplayName } from '../../../constants/roles';
 import { useAuth } from '../../../contexts/AuthContext';
 import PermissionService from '../../../services/permissionService';
-import VenueStatusControl from '../../VenueStatusControl';
 import { useUserData } from '../../../contexts/UserDataContext';
 import { venueService } from '../../../services/venueService';
 
@@ -89,6 +82,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     venueName: string;
   } | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Load dinosaur avatar from localStorage
   useEffect(() => {
@@ -114,29 +109,16 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     };
   }, []);
 
-  // REMOVED: Unnecessary API call to load venue status
-  // The venue status is already available in UserDataContext from /auth/user-data
+  // Load venue status from UserDataContext
   useEffect(() => {
     const userIsAdmin = isAdmin() || isSuperAdmin();
-    
-    console.log('🔍 MobileMenu - Checking venue status conditions:', {
-      hasUser: !!user,
-      userRole: user?.role,
-      isAdminFromContext: userIsAdmin,
-      isAdminMethod: isAdmin(),
-      isSuperAdminMethod: isSuperAdmin(),
-      venueId: userData?.venue?.id,
-      venueName: userData?.venue?.name
-    });
 
     if (!user || !userIsAdmin) {
-      console.log('❌ MobileMenu - User not admin level, hiding venue status');
       setVenueStatus(null);
       return;
     }
 
     if (!userData?.venue) {
-      console.log('⚠️ MobileMenu - No venue found, setting fallback status');
       setVenueStatus({
         isActive: false,
         isOpen: false,
@@ -151,7 +133,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
       isOpen: userData.venue.is_open || false,
       venueName: userData.venue.name || 'Current Venue'
     };
-    console.log('✅ MobileMenu - Using venue status from UserDataContext:', statusData);
     setVenueStatus(statusData);
   }, [user, userData?.venue, isAdmin, isSuperAdmin]);
 
@@ -168,10 +149,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
       });
 
       setVenueStatus(prev => prev ? { ...prev, isOpen: newStatus } : null);
-      
-      console.log(`✅ MobileMenu - Venue ${newStatus ? 'opened' : 'closed'} for orders`);
     } catch (error) {
-      console.error('❌ MobileMenu - Error toggling venue status:', error);
+      // Handle error silently or show user notification
     } finally {
       setStatusLoading(false);
     }
@@ -226,10 +205,10 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
       sx={{
         zIndex: 1300,
         '& .MuiDrawer-paper': {
-          width: { xs: '100vw', sm: 320 },
-          maxWidth: 320,
+          width: { xs: '80vw', sm: 360, md: 320 },
+          maxWidth: { xs: '80vw', sm: 360 },
           backgroundColor: 'background.paper',
-          borderLeft: '1px solid',
+          borderLeft: { xs: 'none', sm: '1px solid' },
           borderColor: 'divider',
           borderRadius: '0 !important',
           height: '100vh !important',
@@ -240,6 +219,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           position: 'fixed !important',
           margin: '0 !important',
           transform: 'none !important',
+          // Better mobile performance
+          willChange: 'transform',
+          backfaceVisibility: 'hidden',
         },
         '& .MuiModal-root': {
           top: '0 !important',
@@ -250,6 +232,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
           top: '0 !important',
           height: '100vh !important',
           position: 'fixed !important',
+          backgroundColor: { xs: 'rgba(0, 0, 0, 0.8)', sm: 'rgba(0, 0, 0, 0.5)' },
         },
       }}
     >
@@ -261,28 +244,40 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         {/* Header */}
         <Box
           sx={{
-            p: 2,
+            p: { xs: 2, sm: 2.5 },
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             borderBottom: '1px solid',
             borderColor: 'divider',
-            minHeight: 64,
+            minHeight: { xs: 60, sm: 64 },
+            // Add safe area for mobile devices with notches
+            paddingTop: { xs: 'max(16px, env(safe-area-inset-top))', sm: 2.5 },
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <DinoLogo size={32} animated={false} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.5, sm: 2 } }}>
+            <DinoLogo size={isMobile ? 28 : 32} animated={false} />
             <Box>
-              <Typography variant="h6" fontWeight={600} color="text.primary">
+              <Typography 
+                variant="h6" 
+                fontWeight={600} 
+                color="text.primary"
+                sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}
+              >
                 Dino E-Menu
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+              >
                 Digital Menu Revolution
               </Typography>
             </Box>
           </Box>
           <IconButton
             onClick={onClose}
+            size={isMobile ? 'small' : 'medium'}
             sx={{
               color: 'text.secondary',
               '&:hover': {
@@ -296,11 +291,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
 
         {/* User Section */}
         {user && (
-          <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Box sx={{ p: { xs: 1.5, sm: 2 }, borderBottom: '1px solid', borderColor: 'divider' }}>
             <Paper
               elevation={0}
               sx={{
-                p: 2,
+                p: { xs: 1.5, sm: 2 },
                 backgroundColor: '#E3F2FD',
                 border: 'none',
                 borderRadius: 2,

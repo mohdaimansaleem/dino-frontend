@@ -96,7 +96,6 @@ class ApiService {
 
   constructor() {
     // Log configuration during initialization
-    console.log('🔧 ApiService constructor - API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
     console.log('🔧 ApiService constructor - window.APP_CONFIG:', (window as any).APP_CONFIG);
     
     this.axiosInstance = axios.create({
@@ -114,22 +113,18 @@ class ApiService {
       async (config) => {
         // Check if token needs refresh before making request
         if (authService.shouldRefreshToken()) {
-          console.log('🔄 Token needs refresh, attempting before request...');
           try {
             await authService.refreshToken();
           } catch (error) {
-            console.error('Pre-request token refresh failed:', error);
-          }
+            }
         }
         
         // Add authentication token
         const token = authService.getToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
-          console.log('🔑 Added auth token to request:', config.url);
-        } else {
-          console.warn('⚠️ No auth token available for request:', config.url);
-        }
+          } else {
+          }
 
         // Convert request data to snake_case
         if (config.data && typeof config.data === 'object') {
@@ -196,7 +191,6 @@ class ApiService {
             }
           } catch (refreshError) {
             // Refresh failed, redirect to login
-            console.error('Token refresh failed:', refreshError);
             authService.logout();
             window.location.href = '/login';
             return Promise.reject(refreshError);
@@ -426,7 +420,6 @@ class ApiService {
    * Update base URL
    */
   setBaseURL(baseURL: string): void {
-    console.log('🔧 Updating API base URL from', this.axiosInstance.defaults.baseURL, 'to', baseURL);
     this.axiosInstance.defaults.baseURL = baseURL;
   }
 
@@ -436,19 +429,12 @@ class ApiService {
   refreshConfiguration(): void {
     const runtimeConfig = (window as any).APP_CONFIG;
     if (runtimeConfig && runtimeConfig.API_BASE_URL) {
-      console.log('🔧 Refreshing API configuration from runtime config');
-      console.log('   Current base URL:', this.axiosInstance.defaults.baseURL);
-      console.log('   Runtime config API_BASE_URL:', runtimeConfig.API_BASE_URL);
-      
       if (this.axiosInstance.defaults.baseURL !== runtimeConfig.API_BASE_URL) {
         this.setBaseURL(runtimeConfig.API_BASE_URL);
-        console.log('✅ API base URL updated to:', runtimeConfig.API_BASE_URL);
-      } else {
-        console.log('✅ API base URL already correct');
-      }
+        } else {
+        }
     } else {
-      console.warn('⚠️ No runtime config found or API_BASE_URL not set');
-    }
+      }
   }
 
   /**
@@ -457,11 +443,9 @@ class ApiService {
   setAuthorizationHeader(token: string | null): void {
     if (token) {
       this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      console.log('✅ Authorization header set for all future requests');
-    } else {
+      } else {
       delete this.axiosInstance.defaults.headers.common['Authorization'];
-      console.log('🗑️ Authorization header removed');
-    }
+      }
   }
 
   /**
@@ -492,13 +476,7 @@ apiService.debugConfiguration = function() {
   console.log('Base URL:', (apiService as any).axiosInstance.defaults.baseURL);
   console.log('Timeout:', (apiService as any).axiosInstance.defaults.timeout);
   console.log('Headers:', (apiService as any).axiosInstance.defaults.headers);
-  console.log('API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
-  console.log('Window Location:', window.location.href);
-  console.log('User Agent:', navigator.userAgent);
   console.log('Is Mobile:', /Mobile|Android|iPhone|iPad/.test(navigator.userAgent));
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-  console.log('REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
-  console.log('Runtime Config API_BASE_URL:', API_CONFIG.BASE_URL);
   console.groupEnd();
 };
 

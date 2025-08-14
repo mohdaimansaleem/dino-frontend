@@ -87,8 +87,8 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
         tableNumber,
         customization: {
           template,
-          primaryColor: '#2e7d32',
-          secondaryColor: '#1b5e20',
+          primaryColor: '#000000',
+          secondaryColor: '#000000',
         },
       });
       setQrData(newQrData);
@@ -99,50 +99,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
     }
   }, [tableId, actualVenueId, actualVenueName, tableNumber, template]);
 
-  // Generate a demo QR code as base64 image
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const generateDemoQRCode = () => {
-    // This is a simple demo QR code - in a real app, you'd use a QR library
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 200;
-    canvas.height = 200;
-    
-    if (ctx) {
-      // Fill with white background
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, 200, 200);
-      
-      // Draw a simple QR-like pattern
-      ctx.fillStyle = 'black';
-      for (let i = 0; i < 20; i++) {
-        for (let j = 0; j < 20; j++) {
-          if ((i + j) % 3 === 0) {
-            ctx.fillRect(i * 10, j * 10, 8, 8);
-          }
-        }
-      }
-      
-      // Add corner squares
-      ctx.fillRect(0, 0, 60, 60);
-      ctx.fillRect(140, 0, 60, 60);
-      ctx.fillRect(0, 140, 60, 60);
-      
-      // Add white inner squares
-      ctx.fillStyle = 'white';
-      ctx.fillRect(10, 10, 40, 40);
-      ctx.fillRect(150, 10, 40, 40);
-      ctx.fillRect(10, 150, 40, 40);
-      
-      // Add black center squares
-      ctx.fillStyle = 'black';
-      ctx.fillRect(20, 20, 20, 20);
-      ctx.fillRect(160, 20, 20, 20);
-      ctx.fillRect(20, 160, 20, 20);
-    }
-    
-    return canvas.toDataURL('image/png');
-  };
+
 
   useEffect(() => {
     if (open && !qrData && tableId && actualVenueId && actualVenueName && tableNumber) {
@@ -164,8 +121,8 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
         tableNumber: qrData.tableNumber,
         customization: {
           template,
-          primaryColor: '#2e7d32',
-          secondaryColor: '#1b5e20',
+          primaryColor: '#000000',
+          secondaryColor: '#000000',
         },
       });
 
@@ -261,7 +218,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
             background: white;
           }
           .qr-container {
-            border: 3px solid #2e7d32;
+            border: 3px solid #000000;
             border-radius: 15px;
             padding: 30px;
             margin: 20px auto;
@@ -269,7 +226,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
           }
           .header {
-            color: #2e7d32;
+            color: #000000;
             font-size: 28px;
             font-weight: bold;
             margin-bottom: 10px;
@@ -281,7 +238,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
           }
           .table-number {
             font-size: 20px;
-            color: #2e7d32;
+            color: #000000;
             font-weight: bold;
             margin-bottom: 20px;
           }
@@ -861,9 +818,6 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 1 }}>
-        <Button onClick={onClose} size="large">
-          Close
-        </Button>
         {qrData && (
           <>
             <Button
@@ -880,7 +834,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
               onClick={handlePrint}
               size="large"
             >
-              Print QR Code
+              Print
             </Button>
           </>
         )}

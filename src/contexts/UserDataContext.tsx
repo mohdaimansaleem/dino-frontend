@@ -69,19 +69,15 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
 
     // Prevent duplicate calls - only load if forced or not already loading/loaded
     if (!force && (loading || (userData && initialized))) {
-      console.log('🔄 UserDataContext: Skipping duplicate load request');
       return;
     }
 
     setLoading(true);
     try {
-      console.log('🔄 UserDataContext: Loading user data...');
       const data = await userDataService.getUserData();
       setUserData(data);
       setInitialized(true);
-      console.log('✅ UserDataContext: User data loaded successfully');
-    } catch (error: any) {
-      console.error('❌ UserDataContext: Error loading user data:', error);
+      } catch (error: any) {
       setUserData(null);
       setInitialized(true);
     } finally {
@@ -92,10 +88,8 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
   // Initialize user data when authentication changes
   useEffect(() => {
     if (isAuthenticated && !initialized) {
-      console.log('🔄 UserDataContext: Authentication detected, initializing user data...');
       loadUserData(true);
     } else if (!isAuthenticated && initialized) {
-      console.log('🔄 UserDataContext: User logged out, clearing data...');
       setUserData(null);
       setInitialized(false);
     }
@@ -104,7 +98,6 @@ export const UserDataProvider: React.FC<UserDataProviderProps> = ({ children }) 
   // Additional effect to ensure data is loaded after login - with better conditions
   useEffect(() => {
     if (isAuthenticated && user && !userData && !loading && initialized) {
-      console.log('🔄 UserDataContext: User authenticated but no data, loading...');
       loadUserData(true);
     }
   }, [isAuthenticated, user, userData, loading, initialized, loadUserData]);

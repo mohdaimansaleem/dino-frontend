@@ -20,9 +20,8 @@ import {
   Wifi,
   Security,
   Block,
-  Warning,
 } from '@mui/icons-material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface ErrorPageProps {
@@ -59,7 +58,6 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
-  const location = useLocation();
   const { isAuthenticated } = useAuth();
 
   // Determine error type and configuration
@@ -72,12 +70,12 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
       return {
         icon: <Wifi sx={{ fontSize: { xs: 48, md: 64 }, color: 'warning.main' }} />,
         title: 'Connection Problem',
-        message: 'Unable to connect to our servers. Please check your internet connection and try again.',
+        message: 'We\'re having trouble connecting to our servers. Please check your internet connection and try again.',
         color: 'warning',
         suggestions: [
           'Check your internet connection',
           'Try refreshing the page',
-          'Contact support if the problem persists'
+          'Wait a moment and try again'
         ]
       };
     }

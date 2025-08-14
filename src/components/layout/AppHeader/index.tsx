@@ -36,7 +36,7 @@ import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import MobileMenu from '../MobileMenu';
 import { NAVIGATION, COMPANY_INFO } from '../../../data/info';
 import { getUserFirstName } from '../../../utils/userUtils';
-import { ROLE_NAMES, isAdminLevel } from '../../../constants/roles';
+import { isAdminLevel } from '../../../constants/roles';
 import { useUserData } from '../../../contexts/UserDataContext';
 import { venueService } from '../../../services/venueService';
 
@@ -115,7 +115,6 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
       venueName: userData.venue.name || 'Current Venue'
     };
     setVenueStatus(statusData);
-    console.log('✅ AppHeader - Using venue status from UserDataContext:', statusData);
   }, [user, userData?.venue, isAdmin, isSuperAdmin]);
 
   // Handle venue status toggle
@@ -132,7 +131,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
 
       setVenueStatus(prev => prev ? { ...prev, isOpen: newStatus } : null);
     } catch (error) {
-      console.error('❌ AppHeader - Error toggling venue status:', error);
+      // Handle error silently or show user notification
     } finally {
       setStatusLoading(false);
     }
@@ -252,6 +251,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
     return null;
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderVenueStatus = () => {
     if (!user || !(isAdmin() || isSuperAdmin()) || !venueStatus) return null;
 
@@ -578,23 +578,22 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
           </Container>
         </AppBar>
 
-      {/* Mobile Menu - Only for non-admin routes */}
-      {!isAdminRoute && (
-        <MobileMenu
-          open={mobileMenuOpen}
-          onClose={() => setMobileMenuOpen(false)}
-          homeNavItems={homeNavItems}
-          activeSection={activeSection}
-          onSectionClick={scrollToSection}
-          user={user}
-          onLogout={handleLogout}
-          onNavigate={(path) => {
-            navigate(path);
-            setMobileMenuOpen(false);
-          }}
-          isHomePage={isHomePage}
-        />
-      )}
+      {/* Mobile Menu */}
+      <MobileMenu
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        homeNavItems={homeNavItems}
+        activeSection={activeSection}
+        onSectionClick={scrollToSection}
+        user={user}
+        onLogout={handleLogout}
+        onNavigate={(path) => {
+          navigate(path);
+          setMobileMenuOpen(false);
+        }}
+        isHomePage={isHomePage}
+        isAdminRoute={isAdminRoute}
+      />
     </>
   );
 };

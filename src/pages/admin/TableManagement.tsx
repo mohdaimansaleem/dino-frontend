@@ -623,7 +623,7 @@ const TableManagement: React.FC = () => {
                   size={isMobile ? "medium" : "medium"}
                   fullWidth={isMobile}
                 >
-                  Add Table
+                Table
                 </Button>
               </Stack>
             </Grid>
@@ -918,7 +918,7 @@ const TableManagement: React.FC = () => {
                             <QrCode fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Print QR Code">
+                        <Tooltip title="Print">
                           <IconButton 
                             size="small" 
                             onClick={() => printQRCode(table.id)}
