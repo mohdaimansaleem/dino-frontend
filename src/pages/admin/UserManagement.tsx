@@ -34,6 +34,7 @@ import {
   useMediaQuery,
   Stack,
   keyframes,
+  Button,
 } from '@mui/material';
 import {
   Add,
@@ -61,8 +62,7 @@ import { userService, User, UserCreate, UserUpdate } from '../../services/userSe
 import { VenueUser } from '../../types/api';
 import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
 import { PageLoadingSkeleton, EmptyState } from '../../components/ui/LoadingStates';
-import StandardButton from '../../components/ui/StandardButton';
-import StandardCard from '../../components/ui/StandardCard';
+
 
 // Animation for refresh icon
 const spin = keyframes`
@@ -449,10 +449,14 @@ const UserManagement: React.FC = () => {
         </Box>
         
         <Card sx={{ 
-          borderRadius: 3,
-          boxShadow: theme.shadows[2],
+          borderRadius: 2,
           border: '1px solid',
-          borderColor: 'divider'
+          borderColor: 'divider',
+          transition: 'all 0.2s ease-in-out',
+          '&:hover': {
+            boxShadow: 3,
+            transform: 'translateY(-2px)',
+          },
         }}>
           <CardContent sx={{ p: 4, textAlign: 'center' }}>
             <People sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
@@ -463,7 +467,7 @@ const UserManagement: React.FC = () => {
               {error}
             </Typography>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
-              <StandardButton 
+              <Button 
                 variant="contained" 
                 startIcon={<Refresh />}
                 onClick={() => {
@@ -474,15 +478,15 @@ const UserManagement: React.FC = () => {
                 size="large"
               >
                 Try Again
-              </StandardButton>
-              <StandardButton 
+              </Button>
+              <Button 
                 variant="outlined" 
                 startIcon={<ArrowBack />}
                 onClick={() => navigate('/admin')}
                 size="large"
               >
                 Back to Dashboard
-              </StandardButton>
+              </Button>
             </Stack>
           </CardContent>
         </Card>
@@ -506,18 +510,22 @@ const UserManagement: React.FC = () => {
           </Typography>
         </Box>
 
-        <Box
+        <Card
           sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '400px',
-            backgroundColor: 'white',
             borderRadius: 2,
             border: '1px solid',
             borderColor: 'divider',
             p: 4,
+            transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            '&:hover': {
+              borderColor: 'primary.main',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            },
           }}
         >
           <Business
@@ -533,7 +541,7 @@ const UserManagement: React.FC = () => {
           <Typography variant="body1" color="text.secondary" textAlign="center" mb={3}>
             You need to select a workspace first to manage users. Please select or create a workspace to continue.
           </Typography>
-        </Box>
+        </Card>
       </Container>
     );
   }
@@ -549,7 +557,7 @@ const UserManagement: React.FC = () => {
     >
       <Box sx={{ py: { xs: 2, sm: 4 } }}>
         {/* Header */}
-        <Box sx={{ mb: { xs: 2, md: 3 } }}>
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
           <Stack 
             direction={{ xs: 'column', sm: 'row' }}
             justifyContent="space-between" 
@@ -559,25 +567,24 @@ const UserManagement: React.FC = () => {
           >
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography 
-                variant={isMobile ? "h5" : "h4"} 
+                variant="h4" 
                 component="h1"
                 gutterBottom 
                 fontWeight="600"
                 sx={{ 
-                  fontSize: { xs: '1.25rem', sm: '1.75rem', md: '2rem' },
+                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
+                  letterSpacing: '-0.01em',
                   lineHeight: 1.2
                 }}
               >
                 User Management
               </Typography>
               <Typography 
-                variant={isMobile ? "body2" : "body1"} 
+                variant="body1" 
                 color="text.secondary"
                 sx={{ 
                   fontSize: { xs: '0.875rem', sm: '1rem' },
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: { xs: 'nowrap', sm: 'normal' }
+                  fontWeight: 400
                 }}
               >
                 Manage users and their permissions
@@ -593,24 +600,14 @@ const UserManagement: React.FC = () => {
               }}
             >
               {canCreateUsers && (
-                <StandardButton
+                <Button
                   variant="contained"
                   startIcon={<Add />}
                   onClick={() => handleOpenDialog()}
                   size="large"
-                  sx={{
-                    fontWeight: 600,
-                    borderRadius: 2,
-                    px: 3,
-                    py: 1,
-                    transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                    },
-                  }}
                 >
                   User
-                </StandardButton>
+                </Button>
               )}
 
               <IconButton
@@ -622,13 +619,10 @@ const UserManagement: React.FC = () => {
                   border: '1px solid',
                   borderColor: 'divider',
                   color: 'text.primary',
-                  borderRadius: 2,
-                  transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                   '&:hover': {
                     backgroundColor: 'action.hover',
                     borderColor: 'primary.main',
                     color: 'primary.main',
-                    transform: 'translateY(-1px)',
                   },
                   '&:disabled': {
                     opacity: 0.5,
@@ -647,10 +641,18 @@ const UserManagement: React.FC = () => {
         </Box>
 
         {/* Users Table */}
-        <StandardCard 
-          variant="default"
-          noPadding={true}
-          sx={{ mt: { xs: 2, sm: 3 } }}
+        <Card 
+          sx={{ 
+            mt: { xs: 2, sm: 3 },
+            borderRadius: 2,
+            border: '1px solid',
+            borderColor: 'divider',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              boxShadow: 3,
+              transform: 'translateY(-2px)',
+            },
+          }}
         >
             {users.length === 0 ? (
               <EmptyState
@@ -661,14 +663,14 @@ const UserManagement: React.FC = () => {
                   : "No team members have been added yet. Contact your administrator to add users."
                 }
                 action={canCreateUsers && (
-                  <StandardButton 
+                  <Button 
                     variant="contained" 
                     startIcon={<Add />} 
                     size={isMobile ? "medium" : "large"}
                     onClick={() => handleOpenDialog()}
                   >
                     Add Your First User
-                  </StandardButton>
+                  </Button>
                 )}
               />
             ) : (
@@ -827,7 +829,7 @@ const UserManagement: React.FC = () => {
                 </Table>
               </Box>
             )}
-        </StandardCard>
+        </Card>
 
         {/* User Actions Menu */}
         <Menu
@@ -911,9 +913,10 @@ const UserManagement: React.FC = () => {
           </DialogTitle>
           <DialogContent sx={{ 
             px: { xs: 2, sm: 3 },
-            py: { xs: 2, sm: 3 },
+            py: { xs: 3, sm: 4 },
             flex: 1,
-            overflow: 'auto'
+            overflow: 'auto',
+            minHeight: '400px'
           }}>
             <Stack spacing={{ xs: 2, sm: 2.5 }} sx={{ mt: 0.5 }}>
               {/* Name Fields */}
@@ -1030,22 +1033,22 @@ const UserManagement: React.FC = () => {
             borderColor: 'divider',
             gap: 1
           }}>
-            <StandardButton 
+            <Button 
               onClick={handleCloseDialog}
               variant="outlined"
               fullWidth={isMobile}
               size={isMobile ? "large" : "medium"}
             >
               Cancel
-            </StandardButton>
-            <StandardButton 
+            </Button>
+            <Button 
               onClick={handleSubmit} 
               variant="contained"
               fullWidth={isMobile}
               size={isMobile ? "large" : "medium"}
             >
               {editingUser ? 'Update User' : 'Create User'}
-            </StandardButton>
+            </Button>
           </DialogActions>
         </Dialog>
 

@@ -375,7 +375,7 @@ export interface Table {
   updated_at?: string;
 }
 
-export type TableStatus = 'available' | 'booked' | 'occupied' | 'maintenance' | 'out_of_service';
+export type TableStatus = 'available' | 'reserved' | 'occupied' | 'maintenance' | 'out_of_service';
 
 export interface TableCreate {
   table_number: string;

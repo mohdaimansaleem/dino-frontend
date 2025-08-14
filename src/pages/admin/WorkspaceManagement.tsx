@@ -320,7 +320,7 @@ const WorkspaceManagement: React.FC = () => {
   // Loading state
   if (userDataLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <CircularProgress size={60} />
           <Typography variant="h6" sx={{ ml: 2 }}>
@@ -335,6 +335,7 @@ const WorkspaceManagement: React.FC = () => {
     <Container 
       maxWidth="xl" 
       sx={{ 
+        pt: { xs: '56px', sm: '64px' },
         py: { xs: 2, sm: 3, md: 4 },
         px: { xs: 2, sm: 3 },
         maxWidth: '100%',
@@ -352,7 +353,16 @@ const WorkspaceManagement: React.FC = () => {
         gap: 2
       }}>
         <Box>
-          <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            gutterBottom 
+            fontWeight="600"
+            sx={{ 
+              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
+              letterSpacing: '-0.01em'
+            }}
+          >
             Workspace Venues
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -576,7 +586,11 @@ const WorkspaceManagement: React.FC = () => {
           </Box>
         </DialogTitle>
         
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ 
+          px: { xs: 2, sm: 3 }, 
+          py: { xs: 3, sm: 4 },
+          minHeight: '600px'
+        }}>
           <Grid container spacing={3}>
             {/* Basic Information */}
             <Grid item xs={12}>

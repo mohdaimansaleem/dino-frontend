@@ -560,7 +560,7 @@ const OrdersManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" className="container-responsive">
+      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
         <Box sx={{ py: { xs: 2, sm: 4 } }}>
           <Grid container spacing={{ xs: 2, sm: 3 }}>
             {[...Array(6)].map((_, index) => (
@@ -582,7 +582,7 @@ const OrdersManagement: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth="xl" className="container-responsive">
+      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
         <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
           <Typography 
             variant={isMobile ? "body1" : "h6"} 
@@ -606,10 +606,10 @@ const OrdersManagement: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" className="container-responsive">
+    <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
       <Box sx={{ py: { xs: 2, sm: 4 } }}>
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
           <Box sx={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -621,7 +621,7 @@ const OrdersManagement: React.FC = () => {
                 variant="h4" 
                 component="h1"
                 sx={{ 
-                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
                   fontWeight: 600,
                   color: 'text.primary',
                   mb: 1,
@@ -922,7 +922,11 @@ const OrdersManagement: React.FC = () => {
               )}
             </Stack>
           </DialogTitle>
-          <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+          <DialogContent sx={{ 
+            px: { xs: 2, sm: 3 }, 
+            py: { xs: 3, sm: 4 },
+            minHeight: '400px'
+          }}>
             {selectedOrder && (
               <Grid container spacing={{ xs: 2, sm: 3 }}>
                 <Grid item xs={12} md={8}>

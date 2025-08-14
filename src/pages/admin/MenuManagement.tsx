@@ -571,42 +571,33 @@ const MenuManagement: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" className="container-responsive" sx={{ pt: { xs: '56px', sm: '64px' } }}>
+    <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
       <Box sx={{ py: { xs: 2, sm: 4 } }}>
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'flex-start', 
-            mb: 2
-          }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography 
-                variant="h4" 
-                component="h1"
-                sx={{ 
-                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-                  fontWeight: 600,
-                  color: 'text.primary',
-                  mb: 1,
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                Menu Management
-              </Typography>
-              <Typography 
-                variant="body1" 
-                color="text.secondary"
-                sx={{ 
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  fontWeight: 400
-                }}
-              >
-                Manage your restaurant's menu items and categories for {getVenueDisplayName()}
-              </Typography>
-            </Box>
-          </Box>
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+          <Typography 
+            variant="h4" 
+            component="h1"
+            sx={{ 
+              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
+              fontWeight: 600,
+              color: 'text.primary',
+              mb: 1,
+              letterSpacing: '-0.01em'
+            }}
+          >
+            Menu Management
+          </Typography>
+          <Typography 
+            variant="body1" 
+            color="text.secondary"
+            sx={{ 
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              fontWeight: 400
+            }}
+          >
+            Manage your restaurant's menu items and categories for {getVenueDisplayName()}
+          </Typography>
         </Box>
 
         {/* Enhanced Controls */}
@@ -913,7 +904,7 @@ const MenuManagement: React.FC = () => {
               </Button>
             </Box>
           ) : (
-            <Grid container spacing={{ xs: 2, sm: 2 }}>
+            <Grid container spacing={{ xs: 2, sm: 2 }} sx={{ pb: 2 }}>
               {categories.map(category => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={category.id}>
                   <Card 
@@ -932,7 +923,8 @@ const MenuManagement: React.FC = () => {
                       height: '100%',
                       minHeight: 120,
                       maxWidth: '100%',
-                      overflow: 'hidden'
+                      overflow: 'hidden',
+                      mb: 2
                     }}
                   >
                     <CardContent sx={{ 
@@ -1470,10 +1462,12 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
           <Box
             sx={{
               position: 'absolute',
-              top: '5%',
-              left: '5%',
-              right: '5%',
-              bottom: '5%',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '90%',
+              maxWidth: '500px',
+              maxHeight: '85vh',
               bgcolor: 'background.paper',
               borderRadius: 2,
               boxShadow: 24,
@@ -1500,43 +1494,39 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
             </AppBar>
 
             {/* Modal Content */}
-            <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Item Name"
-                    value={formData.name || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Category</InputLabel>
-                    <Select
-                      value={formData.category || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                      label="Category"
-                    >
-                      {categories.map(category => (
-                        <MuiMenuItem key={category.id} value={category.id}>
-                          {category.name}
-                        </MuiMenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Description"
-                    multiline
-                    rows={3}
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                </Grid>
-                <Grid item xs={6}>
+            <Box sx={{ overflow: 'auto', p: 1.5 }}>
+              <Stack spacing={1}>
+                <TextField
+                  fullWidth
+                  label="Item Name"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  size="medium"
+                />
+                <FormControl fullWidth size="medium">
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    value={formData.category || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    label="Category"
+                  >
+                    {categories.map(category => (
+                      <MuiMenuItem key={category.id} value={category.id}>
+                        {category.name}
+                      </MuiMenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  multiline
+                  rows={2}
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  size="medium"
+                />
+                <Stack direction="row" spacing={1}>
                   <TextField
                     fullWidth
                     label="Price (₹)"
@@ -1570,9 +1560,8 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
                         },
                       },
                     }}
+                    size="medium"
                   />
-                </Grid>
-                <Grid item xs={6}>
                   <TextField
                     fullWidth
                     label="Prep Time (min)"
@@ -1603,42 +1592,42 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
                         },
                       },
                     }}
+                    size="medium"
                   />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Calories (optional)"
-                    type="number"
-                    value={formData.calories === 0 ? '' : formData.calories || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, calories: e.target.value ? parseInt(e.target.value) : undefined }))}
-                    onFocus={(e) => {
-                      if (e.target.value === '0') {
-                        e.target.select();
-                      }
-                    }}
-                    placeholder="Enter calories"
-                    inputProps={{
-                      min: 0,
-                      step: 1,
-                      onWheel: (e: any) => e.preventDefault(),
-                      style: { MozAppearance: 'textfield' }
-                    }}
-                    sx={{
-                      '& input[type=number]': {
-                        '&::-webkit-outer-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
-                        '&::-webkit-inner-spin-button': {
-                          '-webkit-appearance': 'none',
-                          margin: 0,
-                        },
+                </Stack>
+                <TextField
+                  fullWidth
+                  label="Calories (optional)"
+                  type="number"
+                  value={formData.calories === 0 ? '' : formData.calories || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, calories: e.target.value ? parseInt(e.target.value) : undefined }))}
+                  onFocus={(e) => {
+                    if (e.target.value === '0') {
+                      e.target.select();
+                    }
+                  }}
+                  placeholder="Enter calories"
+                  inputProps={{
+                    min: 0,
+                    step: 1,
+                    onWheel: (e: any) => e.preventDefault(),
+                    style: { MozAppearance: 'textfield' }
+                  }}
+                  sx={{
+                    '& input[type=number]': {
+                      '&::-webkit-outer-spin-button': {
+                        '-webkit-appearance': 'none',
+                        margin: 0,
                       },
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={6}>
+                      '&::-webkit-inner-spin-button': {
+                        '-webkit-appearance': 'none',
+                        margin: 0,
+                      },
+                    },
+                  }}
+                  size="medium"
+                />
+                <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between' }}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -1648,8 +1637,6 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
                     }
                     label="Vegetarian"
                   />
-                </Grid>
-                <Grid item xs={6}>
                   <FormControlLabel
                     control={
                       <Switch
@@ -1659,23 +1646,21 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
                     }
                     label="Available"
                   />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.featured || false}
-                        onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
-                      />
-                    }
-                    label="Featured Item"
-                  />
-                </Grid>
-              </Grid>
+                </Stack>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.featured || false}
+                      onChange={(e) => setFormData(prev => ({ ...prev, featured: e.target.checked }))}
+                    />
+                  }
+                  label="Featured Item"
+                />
+              </Stack>
             </Box>
 
             {/* Modal Footer */}
-            <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
+            <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
               <Stack direction="row" spacing={2}>
                 <Button onClick={onClose} fullWidth variant="outlined">
                   Cancel
@@ -1709,7 +1694,10 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
           {item ? 'Edit Menu Item' : 'Add Menu Item'}
         </Typography>
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ 
+        px: { xs: 2, sm: 3 }, 
+        py: { xs: 3, sm: 4 }
+      }}>
         <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12} md={6}>
             <TextField
@@ -1939,16 +1927,18 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, 
           <Box
             sx={{
               position: 'absolute',
-              top: '20%',
-              left: '5%',
-              right: '5%',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '90%',
+              maxWidth: '450px',
+              maxHeight: '70vh',
               bgcolor: 'background.paper',
               borderRadius: 2,
               boxShadow: 24,
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              maxHeight: '60vh',
             }}
           >
             {/* Modal Header */}
@@ -1969,42 +1959,38 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, 
             </AppBar>
 
             {/* Modal Content */}
-            <Box sx={{ flex: 1, overflow: 'auto', p: 3 }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Category Name"
-                    value={formData.name || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    label="Description"
-                    multiline
-                    rows={2}
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.active || false}
-                        onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
-                      />
-                    }
-                    label="Active"
-                  />
-                </Grid>
-              </Grid>
+            <Box sx={{ overflow: 'auto', p: 1.5 }}>
+              <Stack spacing={1}>
+                <TextField
+                  fullWidth
+                  label="Category Name"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  size="medium"
+                />
+                <TextField
+                  fullWidth
+                  label="Description"
+                  multiline
+                  rows={2}
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  size="medium"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.active || false}
+                      onChange={(e) => setFormData(prev => ({ ...prev, active: e.target.checked }))}
+                    />
+                  }
+                  label="Active"
+                />
+              </Stack>
             </Box>
 
             {/* Modal Footer */}
-            <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
+            <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
               <Stack direction="row" spacing={2}>
                 <Button onClick={onClose} fullWidth variant="outlined">
                   Cancel
@@ -2038,7 +2024,10 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, 
           {category ? 'Edit Category' : 'Add Category'}
         </Typography>
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ 
+        px: { xs: 2, sm: 3 }, 
+        py: { xs: 3, sm: 4 }
+      }}>
         <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12}>
             <TextField

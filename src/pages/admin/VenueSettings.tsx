@@ -444,7 +444,7 @@ const VenueSettings: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <CircularProgress size={60} />
         </Box>
@@ -454,7 +454,7 @@ const VenueSettings: React.FC = () => {
 
   if (error) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
@@ -473,7 +473,7 @@ const VenueSettings: React.FC = () => {
 
   return (
     <Box>
-      <Container maxWidth="xl" className="container-responsive">
+      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
         <Box sx={{ py: { xs: 2, sm: 4 } }}>
           <Box sx={{ mb: { xs: 3, md: 4 } }}>
             <Paper 
@@ -498,7 +498,15 @@ const VenueSettings: React.FC = () => {
                   🦕
                 </Avatar>
                 <Box>
-                  <Typography variant="h4" gutterBottom fontWeight="600">
+                  <Typography 
+                    variant="h4" 
+                    gutterBottom 
+                    fontWeight="600"
+                    sx={{ 
+                      fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
+                      letterSpacing: '-0.01em'
+                    }}
+                  >
                     Venue Settings
                   </Typography>
                   <Typography variant="h6" color="text.secondary" fontWeight="500">

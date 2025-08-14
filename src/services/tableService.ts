@@ -261,7 +261,7 @@ class TableService {
   getTableStatusColor(status: TableStatus): string {
     const colors = {
       available: '#10b981', // green
-      booked: '#f59e0b',    // yellow
+      reserved: '#f59e0b',    // yellow
       occupied: '#ef4444',  // red
       maintenance: '#6b7280', // gray
       out_of_service: '#374151' // dark gray
@@ -275,7 +275,7 @@ class TableService {
   getTableStatusIcon(status: TableStatus): string {
     const icons = {
       available: '✅',
-      booked: '📅',
+      reserved: '📅',
       occupied: '👥',
       maintenance: '🔧',
       out_of_service: '❌'
@@ -289,7 +289,7 @@ class TableService {
   formatTableStatus(status: TableStatus): string {
     const labels = {
       available: 'Available',
-      booked: 'Booked',
+      reserved: 'Reserved',
       occupied: 'Occupied',
       maintenance: 'Maintenance',
       out_of_service: 'Out of Service'
@@ -301,14 +301,14 @@ class TableService {
    * Check if table can be occupied
    */
   canOccupyTable(table: Table): boolean {
-    return table.is_active && ['available', 'booked'].includes(table.table_status);
+    return table.is_active && ['available'].includes(table.table_status);
   }
 
   /**
    * Check if table can be freed
    */
   canFreeTable(table: Table): boolean {
-    return table.is_active && ['occupied', 'booked'].includes(table.table_status);
+    return table.is_active && ['occupied', 'reserved'].includes(table.table_status);
   }
 
   /**
@@ -388,7 +388,7 @@ class TableService {
   getStatusOptions(): Array<{ value: TableStatus; label: string; color: string }> {
     return [
       { value: 'available', label: 'Available', color: this.getTableStatusColor('available') },
-      { value: 'booked', label: 'Booked', color: this.getTableStatusColor('booked') },
+      { value: 'reserved', label: 'Reserved', color: this.getTableStatusColor('reserved') },
       { value: 'occupied', label: 'Occupied', color: this.getTableStatusColor('occupied') },
       { value: 'maintenance', label: 'Maintenance', color: this.getTableStatusColor('maintenance') },
       { value: 'out_of_service', label: 'Out of Service', color: this.getTableStatusColor('out_of_service') }
@@ -420,7 +420,7 @@ class TableService {
     }, {} as Record<TableStatus, Table[]>);
 
     // Ensure all statuses are present
-    const allStatuses: TableStatus[] = ['available', 'booked', 'occupied', 'maintenance', 'out_of_service'];
+    const allStatuses: TableStatus[] = ['available', 'reserved', 'occupied', 'maintenance', 'out_of_service'];
     allStatuses.forEach(status => {
       if (!grouped[status]) {
         grouped[status] = [];
@@ -438,7 +438,7 @@ class TableService {
     active: number;
     available: number;
     occupied: number;
-    booked: number;
+    reserved: number;
     maintenance: number;
     outOfService: number;
     totalCapacity: number;
@@ -447,7 +447,7 @@ class TableService {
     const active = tables.filter(t => t.is_active);
     const available = tables.filter(t => t.table_status === 'available');
     const occupied = tables.filter(t => t.table_status === 'occupied');
-    const booked = tables.filter(t => t.table_status === 'booked');
+    const reserved = tables.filter(t => t.table_status === 'reserved');
     const maintenance = tables.filter(t => t.table_status === 'maintenance');
     const outOfService = tables.filter(t => t.table_status === 'out_of_service');
     
@@ -459,7 +459,7 @@ class TableService {
       active: active.length,
       available: available.length,
       occupied: occupied.length,
-      booked: booked.length,
+      reserved: reserved.length,
       maintenance: maintenance.length,
       outOfService: outOfService.length,
       totalCapacity,

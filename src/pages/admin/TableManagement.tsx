@@ -34,6 +34,11 @@ import {
   useTheme,
   useMediaQuery,
   Stack,
+  Modal,
+  Backdrop,
+  Fade,
+  AppBar,
+  Toolbar,
 } from '@mui/material';
 import {
   Add,
@@ -50,6 +55,8 @@ import {
   Cancel,
   Schedule,
   QrCodeScanner,
+  Close,
+  Refresh,
 } from '@mui/icons-material';
 
 // Local interface for table areas (backward compatibility)
@@ -61,7 +68,7 @@ interface TableArea {
   active: boolean;
 }
 
-const TableManagement: React.FC = () => {
+const TableManagement = () => {
   const { getVenue, getVenueDisplayName, userData, loading: userDataLoading } = useUserData();
   const [tables, setTables] = useState<Table[]>([]);
   const [areas, setAreas] = useState<TableArea[]>([]);
@@ -514,32 +521,55 @@ const TableManagement: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" className="container-responsive">
+    <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
       <Box sx={{ py: { xs: 2, sm: 4 } }}>
-        <Box sx={{ mb: 4 }}>
-          <Typography 
-            variant="h4" 
-            component="h1"
-            sx={{ 
-              fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-              fontWeight: 600,
-              color: 'text.primary',
-              mb: 1,
-              letterSpacing: '-0.01em'
-            }}
-          >
-            Table Management
-          </Typography>
-          <Typography 
-            variant="body1" 
-            color="text.secondary"
-            sx={{ 
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-              fontWeight: 400
-            }}
-          >
-            Manage your restaurant's tables, seating areas, and QR codes
-          </Typography>
+        {/* Header */}
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+            <Box>
+              <Typography 
+                variant="h4" 
+                component="h1"
+                sx={{ 
+                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  mb: 1,
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                Table Management
+              </Typography>
+              <Typography 
+                variant="body1" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontWeight: 400
+                }}
+              >
+                Manage your restaurant's tables, seating areas, and QR codes
+              </Typography>
+            </Box>
+            {!isMobile && (
+              <Button
+                variant="outlined"
+                startIcon={<QrCodeScanner />}
+                onClick={handleBulkQRGeneration}
+                size="medium"
+                sx={{
+                  borderColor: 'divider',
+                  color: 'text.primary',
+                  '&:hover': {
+                    borderColor: 'primary.main',
+                    backgroundColor: 'primary.50'
+                  }
+                }}
+              >
+                Bulk QR Manager
+              </Button>
+            )}
+          </Box>
         </Box>
 
         <Paper 
@@ -582,8 +612,8 @@ const TableManagement: React.FC = () => {
             </Grid>
             <Grid item xs={12} md={8}>
               <Stack 
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={{ xs: 1, sm: 2 }}
+                direction={{ xs: 'row', sm: 'row' }}
+                spacing={2}
                 justifyContent={{ xs: 'stretch', md: 'flex-end' }}
               >
                 <Button
@@ -593,27 +623,16 @@ const TableManagement: React.FC = () => {
                   className="btn-responsive"
                   size={isMobile ? "medium" : "medium"}
                   fullWidth={isMobile}
+                  sx={{
+                    borderColor: 'divider',
+                    color: 'text.primary',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      backgroundColor: 'primary.50'
+                    }
+                  }}
                 >
                   {isMobile ? "Areas" : "Manage Areas"}
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<QrCodeScanner />}
-                  onClick={handleBulkQRGeneration}
-                  className="btn-responsive"
-                  size={isMobile ? "medium" : "medium"}
-                  fullWidth={isMobile}
-                >
-                  {isMobile ? "QR Manager" : "Bulk QR Manager"}
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={refreshData}
-                  className="btn-responsive"
-                  size={isMobile ? "medium" : "medium"}
-                  fullWidth={isMobile}
-                >
-                  Refresh
                 </Button>
                 <Button
                   variant="contained"
@@ -622,9 +641,37 @@ const TableManagement: React.FC = () => {
                   className="btn-responsive"
                   size={isMobile ? "medium" : "medium"}
                   fullWidth={isMobile}
+                  sx={{
+                    fontWeight: 600,
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                    }
+                  }}
                 >
-                Table
+                  Table
                 </Button>
+                <IconButton
+                  onClick={refreshData}
+                  size="large"
+                  sx={{
+                    backgroundColor: 'background.paper',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    color: 'text.primary',
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: 1,
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                    },
+                  }}
+                  title="Refresh table data"
+                >
+                  <Refresh />
+                </IconButton>
               </Stack>
             </Grid>
           </Grid>
@@ -635,7 +682,7 @@ const TableManagement: React.FC = () => {
             { label: 'Total Tables', value: tables.length, color: '#2196F3', icon: <TableRestaurant /> },
             { label: 'Available', value: tables.filter(t => t.table_status === 'available').length, color: '#4CAF50', icon: <CheckCircle /> },
             { label: 'Occupied', value: tables.filter(t => t.table_status === 'occupied').length, color: '#F44336', icon: <People /> },
-            { label: 'Reserved', value: tables.filter(t => t.table_status === 'booked').length, color: '#FF9800', icon: <Schedule /> },
+            { label: 'Reserved', value: tables.filter(t => t.table_status === 'reserved').length, color: '#FF9800', icon: <Schedule /> },
           ].map((stat, index) => (
             <Grid item xs={6} md={3} key={index}>
               <Paper 
@@ -698,10 +745,11 @@ const TableManagement: React.FC = () => {
             gutterBottom 
             fontWeight="600" 
             color="text.primary"
+            sx={{ mb: 2 }}
           >
             Seating Areas
           </Typography>
-          <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+          <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ pb: 2 }}>
             {areas.map(area => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={area.id}>
                 <Card 
@@ -715,7 +763,8 @@ const TableManagement: React.FC = () => {
                       borderColor: 'primary.main',
                       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
                     },
-                    height: '100%'
+                    height: '100%',
+                    mb: 2
                   }}
                 >
                   <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
@@ -834,18 +883,18 @@ const TableManagement: React.FC = () => {
                   }}
                 >
                   <CardContent sx={{ 
-                    p: { xs: 2, sm: 3 }, 
+                    p: { xs: 1.5, sm: 2 }, 
                     flexGrow: 1, 
                     display: 'flex', 
                     flexDirection: 'column', 
-                    minHeight: { xs: 280, sm: 350 }
+                    minHeight: { xs: 200, sm: 240 }
                   }}>
                     <Stack 
                       direction="row"
                       justifyContent="space-between" 
                       alignItems="flex-start" 
                       spacing={1}
-                      sx={{ mb: 2 }}
+                      sx={{ mb: 1.5 }}
                     >
                       <Box sx={{ flex: 1, minWidth: 0 }}>
                         <Typography 
@@ -881,7 +930,7 @@ const TableManagement: React.FC = () => {
                       direction="row"
                       alignItems="center" 
                       spacing={2} 
-                      sx={{ mb: 2 }}
+                      sx={{ mb: 1.5 }}
                     >
                       <Stack direction="row" alignItems="center" spacing={0.5}>
                         <People fontSize="small" color="action" />
@@ -898,7 +947,7 @@ const TableManagement: React.FC = () => {
                     </Stack>
 
                     <Box sx={{ mt: 'auto' }}>
-                      <Divider sx={{ my: 2 }} />
+                      <Divider sx={{ my: 1.5 }} />
                       
                       <Stack 
                         direction="row"
@@ -1036,7 +1085,7 @@ interface TableDialogProps {
   isMobile?: boolean;
 }
 
-const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table, areas, tables, isMobile = false }) => {
+const TableDialog = ({ open, onClose, onSave, table, areas, tables, isMobile = false }: TableDialogProps) => {
   const [formData, setFormData] = useState<any>({
     table_number: '1',
     capacity: 2,
@@ -1081,8 +1130,8 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
       alert('Please enter a valid table number');
       return;
     }
-    if (!formData.capacity || formData.capacity < 1) {
-      alert('Please enter a valid capacity');
+    if (!formData.capacity || formData.capacity <= 0) {
+      alert('Please enter a valid capacity greater than 0');
       return;
     }
     
@@ -1098,17 +1147,155 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
     onSave(formData);
   };
 
+  if (isMobile) {
+    return (
+      <Modal
+        open={open}
+        onClose={onClose}
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500,
+        }}
+      >
+        <Fade in={open}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '90%',
+              maxWidth: '500px',
+              maxHeight: '85vh',
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Modal Header */}
+            <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+              <Toolbar>
+                <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                  {table ? 'Edit Table' : 'Add Table'}
+                </Typography>
+                <IconButton
+                  edge="end"
+                  color="inherit"
+                  onClick={onClose}
+                  aria-label="close"
+                >
+                  <Close />
+                </IconButton>
+              </Toolbar>
+            </AppBar>
+
+            {/* Modal Content */}
+            <Box sx={{ overflow: 'auto', p: 1.5 }}>
+              <Stack spacing={1}>
+                <TextField
+                  fullWidth
+                  label="Table Number"
+                  type="text"
+                  value={formData.table_number}
+                  onChange={(e) => setFormData((prev: any) => ({ ...prev, table_number: e.target.value }))}
+                  error={!table && tables.some(t => t.table_number === formData.table_number.trim() && t.is_active)}
+                  size="medium"
+                />
+                <FormControl fullWidth size="medium">
+                  <InputLabel>Area</InputLabel>
+                  <Select
+                    value={formData.location || ''}
+                    onChange={(e) => setFormData((prev: any) => ({ ...prev, location: e.target.value }))}
+                    label="Area"
+                  >
+                    {areas.map(area => (
+                      <MenuItem key={area.id} value={area.id}>
+                        {area.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Stack direction="row" spacing={1}>
+                  <TextField
+                    fullWidth
+                    label="Capacity"
+                    type="text"
+                    value={formData.capacity === 0 ? '' : formData.capacity || ''}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || /^\d+$/.test(value)) {
+                        const numValue = value === '' ? 0 : parseInt(value);
+                        setFormData((prev: any) => ({ ...prev, capacity: numValue }));
+                      }
+                    }}
+                    onFocus={(e) => {
+                      if (e.target.value === '0') {
+                        e.target.select();
+                      }
+                    }}
+                    placeholder="Enter capacity"
+                    error={formData.capacity !== undefined && formData.capacity <= 0}
+                    helperText={formData.capacity !== undefined && formData.capacity <= 0 ? "Capacity must be greater than 0" : ""}
+                    size="medium"
+                  />
+                  <FormControl fullWidth size="medium">
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                      value={formData.table_status || 'available'}
+                      onChange={(e) => setFormData((prev: any) => ({ ...prev, table_status: e.target.value }))}
+                      label="Status"
+                    >
+                      <MenuItem value="available">Available</MenuItem>
+                      <MenuItem value="occupied">Occupied</MenuItem>
+                      <MenuItem value="reserved">Reserved</MenuItem>
+                      <MenuItem value="maintenance">Maintenance</MenuItem>
+                      <MenuItem value="out_of_service">Out of Service</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Stack>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.is_active !== undefined ? formData.is_active : true}
+                      onChange={(e) => setFormData((prev: any) => ({ ...prev, is_active: e.target.checked }))}
+                    />
+                  }
+                  label="Active"
+                />
+              </Stack>
+            </Box>
+
+            {/* Modal Footer */}
+            <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
+              <Stack direction="row" spacing={2}>
+                <Button onClick={onClose} fullWidth variant="outlined">
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} variant="contained" fullWidth>
+                  {table ? 'Update' : 'Add'} Table
+                </Button>
+              </Stack>
+            </Box>
+          </Box>
+        </Fade>
+      </Modal>
+    );
+  }
+
   return (
     <Dialog 
       open={open} 
       onClose={onClose} 
       maxWidth="md" 
       fullWidth
-      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          m: isMobile ? 0 : 2,
-          maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)'
+          m: 2,
+          maxHeight: 'calc(100vh - 64px)'
         }
       }}
     >
@@ -1117,29 +1304,29 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
           {table ? 'Edit Table' : 'Add Table'}
         </Typography>
       </DialogTitle>
-      <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
-        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 0.5 }}>
+      <DialogContent sx={{ 
+        px: { xs: 2, sm: 3 }, 
+        py: { xs: 3, sm: 4 }
+      }}>
+        <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              className="input-responsive"
               label="Table Number"
               type="text"
               value={formData.table_number || '1'}
               onChange={(e) => setFormData((prev: any) => ({ ...prev, table_number: e.target.value }))}
               helperText={!table ? `Next available: ${formData.table_number}` : ''}
               error={!table && tables.some(t => t.table_number === formData.table_number.trim() && t.is_active)}
-              size={isMobile ? "medium" : "medium"}
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <FormControl fullWidth className="input-responsive">
+            <FormControl fullWidth>
               <InputLabel>Area</InputLabel>
               <Select
                 value={formData.location || ''}
                 onChange={(e) => setFormData((prev: any) => ({ ...prev, location: e.target.value }))}
                 label="Area"
-                size={isMobile ? "medium" : "medium"}
               >
                 {areas.map(area => (
                   <MenuItem key={area.id} value={area.id}>
@@ -1152,50 +1339,43 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
-              className="input-responsive"
               label="Capacity"
-              type="number"
-              value={formData.capacity || 2}
-              onChange={(e) => setFormData((prev: any) => ({ ...prev, capacity: parseInt(e.target.value) || 2 }))}
-              inputProps={{
-                min: 1,
-                step: 1,
-                onWheel: (e: any) => e.preventDefault(),
-                style: { MozAppearance: 'textfield' }
+              type="text"
+              value={formData.capacity === 0 ? '' : formData.capacity || ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                  const numValue = value === '' ? 0 : parseInt(value);
+                  setFormData((prev: any) => ({ ...prev, capacity: numValue }));
+                }
               }}
-              size={isMobile ? "medium" : "medium"}
-              sx={{
-                '& input[type=number]': {
-                  '&::-webkit-outer-spin-button': {
-                    '-webkit-appearance': 'none',
-                    margin: 0,
-                  },
-                  '&::-webkit-inner-spin-button': {
-                    '-webkit-appearance': 'none',
-                    margin: 0,
-                  },
-                },
+              onFocus={(e) => {
+                if (e.target.value === '0') {
+                  e.target.select();
+                }
               }}
+              placeholder="Enter capacity"
+              error={formData.capacity !== undefined && formData.capacity <= 0}
+              helperText={formData.capacity !== undefined && formData.capacity <= 0 ? "Capacity must be greater than 0" : ""}
             />
           </Grid>
           <Grid item xs={12} md={4}>
-            <FormControl fullWidth className="input-responsive">
+            <FormControl fullWidth>
               <InputLabel>Status</InputLabel>
               <Select
                 value={formData.table_status || 'available'}
                 onChange={(e) => setFormData((prev: any) => ({ ...prev, table_status: e.target.value }))}
                 label="Status"
-                size={isMobile ? "medium" : "medium"}
               >
                 <MenuItem value="available">Available</MenuItem>
                 <MenuItem value="occupied">Occupied</MenuItem>
-                <MenuItem value="booked">Booked</MenuItem>
+                <MenuItem value="reserved">Reserved</MenuItem>
                 <MenuItem value="maintenance">Maintenance</MenuItem>
                 <MenuItem value="out_of_service">Out of Service</MenuItem>
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12}>
+          <Grid item xs={12} md={4}>
             <FormControlLabel
               control={
                 <Switch
@@ -1208,28 +1388,11 @@ const TableDialog: React.FC<TableDialogProps> = ({ open, onClose, onSave, table,
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
-        <Stack 
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={1}
-          width={{ xs: '100%', sm: 'auto' }}
-        >
-          <Button 
-            onClick={onClose}
-            className="btn-responsive"
-            fullWidth={isMobile}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            variant="contained"
-            className="btn-responsive"
-            fullWidth={isMobile}
-          >
-            {table ? 'Update' : 'Add'} Table
-          </Button>
-        </Stack>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSave} variant="contained">
+          {table ? 'Update' : 'Add'} Table
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -1243,7 +1406,7 @@ interface AreaDialogProps {
   isMobile?: boolean;
 }
 
-const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area, isMobile = false }) => {
+const AreaDialog = ({ open, onClose, onSave, area, isMobile = false }: AreaDialogProps) => {
   const [formData, setFormData] = useState<Partial<TableArea>>({
     name: '',
     description: '',
@@ -1272,17 +1435,139 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area, is
     '#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#F44336', '#607D8B', '#795548', '#FF5722'
   ];
 
+  if (isMobile) {
+    return (
+      <Modal
+        open={open}
+        onClose={onClose}
+        closeAfterTransition
+        BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500,
+        }}
+      >
+        <Fade in={open}>
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '90%',
+              maxWidth: '450px',
+              maxHeight: '75vh',
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 24,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Modal Header */}
+            <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+              <Toolbar>
+                <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                  {area ? 'Edit Area' : 'Add Area'}
+                </Typography>
+                <IconButton
+                  edge="end"
+                  color="inherit"
+                  onClick={onClose}
+                  aria-label="close"
+                >
+                  <Close />
+                </IconButton>
+              </Toolbar>
+            </AppBar>
+
+            {/* Modal Content */}
+            <Box sx={{ overflow: 'auto', p: 1.5 }}>
+              <Stack spacing={1}>
+                <TextField
+                  fullWidth
+                  label="Area Name"
+                  value={formData.name || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  size="medium"
+                />
+                <TextField
+                  fullWidth
+                  label="Description"
+                  multiline
+                  rows={2}
+                  value={formData.description || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  size="medium"
+                />
+                <Box>
+                  <Typography variant="body2" gutterBottom fontWeight="600" sx={{ mb: 0.5 }}>
+                    Color
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {colorOptions.map((color) => (
+                      <Box
+                        key={color}
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          backgroundColor: color,
+                          borderRadius: 1,
+                          cursor: 'pointer',
+                          border: formData.color === color ? '3px solid #000' : '1px solid #ddd',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                            boxShadow: 2
+                          }
+                        }}
+                        onClick={() => setFormData(prev => ({ ...prev, color }))}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.active !== undefined ? formData.active : true}
+                      onChange={(e) => setFormData((prev: any) => ({ ...prev, active: e.target.checked }))}
+                    />
+                  }
+                  label="Active"
+                />
+              </Stack>
+            </Box>
+
+            {/* Modal Footer */}
+            <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
+              <Stack direction="row" spacing={2}>
+                <Button onClick={onClose} fullWidth variant="outlined">
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} variant="contained" fullWidth>
+                  {area ? 'Update' : 'Add'} Area
+                </Button>
+              </Stack>
+            </Box>
+          </Box>
+        </Fade>
+      </Modal>
+    );
+  }
+
   return (
     <Dialog 
       open={open} 
       onClose={onClose} 
       maxWidth="sm" 
       fullWidth
-      fullScreen={isMobile}
       PaperProps={{
         sx: {
-          m: isMobile ? 0 : 2,
-          maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)'
+          m: 2,
+          maxHeight: 'calc(100vh - 64px)'
         }
       }}
     >
@@ -1291,50 +1576,52 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area, is
           {area ? 'Edit Area' : 'Add Area'}
         </Typography>
       </DialogTitle>
-      <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
-        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mt: 0.5 }}>
+      <DialogContent sx={{ 
+        px: { xs: 2, sm: 3 }, 
+        py: { xs: 3, sm: 4 }
+      }}>
+        <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12}>
             <TextField
               fullWidth
-              className="input-responsive"
               label="Area Name"
               value={formData.name || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              size={isMobile ? "medium" : "medium"}
             />
           </Grid>
           <Grid item xs={12}>
             <TextField
               fullWidth
-              className="input-responsive"
               label="Description"
               multiline
-              rows={isMobile ? 3 : 2}
+              rows={2}
               value={formData.description || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              size={isMobile ? "medium" : "medium"}
             />
           </Grid>
           <Grid item xs={12}>
-            <Typography variant={isMobile ? "body1" : "subtitle1"} gutterBottom fontWeight="600">
+            <Typography variant="subtitle1" gutterBottom fontWeight="600" sx={{ mb: 1.5 }}>
               Color
             </Typography>
-            <Box sx={{ display: 'flex', gap: { xs: 1, sm: 1.5 }, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mt: 1 }}>
               {colorOptions.map((color) => (
                 <Box
                   key={color}
                   sx={{
-                    width: { xs: 36, sm: 40 },
-                    height: { xs: 36, sm: 40 },
+                    width: 44,
+                    height: 44,
                     backgroundColor: color,
                     borderRadius: 1,
                     cursor: 'pointer',
                     border: formData.color === color ? '3px solid #000' : '1px solid #ddd',
-                    minWidth: 44,
-                    minHeight: 44,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease-in-out',
+                    '&:hover': {
+                      transform: 'scale(1.1)',
+                      boxShadow: 2
+                    }
                   }}
                   onClick={() => setFormData(prev => ({ ...prev, color }))}
                 />
@@ -1354,28 +1641,11 @@ const AreaDialog: React.FC<AreaDialogProps> = ({ open, onClose, onSave, area, is
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 } }}>
-        <Stack 
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={1}
-          width={{ xs: '100%', sm: 'auto' }}
-        >
-          <Button 
-            onClick={onClose}
-            className="btn-responsive"
-            fullWidth={isMobile}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSave} 
-            variant="contained"
-            className="btn-responsive"
-            fullWidth={isMobile}
-          >
-            {area ? 'Update' : 'Add'} Area
-          </Button>
-        </Stack>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSave} variant="contained">
+          {area ? 'Update' : 'Add'} Area
+        </Button>
       </DialogActions>
     </Dialog>
   );

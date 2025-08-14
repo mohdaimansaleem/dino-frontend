@@ -321,7 +321,7 @@ const UserPermissionsDashboard: React.FC = () => {
   // Add error handling for currentUserAuth
   if (!currentUserAuth && !userDataLoading) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
         <Alert severity="error">
           Unable to load user authentication data. Please try refreshing the page or contact support.
         </Alert>
@@ -335,7 +335,7 @@ const UserPermissionsDashboard: React.FC = () => {
 
   if (!canViewAllUsers) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
         <Alert severity="warning">
           You don't have permission to view user permissions. Contact your administrator.
         </Alert>
@@ -346,7 +346,7 @@ const UserPermissionsDashboard: React.FC = () => {
   // Don't render if currentUserAuth is still loading or null
   if (!currentUserAuth) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <Typography>Loading user permissions...</Typography>
         </Box>
@@ -355,18 +355,35 @@ const UserPermissionsDashboard: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-              User Permissions Dashboard
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Monitor and manage user permissions across your organization
-            </Typography>
-          </Box>
+    <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
+      <Box sx={{ py: { xs: 2, sm: 4 } }}>
+        {/* Header */}
+        <Box sx={{ mb: { xs: 3, md: 4 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+            <Box>
+              <Typography 
+                variant="h4" 
+                component="h1" 
+                gutterBottom 
+                fontWeight="600"
+                sx={{ 
+                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                User Permissions Dashboard
+              </Typography>
+              <Typography 
+                variant="body1" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontWeight: 400
+                }}
+              >
+                Monitor and manage user permissions across your organization
+              </Typography>
+            </Box>
           <Box sx={{ 
             display: 'flex', 
             gap: 2,
@@ -375,12 +392,10 @@ const UserPermissionsDashboard: React.FC = () => {
           }}>
 
           </Box>
+          </Box>
         </Box>
-      </Box>
 
-
-
-      {/* Filters and Search */}
+        {/* Filters and Search */}
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Grid container spacing={3} alignItems="center">
@@ -607,7 +622,11 @@ const UserPermissionsDashboard: React.FC = () => {
           </Box>
         </DialogTitle>
         
-        <DialogContent>
+        <DialogContent sx={{ 
+          px: { xs: 2, sm: 3 }, 
+          py: { xs: 3, sm: 4 },
+          minHeight: '500px'
+        }}>
           <Grid container spacing={3}>
             {permissionCategories.map((category) => {
               const userPermissions = selectedUser?.permissions || [];
@@ -748,6 +767,7 @@ const UserPermissionsDashboard: React.FC = () => {
           <Button onClick={() => setOpenDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
+      </Box>
     </Container>
   );
 };
