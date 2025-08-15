@@ -80,21 +80,59 @@ class DashboardService {
       CacheKeys.dashboardData('superadmin'),
       async () => {
         try {
-          const response = await apiService.get<SuperAdminDashboardResponse>('/dashboard/superadmin/comprehensive');
+          // Get user's assigned venue ID - both Admin and SuperAdmin should have venue assigned
+          const userDataResponse = await apiService.get<any>('/auth/user-data');
+          
+          console.log('🔍 Full user data response:', userDataResponse);
+          console.log('🔍 Response data field:', userDataResponse.data);
+          console.log('🔍 Venue field:', userDataResponse.data?.venue);
+          console.log('🔍 Venue ID:', userDataResponse.data?.venue?.id);
+          
+          // Check different possible paths
+          const responseData = userDataResponse.data as any;
+          const venueId = responseData?.venue?.id || 
+                         responseData?.data?.venue?.id ||
+                         (userDataResponse as any).venue?.id;
+          
+          if (!venueId) {
+            console.error('❌ No venue ID found in any expected path');
+            console.error('❌ Full response structure:', JSON.stringify(userDataResponse, null, 2));
+            throw new Error('No venue assigned to your account. Please contact your administrator.');
+          }
+          console.log('🏢 Using venue ID for dashboard:', venueId);
+          
+          // Only call venue dashboard API - backend will return appropriate data based on user role
+          const response = await apiService.get<SuperAdminDashboardResponse>(`/dashboard/venue/${venueId}`);
           
           if (response.success && response.data) {
-            console.log('✅ SuperAdmin dashboard data loaded:', {
-              totalWorkspaces: response.data.system_stats.total_workspaces,
-              totalVenues: response.data.system_stats.total_venues,
-              todayOrders: response.data.system_stats.total_orders_today,
-              todayRevenue: response.data.system_stats.total_revenue_today
+            const responseData = userDataResponse.data as any;
+            const venueName = responseData?.venue?.name || 
+                             responseData?.data?.venue?.name || 
+                             (userDataResponse as any).venue?.name || 
+                             'Unknown Venue';
+            
+            console.log('✅ Dashboard data loaded from venue API:', {
+              venueId: venueId,
+              venueName: venueName,
+              todayOrders: response.data.system_stats?.total_orders_today,
+              todayRevenue: response.data.system_stats?.total_revenue_today
             });
             return response.data;
           }
           
-          throw new Error('Invalid SuperAdmin dashboard response format');
+          throw new Error('Invalid dashboard response format');
         } catch (error: any) {
           console.error('❌ SuperAdmin dashboard API failed:', error);
+          
+          // Check for specific error types
+          if (error.response?.status === 404) {
+            throw new Error('Dashboard endpoint not found. Please ensure the backend API is properly configured.');
+          } else if (error.response?.status === 403) {
+            throw new Error('Access denied. You may not have permission to view dashboard data.');
+          } else if (error.response?.status === 400 && error.response?.data?.detail?.includes('venue')) {
+            throw new Error('No venue assigned to your account. Please contact your administrator.');
+          }
+          
           throw new Error(error.message || 'Failed to load SuperAdmin dashboard data');
         }
       },
@@ -103,24 +141,33 @@ class DashboardService {
   }
 
   /**
-   * Get comprehensive admin dashboard data from a single API endpoint
-   * This endpoint should return all dashboard data based on real database records
+   * Get comprehensive admin dashboard data from venue-specific endpoint
+   * This endpoint returns all dashboard data based on real database records for the user's venue
    */
   async getAdminDashboard(): Promise<AdminDashboardResponse> {
     return dashboardCache.getOrSet(
       CacheKeys.dashboardData('admin'),
       async () => {
         try {
-          // Single comprehensive endpoint that returns all dashboard data
-          const response = await apiService.get<AdminDashboardResponse>('/dashboard/comprehensive');
+          // Get user's venue ID from auth context
+          const userDataResponse = await apiService.get<any>('/auth/user-data');
+          
+          if (!userDataResponse.success || !userDataResponse.data?.venue?.id) {
+            throw new Error('No venue assigned to your account. Please contact your administrator.');
+          }
+          
+          const venueId = userDataResponse.data.venue.id;
+          console.log('🏢 Using venue ID for dashboard:', venueId);
+          
+          // Use venue-specific endpoint that returns all dashboard data
+          const response = await apiService.get<AdminDashboardResponse>(`/dashboard/venue/${venueId}`);
           
           if (response.success && response.data) {
             console.log('✅ Dashboard data loaded successfully:', {
               venue: response.data.venue_name,
               todayOrders: response.data.stats.today.orders_count,
               todayRevenue: response.data.stats.today.revenue,
-              recentOrdersCount: response.data.recent_orders.length,
-              topMenuItemsCount: response.data.top_menu_items.length
+              recentOrdersCount: response.data.recent_orders.length
             });
             return response.data;
           }
@@ -200,11 +247,11 @@ class DashboardService {
       }
       
       // Return empty data if API fails - no mock data
-      return {};
+      return null;
     } catch (error) {
-      console.warn('Venue dashboard API failed, using mock data for development');
-      // Return empty object to let component use its mock data
-      return {};
+      console.error('Venue dashboard API failed:', error);
+      // Return null to indicate failure - no mock data
+      return null;
     }
   }
 
@@ -216,16 +263,11 @@ class DashboardService {
         return response.data;
       }
       
-      // Return empty data if API fails - no mock data
-      return {
-        summary: { total_active_orders: 0, pending_orders: 0, preparing_orders: 0, ready_orders: 0 },
-        orders_by_status: {}
-      };
+      // Return null if API fails - no mock data
+      return null;
     } catch (error) {
-      return {
-        summary: { total_active_orders: 0, pending_orders: 0, preparing_orders: 0, ready_orders: 0 },
-        orders_by_status: {}
-      };
+      console.error('Live order status API failed:', error);
+      return null;
     }
   }
 
@@ -237,16 +279,11 @@ class DashboardService {
         return response.data;
       }
       
-      // Return empty data if API fails - no mock data
-      return {
-        tables: [],
-        summary: { total_tables: 0, available: 0, occupied: 0, reserved: 0, maintenance: 0 }
-      };
+      // Return null if API fails - no mock data
+      return null;
     } catch (error) {
-      return {
-        tables: [],
-        summary: { total_tables: 0, available: 0, occupied: 0, reserved: 0, maintenance: 0 }
-      };
+      console.error('Live table status API failed:', error);
+      return null;
     }
   }
 
