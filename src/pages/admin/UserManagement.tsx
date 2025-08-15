@@ -62,6 +62,29 @@ import { userService, User, UserCreate, UserUpdate } from '../../services/userSe
 import { VenueUser } from '../../types/api';
 import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
 import { PageLoadingSkeleton, EmptyState } from '../../components/ui/LoadingStates';
+import { hashPassword, getFixedSalt } from '../../utils/passwordHashing';
+import { validatePlainTextPassword } from '../../utils/passwordValidation';
+import { DeleteConfirmationModal } from '../../components/modals';
+
+// Simple password validation function
+const validatePasswordStrength = (password: string) => {
+  const checks = {
+    length: password.length >= 8,
+    lowercase: /[a-z]/.test(password),
+    uppercase: /[A-Z]/.test(password),
+    number: /\d/.test(password),
+    special: /[@$!%*?&]/.test(password)
+  };
+  
+  const score = Object.values(checks).filter(Boolean).length;
+  
+  return {
+    score,
+    checks,
+    isValid: score === 5,
+    strength: score <= 2 ? 'weak' : score <= 4 ? 'medium' : 'strong'
+  };
+};
 
 
 // Animation for refresh icon
@@ -100,11 +123,21 @@ const UserManagement: React.FC = () => {
   const { handleError } = useErrorHandler();
   const navigate = useNavigate();
 
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    userId: '',
+    userName: '',
+    loading: false
+  });
+
   const [formData, setFormData] = useState({
     email: '',
     first_name: '',
     last_name: '',
     phone: '',
+    password: '',
+    confirm_password: '',
     role_name: ROLES.OPERATOR as string,
     workspace_id: '',
     venue_id: '',
@@ -195,6 +228,8 @@ const UserManagement: React.FC = () => {
         first_name: user.first_name,
         last_name: user.last_name,
         phone: user.phone || '',
+        password: '', // Don't populate password for editing
+        confirm_password: '', // Don't populate password for editing
         role_name: user.role as string,
         workspace_id: user.workspace_id,
         venue_id: user.venue_id || '',
@@ -207,6 +242,8 @@ const UserManagement: React.FC = () => {
         first_name: '',
         last_name: '',
         phone: '',
+        password: '',
+        confirm_password: '',
         role_name: ROLES.OPERATOR as string,
         workspace_id: getWorkspace()?.id || currentWorkspace?.id || '',
         venue_id: getVenue()?.id || currentVenue?.id || '',
@@ -223,6 +260,124 @@ const UserManagement: React.FC = () => {
 
   const handleSubmit = async () => {
     try {
+      // Validate form data
+      if (!formData.first_name.trim()) {
+        setSnackbar({ 
+          open: true, 
+          message: 'First name is required', 
+          severity: 'error' 
+        });
+        return;
+      }
+      
+      if (!formData.last_name.trim()) {
+        setSnackbar({ 
+          open: true, 
+          message: 'Last name is required', 
+          severity: 'error' 
+        });
+        return;
+      }
+      
+      if (!formData.email.trim()) {
+        setSnackbar({ 
+          open: true, 
+          message: 'Email is required', 
+          severity: 'error' 
+        });
+        return;
+      }
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setSnackbar({ 
+          open: true, 
+          message: 'Please enter a valid email address', 
+          severity: 'error' 
+        });
+        return;
+      }
+      
+      // Password validation for new users
+      if (!editingUser) {
+        if (!formData.password) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Password is required for new users', 
+            severity: 'error' 
+          });
+          return;
+        }
+        
+        // Validate password strength
+        if (formData.password.length < 8) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Password must be at least 8 characters long', 
+            severity: 'error' 
+          });
+          return;
+        }
+        
+        if (!/(?=.*[a-z])/.test(formData.password)) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Password must contain at least one lowercase letter', 
+            severity: 'error' 
+          });
+          return;
+        }
+        
+        if (!/(?=.*[A-Z])/.test(formData.password)) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Password must contain at least one uppercase letter', 
+            severity: 'error' 
+          });
+          return;
+        }
+        
+        if (!/(?=.*\d)/.test(formData.password)) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Password must contain at least one number', 
+            severity: 'error' 
+          });
+          return;
+        }
+        
+        if (!/(?=.*[@$!%*?&])/.test(formData.password)) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Password must contain at least one special character (@$!%*?&)', 
+            severity: 'error' 
+          });
+          return;
+        }
+        
+        // Validate password is plain text (not already hashed)
+        try {
+          validatePlainTextPassword(formData.password);
+        } catch (error: any) {
+          setSnackbar({ 
+            open: true, 
+            message: error.message, 
+            severity: 'error' 
+          });
+          return;
+        }
+        
+        if (formData.password !== formData.confirm_password) {
+          setSnackbar({ 
+            open: true, 
+            message: 'Passwords do not match', 
+            severity: 'error' 
+          });
+          return;
+        }
+      }
+
       if (editingUser) {
         // Update user
         const updateData: UserUpdate = {
@@ -242,10 +397,12 @@ const UserManagement: React.FC = () => {
         }
       } else {
         // Create new user
+        const salt = getFixedSalt();
+        const hashedPassword = await hashPassword(formData.password, salt);
         const createData: UserCreate = {
           email: formData.email,
-          password: 'TempPassword123!', // Would be generated or set by admin
-          confirm_password: 'TempPassword123!',
+          password: hashedPassword,
+          confirm_password: hashedPassword,
           first_name: formData.first_name,
           last_name: formData.last_name,
           phone: formData.phone,
@@ -277,25 +434,38 @@ const UserManagement: React.FC = () => {
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        const response = await userService.deleteUser(userId);
-        if (response.success) {
-          setSnackbar({ 
-            open: true, 
-            message: 'User deleted successfully', 
-            severity: 'success' 
-          });
-          setUsersLoaded(false);
-          await loadUsers(); // Reload users after deletion
-        }
-      } catch (error: any) {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+    
+    setDeleteModal({
+      open: true,
+      userId: userId,
+      userName: user.user_name || `${user.first_name} ${user.last_name}`,
+      loading: false
+    });
+  };
+
+  const confirmDeleteUser = async () => {
+    try {
+      setDeleteModal(prev => ({ ...prev, loading: true }));
+      const response = await userService.deleteUser(deleteModal.userId);
+      if (response.success) {
         setSnackbar({ 
           open: true, 
-          message: error.message || 'Failed to delete user', 
-          severity: 'error' 
+          message: 'User deleted successfully', 
+          severity: 'success' 
         });
+        setUsersLoaded(false);
+        await loadUsers(); // Reload users after deletion
+        setDeleteModal({ open: false, userId: '', userName: '', loading: false });
       }
+    } catch (error: any) {
+      setSnackbar({ 
+        open: true, 
+        message: error.message || 'Failed to delete user', 
+        severity: 'error' 
+      });
+      setDeleteModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -895,15 +1065,17 @@ const UserManagement: React.FC = () => {
           PaperProps={{
             sx: {
               m: isMobile ? 0 : 2,
-              maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)',
-              height: isMobile ? '100vh' : 'auto'
+              maxHeight: isMobile ? '90vh' : 'calc(100vh - 64px)',
+              height: isMobile ? 'auto' : 'auto',
+              display: 'flex',
+              flexDirection: 'column'
             }
           }}
         >
           <DialogTitle sx={{ 
-            pb: 1, 
+            pb: { xs: 1, sm: 1 }, 
             px: { xs: 2, sm: 3 },
-            pt: { xs: 2, sm: 3 },
+            pt: { xs: 1.5, sm: 2 },
             borderBottom: '1px solid',
             borderColor: 'divider'
           }}>
@@ -913,12 +1085,11 @@ const UserManagement: React.FC = () => {
           </DialogTitle>
           <DialogContent sx={{ 
             px: { xs: 2, sm: 3 },
-            py: { xs: 3, sm: 4 },
+            py: { xs: 1.5, sm: 2 },
             flex: 1,
-            overflow: 'auto',
-            minHeight: '400px'
+            overflow: 'auto'
           }}>
-            <Stack spacing={{ xs: 2, sm: 2.5 }} sx={{ mt: 0.5 }}>
+            <Stack spacing={{ xs: 3.5, sm: 4 }} sx={{ mt: { xs: 3.5, sm: 1 } }}>
               {/* Name Fields */}
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
@@ -951,6 +1122,71 @@ const UserManagement: React.FC = () => {
                 size={isMobile ? "medium" : "medium"}
               />
 
+              {/* Password Fields - Only show for new users */}
+              {editingUser && (
+                <Alert severity="info" sx={{ my: { xs: 3, sm: 2 } }}>
+                  To update the password for this user, use the "Update Password" option from the user actions menu.
+                </Alert>
+              )}
+              {!editingUser && (
+                <>
+                  <Box>
+                    <TextField
+                      fullWidth
+                      label="Password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      required
+                      size={isMobile ? "medium" : "medium"}
+                      helperText="Password must be at least 8 characters with uppercase, lowercase, number, and special character"
+                    />
+                    {formData.password && (
+                      <Box sx={{ mt: { xs: 1, sm: 1 } }}>
+                        {(() => {
+                          const validation = validatePasswordStrength(formData.password);
+                          const color = validation.strength === 'weak' ? 'error' : 
+                                       validation.strength === 'medium' ? 'warning' : 'success';
+                          return (
+                            <Box>
+                              <Typography variant="caption" color={`${color}.main`} sx={{ fontWeight: 500 }}>
+                                Password strength: {validation.strength.toUpperCase()}
+                              </Typography>
+                              <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
+                                {[1, 2, 3, 4, 5].map((level) => (
+                                  <Box
+                                    key={level}
+                                    sx={{
+                                      height: 4,
+                                      flex: 1,
+                                      backgroundColor: level <= validation.score 
+                                        ? `${color}.main` 
+                                        : 'grey.300',
+                                      borderRadius: 1
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                            </Box>
+                          );
+                        })()}
+                      </Box>
+                    )}
+                  </Box>
+                  <TextField
+                    fullWidth
+                    label="Confirm Password"
+                    type="password"
+                    value={formData.confirm_password}
+                    onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+                    required
+                    size={isMobile ? "medium" : "medium"}
+                    error={formData.password !== formData.confirm_password && formData.confirm_password !== ''}
+                    helperText={formData.password !== formData.confirm_password && formData.confirm_password !== '' ? 'Passwords do not match' : ''}
+                  />
+                </>
+              )}
+
               {/* Phone and Role */}
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <TextField
@@ -969,7 +1205,6 @@ const UserManagement: React.FC = () => {
                   >
                     <MenuItem value={ROLES.OPERATOR}>Operator</MenuItem>
                     {isAdmin() && <MenuItem value={ROLES.ADMIN}>Admin</MenuItem>}
-                    {isSuperAdmin() && <MenuItem value={ROLES.SUPERADMIN}>Super Admin</MenuItem>}
                   </Select>
                 </FormControl>
               </Stack>
@@ -997,10 +1232,10 @@ const UserManagement: React.FC = () => {
               <Box sx={{ 
                 display: 'flex', 
                 alignItems: 'center',
-                py: 1,
+                py: { xs: 1, sm: 1 },
                 borderRadius: 1,
                 backgroundColor: 'grey.50',
-                px: 2
+                px: { xs: 2, sm: 2 }
               }}>
                 <FormControlLabel
                   control={
@@ -1027,8 +1262,8 @@ const UserManagement: React.FC = () => {
           </DialogContent>
           <DialogActions sx={{ 
             px: { xs: 2, sm: 3 }, 
-            pb: { xs: 2, sm: 3 },
-            pt: 2,
+            pb: { xs: 1.5, sm: 2 },
+            pt: { xs: 1.5, sm: 1.5 },
             borderTop: '1px solid',
             borderColor: 'divider',
             gap: 1
@@ -1078,6 +1313,24 @@ const UserManagement: React.FC = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          open={deleteModal.open}
+          onClose={() => setDeleteModal({ open: false, userId: '', userName: '', loading: false })}
+          onConfirm={confirmDeleteUser}
+          title="Delete User"
+          itemName={deleteModal.userName}
+          itemType="user account"
+          description="This user account will be permanently removed from the system. The user will lose access to all restaurant management features."
+          loading={deleteModal.loading}
+          additionalWarnings={[
+            'All user activity history will be preserved for audit purposes',
+            'Any ongoing tasks assigned to this user may be affected',
+            'User permissions and role assignments will be revoked',
+            'This action cannot be undone'
+          ]}
+        />
       </Box>
     </Container>
   );

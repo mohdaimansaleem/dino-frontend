@@ -201,22 +201,55 @@ class VenueService {
    */
   async updateVenue(venueId: string, venueData: VenueUpdate): Promise<ApiResponse<Venue>> {
     try {
+      console.log('🔄 VenueService: Updating venue:', {
+        venueId,
+        updateData: venueData,
+        endpoint: `/venues/${venueId}`
+      });
+      
       const response = await apiService.put<Venue>(`/venues/${venueId}`, venueData);
+      
+      console.log('✅ VenueService: Venue update response:', {
+        success: response.success,
+        venueData: response.data,
+        venueStatus: response.data ? {
+          is_active: response.data.is_active,
+          is_open: response.data.is_open,
+          status: response.data.status
+        } : null
+      });
+      
       return response;
     } catch (error: any) {
-      console.error('Error updating venue:', error);
+      console.error('❌ VenueService: Error updating venue:', {
+        venueId,
+        updateData: venueData,
+        error: error.response?.data || error.message,
+        status: error.response?.status
+      });
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update venue');
     }
   }
 
   /**
-   * Deactivate venue (soft delete)
+   * Delete venue permanently (hard delete)
    */
   async deleteVenue(venueId: string): Promise<ApiResponse<void>> {
     try {
       return await apiService.delete<void>(`/venues/${venueId}`);
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to delete venue');
+    }
+  }
+
+  /**
+   * Deactivate venue (soft delete)
+   */
+  async deactivateVenue(venueId: string): Promise<ApiResponse<void>> {
+    try {
+      return await apiService.post<void>(`/venues/${venueId}/deactivate`);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to deactivate venue');
     }
   }
 
@@ -228,6 +261,54 @@ class VenueService {
       return await apiService.post<void>(`/venues/${venueId}/activate`);
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || error.message || 'Failed to activate venue');
+    }
+  }
+
+  /**
+   * Open venue for orders
+   */
+  async openVenue(venueId: string): Promise<ApiResponse<Venue>> {
+    try {
+      console.log('🔄 VenueService: Opening venue for orders:', venueId);
+      
+      // Try specific endpoint first
+      try {
+        const response = await apiService.post<Venue>(`/venues/${venueId}/open`);
+        console.log('✅ VenueService: Venue opened via specific endpoint');
+        return response;
+      } catch (specificError) {
+        console.log('⚠️ VenueService: Specific open endpoint not available, using update method');
+        
+        // Fallback to update method
+        return await this.updateVenue(venueId, { is_open: true });
+      }
+    } catch (error: any) {
+      console.error('❌ VenueService: Error opening venue:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to open venue');
+    }
+  }
+
+  /**
+   * Close venue for orders
+   */
+  async closeVenue(venueId: string): Promise<ApiResponse<Venue>> {
+    try {
+      console.log('🔄 VenueService: Closing venue for orders:', venueId);
+      
+      // Try specific endpoint first
+      try {
+        const response = await apiService.post<Venue>(`/venues/${venueId}/close`);
+        console.log('✅ VenueService: Venue closed via specific endpoint');
+        return response;
+      } catch (specificError) {
+        console.log('⚠️ VenueService: Specific close endpoint not available, using update method');
+        
+        // Fallback to update method
+        return await this.updateVenue(venueId, { is_open: false });
+      }
+    } catch (error: any) {
+      console.error('❌ VenueService: Error closing venue:', error);
+      throw new Error(error.response?.data?.detail || error.message || 'Failed to close venue');
     }
   }
 

@@ -54,6 +54,7 @@ import { PERMISSIONS } from '../../types/auth';
 import { venueService } from '../../services/venueService';
 import { PriceRange } from '../../types/api';
 import StorageManager from '../../utils/storageManager';
+import { DeleteConfirmationModal } from '../../components/modals';
 
 // Animation for refresh icon
 const spin = keyframes`
@@ -121,6 +122,14 @@ const WorkspaceManagement: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
   const lastFetchTimeRef = useRef<number>(0);
+
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    venueId: '',
+    venueName: '',
+    loading: false
+  });
 
   // Cache key for workspace venues
   const workspaceCacheKey = useMemo(() => 
@@ -316,6 +325,38 @@ const WorkspaceManagement: React.FC = () => {
   // Permission checks
   const canCreateVenues = hasPermission(PERMISSIONS.VENUE_ACTIVATE);
   const canDeleteItems = isSuperAdmin();
+
+  // Delete venue confirmation
+  const confirmDeleteVenue = async () => {
+    try {
+      setDeleteModal(prev => ({ ...prev, loading: true }));
+      await venueService.deleteVenue(deleteModal.venueId);
+      setSnackbar({
+        open: true,
+        message: `Venue "${deleteModal.venueName}" deleted successfully`,
+        severity: 'success'
+      });
+      
+      // Clear cache to force fresh data
+      if (workspaceCacheKey) {
+        StorageManager.removeItem(workspaceCacheKey);
+      }
+      
+      // Refresh venues list with force refresh
+      await refreshWorkspaceVenues();
+      // Refresh user data to get updated venue info
+      await refreshUserData();
+      
+      setDeleteModal({ open: false, venueId: '', venueName: '', loading: false });
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to delete venue',
+        severity: 'error'
+      });
+      setDeleteModal(prev => ({ ...prev, loading: false }));
+    }
+  };
 
   // Loading state
   if (userDataLoading) {
@@ -923,7 +964,12 @@ const WorkspaceManagement: React.FC = () => {
                   });
                 }
 
-                // Refresh venues list
+                // Clear cache to force fresh data
+                if (workspaceCacheKey) {
+                  StorageManager.removeItem(workspaceCacheKey);
+                }
+                
+                // Refresh venues list with force refresh
                 await refreshWorkspaceVenues();
                 
                 // Refresh user data to get updated venue info
@@ -1021,10 +1067,39 @@ const WorkspaceManagement: React.FC = () => {
         </MenuItem>
         
         <MenuItem
-          onClick={() => {
+          onClick={async () => {
             // Toggle venue status
             if (selectedItem) {
-              // Implementation for toggling venue status
+              try {
+                const newStatus = !selectedItem.is_open;
+                await venueService.updateVenue(selectedItem.id, {
+                  is_open: newStatus
+                });
+                
+                setSnackbar({
+                  open: true,
+                  message: `Venue ${newStatus ? 'opened' : 'closed'} successfully`,
+                  severity: 'success'
+                });
+                
+                // Clear cache to force fresh data
+                if (workspaceCacheKey) {
+                  StorageManager.removeItem(workspaceCacheKey);
+                }
+                
+                // Refresh venues list with force refresh
+                await refreshWorkspaceVenues();
+                
+                // Refresh user data to get updated venue info
+                await refreshUserData();
+                
+              } catch (error: any) {
+                setSnackbar({
+                  open: true,
+                  message: error.message || 'Failed to update venue status',
+                  severity: 'error'
+                });
+              }
             }
             setAnchorEl(null);
             setSelectedItem(null);
@@ -1038,12 +1113,59 @@ const WorkspaceManagement: React.FC = () => {
           </ListItemText>
         </MenuItem>
         
+        <MenuItem
+          onClick={async () => {
+            // Deactivate venue (soft delete)
+            if (selectedItem) {
+              try {
+                await venueService.deactivateVenue(selectedItem.id);
+                
+                setSnackbar({
+                  open: true,
+                  message: `Venue "${selectedItem.name}" deactivated successfully`,
+                  severity: 'success'
+                });
+                
+                // Clear cache to force fresh data
+                if (workspaceCacheKey) {
+                  StorageManager.removeItem(workspaceCacheKey);
+                }
+                
+                // Refresh venues list with force refresh
+                await refreshWorkspaceVenues();
+                // Refresh user data to get updated venue info
+                await refreshUserData();
+                
+              } catch (error: any) {
+                setSnackbar({
+                  open: true,
+                  message: error.message || 'Failed to deactivate venue',
+                  severity: 'error'
+                });
+              }
+            }
+            setAnchorEl(null);
+            setSelectedItem(null);
+          }}
+          sx={{ color: 'warning.main' }}
+        >
+          <ListItemIcon>
+            <VisibilityOff fontSize="small" color="warning" />
+          </ListItemIcon>
+          <ListItemText>Deactivate Venue</ListItemText>
+        </MenuItem>
+
         {canDeleteItems && (
           <MenuItem
             onClick={() => {
-              // Delete venue
+              // Delete venue permanently
               if (selectedItem) {
-                // Implementation for deleting venue
+                setDeleteModal({
+                  open: true,
+                  venueId: selectedItem.id,
+                  venueName: selectedItem.name,
+                  loading: false
+                });
               }
               setAnchorEl(null);
               setSelectedItem(null);
@@ -1053,7 +1175,7 @@ const WorkspaceManagement: React.FC = () => {
             <ListItemIcon>
               <Delete fontSize="small" color="error" />
             </ListItemIcon>
-            <ListItemText>Delete Venue</ListItemText>
+            <ListItemText>Delete Permanently</ListItemText>
           </MenuItem>
         )}
       </Menu>
@@ -1068,6 +1190,26 @@ const WorkspaceManagement: React.FC = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        open={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, venueId: '', venueName: '', loading: false })}
+        onConfirm={confirmDeleteVenue}
+        title="Delete Venue Permanently"
+        itemName={deleteModal.venueName}
+        itemType="venue"
+        description="⚠️ WARNING: This action will PERMANENTLY DELETE the venue and ALL associated data. This cannot be undone!"
+        loading={deleteModal.loading}
+        additionalWarnings={[
+          'All tables and seating areas will be deleted',
+          'Menu items and categories will be permanently removed',
+          'Order history and customer data will be lost',
+          'Staff access to this venue will be revoked',
+          'QR codes and payment integrations will be disabled',
+          'This action cannot be undone'
+        ]}
+      />
     </Container>
   );
 };

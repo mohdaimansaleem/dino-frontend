@@ -49,6 +49,7 @@ import { AdminDashboardResponse } from '../../types/dashboard';
 import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
 import { getUserFirstName } from '../../utils/userUtils';
 import DashboardTour from '../tour/DashboardTour';
+import VenueStatusDebug from '../VenueStatusDebug';
 
 /**
  * AdminDashboard Component
@@ -1510,6 +1511,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
 
   return (
     <VenueAssignmentCheck showFullPage={true}>
+      <VenueStatusDebug />
       {renderDashboardContent()}
       
       {/* Dashboard Tour */}

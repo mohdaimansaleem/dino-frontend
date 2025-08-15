@@ -13,7 +13,7 @@ interface PermissionSyncProps {
  */
 const PermissionSync: React.FC<PermissionSyncProps> = ({
   children,
-  autoRefreshInterval = 5 * 60 * 1000, // 5 minutes default
+  autoRefreshInterval = 15 * 60 * 1000, // 15 minutes default (increased to reduce API calls)
   showSyncStatus = false
 }) => {
   const { isAuthenticated, refreshPermissions, userPermissions } = useAuth();
@@ -26,6 +26,11 @@ const PermissionSync: React.FC<PermissionSyncProps> = ({
     if (!isAuthenticated || !autoRefreshInterval) return;
 
     const interval = setInterval(async () => {
+      // Skip refresh if already syncing or recently synced (within 5 minutes)
+      if (isSyncing || (lastSync && Date.now() - lastSync.getTime() < 5 * 60 * 1000)) {
+        return;
+      }
+
       try {
         setIsSyncing(true);
         setSyncError(null);
@@ -39,7 +44,7 @@ const PermissionSync: React.FC<PermissionSyncProps> = ({
     }, autoRefreshInterval);
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, autoRefreshInterval, refreshPermissions]);
+  }, [isAuthenticated, autoRefreshInterval, refreshPermissions, isSyncing, lastSync]);
 
   // Manual refresh function
   const handleManualRefresh = useCallback(async () => {

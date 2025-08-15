@@ -49,10 +49,14 @@ import {
   LocalDining,
   Schedule,
   Refresh,
-  Close
+  Close,
+  CloudUpload,
+  Image as ImageIcon,
+  DeleteOutline
 } from '@mui/icons-material';
 import { menuService } from '../../services/menuService';
 import { useUserData } from '../../contexts/UserDataContext';
+import { DeleteConfirmationModal } from '../../components/modals';
 
 interface MenuItemType {
   id: string;
@@ -111,6 +115,15 @@ const MenuManagement: React.FC = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'warning' | 'info' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    type: '' as 'item' | 'category',
+    id: '',
+    name: '',
+    loading: false
+  });
 
   
   const theme = useTheme();
@@ -161,7 +174,9 @@ const MenuManagement: React.FC = () => {
           isVeg: item.is_vegetarian || false,
           available: item.is_available,
           isAvailable: item.is_available,
-          preparationTime: item.preparation_time_minutes || 15
+          preparationTime: item.preparation_time_minutes || 15,
+          image: item.image_urls?.[0],
+          image_urls: item.image_urls || []
         }));
 
         // Update state
@@ -200,17 +215,33 @@ const MenuManagement: React.FC = () => {
   };
 
   const handleDeleteItem = async (itemId: string) => {
+    const item = menuItems.find(item => item.id === itemId);
+    if (!item) return;
+    
+    setDeleteModal({
+      open: true,
+      type: 'item',
+      id: itemId,
+      name: item.name,
+      loading: false
+    });
+  };
+
+  const confirmDeleteItem = async () => {
     try {
-      const item = menuItems.find(item => item.id === itemId);
-      await menuService.deleteMenuItem(itemId);
-      setMenuItems(prev => prev.filter(item => item.id !== itemId));
+      setDeleteModal(prev => ({ ...prev, loading: true }));
+      const item = menuItems.find(item => item.id === deleteModal.id);
+      await menuService.deleteMenuItem(deleteModal.id);
+      setMenuItems(prev => prev.filter(item => item.id !== deleteModal.id));
       setSnackbar({ open: true, message: `${item?.name} deleted successfully`, severity: 'success' });
+      setDeleteModal({ open: false, type: 'item', id: '', name: '', loading: false });
     } catch (error) {
       setSnackbar({ open: true, message: 'Failed to delete menu item', severity: 'error' });
+      setDeleteModal(prev => ({ ...prev, loading: false }));
     }
   };
 
-  const handleSaveItem = async (itemData: Partial<MenuItemType>) => {
+  const handleSaveItem = async (itemData: Partial<MenuItemType>, imageFile?: File) => {
     try {
       if (editingItem) {
         // Update existing item
@@ -237,7 +268,9 @@ const MenuManagement: React.FC = () => {
               isVeg: response.data!.is_vegetarian || false,
               available: response.data!.is_available || false,
               isAvailable: response.data!.is_available || false,
-              preparationTime: response.data!.preparation_time_minutes || 15
+              preparationTime: response.data!.preparation_time_minutes || 15,
+              image: response.data!.image_urls?.[0] || item.image,
+              image_urls: response.data!.image_urls || item.image_urls
             } as unknown as MenuItemType : item
           ));
           setSnackbar({ open: true, message: 'Menu item updated successfully', severity: 'success' });
@@ -264,17 +297,41 @@ const MenuManagement: React.FC = () => {
         const response = await menuService.createMenuItem(createData);
         
         if (response.success && response.data) {
-          const newItem = {
+          let newItem = {
             ...response.data!,
             price: response.data!.base_price,
             category: response.data!.category_id,
             isVeg: response.data!.is_vegetarian || false,
             available: response.data!.is_available || false,
             isAvailable: response.data!.is_available || false,
-            preparationTime: response.data!.preparation_time_minutes || 15
+            preparationTime: response.data!.preparation_time_minutes || 15,
+            image: response.data!.image_urls?.[0],
+            image_urls: response.data!.image_urls || []
           } as unknown as MenuItemType;
+
+          // If there's an image file to upload, upload it now
+          if (imageFile) {
+            try {
+              const uploadResponse = await menuService.uploadMenuItemImage(response.data!.id, imageFile);
+              if (uploadResponse.success && uploadResponse.data) {
+                newItem = {
+                  ...newItem,
+                  image: uploadResponse.data.image_url,
+                  image_urls: [uploadResponse.data.image_url]
+                };
+                setSnackbar({ open: true, message: 'Menu item and image added successfully', severity: 'success' });
+              } else {
+                setSnackbar({ open: true, message: 'Menu item added, but image upload failed', severity: 'warning' });
+              }
+            } catch (uploadError) {
+              console.error('Image upload failed:', uploadError);
+              setSnackbar({ open: true, message: 'Menu item added, but image upload failed', severity: 'warning' });
+            }
+          } else {
+            setSnackbar({ open: true, message: 'Menu item added successfully', severity: 'success' });
+          }
+
           setMenuItems(prev => [...prev, newItem]);
-          setSnackbar({ open: true, message: 'Menu item added successfully', severity: 'success' });
         } else {
           throw new Error(response.message || 'Creation failed');
         }
@@ -285,6 +342,35 @@ const MenuManagement: React.FC = () => {
         open: true, 
         message: error.message || 'Failed to save menu item', 
         severity: 'error' 
+      });
+    }
+  };
+
+  const handleQuickImageUpload = async (itemId: string, file: File) => {
+    try {
+      const response = await menuService.uploadMenuItemImage(itemId, file);
+      
+      if (response.success && response.data) {
+        // Update the menu items list to reflect the new image
+        setMenuItems(prev => prev.map(item => 
+          item.id === itemId ? { 
+            ...item,
+            image: response.data!.image_url,
+            image_urls: [...(item.image_urls || []), response.data!.image_url]
+          } : item
+        ));
+        
+        setSnackbar({
+          open: true,
+          message: 'Image uploaded successfully!',
+          severity: 'success'
+        });
+      }
+    } catch (error: any) {
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to upload image',
+        severity: 'error'
       });
     }
   };
@@ -307,7 +393,9 @@ const MenuManagement: React.FC = () => {
             isVeg: response.data!.is_vegetarian || false,
             available: response.data!.is_available,
             isAvailable: response.data!.is_available,
-            preparationTime: response.data!.preparation_time_minutes || 15
+            preparationTime: response.data!.preparation_time_minutes || 15,
+            image: response.data!.image_urls?.[0] || item.image,
+            image_urls: response.data!.image_urls || item.image_urls
           } as unknown as MenuItemType : item
         ));
         setSnackbar({ 
@@ -332,25 +420,40 @@ const MenuManagement: React.FC = () => {
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    if (!category) return;
+    
+    // Check if category has menu items
+    const itemsInCategory = menuItems.filter(item => item.category === categoryId);
+    if (itemsInCategory.length > 0) {
+      setSnackbar({ 
+        open: true, 
+        message: `Cannot delete category "${category.name}": ${itemsInCategory.length} menu items are assigned to this category. Please reassign or delete items first.`, 
+        severity: 'error' 
+      });
+      return;
+    }
+    
+    setDeleteModal({
+      open: true,
+      type: 'category',
+      id: categoryId,
+      name: category.name,
+      loading: false
+    });
+  };
+
+  const confirmDeleteCategory = async () => {
     try {
-      const category = categories.find(cat => cat.id === categoryId);
-      
-      // Check if category has menu items
-      const itemsInCategory = menuItems.filter(item => item.category === categoryId);
-      if (itemsInCategory.length > 0) {
-        setSnackbar({ 
-          open: true, 
-          message: `Cannot delete category "${category?.name}": ${itemsInCategory.length} menu items are assigned to this category. Please reassign or delete items first.`, 
-          severity: 'error' 
-        });
-        return;
-      }
-      
-      await menuService.deleteMenuCategory(categoryId);
-      setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+      setDeleteModal(prev => ({ ...prev, loading: true }));
+      const category = categories.find(cat => cat.id === deleteModal.id);
+      await menuService.deleteMenuCategory(deleteModal.id);
+      setCategories(prev => prev.filter(cat => cat.id !== deleteModal.id));
       setSnackbar({ open: true, message: `Category "${category?.name}" deleted successfully`, severity: 'success' });
+      setDeleteModal({ open: false, type: 'category', id: '', name: '', loading: false });
     } catch (error) {
       setSnackbar({ open: true, message: 'Failed to delete category', severity: 'error' });
+      setDeleteModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -443,7 +546,9 @@ const MenuManagement: React.FC = () => {
         isVeg: item.is_vegetarian || false,
         available: item.is_available,
         isAvailable: item.is_available,
-        preparationTime: item.preparation_time_minutes || 15
+        preparationTime: item.preparation_time_minutes || 15,
+        image: item.image_urls?.[0],
+        image_urls: item.image_urls || []
       }));
 
       // Update state
@@ -1057,12 +1162,13 @@ const MenuManagement: React.FC = () => {
                   overflow: 'hidden'
                 }}
               >
-              {item.image && (
+              {(item.image || (item.image_urls && item.image_urls.length > 0)) && (
                 <CardMedia
                   component="img"
                   height="140"
-                  image={item.image}
+                  image={item.image || item.image_urls?.[0]}
                   alt={item.name}
+                  sx={{ objectFit: 'cover' }}
                 />
               )}
               <CardContent sx={{ 
@@ -1241,6 +1347,30 @@ const MenuManagement: React.FC = () => {
                         }
                       </IconButton>
                     </Tooltip>
+                    <Tooltip title="Upload Image">
+                      <IconButton 
+                        size="small" 
+                        component="label"
+                        sx={{ 
+                          minWidth: 32, 
+                          minHeight: 32,
+                          '&:hover': { backgroundColor: 'info.50' }
+                        }}
+                      >
+                        <ImageIcon fontSize="small" />
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleQuickImageUpload(item.id, file);
+                            }
+                          }}
+                        />
+                      </IconButton>
+                    </Tooltip>
                     <Tooltip title="Edit Item">
                       <IconButton 
                         size="small" 
@@ -1359,6 +1489,7 @@ const MenuManagement: React.FC = () => {
           item={editingItem}
           categories={categories.filter(cat => cat.active)}
           isMobile={isMobile}
+          onShowMessage={(message, severity) => setSnackbar({ open: true, message, severity })}
         />
 
         {/* Category Dialog */}
@@ -1380,6 +1511,27 @@ const MenuManagement: React.FC = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          open={deleteModal.open}
+          onClose={() => setDeleteModal({ open: false, type: 'item', id: '', name: '', loading: false })}
+          onConfirm={deleteModal.type === 'item' ? confirmDeleteItem : confirmDeleteCategory}
+          title={`Delete ${deleteModal.type === 'item' ? 'Menu Item' : 'Category'}`}
+          itemName={deleteModal.name}
+          itemType={deleteModal.type === 'item' ? 'menu item' : 'category'}
+          description={
+            deleteModal.type === 'item' 
+              ? 'This menu item will be permanently removed from your menu and will no longer be available for ordering.'
+              : 'This category will be permanently removed. Make sure no menu items are assigned to this category before deleting.'
+          }
+          loading={deleteModal.loading}
+          additionalWarnings={
+            deleteModal.type === 'item' 
+              ? ['Any ongoing orders with this item may be affected', 'Customer favorites and reviews will be lost']
+              : ['All menu items must be reassigned before deletion', 'Category-specific analytics will be lost']
+          }
+        />
       </Box>
     </Container>
   );
@@ -1389,13 +1541,14 @@ const MenuManagement: React.FC = () => {
 interface MenuItemDialogProps {
   open: boolean;
   onClose: () => void;
-  onSave: (item: Partial<MenuItemType>) => void;
+  onSave: (item: Partial<MenuItemType>, imageFile?: File) => Promise<void> | void;
   item: MenuItemType | null;
   categories: CategoryType[];
   isMobile?: boolean;
+  onShowMessage?: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
 }
 
-const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, item, categories, isMobile = false }) => {
+const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, item, categories, isMobile = false, onShowMessage }) => {
   const [formData, setFormData] = useState<Partial<MenuItemType>>({
     name: '',
     description: '',
@@ -1409,10 +1562,15 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
     spicyLevel: 0,
     isVeg: true,
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (item) {
       setFormData(item);
+      setImagePreviewUrl(item.image || null);
     } else {
       setFormData({
         name: '',
@@ -1427,8 +1585,77 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
         spicyLevel: 0,
         isVeg: true,
       });
+      setImagePreviewUrl(null);
     }
+    // Reset image upload state when dialog opens/closes
+    setSelectedImageFile(null);
+    setImageUploadError(null);
+    setUploadingImage(false);
   }, [item, open]);
+
+  // Cleanup blob URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      setImageUploadError(null);
+      
+      // For existing items, upload immediately
+      if (item?.id) {
+        setUploadingImage(true);
+        const response = await menuService.uploadMenuItemImage(item.id, file);
+        
+        if (response.success && response.data) {
+          // Update the form data with the new image URL
+          setFormData(prev => ({
+            ...prev,
+            image: response.data!.image_url
+          }));
+          setImagePreviewUrl(response.data!.image_url);
+          
+          // Show success message
+          onShowMessage?.('Image uploaded successfully!', 'success');
+        }
+      } else {
+        // For new items, store the file and show preview
+        setSelectedImageFile(file);
+        
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file);
+        setImagePreviewUrl(previewUrl);
+        
+        // Update form data to indicate an image is selected
+        setFormData(prev => ({
+          ...prev,
+          image: 'pending_upload' // Temporary indicator
+        }));
+      }
+    } catch (error: any) {
+      setImageUploadError(error.message || 'Failed to process image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setSelectedImageFile(null);
+    setImagePreviewUrl(null);
+    setFormData(prev => ({
+      ...prev,
+      image: undefined
+    }));
+    
+    // Clean up preview URL if it was created locally
+    if (imagePreviewUrl && imagePreviewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+  };
 
   const handleSave = () => {
     onSave(formData);
@@ -1452,9 +1679,9 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: '90%',
+              width: '95%',
               maxWidth: '500px',
-              maxHeight: '85vh',
+              maxHeight: '90vh',
               bgcolor: 'background.paper',
               borderRadius: 2,
               boxShadow: 24,
@@ -1465,7 +1692,7 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
           >
             {/* Modal Header */}
             <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-              <Toolbar>
+              <Toolbar sx={{ px: { xs: 2, sm: 3 } }}>
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
                   {item ? 'Edit Menu Item' : 'Add Menu Item'}
                 </Typography>
@@ -1481,8 +1708,8 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
             </AppBar>
 
             {/* Modal Content */}
-            <Box sx={{ overflow: 'auto', p: 1.5 }}>
-              <Stack spacing={1}>
+            <Box sx={{ overflow: 'auto', p: { xs: 2, sm: 1.5 } }}>
+              <Stack spacing={{ xs: 2, sm: 1 }}>
                 <TextField
                   fullWidth
                   label="Item Name"
@@ -1643,11 +1870,79 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
                   }
                   label="Featured Item"
                 />
+                
+                {/* Image Upload Section */}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Menu Item Image
+                  </Typography>
+                  
+                  {/* Current Image Preview */}
+                  {imagePreviewUrl && (
+                    <Box sx={{ mb: 2 }}>
+                      <img
+                        src={imagePreviewUrl}
+                        alt="Menu item"
+                        style={{
+                          width: '100%',
+                          maxWidth: '200px',
+                          height: '120px',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          border: '1px solid #ddd'
+                        }}
+                      />
+                      {selectedImageFile && (
+                        <Typography variant="caption" color="primary" display="block" sx={{ mt: 1 }}>
+                          Image ready to upload with menu item
+                        </Typography>
+                      )}
+                    </Box>
+                  )}
+                  
+                  {/* Upload Button */}
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="image-upload-mobile"
+                    type="file"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleImageUpload(file);
+                      }
+                    }}
+                  />
+                  <label htmlFor="image-upload-mobile">
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      startIcon={uploadingImage ? <CircularProgress size={20} /> : <CloudUpload />}
+                      disabled={uploadingImage}
+                      fullWidth
+                      sx={{ mb: 1 }}
+                    >
+                      {uploadingImage ? 'Uploading...' : 'Upload Image'}
+                    </Button>
+                  </label>
+                  
+                  {!item?.id && !selectedImageFile && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      Select an image to upload with the menu item
+                    </Typography>
+                  )}
+                  
+                  {imageUploadError && (
+                    <Alert severity="error" sx={{ mt: 1 }}>
+                      {imageUploadError}
+                    </Alert>
+                  )}
+                </Box>
               </Stack>
             </Box>
 
             {/* Modal Footer */}
-            <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
+            <Box sx={{ p: { xs: 2, sm: 1.5 }, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
               <Stack direction="row" spacing={2}>
                 <Button onClick={onClose} fullWidth variant="outlined">
                   Cancel
@@ -1855,6 +2150,86 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({ open, onClose, onSave, 
               label="Featured Item"
             />
           </Grid>
+          
+          {/* Image Upload Section */}
+          <Grid item xs={12}>
+            <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+              Menu Item Image
+            </Typography>
+            
+            {/* Current Image Preview */}
+            {imagePreviewUrl && (
+              <Box sx={{ mb: 2 }}>
+                <img
+                  src={imagePreviewUrl}
+                  alt="Menu item"
+                  style={{
+                    width: '100%',
+                    maxWidth: '300px',
+                    height: '180px',
+                    objectFit: 'cover',
+                    borderRadius: '8px',
+                    border: '1px solid #ddd'
+                  }}
+                />
+                {selectedImageFile && (
+                  <Typography variant="caption" color="primary" display="block" sx={{ mt: 1 }}>
+                    Image ready to upload with menu item
+                  </Typography>
+                )}
+              </Box>
+            )}
+            
+            {/* Upload Controls */}
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                accept="image/*"
+                style={{ display: 'none' }}
+                id="image-upload-desktop"
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    handleImageUpload(file);
+                  }
+                }}
+              />
+              <label htmlFor="image-upload-desktop">
+                <Button
+                  variant="outlined"
+                  component="span"
+                  startIcon={uploadingImage ? <CircularProgress size={20} /> : <CloudUpload />}
+                  disabled={uploadingImage}
+                >
+                  {uploadingImage ? 'Uploading...' : 'Upload Image'}
+                </Button>
+              </label>
+              
+              {imagePreviewUrl && (
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteOutline />}
+                  onClick={handleRemoveImage}
+                  disabled={uploadingImage}
+                >
+                  Remove Image
+                </Button>
+              )}
+            </Box>
+            
+            {!item?.id && !selectedImageFile && (
+              <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                Select an image to upload with the menu item
+              </Typography>
+            )}
+            
+            {imageUploadError && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {imageUploadError}
+              </Alert>
+            )}
+          </Grid>
         </Grid>
       </DialogContent>
       <DialogActions>
@@ -1917,9 +2292,9 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, 
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: '90%',
+              width: '95%',
               maxWidth: '450px',
-              maxHeight: '70vh',
+              maxHeight: '85vh',
               bgcolor: 'background.paper',
               borderRadius: 2,
               boxShadow: 24,
@@ -1930,7 +2305,7 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, 
           >
             {/* Modal Header */}
             <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-              <Toolbar>
+              <Toolbar sx={{ px: { xs: 2, sm: 3 } }}>
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
                   {category ? 'Edit Category' : 'Add Category'}
                 </Typography>
@@ -1946,8 +2321,8 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, 
             </AppBar>
 
             {/* Modal Content */}
-            <Box sx={{ overflow: 'auto', p: 1.5 }}>
-              <Stack spacing={1}>
+            <Box sx={{ overflow: 'auto', p: { xs: 2, sm: 1.5 } }}>
+              <Stack spacing={{ xs: 2, sm: 1 }}>
                 <TextField
                   fullWidth
                   label="Category Name"
@@ -1977,7 +2352,7 @@ const CategoryDialog: React.FC<CategoryDialogProps> = ({ open, onClose, onSave, 
             </Box>
 
             {/* Modal Footer */}
-            <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
+            <Box sx={{ p: { xs: 2, sm: 1.5 }, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
               <Stack direction="row" spacing={2}>
                 <Button onClick={onClose} fullWidth variant="outlined">
                   Cancel

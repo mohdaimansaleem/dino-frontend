@@ -1,6 +1,7 @@
 import { apiService } from './api';
 import { ApiResponse } from '../types/api';
 import { ROLE_NAMES, isAdminLevel } from '../constants/roles';
+import StorageManager from '../utils/storageManager';
 
 export interface UserData {
   user: {
@@ -136,11 +137,56 @@ class UserDataService {
         
         // Map venue data properly with comprehensive field mapping
         if (userData.venue) {
+          console.log('UserDataService: Raw venue data from API:', userData.venue);
+          
+          // Convert backend status field to frontend is_open boolean
+          let isOpen = false;
+          let statusField = (userData.venue as any).status;
+          
+          console.log('UserDataService: Status field analysis:', {
+            raw_is_open: userData.venue.is_open,
+            raw_status: statusField,
+            raw_isOpen: (userData.venue as any).isOpen,
+            venue_id: userData.venue.id
+          });
+          
+          // Priority order for determining is_open:
+          // 1. Use existing is_open if it's explicitly set
+          // 2. Convert status field ("active"/"open" = true, "closed"/"inactive" = false)
+          // 3. Fallback to camelCase isOpen
+          // 4. Default to false
+          
+          if (userData.venue.is_open !== undefined && userData.venue.is_open !== null) {
+            // Use existing is_open if available and not null/undefined
+            isOpen = Boolean(userData.venue.is_open);
+            console.log('UserDataService: Using existing is_open field:', isOpen);
+          } else if (statusField !== undefined && statusField !== null) {
+            // Convert status field: "active"/"open" = true, "closed"/"inactive" = false
+            const statusStr = String(statusField).toLowerCase();
+            isOpen = statusStr === 'active' || statusStr === 'open';
+            console.log('UserDataService: Converting status to is_open:', {
+              originalStatus: statusField,
+              normalizedStatus: statusStr,
+              convertedIsOpen: isOpen
+            });
+          } else if ((userData.venue as any).isOpen !== undefined) {
+            // Fallback to camelCase version
+            isOpen = Boolean((userData.venue as any).isOpen);
+            console.log('UserDataService: Using camelCase isOpen field:', isOpen);
+          } else {
+            console.log('UserDataService: No status fields found, defaulting to false');
+            isOpen = false;
+          }
+          
+          // Ensure both is_open and status fields are properly synchronized
+          const finalStatus = isOpen ? 'active' : 'closed';
+          
           userData.venue = {
             ...userData.venue,
             // Ensure camelCase properties exist alongside snake_case
             isActive: userData.venue.is_active !== undefined ? userData.venue.is_active : (userData.venue as any).isActive,
-            isOpen: userData.venue.is_open !== undefined ? userData.venue.is_open : (userData.venue as any).isOpen || false,
+            isOpen: isOpen,
+            is_open: isOpen, // Ensure both snake_case and camelCase are set
             createdAt: userData.venue.created_at || (userData.venue as any).createdAt,
             updatedAt: userData.venue.updated_at || (userData.venue as any).updatedAt,
             
@@ -160,6 +206,21 @@ class UserDataService {
             phone: userData.venue.phone || '',
             email: userData.venue.email || ''
           };
+          
+          // Set status field separately to avoid TypeScript issues
+          (userData.venue as any).status = finalStatus;
+          
+          console.log('UserDataService: Processed venue data:', {
+            id: userData.venue.id,
+            name: userData.venue.name,
+            original_status: statusField,
+            final_status: (userData.venue as any).status,
+            is_active: userData.venue.is_active,
+            is_open: userData.venue.is_open,
+            isActive: userData.venue.isActive,
+            isOpen: userData.venue.isOpen,
+            fields_synchronized: userData.venue.is_open === isOpen && (userData.venue as any).status === finalStatus
+          });
         }
         
         // Map user data properly
@@ -238,12 +299,17 @@ class UserDataService {
 
   /**
    * Refresh user data (useful after venue switching or data updates)
-   * Forces a fresh call by clearing debounce state
+   * Forces a fresh call by clearing debounce state and cache
    */
   async refreshUserData(): Promise<UserData | null> {
     // Clear debounce state to force fresh call
     this.lastCallTime = 0;
     this.currentRequest = null;
+    
+    // Clear cached user data to ensure fresh fetch
+    StorageManager.clearVenueData();
+    StorageManager.removeItem(StorageManager.KEYS.USER);
+    
     return this.getUserData();
   }
 

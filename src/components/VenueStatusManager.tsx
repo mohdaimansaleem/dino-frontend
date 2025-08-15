@@ -34,6 +34,8 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useUserData } from '../contexts/UserDataContext';
 import { PERMISSIONS } from '../types/auth';
+import { venueService } from '../services/venueService';
+import StorageManager from '../utils/storageManager';
 
 interface VenueStatusManagerProps {
   venue?: any;
@@ -85,12 +87,12 @@ const VenueStatusManager: React.FC<VenueStatusManagerProps> = ({
   const confirmStatusChange = async () => {
     setLoading(true);
     try {
-      // TODO: Implement venue status update API calls
-      // This would use venueService to update venue status
-      console.log(`Updating ${statusType} status for venue ${targetVenue.id}`);
+      // Update venue status using venueService
+      const updateData = statusType === 'open' 
+        ? { is_open: !targetVenue.isOpen }
+        : { is_active: !targetVenue.isActive };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await venueService.updateVenue(targetVenue.id, updateData);
       
       onStatusChange?.(
         targetVenue.id, 
@@ -98,7 +100,8 @@ const VenueStatusManager: React.FC<VenueStatusManagerProps> = ({
         statusType === 'active' ? !targetVenue.isActive : targetVenue.isActive
       );
       
-      // Refresh user data to get updated venue status
+      // Clear venue cache and refresh user data to get updated venue status
+      StorageManager.clearVenueData();
       await refreshUserData();
       
       setOpenDialog(false);

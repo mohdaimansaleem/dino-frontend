@@ -72,6 +72,7 @@ import {
 import { venueService } from '../../services/venueService';
 import { useUserData } from '../../contexts/UserDataContext';
 import { CircularProgress } from '@mui/material';
+import StorageManager from '../../utils/storageManager';
 
 interface VenueSettings {
   name: string;
@@ -342,8 +343,9 @@ const VenueSettings: React.FC = () => {
         // Don't fail the entire save operation for operating hours
       }
       
-      // Refresh user data to get updated venue information
-      console.log('Refreshing user data...');
+      // Clear venue cache and refresh user data to get updated venue information
+      console.log('Clearing venue cache and refreshing user data...');
+      StorageManager.clearVenueData();
       await refreshUserData();
 
       setSnackbar({ open: true, message: 'Settings saved successfully', severity: 'success' });
@@ -388,8 +390,9 @@ const VenueSettings: React.FC = () => {
         await venueService.updateVenue(venue.id, { is_active: false });
       }
       
-      // Refresh user data to get updated venue status
-      console.log('Refreshing user data after status change...');
+      // Clear venue cache and refresh user data to get updated venue status
+      console.log('Clearing venue cache and refreshing user data after status change...');
+      StorageManager.clearVenueData();
       await refreshUserData();
 
       setVenueActive(newStatus);

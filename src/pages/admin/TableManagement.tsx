@@ -3,6 +3,7 @@ import QRCodeViewer from '../../components/QRCodeViewer';
 import QRCodeManager from '../../components/QRCodeManager';
 import { tableService, Table } from '../../services/tableService';
 import { useUserData } from '../../contexts/UserDataContext';
+import { DeleteConfirmationModal } from '../../components/modals';
 import {
   Box,
   Container,
@@ -83,6 +84,15 @@ const TableManagement = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    type: '' as 'table' | 'area',
+    id: '',
+    name: '',
+    loading: false
+  });
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -228,15 +238,30 @@ const TableManagement = () => {
   };
 
   const handleDeleteTable = async (tableId: string) => {
+    const table = tables.find(t => t.id === tableId);
+    if (!table) return;
+    
+    setDeleteModal({
+      open: true,
+      type: 'table',
+      id: tableId,
+      name: `Table ${table.table_number}`,
+      loading: false
+    });
+  };
+
+  const confirmDeleteTable = async () => {
     try {
-      console.log('Deleting table:', tableId);
-      const response = await tableService.deleteTable(tableId);
+      setDeleteModal(prev => ({ ...prev, loading: true }));
+      console.log('Deleting table:', deleteModal.id);
+      const response = await tableService.deleteTable(deleteModal.id);
       if (response.success) {
         console.log('Table deleted, refreshing data...');
         // Refresh both areas and tables data to update area table counts
         await refreshData();
         console.log('Data refreshed after table deletion');
         setSnackbar({ open: true, message: 'Table deleted successfully', severity: 'success' });
+        setDeleteModal({ open: false, type: 'table', id: '', name: '', loading: false });
       }
     } catch (error: any) {
       console.error('Error deleting table:', error);
@@ -245,6 +270,7 @@ const TableManagement = () => {
         message: error.message || 'Failed to delete table', 
         severity: 'error' 
       });
+      setDeleteModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -349,29 +375,42 @@ const TableManagement = () => {
   };
 
   const handleDeleteArea = async (areaId: string) => {
+    const area = areas.find(a => a.id === areaId);
+    if (!area) return;
+    
+    // Check if area has tables assigned to it
+    const tablesInArea = tables.filter(table => (table.location || '') === areaId);
+    if (tablesInArea.length > 0) {
+      setSnackbar({ 
+        open: true, 
+        message: `Cannot delete area "${area.name}": ${tablesInArea.length} tables are assigned to this area. Please reassign or delete tables first.`, 
+        severity: 'error' 
+      });
+      return;
+    }
+    
+    setDeleteModal({
+      open: true,
+      type: 'area',
+      id: areaId,
+      name: area.name,
+      loading: false
+    });
+  };
+
+  const confirmDeleteArea = async () => {
     try {
-      const area = areas.find(a => a.id === areaId);
-      
-      // Check if area has tables assigned to it
-      const tablesInArea = tables.filter(table => (table.location || '') === areaId);
-      if (tablesInArea.length > 0) {
-        setSnackbar({ 
-          open: true, 
-          message: `Cannot delete area "${area?.name}": ${tablesInArea.length} tables are assigned to this area. Please reassign or delete tables first.`, 
-          severity: 'error' 
-        });
-        return;
-      }
-      
-      console.log('Deleting area:', areaId);
-      await tableService.deleteArea(areaId);
+      setDeleteModal(prev => ({ ...prev, loading: true }));
+      console.log('Deleting area:', deleteModal.id);
+      await tableService.deleteArea(deleteModal.id);
       console.log('Area deleted, refreshing data...');
       
       // Refresh both areas and tables data
       await refreshData();
       console.log('Data refreshed after area deletion');
       
-      setSnackbar({ open: true, message: `Area "${area?.name}" deleted successfully`, severity: 'success' });
+      setSnackbar({ open: true, message: `Area "${deleteModal.name}" deleted successfully`, severity: 'success' });
+      setDeleteModal({ open: false, type: 'area', id: '', name: '', loading: false });
     } catch (error: any) {
       console.error('Error deleting area:', error);
       setSnackbar({ 
@@ -379,6 +418,7 @@ const TableManagement = () => {
         message: error.message || 'Failed to delete area', 
         severity: 'error' 
       });
+      setDeleteModal(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -551,24 +591,23 @@ const TableManagement = () => {
                 Manage your restaurant's tables, seating areas, and QR codes
               </Typography>
             </Box>
-            {!isMobile && (
-              <Button
-                variant="outlined"
-                startIcon={<QrCodeScanner />}
-                onClick={handleBulkQRGeneration}
-                size="medium"
-                sx={{
-                  borderColor: 'divider',
-                  color: 'text.primary',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    backgroundColor: 'primary.50'
-                  }
-                }}
-              >
-                Bulk QR Manager
-              </Button>
-            )}
+            <Button
+              variant="outlined"
+              startIcon={<QrCodeScanner />}
+              onClick={handleBulkQRGeneration}
+              size="medium"
+              sx={{
+                borderColor: 'divider',
+                color: 'text.primary',
+                display: { xs: 'none', sm: 'flex' },
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  backgroundColor: 'primary.50'
+                }
+              }}
+            >
+              Bulk QR Manager
+            </Button>
           </Box>
         </Box>
 
@@ -634,6 +673,25 @@ const TableManagement = () => {
                 >
                   {isMobile ? "Areas" : "Manage Areas"}
                 </Button>
+                {isMobile && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<QrCodeScanner />}
+                    onClick={handleBulkQRGeneration}
+                    className="btn-responsive"
+                    size="medium"
+                    fullWidth
+                    sx={{
+                      borderColor: 'divider',
+                      color: 'text.primary',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        backgroundColor: 'primary.50'
+                      }
+                    }}
+                  >
+                  </Button>
+                )}
                 <Button
                   variant="contained"
                   startIcon={<Add />}
@@ -1070,6 +1128,27 @@ const TableManagement = () => {
           venueId={getVenue()?.id || ''}
           venueName={getVenueDisplayName()}
         />
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmationModal
+          open={deleteModal.open}
+          onClose={() => setDeleteModal({ open: false, type: 'table', id: '', name: '', loading: false })}
+          onConfirm={deleteModal.type === 'table' ? confirmDeleteTable : confirmDeleteArea}
+          title={`Delete ${deleteModal.type === 'table' ? 'Table' : 'Area'}`}
+          itemName={deleteModal.name}
+          itemType={deleteModal.type === 'table' ? 'table' : 'seating area'}
+          description={
+            deleteModal.type === 'table' 
+              ? 'This table will be permanently removed from your restaurant layout and will no longer be available for seating customers.'
+              : 'This seating area will be permanently removed. Make sure no tables are assigned to this area before deleting.'
+          }
+          loading={deleteModal.loading}
+          additionalWarnings={
+            deleteModal.type === 'table' 
+              ? ['Any ongoing reservations for this table may be affected', 'QR codes for this table will become invalid', 'Table-specific analytics will be lost']
+              : ['All tables must be reassigned before deletion', 'Area-specific analytics will be lost', 'Layout configurations will be reset']
+          }
+        />
       </Box>
     </Container>
   );
@@ -1165,9 +1244,9 @@ const TableDialog = ({ open, onClose, onSave, table, areas, tables, isMobile = f
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: '90%',
+              width: '95%',
               maxWidth: '500px',
-              maxHeight: '85vh',
+              maxHeight: '90vh',
               bgcolor: 'background.paper',
               borderRadius: 2,
               boxShadow: 24,
@@ -1178,7 +1257,7 @@ const TableDialog = ({ open, onClose, onSave, table, areas, tables, isMobile = f
           >
             {/* Modal Header */}
             <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-              <Toolbar>
+              <Toolbar sx={{ px: { xs: 2, sm: 3 } }}>
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
                   {table ? 'Edit Table' : 'Add Table'}
                 </Typography>
@@ -1194,8 +1273,8 @@ const TableDialog = ({ open, onClose, onSave, table, areas, tables, isMobile = f
             </AppBar>
 
             {/* Modal Content */}
-            <Box sx={{ overflow: 'auto', p: 1.5 }}>
-              <Stack spacing={1}>
+            <Box sx={{ overflow: 'auto', p: { xs: 2, sm: 1.5 } }}>
+              <Stack spacing={{ xs: 2, sm: 1 }}>
                 <TextField
                   fullWidth
                   label="Table Number"
@@ -1270,7 +1349,7 @@ const TableDialog = ({ open, onClose, onSave, table, areas, tables, isMobile = f
             </Box>
 
             {/* Modal Footer */}
-            <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
+            <Box sx={{ p: { xs: 2, sm: 1.5 }, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
               <Stack direction="row" spacing={2}>
                 <Button onClick={onClose} fullWidth variant="outlined">
                   Cancel
@@ -1453,9 +1532,9 @@ const AreaDialog = ({ open, onClose, onSave, area, isMobile = false }: AreaDialo
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: '90%',
+              width: '95%',
               maxWidth: '450px',
-              maxHeight: '75vh',
+              maxHeight: '85vh',
               bgcolor: 'background.paper',
               borderRadius: 2,
               boxShadow: 24,
@@ -1466,7 +1545,7 @@ const AreaDialog = ({ open, onClose, onSave, area, isMobile = false }: AreaDialo
           >
             {/* Modal Header */}
             <AppBar position="static" color="default" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
-              <Toolbar>
+              <Toolbar sx={{ px: { xs: 2, sm: 3 } }}>
                 <Typography variant="h6" sx={{ flexGrow: 1 }}>
                   {area ? 'Edit Area' : 'Add Area'}
                 </Typography>
@@ -1482,8 +1561,8 @@ const AreaDialog = ({ open, onClose, onSave, area, isMobile = false }: AreaDialo
             </AppBar>
 
             {/* Modal Content */}
-            <Box sx={{ overflow: 'auto', p: 1.5 }}>
-              <Stack spacing={1}>
+            <Box sx={{ overflow: 'auto', p: { xs: 2, sm: 1.5 } }}>
+              <Stack spacing={{ xs: 2, sm: 1 }}>
                 <TextField
                   fullWidth
                   label="Area Name"
@@ -1542,7 +1621,7 @@ const AreaDialog = ({ open, onClose, onSave, area, isMobile = false }: AreaDialo
             </Box>
 
             {/* Modal Footer */}
-            <Box sx={{ p: 1.5, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
+            <Box sx={{ p: { xs: 2, sm: 1.5 }, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.default' }}>
               <Stack direction="row" spacing={2}>
                 <Button onClick={onClose} fullWidth variant="outlined">
                   Cancel

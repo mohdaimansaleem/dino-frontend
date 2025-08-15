@@ -175,6 +175,13 @@ export class StorageManager {
   }
 
   /**
+   * Clear venue data cache
+   */
+  static clearVenueData(): void {
+    this.removeItem(this.KEYS.VENUE);
+  }
+
+  /**
    * Cache menu data with TTL
    */
   static setCachedMenu(venueId: string, menuData: any): void {
