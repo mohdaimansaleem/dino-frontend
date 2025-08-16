@@ -55,6 +55,7 @@ import { venueService } from '../../services/venueService';
 import { PriceRange } from '../../types/api';
 import StorageManager from '../../utils/storageManager';
 import { DeleteConfirmationModal } from '../../components/modals';
+import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
 // Animation for refresh icon
 const spin = keyframes`
@@ -142,7 +143,16 @@ const WorkspaceManagement: React.FC = () => {
   const venues = useMemo(() => {
     // Always prioritize workspaceVenues if available, regardless of length
     if (workspaceVenues && Array.isArray(workspaceVenues)) {
-      return workspaceVenues;
+      // Sort venues to put the selected/current venue first
+      const sortedVenues = [...workspaceVenues].sort((a, b) => {
+        // If 'a' is the current venue, it should come first (return -1)
+        if (currentVenue && a.id === currentVenue.id) return -1;
+        // If 'b' is the current venue, it should come first (return 1)
+        if (currentVenue && b.id === currentVenue.id) return 1;
+        // Otherwise, maintain original order
+        return 0;
+      });
+      return sortedVenues;
     }
     // Fallback to currentVenue only if workspaceVenues is null/undefined
     const fallback = currentVenue ? [currentVenue] : [];
@@ -361,121 +371,377 @@ const WorkspaceManagement: React.FC = () => {
   // Loading state
   if (userDataLoading) {
     return (
-      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
+      <Box sx={{ pt: { xs: '56px', sm: '64px' }, py: 4, width: '100%' }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <CircularProgress size={60} />
           <Typography variant="h6" sx={{ ml: 2 }}>
             Loading workspace data...
           </Typography>
         </Box>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container 
-      maxWidth="xl" 
-      sx={{ 
-        pt: { xs: '56px', sm: '64px' },
-        py: { xs: 2, sm: 3, md: 4 },
-        px: { xs: 2, sm: 3 },
-        maxWidth: '100%',
+    <Box
+      sx={{
+        minHeight: 'auto',
+        height: 'auto',
+        backgroundColor: '#f8f9fa',
+        padding: 0,
+        margin: 0,
+        width: '100%',
         overflow: 'visible',
-        minHeight: { xs: 'calc(100vh - 120px)', sm: 'auto' }, // Ensure content fits in mobile
+        '& .MuiContainer-root': {
+          padding: '0 !important',
+          margin: '0 !important',
+          maxWidth: 'none !important',
+        },
       }}
     >
-      {/* Header */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        mb: 4,
-        flexWrap: 'wrap',
-        gap: 2
-      }}>
-        <Box>
-          <Typography 
-            variant="h4" 
-            component="h1" 
-            gutterBottom 
-            fontWeight="600"
-            sx={{ 
-              fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
-              letterSpacing: '-0.01em'
-            }}
-          >
-            Workspace Venues
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Manage all venues in your workspace
-          </Typography>
-          {userData?.workspace && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Workspace: {userData.workspace.name || userData.workspace.display_name}
-            </Typography>
-          )}
-        </Box>
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 2,
-          flexWrap: 'wrap',
-          alignItems: 'center'
-        }}>
-          {canCreateVenues && (
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setOpenVenueDialog(true)}
-              size="large"
-            >
-              Venue
-            </Button>
-          )}
-
-          <IconButton
-            onClick={refreshWorkspaceVenues}
-            disabled={loadingVenues}
-            size="large"
+      {/* Hero Section */}
+      <Box
+        sx={{
+          backgroundColor: 'grey.100',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          position: 'relative',
+          overflow: 'hidden',
+          color: 'text.primary',
+          padding: 0,
+          margin: 0,
+          width: '100%',
+        }}
+      >
+        <AnimatedBackground />
+        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2 }}>
+          <Box
             sx={{
-              backgroundColor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'divider',
-              color: 'text.primary',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-                borderColor: 'primary.main',
-                color: 'primary.main',
-              },
-              '&:disabled': {
-                opacity: 0.5,
-              },
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              gap: { xs: 2, md: 3 },
+              py: { xs: 3, sm: 4 },
+              px: { xs: 3, sm: 4 },
             }}
-            title={loadingVenues ? 'Refreshing...' : 'Refresh venues'}
           >
-            {loadingVenues ? (
-              <CachedOutlined sx={{ animation: `${spin} 1s linear infinite` }} />
-            ) : (
-              <Refresh />
-            )}
-          </IconButton>
-        </Box>
+            {/* Header Content */}
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Restaurant sx={{ fontSize: 32, mr: 1.5, color: 'text.primary', opacity: 0.9 }} />
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  fontWeight="600"
+                  sx={{
+                    fontSize: { xs: '1.75rem', sm: '2rem' },
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.2,
+                    color: 'text.primary',
+                  }}
+                >
+                  Workspace Venues
+                </Typography>
+              </Box>
+              
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontWeight: 400,
+                  mb: 1,
+                  maxWidth: '500px',
+                  color: 'text.secondary',
+                }}
+              >
+                Centralized management for all your restaurant locations and venues
+              </Typography>
+
+              {userData?.workspace && (
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(10px)',
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  <Store sx={{ fontSize: 18, mr: 1, color: 'primary.main', opacity: 0.9 }} />
+                  <Typography variant="body2" fontWeight="500" color="text.primary">
+                    {userData.workspace.name || userData.workspace.display_name}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Action Buttons */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1.5,
+                flexDirection: { xs: 'row', sm: 'row' },
+                flexWrap: 'wrap',
+                alignItems: 'center',
+              }}
+            >
+              {canCreateVenues && (
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => setOpenVenueDialog(true)}
+                  size="medium"
+                  sx={{
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    fontWeight: 600,
+                    px: 3,
+                    py: 1,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '0.875rem',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  Add New Venue
+                </Button>
+              )}
+
+              <IconButton
+                onClick={refreshWorkspaceVenues}
+                disabled={loadingVenues}
+                size="medium"
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  color: 'text.secondary',
+                  width: 40,
+                  height: 40,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 1)',
+                    color: 'primary.main',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+                title={loadingVenues ? 'Refreshing...' : 'Refresh venues'}
+              >
+                {loadingVenues ? (
+                  <CachedOutlined sx={{ animation: `${spin} 1s linear infinite` }} />
+                ) : (
+                  <Refresh />
+                )}
+              </IconButton>
+            </Box>
+          </Box>
+        </Container>
       </Box>
 
+      {/* Main Content */}
+      <Box
+        sx={{
+          width: '100%',
+          padding: 0,
+          margin: 0,
+        }}
+      >
+        {/* Stats Section */}
+        {venues.length > 0 && (
+          <Box sx={{ mb: 4, px: { xs: 3, sm: 4 }, py: 2 }}>
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+              <Grid item xs={6} sm={3}>
+                <Card
+                  sx={{
+                    p: 2,
+                    textAlign: 'center',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)',
+                    },
+                  }}
+                >
+                  <Typography variant="h4" fontWeight="700" color="primary.main" gutterBottom>
+                    {venues.length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" fontWeight="500">
+                    Total Venues
+                  </Typography>
+                </Card>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Card
+                  sx={{
+                    p: 2,
+                    textAlign: 'center',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)',
+                    },
+                  }}
+                >
+                  <Typography variant="h4" fontWeight="700" color="success.main" gutterBottom>
+                    {venues.filter(v => v.is_active).length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" fontWeight="500">
+                    Active Venues
+                  </Typography>
+                </Card>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Card
+                  sx={{
+                    p: 2,
+                    textAlign: 'center',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)',
+                    },
+                  }}
+                >
+                  <Typography variant="h4" fontWeight="700" color="info.main" gutterBottom>
+                    {venues.filter(v => v.is_open).length}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" fontWeight="500">
+                    Currently Open
+                  </Typography>
+                </Card>
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Card
+                  sx={{
+                    p: 2,
+                    textAlign: 'center',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)',
+                    },
+                  }}
+                >
+                  <Typography variant="h4" fontWeight="700" color="warning.main" gutterBottom>
+                    {currentVenue ? '1' : '0'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" fontWeight="500">
+                    Selected
+                  </Typography>
+                </Card>
+              </Grid>
+            </Grid>
+          </Box>
+        )}
+
+        {/* Section Header */}
+        <Box sx={{ mb: 4, px: { xs: 3, sm: 4 }, py: 2 }}>
+          <Typography
+            variant="h6"
+            fontWeight="600"
+            color="text.primary"
+            gutterBottom
+            sx={{ fontSize: { xs: '1.25rem', sm: '1.375rem' }, mb: 1 }}
+          >
+            Your Venues
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
+            {venues.length > 0 
+              ? `Manage and monitor all ${venues.length} venue${venues.length > 1 ? 's' : ''} in your workspace`
+              : 'No venues found in your workspace'
+            }
+          </Typography>
+        </Box>
+
       {/* Venues Grid */}
+      <Box sx={{ px: { xs: 3, sm: 4 }, pb: 4 }}>
       {loadingVenues ? (
-        <Grid container spacing={3} sx={{ width: '100%', m: 0 }}>
-          {[1, 2, 3].map((i) => (
-            <Grid item xs={12} sm={6} md={4} key={i}>
-              <Card>
-                <CardContent>
-                  <Skeleton variant="text" width="60%" height={32} />
-                  <Skeleton variant="text" width="80%" height={20} sx={{ mt: 1 }} />
-                  <Skeleton variant="text" width="40%" height={20} sx={{ mt: 1 }} />
-                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                    <Skeleton variant="rectangular" width={60} height={24} />
-                    <Skeleton variant="rectangular" width={60} height={24} />
+        <Grid container spacing={2}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Grid item xs={12} sm={6} lg={4} xl={3} key={i}>
+              <Card
+                sx={{
+                  borderRadius: 3,
+                  overflow: 'hidden',
+                  height: '100%',
+                }}
+              >
+                {/* Header Skeleton */}
+                <Box sx={{ p: 3, pb: 2, backgroundColor: 'grey.50' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                    <Box sx={{ flex: 1, pr: 2 }}>
+                      <Skeleton variant="text" width="70%" height={28} sx={{ mb: 0.5 }} />
+                      <Skeleton variant="text" width="40%" height={20} />
+                    </Box>
+                    <Skeleton variant="circular" width={32} height={32} />
                   </Box>
+                </Box>
+
+                {/* Content Skeleton */}
+                <CardContent sx={{ p: 3, pt: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                    <Skeleton variant="circular" width={18} height={18} sx={{ mt: 0.2, mr: 1 }} />
+                    <Box sx={{ flex: 1 }}>
+                      <Skeleton variant="text" width="90%" height={20} />
+                      <Skeleton variant="text" width="60%" height={20} sx={{ mt: 0.5 }} />
+                    </Box>
+                  </Box>
+
+                  <Skeleton variant="text" width="85%" height={20} sx={{ mb: 2 }} />
+
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Skeleton variant="circular" width={16} height={16} sx={{ mr: 1 }} />
+                      <Skeleton variant="text" width="50%" height={20} />
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Skeleton variant="circular" width={16} height={16} sx={{ mr: 1 }} />
+                      <Skeleton variant="text" width="70%" height={20} />
+                    </Box>
+                  </Box>
+
+                  <Skeleton variant="rectangular" width={80} height={24} sx={{ borderRadius: 2, mb: 2 }} />
                 </CardContent>
+
+                {/* Footer Skeleton */}
+                <Box sx={{ p: 3, pt: 0, borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Skeleton variant="rectangular" width={50} height={24} sx={{ borderRadius: 2 }} />
+                      <Skeleton variant="rectangular" width={45} height={24} sx={{ borderRadius: 2 }} />
+                    </Box>
+                    <Skeleton variant="text" width={60} height={16} />
+                  </Box>
+                </Box>
               </Card>
             </Grid>
           ))}
@@ -483,104 +749,373 @@ const WorkspaceManagement: React.FC = () => {
       ) : venues.length > 0 ? (
         <Grid container spacing={3}>
           {venues.map((venue) => (
-            <Grid item xs={12} sm={6} md={4} key={venue.id}>
+            <Grid item xs={12} sm={6} lg={6} xl={4} key={venue.id}>
               <Card
                 sx={{
-                  border: venue.id === currentVenue?.id ? '2px solid' : '1px solid',
-                  borderColor: venue.id === currentVenue?.id ? 'secondary.main' : 'divider',
-                  height: '100%',
+                  position: 'relative',
+                  height: 280,
                   display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'all 0.2s ease-in-out',
+                  flexDirection: 'row',
+                  borderRadius: 1,
+                  overflow: 'hidden',
+                  border: venue.id === currentVenue?.id ? '2px solid' : '1px solid',
+                  borderColor: venue.id === currentVenue?.id ? 'primary.main' : 'divider',
+                  background: 'white',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    boxShadow: 3,
                     transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
+                    borderColor: venue.id === currentVenue?.id ? 'primary.main' : 'primary.light',
                   },
                 }}
               >
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Typography variant="h6" fontWeight="600">
-                      {venue.name}
-                    </Typography>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        setAnchorEl(e.currentTarget);
-                        setSelectedItem(venue);
+                {/* Selected Badge */}
+                {venue.id === currentVenue?.id && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 12,
+                      left: 12,
+                      zIndex: 3,
+                      backgroundColor: 'grey.600',
+                      color: 'white',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    }}
+                  >
+                    Selected
+                  </Box>
+                )}
+
+                {/* Image Section - 30% */}
+                <Box
+                  sx={{
+                    width: '30%',
+                    height: '100%',
+                    position: 'relative',
+                    backgroundImage: venue.image_url 
+                      ? `url(${venue.image_url})`
+                      : 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%23666\'%3E%3Cpath d=\'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z\'/%3E%3C/path%3E%3C/svg%3E")',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundColor: '#f5f5f5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {!venue.image_url && (
+                    <Store sx={{ fontSize: 48, color: '#999' }} />
+                  )}
+                </Box>
+
+                {/* Content Section - 70% */}
+                <Box
+                  sx={{
+                    width: '70%',
+                    height: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                  }}
+                >
+                  {/* Three Dots Menu */}
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      setAnchorEl(e.currentTarget);
+                      setSelectedItem(venue);
+                    }}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 2,
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      color: 'text.secondary',
+                      width: 32,
+                      height: 32,
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 1)',
+                        color: 'primary.main',
+                      },
+                    }}
+                  >
+                    <MoreVert sx={{ fontSize: 18 }} />
+                  </IconButton>
+
+                  {/* Header */}
+                  <Box sx={{ p: 3, pb: 2 }}>
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="700"
+                      sx={{ 
+                        color: 'text.primary',
+                        fontSize: '1.25rem',
+                        lineHeight: 1.3,
+                        mb: 1,
+                        pr: 4, // Space for menu button
+                        textTransform: 'capitalize',
                       }}
                     >
-                      <MoreVert />
-                    </IconButton>
-                  </Box>
-                  
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    {venue.location?.address || 'No address available'}
-                  </Typography>
-                  
-                  {venue.description && (
-                    <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontStyle: 'italic' }}>
-                      {venue.description}
+                      {venue.name}
                     </Typography>
-                  )}
-                  
-                  <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-                    <Chip
-                      label={venue.is_active ? 'Active' : 'Inactive'}
-                      color={venue.is_active ? 'success' : 'default'}
-                      size="small"
-                    />
-                    <Chip
-                      label={venue.is_open ? 'Open' : 'Closed'}
-                      color={venue.is_open ? 'success' : 'error'}
-                      size="small"
-                    />
+                    
+                    {/* Description */}
+                    {venue.description && (
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: 'text.secondary',
+                          fontSize: '0.9rem',
+                          lineHeight: 1.4,
+                          mb: 1.5,
+                          fontWeight: 400,
+                          fontStyle: 'italic',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textTransform: 'capitalize',
+                        }}
+                      >
+                        {venue.description}
+                      </Typography>
+                    )}
+                    
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: 'text.secondary',
+                        fontSize: '0.85rem',
+                        textTransform: 'capitalize',
+                        mb: 1.5,
+                        fontWeight: 500,
+                      }}
+                    >
+                      {venue.venue_type?.replace('_', ' ') || 'Restaurant'}
+                    </Typography>
+
+                    {/* Status Icons */}
+                    <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            backgroundColor: venue.is_active ? 'success.main' : 'grey.400',
+                          }}
+                        />
+                        <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', fontWeight: 400, textTransform: 'capitalize' }}>
+                          {venue.is_active ? 'Active' : 'Inactive'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                        <Box
+                          sx={{
+                            width: 10,
+                            height: 10,
+                            borderRadius: '50%',
+                            backgroundColor: venue.is_open ? 'success.main' : 'error.main',
+                          }}
+                        />
+                        <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', fontWeight: 400, textTransform: 'capitalize' }}>
+                          {venue.is_open ? 'Open' : 'Closed'}
+                        </Typography>
+                      </Box>
+                    </Box>
                   </Box>
-                </CardContent>
+
+                  {/* Content */}
+                  <Box sx={{ px: 3, flex: 1, overflow: 'hidden' }}>
+                    {/* Location */}
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
+                      <LocationOn sx={{ color: 'text.secondary', fontSize: 18, mt: 0.2, mr: 1.5 }} />
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ 
+                          fontSize: '0.9rem',
+                          lineHeight: 1.4,
+                          flex: 1,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        {venue.location?.address || 'NO ADDRESS AVAILABLE'}
+                        {venue.location?.city && (
+                          <Box component="span" sx={{ display: 'block', fontWeight: 400, mt: 0.5, textTransform: 'uppercase' }}>
+                            {venue.location.city}, {venue.location.state}
+                          </Box>
+                        )}
+                      </Typography>
+                    </Box>
+
+                    {/* Contact Info */}
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {venue.phone && (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Phone sx={{ color: 'text.secondary', fontSize: 16, mr: 1.5 }} />
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.9rem' }}>
+                            {venue.phone}
+                          </Typography>
+                        </Box>
+                      )}
+                      {venue.email && (
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Email sx={{ color: 'text.secondary', fontSize: 16, mr: 1.5 }} />
+                          <Typography 
+                            variant="body2" 
+                            color="text.secondary" 
+                            sx={{ 
+                              fontSize: '0.9rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {venue.email}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {/* Footer */}
+                  <Box sx={{ p: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ 
+                        fontSize: '0.8rem',
+                        fontWeight: 400,
+                      }}
+                    >
+                      ID: {venue.id?.slice(-6) || 'N/A'}
+                    </Typography>
+                  </Box>
+                </Box>
               </Card>
             </Grid>
           ))}
         </Grid>
       ) : (
-        <Box
+        <Card
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '400px',
-            backgroundColor: 'white',
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'divider',
-            p: 4,
+            borderRadius: 3,
+            border: '2px dashed',
+            borderColor: 'primary.light',
+            background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+            textAlign: 'center',
+            py: { xs: 4, sm: 6 },
+            px: { xs: 2, sm: 3 },
+            position: 'relative',
+            overflow: 'hidden',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(45deg, transparent 30%, rgba(0, 0, 0, 0.02) 50%, transparent 70%)',
+            },
           }}
         >
-          <Restaurant
-            sx={{
-              fontSize: 80,
-              color: 'text.secondary',
-              mb: 2,
-            }}
-          />
-          <Typography variant="h5" fontWeight="600" gutterBottom color="text.secondary">
-            No Venues Found
-          </Typography>
-          <Typography variant="body1" color="text.secondary" textAlign="center" mb={3}>
-            You haven't added any venues yet. Get started by creating your first venue location.
-          </Typography>
-          {canCreateVenues && (
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setOpenVenueDialog(true)}
-              size="large"
+          <Box sx={{ position: 'relative', zIndex: 1 }}>
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #bbdefb 0%, #90caf9 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mx: 'auto',
+                mb: 3,
+                border: '2px solid',
+                borderColor: 'primary.main',
+              }}
             >
-              Add Your First Venue
-            </Button>
-          )}
-        </Box>
+              <Restaurant
+                sx={{
+                  fontSize: 40,
+                  color: '#1565c0',
+                }}
+              />
+            </Box>
+            
+            <Typography 
+              variant="h6" 
+              fontWeight="600" 
+              gutterBottom 
+              color="text.primary"
+              sx={{ fontSize: { xs: '1.25rem', sm: '1.375rem' } }}
+            >
+              No Venues Yet
+            </Typography>
+            
+            <Typography 
+              variant="body1" 
+              color="text.secondary" 
+              sx={{ 
+                mb: 3,
+                maxWidth: '400px',
+                mx: 'auto',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
+                lineHeight: 1.5,
+              }}
+            >
+              Start building your restaurant empire by adding your first venue location. 
+              You can manage multiple locations from this central dashboard.
+            </Typography>
+
+            {canCreateVenues && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={() => setOpenVenueDialog(true)}
+                  size="medium"
+                  sx={{
+                    px: 3,
+                    py: 1,
+                    borderRadius: 2,
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  Create Your First Venue
+                </Button>
+                
+                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  It only takes a few minutes to get started
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </Card>
       )}
+      </Box>
+      </Box>
 
       {/* Venue Creation/Edit Dialog */}
       <Dialog
@@ -1112,48 +1647,6 @@ const WorkspaceManagement: React.FC = () => {
             {selectedItem?.is_open ? 'Close Venue' : 'Open Venue'}
           </ListItemText>
         </MenuItem>
-        
-        <MenuItem
-          onClick={async () => {
-            // Deactivate venue (soft delete)
-            if (selectedItem) {
-              try {
-                await venueService.deactivateVenue(selectedItem.id);
-                
-                setSnackbar({
-                  open: true,
-                  message: `Venue "${selectedItem.name}" deactivated successfully`,
-                  severity: 'success'
-                });
-                
-                // Clear cache to force fresh data
-                if (workspaceCacheKey) {
-                  StorageManager.removeItem(workspaceCacheKey);
-                }
-                
-                // Refresh venues list with force refresh
-                await refreshWorkspaceVenues();
-                // Refresh user data to get updated venue info
-                await refreshUserData();
-                
-              } catch (error: any) {
-                setSnackbar({
-                  open: true,
-                  message: error.message || 'Failed to deactivate venue',
-                  severity: 'error'
-                });
-              }
-            }
-            setAnchorEl(null);
-            setSelectedItem(null);
-          }}
-          sx={{ color: 'warning.main' }}
-        >
-          <ListItemIcon>
-            <VisibilityOff fontSize="small" color="warning" />
-          </ListItemIcon>
-          <ListItemText>Deactivate Venue</ListItemText>
-        </MenuItem>
 
         {canDeleteItems && (
           <MenuItem
@@ -1210,7 +1703,7 @@ const WorkspaceManagement: React.FC = () => {
           'This action cannot be undone'
         ]}
       />
-    </Container>
+    </Box>
   );
 };
 

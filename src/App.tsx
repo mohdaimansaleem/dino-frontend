@@ -8,6 +8,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { TourProvider } from './contexts/TourContext';
+import { WebSocketProvider } from './contexts/WebSocketContext';
 import { validatePasswordHashingSetup } from './utils/passwordValidation';
 
 // Public Pages
@@ -24,7 +25,7 @@ import OrderTrackingPage from './pages/OrderTrackingPage';
 
 
 // Lazy-loaded components for better performance
-import { LazyComponents } from './components/LazyLoadingComponents';
+import { LazyComponents } from './components/lazy';
 import { Suspense } from 'react';
 import { CircularProgress, Box } from '@mui/material';
 
@@ -39,7 +40,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import { PERMISSIONS } from './types/auth';
 import AppInitializer from './components/AppInitializer';
 import { logger } from './utils/logger';
-import { config, isDevelopment } from './config/environment';
+import { RUNTIME_CONFIG as config, isDevelopment } from './config/runtime';
 import { StorageCleanup } from './utils/storageCleanup';
 import { tokenRefreshScheduler } from './utils/tokenRefreshScheduler';
 import { apiService } from './services/api';
@@ -111,7 +112,8 @@ function App() {
                   <AppInitializer>
                     <WorkspaceProvider>
                       <NotificationProvider>
-                        <CartProvider>
+                        <WebSocketProvider>
+                          <CartProvider>
               <Routes>
                 {/* Routes with Layout */}
                 <Route path="/" element={<Layout><HomePage /></Layout>} />
@@ -219,7 +221,8 @@ function App() {
                 {/* Standalone 404 Page - No Layout */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
-                        </CartProvider>
+                          </CartProvider>
+                        </WebSocketProvider>
                       </NotificationProvider>
                     </WorkspaceProvider>
                   </AppInitializer>

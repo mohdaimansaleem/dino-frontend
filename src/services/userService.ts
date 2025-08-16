@@ -8,7 +8,12 @@ import {
   ApiResponse,
   UserFilters
 } from '../types/api';
-import { ROLE_NAMES, isAdminLevel } from '../constants/roles';
+// Role constants are now defined inline to match API types
+
+// Helper function to check if role is admin level (using API role names)
+const isAdminLevel = (role: string): boolean => {
+  return role === 'admin' || role === 'superadmin';
+};
 
 class UserService {
   // =============================================================================
@@ -237,12 +242,12 @@ class UserService {
    */
   canAccessVenue(user: User, venueId: string): boolean {
     // SuperAdmin can access all venues
-    if (user.role === ROLE_NAMES.SUPERADMIN) {
+    if (user.role === 'superadmin') {
       return true;
     }
 
     // Admin and Operator can access their assigned venue
-    if (isAdminLevel(user.role) || user.role === ROLE_NAMES.OPERATOR) {
+    if (isAdminLevel(user.role) || user.role === 'operator') {
       return user.venue_id === venueId;
     }
 
@@ -259,7 +264,7 @@ class UserService {
    */
   canAccessWorkspace(user: User, workspaceId: string): boolean {
     // SuperAdmin can access all workspaces
-    if (user.role === ROLE_NAMES.SUPERADMIN) {
+    if (user.role === 'superadmin') {
       return true;
     }
 
@@ -511,13 +516,13 @@ class UserService {
     if (currentUser.id === targetUser.id) return false;
     
     // SuperAdmin can delete anyone except other SuperAdmins
-    if (currentUser.role === ROLE_NAMES.SUPERADMIN) {
-      return targetUser.role !== ROLE_NAMES.SUPERADMIN;
+    if (currentUser.role === 'superadmin') {
+      return targetUser.role !== 'superadmin';
     }
     
     // Admin can delete operators and customers in their workspace
     if (isAdminLevel(currentUser.role)) {
-      return (targetUser.role === ROLE_NAMES.OPERATOR || targetUser.role === ROLE_NAMES.CUSTOMER) && 
+      return (targetUser.role === 'operator' || targetUser.role === 'customer') && 
              currentUser.workspace_id === targetUser.workspace_id;
     }
     
@@ -532,11 +537,11 @@ class UserService {
     if (currentUser.id === targetUser.id) return true;
     
     // SuperAdmin can edit anyone
-    if (currentUser.role === ROLE_NAMES.SUPERADMIN) return true;
+    if (currentUser.role === 'superadmin') return true;
     
     // Admin can edit users in their workspace (except other admins)
     if (isAdminLevel(currentUser.role)) {
-      return (targetUser.role === ROLE_NAMES.OPERATOR || targetUser.role === ROLE_NAMES.CUSTOMER) && 
+      return (targetUser.role === 'operator' || targetUser.role === 'customer') && 
              currentUser.workspace_id === targetUser.workspace_id;
     }
     

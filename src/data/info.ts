@@ -1,856 +1,736 @@
-import {
-  QrCode,
-  Analytics,
-  Speed,
-  Security,
-  Smartphone,
-  CloudDone,
+/**
+ * Application Information and Content
+ * 
+ * This file contains all user-facing content, messages, and information
+ * used throughout the Dino E-Menu application.
+ */
+
+import { 
+  MenuBook, 
+  QrCode, 
+  Dashboard,
   Restaurant,
-  TableRestaurant,
-  ShoppingCart,
-  Notifications,
-  TrendingUp,
-  Support,
-  Star,
-  Inventory,
-  People,
-  Assessment,
-  Phone,
-  Email,
-  LocationOn,
-  Schedule,
   Business,
-  Engineering,
-  Facebook,
-  Twitter,
-  Instagram,
-  LinkedIn,
-  Home,
-  Info,
-  AttachMoney,
-  RateReview,
-  ContactMail,
-  EmojiEvents,
   CorporateFare,
+  ShoppingCart,
+  ThumbUp,
+  CloudDone
 } from '@mui/icons-material';
 
-// Company Information
+// ===================================================================
+// COMPANY INFORMATION
+// ===================================================================
+
 export const COMPANY_INFO = {
-  name: 'Dino',
-  fullName: 'Dino',
-  tagline: 'Digital Menu Revolution',
-  description: 'Transform your restaurant with our cutting-edge digital menu system. Enhance customer experience, boost efficiency, and increase revenue with our innovative QR-based ordering platform.',
-  
-  // Contact Information
+  name: 'Dino E-Menu',
+  tagline: 'Revolutionizing Restaurant Ordering',
+  description: 'Digital menu solutions for modern restaurants',
+  website: 'https://dino-emenu.com',
+  email: 'contact@dino-emenu.com',
+  phone: '+91 98765 43210',
+  address: {
+    street: '123 Tech Park',
+    city: 'Bangalore',
+    state: 'Karnataka',
+    country: 'India',
+    pincode: '560001'
+  },
+  social: {
+    twitter: '@dinoemenu',
+    facebook: 'dinoemenu',
+    instagram: 'dinoemenu',
+    linkedin: 'dino-emenu'
+  },
+  legal: {
+    copyright: '© 2024 Dino E-Menu. All rights reserved.',
+    privacy: 'Privacy Policy',
+    terms: 'Terms of Service'
+  },
+  socialMedia: [
+    { icon: 'Twitter', color: '#1DA1F2' },
+    { icon: 'Facebook', color: '#4267B2' },
+    { icon: 'Instagram', color: '#E4405F' },
+    { icon: 'LinkedIn', color: '#0077B5' }
+  ],
   contact: {
+    address: {
+      full: '123 Tech Park, Whitefield, Bangalore 560066'
+    },
     phone: {
-      primary: '+91 98765 43210',
-      secondary: '+91 98765 43211',
-      hours: 'Mon-Fri 9AM-6PM IST'
+      primary: '+91 98765 43210'
     },
     email: {
-      primary: 'hello@dinoemenu.in',
-      support: 'support@dinoemenu.com',
-      sales: 'sales@dinoemenu.com',
-      tech: 'tech@dinoemenu.com',
-      partners: 'partners@dinoemenu.com',
-      responseTime: 'We reply within 24 hours'
-    },
-    address: {
-      street: '123 Tech Park, Sector 5',
-      city: 'Hyderabad',
-      state: 'Telangana',
-      pincode: '500032',
-      country: 'India',
-      full: 'BKC, Mumbai, Maharashtra 400051',
-      description: 'Visit us for demos'
-    },
-    businessHours: {
-      weekdays: 'Monday - Friday: 9:00 AM - 6:00 PM',
-      saturday: 'Saturday: 10:00 AM - 4:00 PM',
-      sunday: 'Sunday: Closed'
+      primary: 'contact@dino-emenu.com'
     }
-  },
-
-  // Social Media
-  socialMedia: [
-    { platform: 'Facebook', icon: Facebook, color: '#1877F2', url: '#' },
-    { platform: 'Twitter', icon: Twitter, color: '#1DA1F2', url: '#' },
-    { platform: 'Instagram', icon: Instagram, color: '#E4405F', url: '#' },
-    { platform: 'LinkedIn', icon: LinkedIn, color: '#0A66C2', url: '#' },
-  ],
-
-  // Legal
-  legal: {
-    copyright: '© 2024 Dino Digital Menu Revolution. All rights reserved.'
   }
 } as const;
 
-// Statistics and Metrics
 export const COMPANY_STATS = [
-  { 
-    number: 5000, 
-    suffix: "+", 
-    label: "Restaurants", 
+  {
+    number: 500,
+    suffix: '+',
+    label: 'Restaurants',
     icon: Restaurant,
-    color: '#4caf50',
-    bgColor: 'rgba(76, 175, 80, 0.1)',
+    color: '#1976d2',
+    bgColor: 'rgba(25, 118, 210, 0.1)',
     decimals: 0
   },
-  { 
-    number: 1000000, 
-    suffix: "+", 
-    label: "Orders Daily", 
-    icon: TrendingUp,
-    color: '#2196f3',
-    bgColor: 'rgba(33, 150, 243, 0.1)',
+  {
+    number: 100,
+    suffix: 'K+',
+    label: 'Orders Processed',
+    icon: ShoppingCart,
+    color: '#2e7d32',
+    bgColor: 'rgba(46, 125, 50, 0.1)',
     decimals: 0
   },
-  { 
-    number: 99.9, 
-    suffix: "%", 
-    label: "Uptime", 
-    icon: CloudDone, 
-    decimals: 1,
-    color: '#ff9800',
-    bgColor: 'rgba(255, 152, 0, 0.1)'
-  },
-  { 
-    number: 45, 
-    suffix: "%", 
-    label: "Revenue Boost", 
-    icon: EmojiEvents,
-    color: '#4caf50',
-    bgColor: 'rgba(76, 175, 80, 0.1)',
+  {
+    number: 99,
+    suffix: '%',
+    label: 'Customer Satisfaction',
+    icon: ThumbUp,
+    color: '#ed6c02',
+    bgColor: 'rgba(237, 108, 2, 0.1)',
     decimals: 0
   },
+  {
+    number: 99.9,
+    suffix: '%',
+    label: 'Uptime',
+    icon: CloudDone,
+    color: '#9c27b0',
+    bgColor: 'rgba(156, 39, 176, 0.1)',
+    decimals: 1
+  }
 ] as const;
 
-// Core Features
+// ===================================================================
+// FEATURES & BENEFITS
+// ===================================================================
+
 export const CORE_FEATURES = [
   {
+    title: 'Digital Menu',
+    description: 'Beautiful, interactive digital menus that customers love',
+    icon: MenuBook,
+    color: 'primary',
+    stats: 'Easy to update',
+    benefits: [
+      'Easy to update',
+      'Rich media support',
+      'Multi-language support',
+      'Dietary filters'
+    ]
+  },
+  {
+    title: 'QR Code Ordering',
+    description: 'Contactless ordering through QR codes',
     icon: QrCode,
-    title: 'Smart QR Ordering',
-    description: 'Customers scan QR codes to access your menu and place orders instantly with zero wait time.',
-    stats: '99.9% Uptime',
-    color: '#2196F3',
+    color: 'secondary',
+    stats: 'Contactless experience',
     benefits: [
-      'Zero contact ordering',
-      'Instant menu access',
-      'Reduced wait times',
-      'Multi-language support'
+      'Contactless experience',
+      'Instant ordering',
+      'No app download required',
+      'Table-specific menus'
     ]
   },
   {
-    icon: Analytics,
-    title: 'Advanced Analytics',
-    description: 'Real-time insights, predictive analytics, and revenue optimization tools for data-driven decisions.',
-    stats: '40% Revenue Boost',
-    color: '#4CAF50',
+    title: 'Real-time Management',
+    description: 'Live order tracking and kitchen management',
+    icon: Dashboard,
+    color: 'success',
+    stats: 'Live order updates',
     benefits: [
-      'Real-time sales tracking',
-      'Customer behavior insights',
-      'Popular item analysis',
-      'Revenue forecasting'
+      'Live order updates',
+      'Kitchen display system',
+      'Staff notifications',
+      'Performance analytics'
     ]
-  },
-  {
-    icon: Security,
-    title: 'Enterprise Security',
-    description: 'Bank-level encryption, PCI compliance, and 24/7 monitoring to keep your data safe.',
-    stats: 'ISO 27001 Certified',
-    color: '#9C27B0',
-    benefits: [
-      'SSL encryption',
-      'PCI compliance',
-      'Data protection',
-      'Secure payments'
-    ]
-  },
-  {
-    icon: Speed,
-    title: 'Lightning Fast',
-    description: 'Sub-second loading times with global CDN and edge computing for optimal performance.',
-    stats: '<100ms Response',
-    color: '#FF9800',
-    benefits: [
-      'Sub-second loading',
-      'Global CDN',
-      'Edge computing',
-      'Optimized performance'
-    ]
-  },
-  {
-    icon: Smartphone,
-    title: 'Mobile First',
-    description: 'Progressive web app with offline support and native app experience across all devices.',
-    stats: '5-Star Rating',
-    color: '#E91E63',
-    benefits: [
-      'Works on any device',
-      'Offline functionality',
-      'App-like experience',
-      'Fast loading times'
-    ]
-  },
-  {
-    icon: Support,
-    title: 'Premium Support',
-    description: 'Dedicated success manager, priority support, and custom integrations for enterprise clients.',
-    stats: '24/7 Available',
-    color: '#00BCD4',
-    benefits: [
-      'Dedicated success manager',
-      'Priority support',
-      'Custom integrations',
-      '24/7 availability'
-    ]
-  },
+  }
 ] as const;
 
-// Management Features
 export const MANAGEMENT_FEATURES = [
   {
-    icon: Restaurant,
-    title: 'Menu Management',
-    description: 'Easy-to-use interface for managing your menu items, categories, and pricing.',
-    features: [
-      'Drag & drop menu organization',
-      'Real-time price updates',
-      'Image management',
-      'Availability controls'
-    ]
-  },
-  {
-    icon: ShoppingCart,
     title: 'Order Management',
-    description: 'Streamlined order processing with real-time updates and status tracking.',
+    description: 'Complete order lifecycle management',
     features: [
-      'Real-time order notifications',
-      'Order status tracking',
-      'Kitchen display integration',
-      'Customer communication'
+      'Order tracking',
+      'Status updates',
+      'Payment processing',
+      'Customer notifications'
     ]
   },
   {
-    icon: TableRestaurant,
-    title: 'Table Management',
-    description: 'Efficient table management with QR code generation and occupancy tracking.',
+    title: 'Menu Management',
+    description: 'Easy menu creation and updates',
     features: [
-      'QR code generation',
-      'Table status tracking',
-      'Capacity management',
-      'Reservation integration'
+      'Drag & drop interface',
+      'Bulk operations',
+      'Category management',
+      'Price optimization'
     ]
   },
   {
-    icon: People,
-    title: 'User Management',
-    description: 'Role-based access control with permission management for your team.',
+    title: 'Analytics Dashboard',
+    description: 'Comprehensive business insights',
     features: [
-      'Role-based permissions',
-      'Staff management',
-      'Activity tracking',
-      'Multi-location support'
+      'Sales analytics',
+      'Popular items',
+      'Peak hours analysis',
+      'Revenue tracking'
     ]
   }
 ] as const;
 
-// Advanced Features
 export const ADVANCED_FEATURES = [
   {
-    icon: Notifications,
-    title: 'Real-time Notifications',
-    description: 'Instant notifications for new orders, status updates, and important alerts.',
-    color: '#1976d2'
+    title: 'Multi-location Support',
+    description: 'Manage multiple restaurant locations',
+    features: [
+      'Centralized management',
+      'Location-specific menus',
+      'Unified reporting',
+      'Staff management'
+    ]
   },
   {
-    icon: TrendingUp,
-    title: 'Sales Analytics',
-    description: 'Detailed sales reports with trends, forecasting, and performance metrics.',
-    color: '#388e3c'
-  },
-  {
-    icon: Inventory,
-    title: 'Inventory Tracking',
-    description: 'Monitor stock levels and get alerts when items are running low.',
-    color: '#f57c00'
-  },
-  {
-    icon: Assessment,
-    title: 'Custom Reports',
-    description: 'Generate custom reports for accounting, tax filing, and business analysis.',
-    color: '#7b1fa2'
-  },
-  {
-    icon: CloudDone,
-    title: 'Cloud Backup',
-    description: 'Automatic cloud backup ensures your data is always safe and accessible.',
-    color: '#0288d1'
-  },
-  {
-    icon: Support,
-    title: '24/7 Support',
-    description: 'Round-the-clock customer support with dedicated account managers.',
-    color: '#d32f2f'
+    title: 'Integration Hub',
+    description: 'Connect with your existing tools',
+    features: [
+      'POS integration',
+      'Payment gateways',
+      'Delivery platforms',
+      'Accounting software'
+    ]
   }
 ] as const;
 
-// Pricing Plans
+// ===================================================================
+// PRICING & PLANS
+// ===================================================================
+
 export const PRICING_PLANS = [
   {
-    id: 'basic',
     name: 'Starter',
-    description: 'Perfect for small cafes and restaurants',
-    monthlyPrice: 2999,
-    annualPrice: 29990,
-    popular: false,
-    maxCafes: 2 as const,
-    maxUsers: 5 as const,
+    price: 999,
+    monthlyPrice: 999,
+    period: 'month',
+    description: 'Perfect for small restaurants',
     icon: Restaurant,
     color: 'primary',
     features: [
-      'Up to 2 cafes',
-      'Basic QR menu',
-      'Order management',
+      'Digital menu for 1 location',
+      'QR code ordering',
       'Basic analytics',
       'Email support',
-      'Mobile app access',
-      'QR Code Ordering',
-      'Digital Menu Management',
-      'Table Management',
-      'Customer Support',
-      'Payment Integration'
+      'Up to 50 menu items'
     ],
-    limitations: [
-      'Limited to 2 cafe locations',
-      'Basic reporting only',
-      'Email support only'
-    ]
+    popular: false
   },
   {
-    id: 'premium',
     name: 'Professional',
-    description: 'Ideal for growing restaurant chains',
-    monthlyPrice: 7999,
-    annualPrice: 79990,
-    popular: true,
-    maxCafes: 10 as const,
-    maxUsers: 25 as const,
+    price: 2499,
+    monthlyPrice: 2499,
+    period: 'month',
+    description: 'Ideal for growing businesses',
     icon: Business,
     color: 'secondary',
     features: [
-      'Up to 10 cafes',
-      'Advanced QR features',
-      'Real-time analytics',
-      'Customer insights',
+      'Digital menu for 3 locations',
+      'Advanced analytics',
+      'Staff management',
       'Priority support',
-      'Custom branding',
-      'Multi-language support',
-      'Integration APIs',
-      'Everything in Basic',
-      'Advanced Analytics & Reports',
-      'Real-time Notifications',
-      'Multi-location Management',
-      'Inventory Management',
-      'Staff Management',
-      'API Access',
-      'Custom Integrations'
+      'Unlimited menu items',
+      'Custom branding'
     ],
-    limitations: [
-      'Limited to 10 cafe locations',
-      'Standard API rate limits'
-    ]
+    popular: true
   },
   {
-    id: 'enterprise',
     name: 'Enterprise',
-    description: 'For large restaurant enterprises',
-    monthlyPrice: 19999,
-    annualPrice: 199990,
-    popular: false,
-    maxCafes: -1, // Unlimited
-    maxUsers: -1, // Unlimited
+    price: 4999,
+    monthlyPrice: 4999,
+    period: 'month',
+    description: 'For large restaurant chains',
     icon: CorporateFare,
     color: 'success',
     features: [
-      'Unlimited cafes',
-      'White-label solution',
-      'Advanced analytics',
-      'Custom integrations',
-      'Dedicated support',
-      'SLA guarantee',
+      'Unlimited locations',
+      'Advanced integrations',
+      'Dedicated account manager',
+      '24/7 phone support',
       'Custom features',
-      'Training & onboarding',
-      'Everything in Premium',
-      'Unlimited Locations',
-      'Unlimited Users',
-      'Advanced Security Features',
-      'Dedicated Account Manager',
-      'Custom Development',
-      '24/7 Phone Support',
-      'On-premise Deployment',
-      'Advanced API Access',
-      'Custom Reports & Analytics'
+      'White-label solution'
     ],
-    limitations: []
+    popular: false
   }
 ] as const;
 
-// Add-ons
 export const PRICING_ADDONS = [
   {
-    name: 'Additional Location',
-    description: 'Add extra cafe locations to your plan',
-    price: 1500,
-    unit: 'per location/month'
-  },
-  {
-    name: 'Extra Users',
-    description: 'Add more staff users to your account',
-    price: 299,
-    unit: 'per user/month'
+    name: 'Advanced Analytics',
+    price: 499,
+    description: 'Detailed insights and reporting'
   },
   {
     name: 'Custom Integration',
-    description: 'Connect with your existing POS/billing systems',
-    price: 15000,
-    unit: 'one-time setup'
+    price: 1999,
+    description: 'Connect with your existing systems'
   },
   {
-    name: 'Training Session',
-    description: 'Dedicated training for your team',
-    price: 5000,
-    unit: 'per session'
+    name: 'Priority Support',
+    price: 299,
+    description: '24/7 priority customer support'
   }
 ] as const;
 
-// Testimonials
+// ===================================================================
+// TESTIMONIALS & SUCCESS STORIES
+// ===================================================================
+
 export const TESTIMONIALS = [
   {
-    id: 1,
-    name: "Rajesh Kumar",
-    role: "Restaurant Owner",
-    position: "Owner",
-    restaurant: "Spice Garden",
-    location: "Mumbai, India",
+    name: 'Rajesh Kumar',
+    role: 'Owner',
+    restaurant: 'Spice Garden',
+    location: 'Mumbai',
     rating: 5,
-    comment: "Dino transformed our restaurant completely! Revenue increased by 45% in just 3 months. The QR ordering system is perfect for Indian customers.",
-    quote: "Dino transformed our restaurant completely. We saw a 45% increase in orders within the first month. The QR code ordering system is a game-changer!",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
-    metrics: {
-      orderIncrease: '45%',
-      timeReduction: '60%',
-      customerSatisfaction: '95%'
-    },
-    plan: 'Premium'
+    text: 'Dino E-Menu transformed our restaurant operations. Orders are faster, more accurate, and our customers love the digital experience.',
+    comment: 'Dino E-Menu transformed our restaurant operations. Orders are faster, more accurate, and our customers love the digital experience.',
+    image: '/testimonials/rajesh.jpg',
+    avatar: '/testimonials/rajesh.jpg'
   },
   {
-    id: 2,
-    name: "Priya Sharma",
-    role: "Head Chef",
-    position: "Manager",
-    restaurant: "Mumbai Masala",
-    location: "Delhi, India",
+    name: 'Priya Sharma',
+    role: 'Manager',
+    restaurant: 'Cafe Delight',
+    location: 'Delhi',
     rating: 5,
-    comment: "The analytics helped us understand our customers better. We can track peak hours and optimize our menu for maximum profit.",
-    quote: "The analytics dashboard gives us insights we never had before. We can track everything in real-time and make data-driven decisions.",
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150",
-    metrics: {
-      orderIncrease: '35%',
-      timeReduction: '50%',
-      customerSatisfaction: '92%'
-    },
-    plan: 'Basic'
+    text: 'The analytics dashboard gives us incredible insights. We\'ve increased our revenue by 30% since implementing Dino E-Menu.',
+    comment: 'The analytics dashboard gives us incredible insights. We\'ve increased our revenue by 30% since implementing Dino E-Menu.',
+    image: '/testimonials/priya.jpg',
+    avatar: '/testimonials/priya.jpg'
   },
   {
-    id: 3,
-    name: "Arjun Patel",
-    role: "Manager",
-    position: "Manager",
-    restaurant: "Gujarati Thali House",
-    location: "Bangalore, India",
+    name: 'Arjun Patel',
+    role: 'Chef',
+    restaurant: 'Fusion Bistro',
+    location: 'Bangalore',
     rating: 5,
-    comment: "Setup was incredibly easy. Our customers love ordering from their phones. Wait times reduced by 60% during lunch rush!",
-    quote: "Setup was incredibly easy. Our customers love ordering from their phones. Wait times reduced by 60% during lunch rush!",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150",
-    metrics: {
-      orderIncrease: '30%',
-      timeReduction: '45%',
-      customerSatisfaction: '90%'
-    },
-    plan: 'Basic'
-  },
-  {
-    id: 4,
-    name: "Deepika Reddy",
-    role: "Owner",
-    position: "Owner",
-    restaurant: "South Indian Express",
-    location: "Chennai, India",
-    rating: 5,
-    comment: "Best investment for our chain! Order accuracy improved and customers appreciate the contactless experience, especially post-COVID.",
-    quote: "Our customers love the contactless ordering. During COVID, this system kept our business running when others had to close.",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150",
-    metrics: {
-      orderIncrease: '40%',
-      timeReduction: '55%',
-      customerSatisfaction: '94%'
-    },
-    plan: 'Premium'
-  },
-  {
-    id: 5,
-    name: "Mohammed Ali",
-    role: "Operations Manager",
-    position: "CEO",
-    restaurant: "Biryani Palace",
-    location: "Hyderabad, India",
-    rating: 5,
-    comment: "Managing our 8 locations across Mumbai became so much easier. Real-time tracking and centralized menu management is fantastic.",
-    quote: "Managing 12 locations was a nightmare before Dino. Now everything is centralized and we can monitor all our restaurants from one dashboard.",
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
-    metrics: {
-      orderIncrease: '55%',
-      timeReduction: '70%',
-      customerSatisfaction: '97%'
-    },
-    plan: 'Enterprise'
-  },
-  {
-    id: 6,
-    name: "Anita Singh",
-    role: "Franchise Owner",
-    position: "Franchise Owner",
-    restaurant: "Punjabi Dhaba Chain",
-    location: "Chandigarh, India",
-    rating: 5,
-    comment: "The enterprise features are outstanding. Custom branding helps maintain our traditional dhaba feel while being modern.",
-    quote: "The enterprise features are outstanding. Custom branding helps maintain our traditional dhaba feel while being modern.",
-    avatar: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150",
-    metrics: {
-      orderIncrease: '38%',
-      timeReduction: '52%',
-      customerSatisfaction: '93%'
-    },
-    plan: 'Premium'
-  },
-  {
-    id: 7,
-    name: "Vikram Singh",
-    role: "Manager",
-    position: "Manager",
-    restaurant: "Punjabi Dhaba",
-    location: "Chandigarh, India",
-    rating: 4,
-    comment: "The staff training was excellent and the support team is always available. Implementation was smooth and customers adapted quickly.",
-    quote: "The staff training was excellent and the support team is always available. Implementation was smooth and customers adapted quickly.",
-    avatar: "/api/placeholder/64/64",
-    metrics: {
-      orderIncrease: '30%',
-      timeReduction: '45%',
-      customerSatisfaction: '90%'
-    },
-    plan: 'Basic'
-  },
-  {
-    id: 8,
-    name: "Suresh Agarwal",
-    role: "Owner",
-    position: "Owner",
-    restaurant: "Rajasthani Royal Thali",
-    location: "Jaipur, India",
-    rating: 5,
-    comment: "Our traditional thali business got a modern touch with Dino. Young customers love the QR ordering while we maintain our authentic taste.",
-    quote: "Our traditional thali business got a modern touch with Dino. Young customers love the QR ordering while we maintain our authentic taste.",
-    avatar: "/api/placeholder/64/64",
-    metrics: {
-      orderIncrease: '50%',
-      timeReduction: '65%',
-      customerSatisfaction: '96%'
-    },
-    plan: 'Basic'
-  },
-  {
-    id: 9,
-    name: "Kavita Joshi",
-    role: "Manager",
-    position: "Manager",
-    restaurant: "Udupi Palace",
-    location: "Bangalore, India",
-    rating: 5,
-    comment: "During festival seasons, we used to have huge queues. Now customers can order while waiting, and our efficiency has doubled.",
-    quote: "During festival seasons, we used to have huge queues. Now customers can order while waiting, and our efficiency has doubled.",
-    avatar: "/api/placeholder/64/64",
-    metrics: {
-      orderIncrease: '42%',
-      timeReduction: '58%',
-      customerSatisfaction: '94%'
-    },
-    plan: 'Premium'
+    text: 'Kitchen operations are so much smoother now. Real-time order updates help us serve customers faster and reduce wait times.',
+    comment: 'Kitchen operations are so much smoother now. Real-time order updates help us serve customers faster and reduce wait times.',
+    image: '/testimonials/arjun.jpg',
+    avatar: '/testimonials/arjun.jpg'
   }
 ] as const;
 
-// Success Stories
 export const SUCCESS_STORIES = [
   {
-    title: 'From Struggling to Thriving',
-    restaurant: 'Green Leaf Cafe',
-    story: 'A small cafe in Pune was struggling with long queues and order mix-ups. After implementing Dino, they reduced wait times by 65% and increased customer satisfaction scores from 3.2 to 4.7 stars.',
-    results: ['65% reduction in wait time', '47% increase in orders', '4.7-star rating'],
-    image: '/api/placeholder/300/200'
+    restaurant: 'The Curry House',
+    location: 'Chennai',
+    improvement: '40% faster service',
+    description: 'Reduced order processing time and improved customer satisfaction'
   },
   {
-    title: 'Scaling Across Cities',
-    restaurant: 'Masala Magic Chain',
-    story: 'A regional chain wanted to expand but struggled with consistency across locations. Dino\'s centralized management helped them maintain quality while scaling from 3 to 15 locations.',
-    results: ['5x location growth', 'Consistent quality', '60% operational efficiency'],
-    image: '/api/placeholder/300/200'
+    restaurant: 'Pizza Corner',
+    location: 'Pune',
+    improvement: '25% revenue increase',
+    description: 'Upselling through digital menu recommendations'
   },
   {
-    title: 'Digital Transformation Success',
-    restaurant: 'Traditional Thali House',
-    story: 'A 50-year-old traditional restaurant embraced digital ordering with Dino. They attracted younger customers while retaining their loyal base, increasing revenue by 80%.',
-    results: ['80% revenue increase', '40% new customers', 'Preserved tradition'],
-    image: '/api/placeholder/300/200'
+    restaurant: 'Healthy Bites',
+    location: 'Hyderabad',
+    improvement: '60% error reduction',
+    description: 'Eliminated order miscommunication between staff and kitchen'
   }
 ] as const;
 
-// Benefits
+// ===================================================================
+// BENEFITS & VALUE PROPOSITIONS
+// ===================================================================
+
 export const BENEFITS = [
-  'Reduce order processing time by 60%',
-  'Increase table turnover rate',
-  'Minimize order errors',
-  'Contactless ordering experience',
-  'Real-time order tracking',
-  'Detailed sales analytics',
-  'Easy menu updates',
-  'Multi-language support',
+  'Increase Revenue - Boost sales with smart upselling and faster table turnover',
+  'Reduce Costs - Lower operational costs with automated processes', 
+  'Improve Efficiency - Streamline operations with digital workflows',
+  'Enhance Experience - Delight customers with modern dining experience'
 ] as const;
 
-// Integrations
+// ===================================================================
+// INTEGRATIONS & PARTNERSHIPS
+// ===================================================================
+
 export const INTEGRATIONS = [
-  'Payment Gateways (Stripe, PayPal, Razorpay)',
-  'Accounting Software (QuickBooks, Xero)',
-  'Delivery Platforms (Uber Eats, DoorDash)',
-  'POS Systems (Square, Toast)',
-  'Email Marketing (Mailchimp, SendGrid)',
-  'SMS Services (Twilio, TextLocal)'
+  {
+    name: 'Razorpay',
+    category: 'Payment Gateway',
+    description: 'Secure payment processing',
+    logo: '/integrations/razorpay.png'
+  },
+  {
+    name: 'Zomato',
+    category: 'Delivery Platform',
+    description: 'Online food delivery integration',
+    logo: '/integrations/zomato.png'
+  },
+  {
+    name: 'Swiggy',
+    category: 'Delivery Platform',
+    description: 'Food delivery and logistics',
+    logo: '/integrations/swiggy.png'
+  },
+  {
+    name: 'Tally',
+    category: 'Accounting',
+    description: 'Financial management integration',
+    logo: '/integrations/tally.png'
+  }
 ] as const;
 
-// Contact Departments
+// ===================================================================
+// CONTACT & SUPPORT
+// ===================================================================
+
 export const CONTACT_DEPARTMENTS = [
   {
-    icon: Business,
-    title: 'Sales',
-    email: 'sales@dinoemenu.com',
-    description: 'Questions about pricing, plans, and demos'
+    name: 'Sales',
+    email: 'sales@dino-emenu.com',
+    phone: '+91 98765 43210',
+    description: 'New customer inquiries and demos'
   },
   {
-    icon: Support,
-    title: 'Support',
-    email: 'support@dinoemenu.com',
-    description: 'Technical support and account help'
+    name: 'Support',
+    email: 'support@dino-emenu.com',
+    phone: '+91 98765 43211',
+    description: 'Technical support and assistance'
   },
   {
-    icon: Engineering,
-    title: 'Technical',
-    email: 'tech@dinoemenu.com',
-    description: 'API, integrations, and custom development'
-  },
-  {
-    icon: Business,
-    title: 'Partnerships',
-    email: 'partners@dinoemenu.com',
-    description: 'Business partnerships and collaborations'
+    name: 'Partnerships',
+    email: 'partners@dino-emenu.com',
+    phone: '+91 98765 43212',
+    description: 'Integration and partnership opportunities'
   }
 ] as const;
 
-// Contact Information Cards
-export const CONTACT_INFO = [
-  {
-    icon: Phone,
-    title: 'Phone',
-    details: ['+91 98765 43210', '+91 98765 43211'],
-    description: 'Mon-Fri 9AM-6PM IST'
+export const CONTACT_INFO = {
+  headquarters: {
+    address: '123 Tech Park, Whitefield, Bangalore 560066',
+    phone: '+91 98765 43210',
+    email: 'contact@dino-emenu.com'
   },
-  {
-    icon: Email,
-    title: 'Email',
-    details: ['hello@dinoemenu.com', 'support@dinoemenu.com'],
-    description: 'We reply within 24 hours'
-  },
-  {
-    icon: LocationOn,
-    title: 'Office',
-    details: ['123 Tech Park, Sector 5', 'Hyderabad, Telangana 500032'],
-    description: 'Visit us for demos'
-  },
-  {
-    icon: Schedule,
-    title: 'Business Hours',
-    details: ['Monday - Friday: 9:00 AM - 6:00 PM', 'Saturday: 10:00 AM - 4:00 PM'],
-    description: 'Sunday: Closed'
+  support: {
+    hours: '24/7 for Enterprise customers, 9 AM - 6 PM for others',
+    email: 'support@dino-emenu.com',
+    phone: '+91 98765 43211'
   }
-] as const;
+} as const;
 
-// FAQ Data
+// ===================================================================
+// FAQ
+// ===================================================================
+
 export const FAQS = [
   {
-    question: 'Can I change my plan anytime?',
-    answer: 'Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.'
+    question: 'How quickly can we get started?',
+    answer: 'You can be up and running within 24 hours. Our team will help you set up your digital menu and train your staff.'
   },
   {
-    question: 'Is there a free trial?',
-    answer: 'Yes, we offer a 14-day free trial for all plans. No credit card required to start.'
+    question: 'Do customers need to download an app?',
+    answer: 'No! Customers simply scan a QR code and access your menu through their web browser. No app download required.'
   },
   {
-    question: 'What payment methods do you accept?',
-    answer: 'We accept all major credit cards, debit cards, UPI, net banking, and bank transfers. For enterprise plans, we also offer invoice-based billing with GST.'
+    question: 'Can we customize the menu design?',
+    answer: 'Yes, you can fully customize your menu with your branding, colors, and layout to match your restaurant\'s style.'
   },
   {
-    question: 'Is my data secure?',
-    answer: 'Absolutely. We use bank-level encryption and are compliant with industry standards including PCI DSS, GDPR, and Indian data protection regulations.'
+    question: 'What payment methods are supported?',
+    answer: 'We support all major payment methods including UPI, cards, wallets, and cash on delivery.'
   },
   {
-    question: 'Do you offer custom solutions?',
-    answer: 'Yes, our Enterprise plan includes custom development and white-label solutions tailored to your specific needs.'
+    question: 'Is there a setup fee?',
+    answer: 'No setup fees! You only pay the monthly subscription. We include free setup and training with all plans.'
   },
   {
-    question: 'How quickly can I get started?',
-    answer: 'You can start using Dino immediately with our free trial. Setup takes less than 15 minutes.'
-  },
-  {
-    question: 'Do you offer training?',
-    answer: 'Yes, we provide comprehensive training for all plans, including video tutorials and live sessions.'
-  },
-  {
-    question: 'Can you integrate with my existing POS?',
-    answer: 'We support integration with most popular POS systems. Contact our technical team for specific requirements.'
-  },
-  {
-    question: 'What kind of support do you provide?',
-    answer: 'We offer email support for all plans, with phone support and dedicated account managers for premium plans.'
+    question: 'Can we integrate with our existing POS?',
+    answer: 'Yes, we integrate with most popular POS systems. Our team will help you set up the integration.'
   }
 ] as const;
 
-// Navigation Items
+// ===================================================================
+// USER INTERFACE MESSAGES & LABELS
+// ===================================================================
+
+// Page Titles
+export const PAGE_TITLES = {
+  ADMIN_DASHBOARD: 'Dashboard',
+  OPERATOR_DASHBOARD: 'Orders Dashboard',
+  ORDERS_MANAGEMENT: 'Orders Management',
+  MENU_MANAGEMENT: 'Menu Management',
+  TABLE_MANAGEMENT: 'Table Management',
+  VENUE_SETTINGS: 'Venue Settings',
+  USER_MANAGEMENT: 'User Management',
+  USER_PERMISSIONS: 'User Permissions',
+  WORKSPACE_MANAGEMENT: 'Workspace Management',
+  HOME: 'Home',
+  LOGIN: 'Login',
+  REGISTER: 'Register',
+  MENU: 'Menu',
+  CHECKOUT: 'Checkout',
+  ORDER_TRACKING: 'Order Tracking',
+  PROFILE: 'Profile',
+} as const;
+
+// App Titles
+export const APP_TITLES = {
+  MAIN: 'Dino E-Menu',
+  ADMIN: 'Admin Dashboard',
+  OPERATOR: 'Operator Dashboard',
+  CUSTOMER: 'Customer Portal',
+} as const;
+
+// Success Messages
+export const SUCCESS_MESSAGES = {
+  LOGIN: 'Login successful!',
+  LOGOUT: 'Logged out successfully',
+  REGISTER: 'Registration successful!',
+  ORDER_PLACED: 'Order placed successfully!',
+  ORDER_UPDATED: 'Order updated successfully!',
+  MENU_UPDATED: 'Menu updated successfully!',
+  USER_CREATED: 'User created successfully!',
+  USER_UPDATED: 'User updated successfully!',
+  SETTINGS_SAVED: 'Settings saved successfully!',
+} as const;
+
+// Error Messages
+export const ERROR_MESSAGES = {
+  LOGIN_FAILED: 'Login failed. Please check your credentials.',
+  NETWORK_ERROR: 'Network error. Please try again.',
+  UNAUTHORIZED: 'You are not authorized to perform this action.',
+  ORDER_FAILED: 'Failed to place order. Please try again.',
+  MENU_LOAD_FAILED: 'Failed to load menu items.',
+  USER_LOAD_FAILED: 'Failed to load user data.',
+  GENERIC: 'Something went wrong. Please try again.',
+} as const;
+
+// Warning Messages
+export const WARNING_MESSAGES = {
+  UNSAVED_CHANGES: 'You have unsaved changes. Are you sure you want to leave?',
+  DELETE_CONFIRMATION: 'Are you sure you want to delete this item?',
+  LOGOUT_CONFIRMATION: 'Are you sure you want to logout?',
+} as const;
+
+// Info Messages
+export const INFO_MESSAGES = {
+  LOADING: 'Loading...',
+  NO_DATA: 'No data available',
+  EMPTY_CART: 'Your cart is empty',
+  ORDER_PROCESSING: 'Your order is being processed',
+} as const;
+
+// Button Labels
+export const BUTTON_LABELS = {
+  LOGIN: 'Login',
+  LOGOUT: 'Logout',
+  REGISTER: 'Register',
+  SUBMIT: 'Submit',
+  CANCEL: 'Cancel',
+  SAVE: 'Save',
+  DELETE: 'Delete',
+  EDIT: 'Edit',
+  ADD: 'Add',
+  REMOVE: 'Remove',
+  VIEW: 'View',
+  BACK: 'Back',
+  NEXT: 'Next',
+  PREVIOUS: 'Previous',
+  CONFIRM: 'Confirm',
+  RETRY: 'Retry',
+} as const;
+
+// Placeholders
+export const PLACEHOLDERS = {
+  EMAIL: 'Enter your email',
+  PASSWORD: 'Enter your password',
+  NAME: 'Enter your name',
+  PHONE: 'Enter your phone number',
+  SEARCH: 'Search...',
+  DESCRIPTION: 'Enter description',
+} as const;
+
+// Form Labels
+export const FORM_LABELS = {
+  EMAIL: 'Email',
+  PASSWORD: 'Password',
+  FIRST_NAME: 'First Name',
+  LAST_NAME: 'Last Name',
+  PHONE: 'Phone Number',
+  ROLE: 'Role',
+  STATUS: 'Status',
+  DESCRIPTION: 'Description',
+  PRICE: 'Price',
+  CATEGORY: 'Category',
+} as const;
+
+// Access Messages
+export const ACCESS_MESSAGES = {
+  ADMIN_REQUIRED: 'Admin access required',
+  LOGIN_REQUIRED: 'Please login to continue',
+  PERMISSION_DENIED: 'You do not have permission to access this resource',
+} as const;
+
+// Status Labels
+export const STATUS_LABELS = {
+  ACTIVE: 'Active',
+  INACTIVE: 'Inactive',
+  PENDING: 'Pending',
+  APPROVED: 'Approved',
+  REJECTED: 'Rejected',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+} as const;
+
+// Notification Messages
+export const NOTIFICATION_MESSAGES = {
+  NEW_ORDER: 'New order received',
+  ORDER_READY: 'Order is ready for pickup',
+  ORDER_DELIVERED: 'Order has been delivered',
+  PAYMENT_RECEIVED: 'Payment received successfully',
+} as const;
+
+// Navigation
 export const NAVIGATION = {
+  HOME: { label: 'Home', path: '/' },
+  MENU: { label: 'Menu', path: '/menu' },
+  ORDERS: { label: 'Orders', path: '/orders' },
+  DASHBOARD: { label: 'Dashboard', path: '/dashboard' },
+  ADMIN: { label: 'Admin', path: '/admin' },
+  PROFILE: { label: 'Profile', path: '/profile' },
+  LOGIN: { label: 'Login', path: '/login' },
+  REGISTER: { label: 'Register', path: '/register' },
+  
+  // Home page navigation sections
   home: [
-    { label: 'Home', id: 'hero', icon: Home },
-    { label: 'Features', id: 'features', icon: Info },
-    { label: 'Pricing', id: 'pricing', icon: AttachMoney },
-    { label: 'Testimonials', id: 'testimonials', icon: RateReview },
-    { label: 'Contact', id: 'contact', icon: ContactMail },
+    { id: 'hero', label: 'Home', icon: 'Home' },
+    { id: 'features', label: 'Features', icon: 'Star' },
+    { id: 'pricing', label: 'Pricing', icon: 'AttachMoney' },
+    { id: 'testimonials', label: 'Reviews', icon: 'Reviews' },
+    { id: 'contact', label: 'Contact', icon: 'ContactMail' },
   ],
+  
+  // Footer navigation
   footer: {
-    platform: ['Features', 'Pricing', 'Testimonials', 'Demo'],
-    solutions: ['QR Menu System', 'Order Management', 'Analytics Dashboard', 'Customer Insights']
+    platform: [
+      'Digital Menu',
+      'QR Ordering',
+      'Analytics',
+      'Multi-location',
+      'Integrations'
+    ],
+    solutions: [
+      'Restaurant Management',
+      'Order Processing',
+      'Customer Experience',
+      'Business Intelligence',
+      'Payment Solutions'
+    ]
   }
 } as const;
 
 // Footer Features
 export const FOOTER_FEATURES = [
-  { icon: QrCode, title: 'QR Ordering', description: 'Contactless dining experience' },
-  { icon: Analytics, title: 'Analytics', description: 'Real-time insights' },
-  { icon: Security, title: 'Secure', description: 'Bank-level encryption' },
-  { icon: Speed, title: 'Fast', description: 'Lightning quick service' },
+  {
+    icon: 'TrackChanges',
+    title: 'Real-time order tracking',
+    description: 'Track orders in real-time'
+  },
+  {
+    icon: 'MenuBook',
+    title: 'Digital menu management',
+    description: 'Manage your menu digitally'
+  },
+  {
+    icon: 'QrCode',
+    title: 'QR code ordering',
+    description: 'Contactless ordering experience'
+  },
+  {
+    icon: 'Analytics',
+    title: 'Analytics dashboard',
+    description: 'Comprehensive business insights'
+  },
 ] as const;
 
-// Content Text
+// Content
 export const CONTENT = {
+  HERO_TITLE: 'Revolutionize Your Restaurant Experience',
+  HERO_SUBTITLE: 'Digital menu, QR ordering, and real-time management',
+  FEATURES_TITLE: 'Everything You Need to Run Your Restaurant',
+  TESTIMONIALS_TITLE: 'What Our Customers Say',
+  
   hero: {
-    badge: 'Revolutionary Technology',
-    title: 'Transform Your Restaurant',
-    subtitle: 'with Digital Menu Ordering',
-    description: 'Join 5,000+ restaurants across India revolutionizing customer experience with QR code-based digital menus. Let customers order directly from their phones while you manage everything from our powerful dashboard.',
+    badge: 'New Features Available',
+    title: 'Revolutionize Your Restaurant Experience',
+    subtitle: 'Digital menu, QR ordering, and real-time management',
+    description: 'Transform your restaurant with our comprehensive digital solution. From contactless ordering to real-time analytics, we help you deliver exceptional dining experiences.',
     cta: {
       primary: 'Start Free Trial',
-      secondary: 'Create Account',
-      dashboard: 'Go to Dashboard'
-    },
-    quickActions: {
-      learnMore: 'Learn More →',
-      viewPricing: 'View Pricing →'
+      secondary: 'Watch Demo'
     }
   },
+  
   features: {
-    title: 'Why Choose Dino?',
-    subtitle: 'Everything you need to modernize your restaurant ordering experience with cutting-edge technology'
+    title: 'Everything You Need to Run Your Restaurant',
+    subtitle: 'Comprehensive tools designed for modern restaurants'
   },
+  
   pricing: {
     title: 'Simple, Transparent Pricing',
-    subtitle: 'Choose the perfect plan for your restaurant. All plans include our core features with no hidden fees.',
-    trialInfo: 'All plans include 14-day free trial • No setup fees • Cancel anytime',
+    subtitle: 'Choose the perfect plan for your restaurant',
+    trialInfo: 'All plans include a 14-day free trial. No setup fees.',
     customPlan: 'Need a custom plan? Contact us'
   },
-  testimonials: {
-    title: 'Loved by Restaurant Owners',
-    subtitle: 'See what our customers are saying about their experience with Dino'
-  },
-  contact: {
-    title: 'Ready to Transform Your Restaurant?',
-    subtitle: 'Join thousands of successful restaurants using Dino'
-  },
+  
   benefits: {
-    title: 'Boost Your Restaurant\'s Efficiency',
-    subtitle: 'Join hundreds of restaurants that have transformed their operations with Dino.',
+    title: 'Why Choose Dino E-Menu?',
+    subtitle: 'Join thousands of restaurants already transforming their business',
     stats: {
-      processing: { value: '60%', label: 'Faster Order Processing' },
-      satisfaction: { value: '95%', label: 'Customer Satisfaction' },
-      availability: { value: '24/7', label: 'System Availability' }
+      processing: {
+        value: '3x',
+        label: 'Faster Order Processing'
+      },
+      satisfaction: {
+        value: '99%',
+        label: 'Customer Satisfaction'
+      },
+      availability: {
+        value: '24/7',
+        label: 'System Availability'
+      }
     }
+  },
+  
+  testimonials: {
+    title: 'What Our Customers Say',
+    subtitle: 'Trusted by restaurants across India'
+  },
+  
+  contact: {
+    title: 'Ready to Get Started?',
+    subtitle: 'Contact us today and transform your restaurant experience'
   }
 } as const;
 
-// Testimonial Stats for Pages
-export const TESTIMONIAL_STATS = [
-  {
-    number: '2,500+',
-    label: 'Happy Restaurants',
-    icon: Restaurant
-  },
-  {
-    number: '5L+',
-    label: 'Orders Processed',
-    icon: TrendingUp
-  },
-  {
-    number: '45%',
-    label: 'Average Revenue Increase',
-    icon: Speed
-  },
-  {
-    number: '4.9/5',
-    label: 'Customer Rating',
-    icon: Star
-  }
-] as const;
+// Testimonial Stats
+export const TESTIMONIAL_STATS = {
+  RESTAURANTS: '500+',
+  ORDERS: '100K+',
+  SATISFACTION: '99%',
+  UPTIME: '99.9%',
+} as const;
 
 // Pricing Benefits
-export const PRICING_BENEFITS = [
-  {
-    icon: TrendingUp,
-    title: 'Proven ROI',
-    description: 'Our customers see an average 40% increase in revenue within 3 months',
-    color: '#4CAF50'
-  },
-  {
-    icon: Security,
-    title: 'Enterprise Security',
-    description: 'Bank-level security with PCI compliance and end-to-end encryption',
-    color: '#2196F3'
-  },
-  {
-    icon: Support,
-    title: 'Expert Support',
-    description: '24/7 support with dedicated account managers for premium plans',
-    color: '#FF9800'
-  },
-  {
-    icon: CloudDone,
-    title: '99.9% Uptime',
-    description: 'Reliable cloud infrastructure with automatic backups and failover',
-    color: '#9C27B0'
-  }
-] as const;
+export const PRICING_BENEFITS = {
+  BASIC: ['Digital Menu', 'QR Code Ordering', 'Basic Analytics'],
+  PROFESSIONAL: ['Everything in Basic', 'Advanced Analytics', 'Multi-location Support'],
+  ENTERPRISE: ['Everything in Professional', 'Custom Integrations', '24/7 Support'],
+} as const;

@@ -165,45 +165,84 @@ export interface OperatorDashboardResponse {
 }
 
 export interface SuperAdminDashboardResponse {
-  // System-wide statistics
+  // Enhanced system-wide statistics
   system_stats: {
     total_workspaces: number;
     total_venues: number;
     total_active_venues: number;
     total_users: number;
+    total_orders: number;
     total_orders_today: number;
+    total_revenue: number;
     total_revenue_today: number;
+    active_orders: number;
+    total_tables: number;
+    occupied_tables: number;
+    total_menu_items: number;
+    active_menu_items: number;
+    table_occupancy_rate: number;
+    avg_order_value: number;
   };
   
-  // Workspace performance
-  workspace_performance: Array<{
-    workspace_id: string;
-    workspace_name: string;
-    venues_count: number;
-    active_venues: number;
-    today_orders: number;
-    today_revenue: number;
-    growth_percentage: number;
+  // Workspace details with enhanced data
+  workspaces: Array<{
+    id: string;
+    name: string;
+    venue_count: number;
+    user_count: number;
+    total_orders: number;
+    total_revenue: number;
+    is_active: boolean;
+    created_at: string;
   }>;
   
-  // Top performing venues
-  top_venues: Array<{
-    venue_id: string;
+  // Venue performance metrics
+  venue_performance: Array<{
+    id: string;
+    name: string;
+    total_orders: number;
+    today_orders: number;
+    total_revenue: number;
+    total_tables: number;
+    occupied_tables: number;
+    occupancy_rate: number;
+    is_open: boolean;
+    status: string;
+  }>;
+  
+  // Top performing menu items
+  top_menu_items: Array<{
+    id: string;
+    name: string;
     venue_name: string;
-    workspace_name: string;
-    today_orders: number;
-    today_revenue: number;
-    monthly_growth: number;
+    category: string;
+    orders: number;
+    revenue: number;
+    quantity_sold: number;
+    price: number;
+    rating: number;
   }>;
   
-  // System alerts
-  system_alerts: Array<{
-    type: 'critical' | 'warning' | 'info';
-    message: string;
-    venue_id?: string;
-    workspace_id?: string;
-    requires_action: boolean;
+  // Recent activity across all venues
+  recent_activity: Array<{
+    id: string;
+    order_number: string;
+    venue_name: string;
+    table_number?: string;
+    total_amount: number;
+    status: string;
+    payment_status: string;
+    created_at: string;
   }>;
   
-  last_updated: string;
+  // Analytics data
+  analytics: {
+    order_status_breakdown: Record<string, number>;
+    table_status_breakdown: Record<string, number>;
+    revenue_by_venue: Record<string, number>;
+  };
+  
+  // SuperAdmin enhancement flags
+  is_superadmin_view?: boolean;
+  current_venue_id?: string;
 }

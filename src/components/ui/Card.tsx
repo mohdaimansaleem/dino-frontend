@@ -8,24 +8,29 @@ import {
   Box,
   Typography,
   IconButton,
-  Divider
+  Divider,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { MoreVert } from '@mui/icons-material';
 
-// Enhanced Card interface with professional variants
+// Enhanced Card interface with professional variants and responsive features
 interface CardProps extends Omit<MuiCardProps, 'variant'> {
-  variant?: 'elevated' | 'outlined' | 'soft' | 'interactive';
+  variant?: 'elevated' | 'outlined' | 'soft' | 'interactive' | 'flat';
   header?: {
     title?: string;
     subtitle?: string;
     action?: React.ReactNode;
     avatar?: React.ReactNode;
-  };
+  } | React.ReactNode | string;
   actions?: React.ReactNode;
   interactive?: boolean;
   loading?: boolean;
   professional?: boolean;
   padding?: 'none' | 'small' | 'medium' | 'large';
+  headerDivider?: boolean;
+  actionsDivider?: boolean;
+  responsive?: boolean;
   children: React.ReactNode;
 }
 
@@ -38,10 +43,16 @@ export const Card: React.FC<CardProps> = ({
   loading = false,
   professional = true,
   padding = 'medium',
+  headerDivider = false,
+  actionsDivider = false,
+  responsive = true,
   onClick,
   sx = {},
   ...props
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   // Professional styling enhancements
   const professionalSx = professional ? {
     borderRadius: 3,
@@ -51,25 +62,29 @@ export const Card: React.FC<CardProps> = ({
     
     // Variant-specific styling
     ...(variant === 'elevated' && {
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)',
+      boxShadow: theme.shadows[2],
       border: '1px solid',
       borderColor: 'rgba(0, 0, 0, 0.08)',
-      '&:hover': interactive || onClick ? {
+      '&:hover': (interactive || onClick) ? {
         transform: 'translateY(-2px)',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+        boxShadow: theme.shadows[8],
         borderColor: 'rgba(0, 0, 0, 0.12)',
-      } : {},
+      } : {
+        boxShadow: theme.shadows[4],
+      },
     }),
     
     ...(variant === 'outlined' && {
       boxShadow: 'none',
       border: '1.5px solid',
       borderColor: 'divider',
-      '&:hover': interactive || onClick ? {
+      '&:hover': (interactive || onClick) ? {
         transform: 'translateY(-1px)',
         borderColor: 'primary.main',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-      } : {},
+        boxShadow: theme.shadows[2],
+      } : {
+        borderColor: 'primary.main',
+      },
     }),
     
     ...(variant === 'soft' && {
@@ -77,22 +92,30 @@ export const Card: React.FC<CardProps> = ({
       border: '1px solid',
       borderColor: 'primary.100',
       boxShadow: 'none',
-      '&:hover': interactive || onClick ? {
+      '&:hover': (interactive || onClick) ? {
         backgroundColor: 'primary.100',
         borderColor: 'primary.200',
         transform: 'translateY(-1px)',
-      } : {},
+      } : {
+        backgroundColor: 'primary.100',
+      },
     }),
     
     ...(variant === 'interactive' && {
       cursor: 'pointer',
       '&:hover': {
         transform: 'translateY(-3px)',
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+        boxShadow: theme.shadows[12],
       },
       '&:active': {
         transform: 'translateY(-1px)',
       },
+    }),
+
+    ...(variant === 'flat' && {
+      boxShadow: 'none',
+      backgroundColor: 'transparent',
+      border: 'none',
     }),
     
     // Interactive states
@@ -112,12 +135,87 @@ export const Card: React.FC<CardProps> = ({
     }),
   } : {};
 
-  // Padding configuration
+  // Responsive padding configuration
   const paddingConfig = {
     none: 0,
-    small: 2,
-    medium: 3,
-    large: 4,
+    small: responsive ? { xs: 1, sm: 2 } : 2,
+    medium: responsive ? { xs: 2, sm: 3 } : 3,
+    large: responsive ? { xs: 3, sm: 4 } : 4,
+  };
+
+  // Render header based on type
+  const renderHeader = () => {
+    if (!header) return null;
+
+    if (typeof header === 'string') {
+      return (
+        <>
+          <CardHeader 
+            title={
+              <Typography variant="h6" fontWeight={600}>
+                {header as React.ReactNode}
+              </Typography>
+            }
+            sx={{ 
+              pb: headerDivider ? 2 : 1,
+              p: responsive ? { xs: 2, sm: 3 } : 3,
+            }}
+          />
+          {headerDivider && <Divider />}
+        </>
+      );
+    }
+
+    if (React.isValidElement(header) || typeof header === 'object') {
+      // Check if it's our header object format
+      if (header && typeof header === 'object' && 'title' in header) {
+        const headerObj = header as { title?: string; subtitle?: string; action?: React.ReactNode; avatar?: React.ReactNode };
+        return (
+          <>
+            <CardHeader
+              avatar={headerObj.avatar}
+              action={headerObj.action || (
+                <IconButton size="small">
+                  <MoreVert />
+                </IconButton>
+              )}
+              title={
+                <Typography variant="h6" fontWeight={600}>
+                  {headerObj.title}
+                </Typography>
+              }
+              subheader={
+                headerObj.subtitle && (
+                  <Typography variant="body2" color="text.secondary">
+                    {headerObj.subtitle}
+                  </Typography>
+                )
+              }
+              sx={{ 
+                pb: headerDivider ? 2 : 1,
+                p: responsive ? { xs: 2, sm: 3 } : 3,
+              }}
+            />
+            {headerDivider && <Divider />}
+          </>
+        );
+      }
+
+      // Custom header component
+      return (
+        <>
+          <Box sx={{ 
+            p: responsive ? { xs: 2, sm: 3 } : 3, 
+            pb: headerDivider ? 2 : 1 
+          }}>
+            {header as React.ReactNode}
+          </Box>
+          {headerDivider && <Divider />}
+        </>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -170,43 +268,33 @@ export const Card: React.FC<CardProps> = ({
       )}
 
       {/* Header */}
-      {header && (
-        <>
-          <CardHeader
-            avatar={header.avatar}
-            action={header.action || (
-              <IconButton size="small">
-                <MoreVert />
-              </IconButton>
-            )}
-            title={
-              <Typography variant="h6" fontWeight={600}>
-                {header.title}
-              </Typography>
-            }
-            subheader={
-              header.subtitle && (
-                <Typography variant="body2" color="text.secondary">
-                  {header.subtitle}
-                </Typography>
-              )
-            }
-            sx={{ pb: 1 }}
-          />
-          <Divider />
-        </>
-      )}
+      {renderHeader()}
 
       {/* Content */}
-      <CardContent sx={{ p: paddingConfig[padding] }}>
+      <CardContent 
+        sx={{ 
+          p: paddingConfig[padding],
+          '&:last-child': {
+            pb: paddingConfig[padding],
+          },
+        }}
+      >
         {children}
       </CardContent>
 
       {/* Actions */}
       {actions && (
         <>
-          <Divider />
-          <CardActions sx={{ p: 2, pt: 1 }}>
+          {actionsDivider && <Divider />}
+          <CardActions 
+            sx={{ 
+              p: responsive ? { xs: 2, sm: 3 } : 3,
+              pt: actionsDivider ? 2 : 1,
+              gap: 1,
+              justifyContent: 'flex-end',
+              flexWrap: isMobile ? 'wrap' : 'nowrap',
+            }}
+          >
             {actions}
           </CardActions>
         </>

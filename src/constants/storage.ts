@@ -1,29 +1,40 @@
 /**
- * Local Storage Keys Constants
- * Centralized storage key definitions to avoid hardcoding throughout the app
+ * Storage Constants
+ * 
+ * Centralized storage key definitions for localStorage and sessionStorage
  */
 
 export const STORAGE_KEYS = {
-  // Authentication related
-  TOKEN: 'dino_token',
+  // Authentication
+  AUTH_TOKEN: 'dino_auth_token',
   REFRESH_TOKEN: 'dino_refresh_token',
-  USER: 'dino_user',
-  PERMISSIONS: 'dino_permissions',
+  USER_DATA: 'dino_user_data',
   
-  // User preferences
+  // User Preferences
   THEME: 'dino_theme',
   LANGUAGE: 'dino_language',
+  SIDEBAR_COLLAPSED: 'dino_sidebar_collapsed',
   
-  // App state
-  LAST_WORKSPACE: 'dino_last_workspace',
-  LAST_VENUE: 'dino_last_venue',
+  // Application State
+  CURRENT_WORKSPACE: 'dino_current_workspace',
+  CURRENT_VENUE: 'dino_current_venue',
+  LAST_ROUTE: 'dino_last_route',
   
-  // Cache keys
-  CACHE_PREFIX: 'dino_cache_',
+  // Cart and Orders
+  CART_ITEMS: 'dino_cart_items',
+  DRAFT_ORDER: 'dino_draft_order',
   
   // Settings
-  USER_SETTINGS: 'dino_user_settings',
-  APP_SETTINGS: 'dino_app_settings',
+  NOTIFICATION_SETTINGS: 'dino_notification_settings',
+  DISPLAY_SETTINGS: 'dino_display_settings',
+  
+  // Cache
+  MENU_CACHE: 'dino_menu_cache',
+  VENUE_CACHE: 'dino_venue_cache',
+  
+  // Session
+  SESSION_ID: 'dino_session_id',
+  LAST_ACTIVITY: 'dino_last_activity',
 } as const;
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];

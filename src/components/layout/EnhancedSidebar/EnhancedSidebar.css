@@ -1,0 +1,84 @@
+/* Enhanced Sidebar Animations */
+.enhanced-sidebar {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.enhanced-sidebar-collapsed {
+  width: 72px !important;
+}
+
+.enhanced-sidebar-expanded {
+  width: 280px !important;
+}
+
+.enhanced-sidebar-tablet {
+  width: 200px !important;
+}
+
+/* Smooth hover effects */
+.sidebar-nav-item {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.sidebar-nav-item:hover {
+  transform: translateX(4px);
+}
+
+.sidebar-nav-item:active {
+  transform: translateX(2px);
+}
+
+/* Floating button animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.floating-menu-button {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Glassmorphism effect */
+.sidebar-glass {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Smooth collapse animations */
+.sidebar-content-collapse {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Active state indicator */
+.sidebar-nav-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(135deg, #1976d2 0%, #42a5f5 100%);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Hover glow effect */
+.sidebar-nav-item:hover {
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .enhanced-sidebar-expanded {
+    width: 200px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .enhanced-sidebar {
+    display: none !important;
+  }
+}

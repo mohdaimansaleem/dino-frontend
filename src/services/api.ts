@@ -97,6 +97,15 @@ class ApiService {
   constructor() {
     // Log configuration during initialization
     console.log('🔧 ApiService constructor - window.APP_CONFIG:', (window as any).APP_CONFIG);
+    console.log('🔧 ApiService constructor - API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
+    console.log('🔧 ApiService constructor - NODE_ENV:', process.env.NODE_ENV);
+    
+    // Force verification of the base URL
+    if (API_CONFIG.BASE_URL.includes('localhost')) {
+      console.error('❌ STILL USING LOCALHOST! API_CONFIG.BASE_URL:', API_CONFIG.BASE_URL);
+    } else {
+      console.log('✅ Using Cloud Run backend:', API_CONFIG.BASE_URL);
+    }
     
     this.axiosInstance = axios.create({
       baseURL: API_CONFIG.BASE_URL,
@@ -132,11 +141,14 @@ class ApiService {
         }
 
         // Log request with detailed URL info for debugging
+        const fullUrl = `${config.baseURL}${config.url}`;
+        console.log('🌐 API Request:', config.method?.toUpperCase(), fullUrl);
+        
         logger.apiRequest(config.method || 'GET', config.url || '', {
           data: config.data,
           params: config.params,
           baseURL: config.baseURL,
-          fullUrl: `${config.baseURL}${config.url}`,
+          fullUrl: fullUrl,
           userAgent: navigator.userAgent,
           isMobile: /Mobile|Android|iPhone|iPad/.test(navigator.userAgent)
         });

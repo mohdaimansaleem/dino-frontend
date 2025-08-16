@@ -30,8 +30,10 @@ import { PERMISSIONS } from '../types/auth';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
+import { useSidebarState } from '../hooks/useSidebarState';
 import AppHeader from './layout/AppHeader';
 import MobileMenu from './layout/MobileMenu';
+import EnhancedSidebar from './layout/EnhancedSidebar';
 import VenueStatusControl from './VenueStatusControl';
 // import DinoLogo from './DinoLogo'; // Unused
 import { getUserFirstName } from '../utils/userUtils';
@@ -55,6 +57,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   
   // Feature flags
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
+  
+  // Sidebar state
+  const { getSidebarWidth } = useSidebarState();
 
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isPublicMenuRoute = location.pathname.includes('/menu/');
@@ -363,54 +368,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Admin Layout with Responsive Sidebar */}
       {isAdminRoute && user ? (
         <Box sx={{ display: 'flex', minHeight: isMobile ? '100vh' : 'calc(100vh - 70px)', position: 'relative', height: isMobile ? '100vh' : 'calc(100vh - 70px)', margin: 0, padding: 0, width: '100%', maxWidth: '100%' }}>
-          {/* Desktop Sidebar Navigation - Fixed */}
+          {/* Enhanced Desktop Sidebar Navigation */}
           {!isMobile && (
-            <Box sx={{ 
-              position: 'fixed',
-              top: 70,
-              left: 0,
-              bottom: 0,
-              width: isTablet ? 200 : 240,
-              backgroundColor: 'background.paper',
-              borderRight: '1px solid',
-              borderColor: 'divider',
-              zIndex: 1200,
-              display: 'flex',
-              flexDirection: 'column',
-            }}>
-              <Box 
-                sx={{ 
-                  p: 1.5,
-                  pt: 1,
-                  flex: 1,
-                  overflow: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  '&::-webkit-scrollbar': {
-                    width: '6px',
-                  },
-                  '&::-webkit-scrollbar-track': {
-                    backgroundColor: 'transparent',
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: 'rgba(0,0,0,0.2)',
-                    borderRadius: '3px',
-                    '&:hover': {
-                      backgroundColor: 'rgba(0,0,0,0.3)',
-                    },
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, pb: 1, pt: 0.5 }}>
-                  {renderNavigation()}
-                </Box>
-                
-                {/* Venue Status Control - Moved to bottom */}
-                <Box sx={{ mt: 'auto', pt: 1 }}>
-                  <VenueStatusControl />
-                </Box>
-              </Box>
-            </Box>
+            <EnhancedSidebar isTablet={isTablet} />
           )}
 
 
@@ -424,7 +384,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               backgroundColor: 'background.default',
               minHeight: isMobile ? '100vh' : 'calc(100vh - 70px)',
               height: isMobile ? '100vh' : 'calc(100vh - 70px)',
-              marginLeft: isMobile ? 0 : (isTablet ? '200px' : '240px'),
+              marginLeft: isMobile ? 0 : `${getSidebarWidth(isTablet)}px`,
               marginTop: isMobile ? 0 : '70px',
               marginRight: 0,
               paddingRight: 0,
@@ -432,7 +392,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               flexDirection: 'column',
               position: 'relative',
               overflow: isMobile ? 'visible' : 'auto',
-              width: isMobile ? '100%' : `calc(100% - ${isTablet ? '200px' : '240px'})`,
+              width: isMobile ? '100%' : `calc(100% - ${getSidebarWidth(isTablet)}px)`,
               maxWidth: '100%',
             }}
           >
@@ -487,21 +447,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                overflow: isMobile ? 'visible' : 'auto',
-                height: isMobile ? 'auto' : '100%',
-                minHeight: isMobile ? 'calc(100vh - 64px)' : '100%',
+                overflow: 'visible',
+                height: 'auto',
+                minHeight: 'auto',
               }}
             >
               <Fade in timeout={300}>
                 <Box 
                   sx={{ 
                     flex: 1,
-                    p: { xs: 0, sm: 3, md: 4 },
-                    pt: { xs: 0, sm: 4, md: 5 },
-                    pb: { xs: 2, sm: 2, md: 2 },
+                    p: 0,
                     overflow: 'visible',
-                    minHeight: 'fit-content',
-                    WebkitOverflowScrolling: 'touch',
+                    minHeight: 'auto',
+                    height: 'auto',
                   }}
                 >
                   {children}

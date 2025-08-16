@@ -10,12 +10,18 @@ import {
   keyframes,
 } from '@mui/material';
 import {
-
   Phone,
   Email,
   LocationOn,
   Restaurant,
-
+  TrackChanges,
+  MenuBook,
+  QrCode,
+  Analytics,
+  Twitter,
+  Facebook,
+  Instagram,
+  LinkedIn,
 } from '@mui/icons-material';
 import { 
   COMPANY_INFO, 
@@ -126,8 +132,15 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
     );
   }
 
+  const iconMap: Record<string, React.ComponentType> = {
+    TrackChanges,
+    MenuBook,
+    QrCode,
+    Analytics,
+  };
+
   const features = FOOTER_FEATURES.map(feature => ({
-    icon: React.createElement(feature.icon),
+    iconComponent: iconMap[feature.icon] || Restaurant,
     title: feature.title,
     description: feature.description
   }));
@@ -242,11 +255,13 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                       mb: 2,
                       animation: `${pulse} 2s ease-in-out infinite`,
                       animationDelay: `${index * 0.5}s`,
+                      '& svg': {
+                        fontSize: 32,
+                        color: 'white'
+                      }
                     }}
                   >
-                    {React.cloneElement(feature.icon, { 
-                      sx: { fontSize: 32, color: 'white' } 
-                    })}
+                    {React.createElement(feature.iconComponent)}
                   </Box>
                   <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
                     {feature.title}
@@ -290,28 +305,37 @@ const Footer: React.FC<FooterProps> = ({ variant = 'default' }) => {
                 {COMPANY_INFO.description}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1 }}>
-                {COMPANY_INFO.socialMedia.map((social, index) => (
-                  <IconButton
-                    key={index}
-                    size="small"
-                    sx={{ 
-                      color: 'white',
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255,255,255,0.2)',
-                      transition: 'all 0.3s ease',
-                      animation: `${float} 3s ease-in-out infinite`,
-                      animationDelay: `${index * 0.2}s`,
-                      '&:hover': { 
-                        backgroundColor: social.color,
-                        transform: 'scale(1.2) translateY(-5px)',
-                        boxShadow: `0 10px 20px ${social.color}40`,
-                      } 
-                    }}
-                  >
-                    {React.createElement(social.icon)}
-                  </IconButton>
-                ))}
+                {COMPANY_INFO.socialMedia.map((social, index) => {
+                  const socialIconMap: Record<string, React.ComponentType> = {
+                    Twitter,
+                    Facebook,
+                    Instagram,
+                    LinkedIn,
+                  };
+                  
+                  return (
+                    <IconButton
+                      key={index}
+                      size="small"
+                      sx={{ 
+                        color: 'white',
+                        background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        transition: 'all 0.3s ease',
+                        animation: `${float} 3s ease-in-out infinite`,
+                        animationDelay: `${index * 0.2}s`,
+                        '&:hover': { 
+                          backgroundColor: social.color,
+                          transform: 'scale(1.2) translateY(-5px)',
+                          boxShadow: `0 10px 20px ${social.color}40`,
+                        } 
+                      }}
+                    >
+                      {React.createElement(socialIconMap[social.icon] || Restaurant)}
+                    </IconButton>
+                  );
+                })}
               </Box>
             </Box>
           </Grid>

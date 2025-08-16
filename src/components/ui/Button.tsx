@@ -3,10 +3,12 @@ import {
   Button as MuiButton, 
   ButtonProps as MuiButtonProps,
   CircularProgress,
-  Box
+  Box,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 
-// Enhanced Button interface with professional variants
+// Enhanced Button interface with professional variants and responsive features
 interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   variant?: 'contained' | 'outlined' | 'text' | 'soft' | 'gradient';
   size?: 'small' | 'medium' | 'large';
@@ -15,7 +17,8 @@ interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   icon?: React.ReactNode;
   iconPosition?: 'start' | 'end';
   fullWidth?: boolean;
-  professional?: boolean; // Enhanced professional styling
+  professional?: boolean;
+  responsive?: boolean; // Auto-adjust size on mobile
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -28,49 +31,111 @@ export const Button: React.FC<ButtonProps> = ({
   iconPosition = 'start',
   disabled = false,
   professional = true,
+  responsive = true,
   sx = {},
   ...props
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Responsive size adjustment
+  const getResponsiveSize = () => {
+    if (!responsive) return size;
+    
+    if (isMobile) {
+      return size === 'large' ? 'medium' : size;
+    }
+    return size;
+  };
+
+  const responsiveSize = getResponsiveSize();
+
+  // Size-based styling
+  const getSizeStyles = () => {
+    const baseStyles = {
+      fontWeight: professional ? 600 : 500,
+      textTransform: 'none' as const,
+      borderRadius: professional ? 2 : 1,
+      transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      letterSpacing: professional ? '0.02em' : 'normal',
+      '&:hover': {
+        transform: professional ? 'translateY(-1px)' : 'none',
+        boxShadow: professional ? theme.shadows[4] : undefined,
+      },
+      '&:active': {
+        transform: professional ? 'translateY(0)' : 'none',
+      },
+      '&:disabled': {
+        transform: 'none',
+      },
+      '&:focus-visible': {
+        outline: '2px solid',
+        outlineColor: 'primary.main',
+        outlineOffset: 2,
+      },
+    };
+
+    switch (responsiveSize) {
+      case 'small':
+        return {
+          ...baseStyles,
+          minHeight: 32,
+          px: 2,
+          py: 0.75,
+          fontSize: '0.8125rem',
+        };
+      case 'large':
+        return {
+          ...baseStyles,
+          minHeight: 48,
+          px: 4,
+          py: 1.5,
+          fontSize: '1rem',
+        };
+      default: // medium
+        return {
+          ...baseStyles,
+          minHeight: 40,
+          px: 3,
+          py: 1.25,
+          fontSize: '0.875rem',
+        };
+    }
+  };
+
   // Professional styling enhancements
-  const professionalSx = professional ? {
-    fontWeight: 500,
-    letterSpacing: '0.02em',
-    textTransform: 'none',
-    borderRadius: 2,
-    minHeight: size === 'small' ? 32 : size === 'large' ? 48 : 40,
-    transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-    '&:hover': {
-      transform: 'translateY(-1px)',
-    },
-    '&:active': {
-      transform: 'translateY(0)',
-    },
-    '&:focus-visible': {
-      outline: '2px solid',
-      outlineColor: 'primary.main',
-      outlineOffset: 2,
-    },
-    // Variant-specific enhancements
-    ...(variant === 'soft' && {
-      backgroundColor: 'primary.50',
-      color: 'primary.main',
-      border: '1px solid',
-      borderColor: 'primary.200',
-      '&:hover': {
-        backgroundColor: 'primary.100',
-        borderColor: 'primary.300',
-        transform: 'translateY(-1px)',
-      },
-    }),
-    ...(variant === 'gradient' && {
-      background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
-      color: 'white',
-      '&:hover': {
-        background: 'linear-gradient(45deg, #0d47a1 30%, #1565c0 90%)',
-        transform: 'translateY(-1px)',
-      },
-    }),
-  } : {};
+  const getVariantStyles = () => {
+    if (!professional) return {};
+
+    switch (variant) {
+      case 'soft':
+        return {
+          backgroundColor: 'primary.50',
+          color: 'primary.main',
+          border: '1px solid',
+          borderColor: 'primary.200',
+          '&:hover': {
+            backgroundColor: 'primary.100',
+            borderColor: 'primary.300',
+            transform: 'translateY(-1px)',
+          },
+        };
+      case 'gradient':
+        return {
+          background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+          color: 'white',
+          '&:hover': {
+            background: 'linear-gradient(45deg, #0d47a1 30%, #1565c0 90%)',
+            transform: 'translateY(-1px)',
+          },
+        };
+      default:
+        return {};
+    }
+  };
+
+  const sizeStyles = getSizeStyles();
+  const variantStyles = getVariantStyles();
 
   // Convert custom variants to Material-UI variants
   const muiVariant = variant === 'soft' || variant === 'gradient' ? 'contained' : variant;
@@ -79,7 +144,7 @@ export const Button: React.FC<ButtonProps> = ({
   const loadingContent = (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <CircularProgress 
-        size={size === 'small' ? 16 : size === 'large' ? 20 : 18} 
+        size={responsiveSize === 'small' ? 14 : responsiveSize === 'large' ? 18 : 16} 
         color="inherit" 
       />
       {loadingText && loadingText}
@@ -98,15 +163,23 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <MuiButton
       variant={muiVariant}
-      size={size}
+      size={responsiveSize}
       disabled={disabled || loading}
+      startIcon={loading && !loadingText ? (
+        <CircularProgress 
+          size={responsiveSize === 'small' ? 14 : responsiveSize === 'large' ? 18 : 16} 
+          color="inherit" 
+        />
+      ) : (!loading && icon && iconPosition === 'start' ? icon : undefined)}
+      endIcon={!loading && icon && iconPosition === 'end' ? icon : undefined}
       sx={{
-        ...professionalSx,
+        ...sizeStyles,
+        ...variantStyles,
         ...sx,
       }}
       {...props}
     >
-      {buttonContent}
+      {loading && loadingText ? loadingText : children}
     </MuiButton>
   );
 };

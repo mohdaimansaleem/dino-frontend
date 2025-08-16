@@ -4,10 +4,10 @@ import { User as AuthUser, ROLES, PermissionName, RoleName } from '../types/auth
 import { authService } from '../services/authService';
 import PermissionService from '../services/permissionService';
 import { userCache, CacheKeys, cacheUtils } from '../services/cacheService';
-import { preloadCriticalComponents } from '../components/LazyComponents';
-import { STORAGE_KEYS } from '../constants/storage';
+import { preloadCriticalComponents } from '../components/lazy';
+import { STORAGE_KEYS } from '../constants/app';
 import StorageManager from '../utils/storageManager';
-import { ROLE_NAMES } from '../constants/roles';
+import { USER_ROLES as ROLE_NAMES } from '../constants/app';
 import { tokenRefreshScheduler } from '../utils/tokenRefreshScheduler';
 
 import { apiService } from '../services/api';
@@ -368,7 +368,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (backendRole && backendRole.name) {
       // Use the actual backend role name
       const backendRoleName = backendRole.name.toLowerCase();
-      if (backendRoleName === ROLE_NAMES.SUPERADMIN) {
+      if (backendRoleName === ROLE_NAMES.SUPER_ADMIN) {
         roleName = ROLES.SUPERADMIN;
       } else if (backendRoleName === ROLE_NAMES.ADMIN) {
         roleName = ROLES.ADMIN;
@@ -378,7 +378,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } else {
       // Fallback to user.role if no backend role
       const userRole = (user as any).role;
-      if (userRole === ROLE_NAMES.SUPERADMIN) {
+      if (userRole === ROLE_NAMES.SUPER_ADMIN) {
         roleName = ROLES.SUPERADMIN;
       } else if (userRole === ROLE_NAMES.ADMIN) {
         roleName = ROLES.ADMIN;
@@ -437,13 +437,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isAdmin = (): boolean => {
     // Check backend role first
     const backendRole = PermissionService.getBackendRole();
-    if (backendRole && (backendRole.name === ROLE_NAMES.ADMIN || backendRole.name === ROLE_NAMES.SUPERADMIN)) {
+    if (backendRole && (backendRole.name === ROLE_NAMES.ADMIN || backendRole.name === ROLE_NAMES.SUPER_ADMIN)) {
       return true;
     }
     
-    // Check user role
-    if (user?.role === ROLE_NAMES.ADMIN || (user as any)?.role === ROLE_NAMES.ADMIN || 
-        user?.role === ROLE_NAMES.SUPERADMIN || (user as any)?.role === ROLE_NAMES.SUPERADMIN) {
+    // Check user role (convert to string for comparison)
+    const userRoleString = (user as any)?.role;
+    if (userRoleString === ROLE_NAMES.ADMIN || userRoleString === ROLE_NAMES.SUPER_ADMIN) {
       return true;
     }
     
@@ -458,12 +458,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isSuperAdmin = (): boolean => {
     // Check backend role first
     const backendRole = PermissionService.getBackendRole();
-    if (backendRole && backendRole.name === ROLE_NAMES.SUPERADMIN) {
+    if (backendRole && backendRole.name === ROLE_NAMES.SUPER_ADMIN) {
       return true;
     }
     
-    // Check user role
-    if (user?.role === ROLE_NAMES.SUPERADMIN || (user as any)?.role === ROLE_NAMES.SUPERADMIN) {
+    // Check user role (convert to string for comparison)
+    const userRoleString = (user as any)?.role;
+    if (userRoleString === ROLE_NAMES.SUPER_ADMIN) {
       return true;
     }
     

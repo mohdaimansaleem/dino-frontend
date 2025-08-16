@@ -46,17 +46,31 @@ const ContactPage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
 
   // Transform contact info for display
-  const contactInfo = CONTACT_INFO.map(info => ({
-    icon: React.createElement(info.icon),
-    title: info.title,
-    details: info.details,
-    description: info.description
-  }));
+  const contactInfo = [
+    {
+      icon: React.createElement(() => <span>📍</span>),
+      title: 'Address',
+      details: [CONTACT_INFO.headquarters.address],
+      description: 'Visit our office'
+    },
+    {
+      icon: React.createElement(() => <span>📞</span>),
+      title: 'Phone',
+      details: [CONTACT_INFO.headquarters.phone],
+      description: 'Call us directly'
+    },
+    {
+      icon: React.createElement(() => <span>✉️</span>),
+      title: 'Email',
+      details: [CONTACT_INFO.headquarters.email],
+      description: 'Send us an email'
+    }
+  ];
 
   // Transform departments for display
   const departments = CONTACT_DEPARTMENTS.map(dept => ({
-    icon: React.createElement(dept.icon),
-    title: dept.title,
+    icon: React.createElement(() => <span>👥</span>),
+    title: dept.name,
     email: dept.email,
     description: dept.description
   }));
@@ -405,9 +419,7 @@ const ContactPage: React.FC = () => {
               {COMPANY_INFO.name} Headquarters
             </Typography>
             <Typography variant="body1" sx={{ mb: 2, opacity: 0.9 }}>
-              {COMPANY_INFO.contact.address.street}<br />
-              {COMPANY_INFO.contact.address.city}, {COMPANY_INFO.contact.address.state} {COMPANY_INFO.contact.address.pincode}<br />
-              {COMPANY_INFO.contact.address.country}
+              {COMPANY_INFO.contact.address.full}
             </Typography>
             <Button
               variant="contained"

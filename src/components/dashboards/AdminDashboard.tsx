@@ -33,19 +33,18 @@ import {
   Edit,
   Dashboard as DashboardIcon,
   Today,
-  BarChart as BarChartIcon,
   PieChart as PieChartIcon,
 
   Settings,
   Refresh,
 } from '@mui/icons-material';
-import { WeeklyRevenueChart, StatusPieChart, DonutChart } from '../charts/ChartComponents';
+import { StatusPieChart, DonutChart } from '../charts/ChartComponents';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
 import { useNavigate } from 'react-router-dom';
 import { PERMISSIONS } from '../../types/auth';
 import { dashboardService } from '../../services/dashboardService';
-import { AdminDashboardResponse } from '../../types/dashboard';
+import { AdminDashboardResponse, SuperAdminDashboardResponse } from '../../types/dashboard';
 import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
 import { getUserFirstName } from '../../utils/userUtils';
 import DashboardTour from '../tour/DashboardTour';
@@ -62,10 +61,10 @@ import VenueStatusDebug from '../VenueStatusDebug';
  * - Quick action buttons
  * 
  * Features:
- * - Removes hardcoded chart metadata
- * - Uses analytics service for chart data
+ * - Uses real database data only
  * - Dynamic role and permission checking
  * - Clean, maintainable code structure
+ * - No mock or sample data
  */
 
 interface AdminDashboardProps {
@@ -73,9 +72,7 @@ interface AdminDashboardProps {
 }
 
 interface ChartData {
-  weeklyRevenue: Array<{ day: string; revenue: number; orders: number }>;
   tableStatus: Array<{ name: string; value: number; color: string }>;
-  menuStatus: Array<{ name: string; value: number; color: string }>;
   orderStatus: Array<{ name: string; value: number; color: string }>;
 }
 
@@ -89,12 +86,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const currentVenue = userData?.venue;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dashboardData, setDashboardData] = useState<AdminDashboardResponse | null>(null);
+  const [dashboardData, setDashboardData] = useState<AdminDashboardResponse | SuperAdminDashboardResponse | null>(null);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [chartLoading, setChartLoading] = useState(false);
-  const [venueActive, setVenueActive] = useState(true);
-  const [venueOpen, setVenueOpen] = useState(true);
-  const [statusLoading, setStatusLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
 
   const loadDashboardData = useCallback(async () => {
@@ -108,37 +102,61 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       const data = await dashboardService.getAdminDashboard();
       
       if (data) {
-        console.log('✅ Dashboard data loaded successfully:', {
-          venue: data.venue_name,
-          todayOrders: data.stats.today.orders_count,
-          todayRevenue: data.stats.today.revenue,
-          recentOrdersCount: data.recent_orders.length,
-          topMenuItemsCount: data.top_menu_items.length
-        });
-        
-        setDashboardData(data);
-        
-        // Process chart data from the comprehensive response
-        const processedChartData: ChartData = {
-          weeklyRevenue: data.revenue_trend.map(item => ({
-            day: item.day_name.substring(0, 3), // Mon, Tue, etc.
-            revenue: item.revenue,
-            orders: item.orders_count
-          })),
-          tableStatus: data.table_status_breakdown.map(item => ({
-            name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-            value: item.count,
-            color: item.color
-          })),
-          menuStatus: [], // Will be calculated from current stats
-          orderStatus: data.order_status_breakdown.map(item => ({
-            name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-            value: item.count,
-            color: item.color
-          }))
-        };
-        
-        setChartData(processedChartData);
+        // Check if this is SuperAdmin format or Admin format
+        if ('system_stats' in data) {
+          // SuperAdmin format
+          const superAdminData = data as SuperAdminDashboardResponse;
+          console.log('✅ Dashboard data loaded successfully (SuperAdmin format):', {
+            todayOrders: superAdminData.system_stats?.total_orders_today,
+            todayRevenue: superAdminData.system_stats?.total_revenue_today,
+            recentActivityCount: superAdminData.recent_activity?.length
+          });
+          
+          setDashboardData(superAdminData);
+          
+          // Process chart data from SuperAdmin response
+          const processedChartData: ChartData = {
+            tableStatus: Object.entries(superAdminData.analytics?.table_status_breakdown || {}).map(([status, count]) => ({
+              name: status.charAt(0).toUpperCase() + status.slice(1),
+              value: count as number,
+              color: getTableStatusColor(status)
+            })),
+            orderStatus: Object.entries(superAdminData.analytics?.order_status_breakdown || {}).map(([status, count]) => ({
+              name: status.charAt(0).toUpperCase() + status.slice(1),
+              value: count as number,
+              color: getOrderStatusColor(status)
+            }))
+          };
+          
+          setChartData(processedChartData);
+        } else {
+          // Standard Admin format
+          const adminData = data as AdminDashboardResponse;
+          console.log('✅ Dashboard data loaded successfully (Admin format):', {
+            venue: adminData.venue_name,
+            todayOrders: adminData.stats.today.orders_count,
+            todayRevenue: adminData.stats.today.revenue,
+            recentOrdersCount: adminData.recent_orders.length
+          });
+          
+          setDashboardData(adminData);
+          
+          // Process chart data from Admin response
+          const processedChartData: ChartData = {
+            tableStatus: adminData.table_status_breakdown.map(item => ({
+              name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+              value: item.count,
+              color: item.color
+            })),
+            orderStatus: adminData.order_status_breakdown.map(item => ({
+              name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+              value: item.count,
+              color: item.color
+            }))
+          };
+          
+          setChartData(processedChartData);
+        }
       } else {
         setDashboardData(null);
         setChartData(null);
@@ -172,43 +190,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
 
 
 
-  const getDefaultStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      pending: '#FFF176',
-      preparing: '#81D4FA',
-      ready: '#C8E6C9',
-      served: '#E1BEE7',
-      confirmed: '#FFCC02',
-      cancelled: '#FFAB91'
-    };
-    return colors[status.toLowerCase()] || '#F5F5F5';
-  };
+
 
   const refreshDashboard = async () => {
     await Promise.all([
       loadDashboardData(),
-      loadVenueStatus(),
       loadChartData()
     ]);
   };
 
-  // REMOVED: Unnecessary API call to load venue status
-  // The venue status is already available in UserDataContext from /auth/user-data
-  const loadVenueStatus = useCallback(() => {
-    if (currentVenue) {
-      setVenueActive(currentVenue.is_active || false);
-      setVenueOpen(currentVenue.is_open || false);
-      console.log('Using venue status from UserDataContext:', {
-        isActive: currentVenue.is_active,
-        isOpen: currentVenue.is_open
-      });
-    }
-  }, [currentVenue]);
-
   useEffect(() => {
     if (currentVenue?.id) {
       loadDashboardData();
-      loadVenueStatus();
       loadChartData();
     } else {
       // If no venue, set loading to false to show the venue assignment check
@@ -222,7 +215,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     return () => {
       document.documentElement.style.scrollBehavior = 'auto';
     };
-  }, [currentVenue?.id, user, loadDashboardData, loadVenueStatus, loadChartData]);
+  }, [currentVenue?.id, user, loadDashboardData, loadChartData]);
 
   // const handleToggleVenueActive = async () => {
   //   if (!currentVenue?.id || statusLoading) return;
@@ -296,6 +289,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     }
   };
 
+  const getTableStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'available': return '#4CAF50';
+      case 'occupied': return '#F44336';
+      case 'reserved': return '#FF9800';
+      case 'maintenance': return '#9E9E9E';
+      default: return '#9E9E9E';
+    }
+  };
+
+  const getOrderStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending': return '#FFF176';
+      case 'confirmed': return '#FFCC02';
+      case 'preparing': return '#81D4FA';
+      case 'ready': return '#C8E6C9';
+      case 'served': return '#E1BEE7';
+      case 'delivered': return '#A5D6A7';
+      case 'cancelled': return '#FFAB91';
+      default: return '#F5F5F5';
+    }
+  };
+
   // Dynamic permission checks
   const canManageVenue = () => {
     return hasPermission(PERMISSIONS.VENUE_ACTIVATE) || 
@@ -315,21 +331,72 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
            hasBackendPermission('order.manage');
   };
 
-  // Extract stats from comprehensive dashboard data
-  const stats = dashboardData?.stats;
-  const recentOrders = dashboardData?.recent_orders || [];
-  const topMenuItems = dashboardData?.top_menu_items || [];
-  
-  // Set default zero values when no data is available
-  const displayStats = {
-    today_orders: stats?.today.orders_count || 0,
-    today_revenue: stats?.today.revenue || 0,
-    total_tables: stats?.current.tables_total || 0,
-    occupied_tables: stats?.current.tables_occupied || 0,
-    total_menu_items: stats?.current.menu_items_total || 0,
-    active_menu_items: stats?.current.menu_items_active || 0,
-    total_staff: stats?.current.staff_total || 0,
-  };
+  // Extract stats from dashboard data (handle both Admin and SuperAdmin formats)
+  const displayStats = (() => {
+    if (!dashboardData) {
+      return {
+        today_orders: 0,
+        today_revenue: 0,
+        total_tables: 0,
+        occupied_tables: 0,
+        total_menu_items: 0,
+        active_menu_items: 0,
+        total_staff: 0,
+      };
+    }
+
+    if ('system_stats' in dashboardData) {
+      // SuperAdmin format
+      const superAdminData = dashboardData as SuperAdminDashboardResponse;
+      return {
+        today_orders: superAdminData.system_stats?.total_orders_today || 0,
+        today_revenue: superAdminData.system_stats?.total_revenue_today || 0,
+        total_tables: superAdminData.system_stats?.total_tables || 0,
+        occupied_tables: superAdminData.system_stats?.occupied_tables || 0,
+        total_menu_items: superAdminData.system_stats?.total_menu_items || 0,
+        active_menu_items: superAdminData.system_stats?.active_menu_items || 0,
+        total_staff: 0, // Not available in SuperAdmin format
+      };
+    } else {
+      // Admin format
+      const adminData = dashboardData as AdminDashboardResponse;
+      const stats = adminData.stats;
+      return {
+        today_orders: stats?.today.orders_count || 0,
+        today_revenue: stats?.today.revenue || 0,
+        total_tables: stats?.current.tables_total || 0,
+        occupied_tables: stats?.current.tables_occupied || 0,
+        total_menu_items: stats?.current.menu_items_total || 0,
+        active_menu_items: stats?.current.menu_items_active || 0,
+        total_staff: stats?.current.staff_total || 0,
+      };
+    }
+  })();
+
+  // Extract recent orders (handle both formats)
+  const recentOrders = (() => {
+    if (!dashboardData) return [];
+    
+    if ('system_stats' in dashboardData) {
+      // SuperAdmin format - use recent_activity and convert to order format
+      const superAdminData = dashboardData as SuperAdminDashboardResponse;
+      return (superAdminData.recent_activity || []).map(activity => ({
+        id: activity.id,
+        order_number: activity.order_number,
+        table_number: activity.table_number || 'N/A',
+        customer_name: undefined,
+        total_amount: activity.total_amount,
+        status: activity.status as any,
+        items_count: 0, // Not available in activity format
+        created_at: activity.created_at,
+        estimated_ready_time: undefined
+      }));
+    } else {
+      // Admin format
+      const adminData = dashboardData as AdminDashboardResponse;
+      return adminData.recent_orders || [];
+    }
+  })();
 
   const tableOccupancyPercentage = displayStats.total_tables > 0 ? 
     Math.round((displayStats.occupied_tables / displayStats.total_tables) * 100) : 0;
@@ -337,39 +404,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const menuActivePercentage = displayStats.total_menu_items > 0 ? 
     Math.round((displayStats.active_menu_items / displayStats.total_menu_items) * 100) : 0;
 
-  // Generate dynamic chart data based on current stats and API data
-  const getTableStatusData = () => [
-    { name: 'Occupied', value: displayStats.occupied_tables || 0, color: '#FFAB91' },
-    { name: 'Available', value: (displayStats.total_tables || 0) - (displayStats.occupied_tables || 0), color: '#A5D6A7' },
-  ];
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const getMenuStatusData = () => [
-    { name: 'Active', value: displayStats.active_menu_items || 0, color: '#A5D6A7' },
-    { name: 'Inactive', value: (displayStats.total_menu_items || 0) - (displayStats.active_menu_items || 0), color: '#FFCC02' },
-  ];
-
-  const getWeeklyRevenueData = () => {
-    return chartData?.weeklyRevenue || [];
+  // Get table status data from API response only
+  const getTableStatusData = () => {
+    if (chartData?.tableStatus && chartData.tableStatus.length > 0) {
+      return chartData.tableStatus;
+    }
+    return [];
   };
 
   const getOrderStatusData = () => {
     if (chartData?.orderStatus && chartData.orderStatus.length > 0) {
       return chartData.orderStatus;
     }
-    
-    // Use recent orders analysis only if we have real data
-    if (recentOrders.length > 0) {
-      const statusData = [
-        { name: 'Pending', value: recentOrders.filter(o => o.status === 'pending').length, color: '#FFF176' },
-        { name: 'Preparing', value: recentOrders.filter(o => o.status === 'preparing').length, color: '#81D4FA' },
-        { name: 'Ready', value: recentOrders.filter(o => o.status === 'ready').length, color: '#C8E6C9' },
-        { name: 'Served', value: recentOrders.filter(o => o.status === 'served').length, color: '#E1BEE7' },
-      ].filter(item => item.value > 0);
-      
-      return statusData.length > 0 ? statusData : [];
-    }
-    
     return [];
   };
 
@@ -753,71 +799,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
             </Grid>
           </Grid>
 
-          {/* Row 2: Weekly Revenue Chart & Recent Orders Status */}
+          {/* Row 2: Order Status Chart */}
           <Grid container spacing={3}>
-            {/* Weekly Revenue Trend */}
-            <Grid item xs={12} md={8}>
-              <Card sx={{ 
-                height: '400px',
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper'
-              }} data-tour="revenue-chart">
-                <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between',
-                    mb: 3
-                  }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <BarChartIcon 
-                        sx={{ 
-                          fontSize: '1.5rem',
-                          color: 'primary.main'
-                        }} 
-                      />
-                      <Typography 
-                        variant="h6"
-                        sx={{ 
-                          fontSize: '1.125rem',
-                          fontWeight: 600,
-                          color: 'text.primary'
-                        }}
-                      >
-                        Weekly Revenue & Orders
-                      </Typography>
-                    </Box>
-                    {chartLoading && <CircularProgress size={20} />}
-                  </Box>
-                  <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {!chartLoading && getWeeklyRevenueData().length > 0 ? (
-                      <WeeklyRevenueChart data={getWeeklyRevenueData()} height={280} />
-                    ) : !chartLoading ? (
-                      <Box sx={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        gap: 2,
-                        py: 4
-                      }}>
-                        <BarChartIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
-                        <Typography variant="body1" color="text.secondary" textAlign="center" fontWeight={500}>
-                          No Revenue Data Available
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" textAlign="center">
-                          Revenue trends will appear here once orders are placed.
-                        </Typography>
-                      </Box>
-                    ) : null}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Recent Orders Status */}
-            <Grid item xs={12} md={4}>
+            {/* Order Status Chart */}
+            <Grid item xs={12} md={6}>
               <Card sx={{ 
                 height: '400px',
                 border: '1px solid',
@@ -876,14 +861,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 </CardContent>
               </Card>
             </Grid>
-          </Grid>
 
-          {/* Row 3: Table Status & Top Menu Items */}
-          <Grid container spacing={3}>
-            {/* Table Status */}
+            {/* Table Status Chart */}
             <Grid item xs={12} md={6}>
               <Card sx={{ 
-                height: '360px',
+                height: '400px',
                 border: '1px solid',
                 borderColor: 'divider',
                 backgroundColor: 'background.paper'
@@ -917,7 +899,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                   </Box>
                   <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {!chartLoading && getTableStatusData().some(item => item.value > 0) ? (
-                      <StatusPieChart data={getTableStatusData()} height={240} />
+                      <StatusPieChart data={getTableStatusData()} height={280} />
                     ) : !chartLoading ? (
                       <Box sx={{ 
                         display: 'flex', 
@@ -940,149 +922,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 </CardContent>
               </Card>
             </Grid>
-
-            {/* Top Menu Items */}
-            <Grid item xs={12} md={6}>
-              <Card sx={{ 
-                height: '360px',
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper'
-              }}>
-                <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between',
-                    mb: 3
-                  }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Restaurant 
-                        sx={{ 
-                          fontSize: '1.5rem',
-                          color: 'primary.main'
-                        }} 
-                      />
-                      <Typography 
-                        variant="h6"
-                        sx={{ 
-                          fontSize: '1.125rem',
-                          fontWeight: 600,
-                          color: 'text.primary'
-                        }}
-                      >
-                        Top Menu Items
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, flex: 1, overflow: 'auto' }}>
-                    {topMenuItems.length === 0 ? (
-                      <Box sx={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        height: '100%',
-                        gap: 2,
-                        py: 4
-                      }}>
-                        <Restaurant sx={{ fontSize: 48, color: 'text.disabled' }} />
-                        <Typography variant="body1" color="text.secondary" textAlign="center" fontWeight={500}>
-                          No Order Data Available
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" textAlign="center">
-                          Popular menu items will appear here once orders are placed.
-                        </Typography>
-                      </Box>
-                    ) : (
-                      topMenuItems.slice(0, 5).map((item, index) => (
-                        <Box 
-                          key={item.id}
-                          sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center',
-                            p: 2,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                            backgroundColor: index === 0 ? 'primary.50' : 'background.paper',
-                            borderLeftWidth: 4,
-                            borderLeftColor: index === 0 ? 'primary.main' : 'transparent',
-                            transition: 'all 0.2s ease-in-out',
-                            '&:hover': {
-                              borderColor: 'primary.main',
-                              backgroundColor: 'primary.50'
-                            }
-                          }}
-                        >
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  fontSize: '0.75rem',
-                                  fontWeight: 600,
-                                  color: 'text.secondary',
-                                  minWidth: '20px'
-                                }}
-                              >
-                                #{index + 1}
-                              </Typography>
-                              <Typography 
-                                variant="body1" 
-                                sx={{ 
-                                  fontWeight: 600,
-                                  color: 'text.primary',
-                                  fontSize: '0.875rem',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}
-                              >
-                                {item.name}
-                              </Typography>
-                            </Box>
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
-                                color: 'text.secondary',
-                                fontSize: '0.75rem'
-                              }}
-                            >
-                              {item.category_name} • ₹{item.price}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ textAlign: 'right', ml: 2 }}>
-                            <Typography 
-                              variant="h6" 
-                              sx={{ 
-                                fontWeight: 700,
-                                color: 'primary.main',
-                                fontSize: '1rem',
-                                lineHeight: 1
-                              }}
-                            >
-                              {item.orders_count}
-                            </Typography>
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
-                                color: 'text.secondary',
-                                fontSize: '0.7rem'
-                              }}
-                            >
-                              orders
-                            </Typography>
-                          </Box>
-                        </Box>
-                      ))
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
           </Grid>
+
+
 
           {/* Recent Orders */}
           <Card sx={{ 

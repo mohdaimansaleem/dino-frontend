@@ -55,7 +55,7 @@ import { PERMISSIONS } from '../../types/auth';
 import { orderService, Order, OrderStatus, PaymentStatus, PaymentMethod } from '../../services/orderService';
 import {
   ORDER_STATUS,
-  ORDER_STATUS_COLORS,
+  STATUS_COLORS,
   PAYMENT_STATUS,
   PAYMENT_METHODS,
   PAGE_TITLES,

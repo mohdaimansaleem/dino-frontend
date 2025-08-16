@@ -1,69 +1,130 @@
 /**
- * Role Constants
- * Centralized role definitions to avoid hardcoding throughout the app
+ * Role Constants and Utilities
+ * 
+ * Centralized role definitions and helper functions
  */
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ROLES } from '../types/auth';
-
-// Role name constants (matching backend)
+// Role Names (matching backend)
 export const ROLE_NAMES = {
-  SUPERADMIN: 'superadmin',
+  SUPERADMIN: 'super_admin',
   ADMIN: 'admin', 
+  MANAGER: 'manager',
   OPERATOR: 'operator',
   STAFF: 'staff',
   CUSTOMER: 'customer',
+  CAFE_OWNER: 'cafe_owner', // Legacy support
 } as const;
 
-// Role display names for UI
-export const ROLE_DISPLAY_NAMES = {
-  [ROLE_NAMES.SUPERADMIN]: 'Super Administrator',
-  [ROLE_NAMES.ADMIN]: 'Administrator',
-  [ROLE_NAMES.OPERATOR]: 'Operator',
-  [ROLE_NAMES.STAFF]: 'Staff',
-  [ROLE_NAMES.CUSTOMER]: 'Customer',
-} as const;
-
-// Role descriptions
-export const ROLE_DESCRIPTIONS = {
-  [ROLE_NAMES.SUPERADMIN]: 'Complete system access with all permissions',
-  [ROLE_NAMES.ADMIN]: 'Full access to all features within workspace',
-  [ROLE_NAMES.OPERATOR]: 'Limited access to daily operations',
-  [ROLE_NAMES.STAFF]: 'Basic access for staff members',
-  [ROLE_NAMES.CUSTOMER]: 'Customer access for ordering',
-} as const;
-
-// Role hierarchy (higher number = more permissions)
+// Role Hierarchy (higher number = more permissions)
 export const ROLE_HIERARCHY = {
   [ROLE_NAMES.CUSTOMER]: 1,
   [ROLE_NAMES.STAFF]: 2,
   [ROLE_NAMES.OPERATOR]: 3,
-  [ROLE_NAMES.ADMIN]: 4,
-  [ROLE_NAMES.SUPERADMIN]: 5,
+  [ROLE_NAMES.MANAGER]: 4,
+  [ROLE_NAMES.ADMIN]: 5,
+  [ROLE_NAMES.CAFE_OWNER]: 5, // Same level as admin
+  [ROLE_NAMES.SUPERADMIN]: 6,
 } as const;
 
-// Helper functions
-export const getRoleDisplayName = (roleName: string): string => {
-  return ROLE_DISPLAY_NAMES[roleName as keyof typeof ROLE_DISPLAY_NAMES] || roleName;
+// Role Display Names
+export const ROLE_DISPLAY_NAMES = {
+  [ROLE_NAMES.SUPERADMIN]: 'Super Administrator',
+  [ROLE_NAMES.ADMIN]: 'Administrator',
+  [ROLE_NAMES.MANAGER]: 'Manager',
+  [ROLE_NAMES.OPERATOR]: 'Operator',
+  [ROLE_NAMES.STAFF]: 'Staff',
+  [ROLE_NAMES.CUSTOMER]: 'Customer',
+  [ROLE_NAMES.CAFE_OWNER]: 'Cafe Owner',
+} as const;
+
+// Helper Functions
+export const isAdminLevel = (role: string): boolean => {
+  const adminRoles = [
+    ROLE_NAMES.ADMIN,
+    ROLE_NAMES.SUPERADMIN,
+    ROLE_NAMES.CAFE_OWNER
+  ];
+  return adminRoles.includes(role as any);
 };
 
-export const getRoleDescription = (roleName: string): string => {
-  return ROLE_DESCRIPTIONS[roleName as keyof typeof ROLE_DESCRIPTIONS] || 'No description available';
+export const isSuperAdmin = (role: string): boolean => {
+  return role === ROLE_NAMES.SUPERADMIN;
 };
 
-export const isHigherRole = (role1: string, role2: string): boolean => {
-  const hierarchy1 = ROLE_HIERARCHY[role1 as keyof typeof ROLE_HIERARCHY] || 0;
-  const hierarchy2 = ROLE_HIERARCHY[role2 as keyof typeof ROLE_HIERARCHY] || 0;
-  return hierarchy1 > hierarchy2;
+export const isManager = (role: string): boolean => {
+  return role === ROLE_NAMES.MANAGER;
 };
 
-export const canManageRole = (userRole: string, targetRole: string): boolean => {
-  return isHigherRole(userRole, targetRole);
+export const isOperator = (role: string): boolean => {
+  return role === ROLE_NAMES.OPERATOR;
 };
 
-// Helper function to check if user has admin-level access (admin or superadmin)
-export const isAdminLevel = (userRole: string): boolean => {
-  return userRole === ROLE_NAMES.ADMIN || userRole === ROLE_NAMES.SUPERADMIN;
+export const isStaff = (role: string): boolean => {
+  return role === ROLE_NAMES.STAFF;
 };
 
-export type RoleName = typeof ROLE_NAMES[keyof typeof ROLE_NAMES];
+export const isCustomer = (role: string): boolean => {
+  return role === ROLE_NAMES.CUSTOMER;
+};
+
+export const getRoleDisplayName = (role: string): string => {
+  return ROLE_DISPLAY_NAMES[role as keyof typeof ROLE_DISPLAY_NAMES] || role;
+};
+
+export const getRoleHierarchy = (role: string): number => {
+  return ROLE_HIERARCHY[role as keyof typeof ROLE_HIERARCHY] || 0;
+};
+
+export const hasHigherRole = (userRole: string, requiredRole: string): boolean => {
+  return getRoleHierarchy(userRole) >= getRoleHierarchy(requiredRole);
+};
+
+export const canAccessAdminFeatures = (role: string): boolean => {
+  return isAdminLevel(role) || isSuperAdmin(role);
+};
+
+export const canManageUsers = (role: string): boolean => {
+  return isAdminLevel(role) || isSuperAdmin(role);
+};
+
+export const canManageMenu = (role: string): boolean => {
+  return hasHigherRole(role, ROLE_NAMES.MANAGER);
+};
+
+export const canManageOrders = (role: string): boolean => {
+  return hasHigherRole(role, ROLE_NAMES.OPERATOR);
+};
+
+export const canViewAnalytics = (role: string): boolean => {
+  return hasHigherRole(role, ROLE_NAMES.MANAGER);
+};
+
+// Default role for new users
+export const DEFAULT_ROLE = ROLE_NAMES.CUSTOMER;
+
+// Available roles for user creation (excluding customer)
+export const ASSIGNABLE_ROLES = [
+  ROLE_NAMES.STAFF,
+  ROLE_NAMES.OPERATOR,
+  ROLE_NAMES.MANAGER,
+  ROLE_NAMES.ADMIN,
+] as const;
+
+// Roles that can be assigned by different user levels
+export const ROLE_ASSIGNMENT_PERMISSIONS = {
+  [ROLE_NAMES.SUPERADMIN]: Object.values(ROLE_NAMES),
+  [ROLE_NAMES.ADMIN]: [
+    ROLE_NAMES.STAFF,
+    ROLE_NAMES.OPERATOR,
+    ROLE_NAMES.MANAGER,
+  ],
+  [ROLE_NAMES.MANAGER]: [
+    ROLE_NAMES.STAFF,
+    ROLE_NAMES.OPERATOR,
+  ],
+} as const;
+
+export const canAssignRole = (assignerRole: string, targetRole: string): boolean => {
+  const permissions = ROLE_ASSIGNMENT_PERMISSIONS[assignerRole as keyof typeof ROLE_ASSIGNMENT_PERMISSIONS];
+  return permissions ? permissions.includes(targetRole as any) : false;
+};

@@ -1,45 +1,16 @@
 /**
- * Enhanced Lazy Loading Components
- * Optimized lazy loading with preloading, error boundaries, and performance monitoring
+ * Enhanced Lazy Component Loader
+ * 
+ * Provides optimized lazy loading with preloading, error boundaries, 
+ * performance monitoring, and intelligent caching.
  */
 
 import React, { Suspense, lazy, ComponentType, LazyExoticComponent } from 'react';
 import { Box, CircularProgress, Typography, Button, Skeleton } from '@mui/material';
-import { performanceService } from '../services/performanceService';
 
-// Simple Error Boundary component
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error?: Error;
-}
-
-class SimpleErrorBoundary extends React.Component<
-  { children: React.ReactNode; fallback: (error: Error, retry: () => void) => React.ReactNode },
-  ErrorBoundaryState
-> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by boundary:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError && this.state.error) {
-      return this.props.fallback(this.state.error, () => {
-        this.setState({ hasError: false, error: undefined });
-      });
-    }
-
-    return this.props.children;
-  }
-}
+// ===================================================================
+// TYPES & INTERFACES
+// ===================================================================
 
 interface LazyComponentConfig {
   preload?: boolean;
@@ -56,51 +27,69 @@ interface LazyLoadedComponent<T = {}> {
   isLoaded: () => boolean;
 }
 
-// Default loading component
-const DefaultLoadingFallback: React.FC = () => (
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+// ===================================================================
+// ERROR BOUNDARY
+// ===================================================================
+
+class SimpleErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback: (error: Error, retry: () => void) => React.ReactNode },
+  ErrorBoundaryState
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Lazy component error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError && this.state.error) {
+      return this.props.fallback(this.state.error, () => {
+        this.setState({ hasError: false, error: undefined });
+      });
+    }
+
+    return this.props.children;
+  }
+}
+
+// ===================================================================
+// FALLBACK COMPONENTS
+// ===================================================================
+
+const DefaultLoadingFallback: React.FC<{ message?: string }> = ({ 
+  message = 'Loading...' 
+}) => (
   <Box
     display="flex"
-    justifyContent="center"
-    alignItems="center"
-    minHeight="200px"
     flexDirection="column"
+    alignItems="center"
+    justifyContent="center"
+    minHeight="200px"
     gap={2}
   >
     <CircularProgress size={40} />
     <Typography variant="body2" color="text.secondary">
-      Loading...
+      {message}
     </Typography>
   </Box>
 );
 
-// Default error fallback
-const DefaultErrorFallback: React.FC<{ error: Error; retry: () => void }> = ({ error, retry }) => {
-  // Import ErrorPage dynamically to avoid circular dependencies
-  const [ErrorPageComponent, setErrorPageComponent] = React.useState<React.ComponentType<any> | null>(null);
-
-  React.useEffect(() => {
-    import('./ErrorPage').then(module => {
-      setErrorPageComponent(() => module.default);
-    }).catch(() => {
-      // Fallback to simple error display if ErrorPage fails to load
-      setErrorPageComponent(null);
-    });
-  }, []);
-
-  if (ErrorPageComponent) {
-    return (
-      <ErrorPageComponent
-        error={error}
-        title="Component Loading Error"
-        message="Failed to load this component. This might be due to a network issue or a temporary problem."
-        onRetry={retry}
-        showGoBack={false}
-        showGoHome={true}
-      />
-    );
-  }
-
-  // Simple fallback if ErrorPage is not available
+const DefaultErrorFallback: React.FC<{ error: Error; retry: () => void }> = ({ 
+  error, 
+  retry 
+}) => {
   return (
     <Box
       display="flex"
@@ -124,9 +113,12 @@ const DefaultErrorFallback: React.FC<{ error: Error; retry: () => void }> = ({ e
   );
 };
 
-// Skeleton components for different layouts
+// ===================================================================
+// SKELETON COMPONENTS
+// ===================================================================
+
 export const PageSkeleton: React.FC = () => (
-  <Box p={3}>
+  <Box p={0}>
     <Skeleton variant="text" width="40%" height={40} sx={{ mb: 2 }} />
     <Skeleton variant="text" width="60%" height={20} sx={{ mb: 3 }} />
     <Box display="flex" gap={2} mb={3}>
@@ -164,6 +156,25 @@ export const ListSkeleton: React.FC = () => (
   </Box>
 );
 
+export const DashboardSkeleton: React.FC = () => (
+  <Box p={3}>
+    <Skeleton variant="text" width="30%" height={32} sx={{ mb: 3 }} />
+    <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(250px, 1fr))" gap={3} mb={4}>
+      {[1, 2, 3, 4].map((i) => (
+        <Box key={i} p={2} border="1px solid #eee" borderRadius={2}>
+          <Skeleton variant="text" width="60%" height={20} sx={{ mb: 1 }} />
+          <Skeleton variant="text" width="40%" height={32} />
+        </Box>
+      ))}
+    </Box>
+    <Skeleton variant="rectangular" width="100%" height={400} />
+  </Box>
+);
+
+// ===================================================================
+// LAZY COMPONENT MANAGER
+// ===================================================================
+
 class LazyComponentManager {
   private loadedComponents = new Set<string>();
   private preloadPromises = new Map<string, Promise<void>>();
@@ -175,14 +186,9 @@ class LazyComponentManager {
   ): LazyLoadedComponent<T> {
     const {
       preload = false,
-      retryable = true,
-      fallback = DefaultLoadingFallback,
-      errorFallback = DefaultErrorFallback,
-      skeleton,
       timeout = 10000
     } = config;
 
-    // Create lazy component with timeout
     const lazyComponent = lazy(() => {
       const startTime = Date.now();
       
@@ -190,14 +196,16 @@ class LazyComponentManager {
         importFn().then(module => {
           const loadTime = Date.now() - startTime;
           try {
-            performanceService.addMetric(
-              'component_lazy_load',
-              loadTime,
-              'render',
-              { component: name }
-            );
+            // Try to use performance service if available
+            if (typeof window !== 'undefined' && (window as any).performanceService) {
+              (window as any).performanceService.addMetric(
+                'component_lazy_load',
+                loadTime,
+                'render',
+                { component: name }
+              );
+            }
           } catch (error) {
-            // Ignore performance service errors
             console.warn('Performance service error:', error);
           }
           this.loadedComponents.add(name);
@@ -209,7 +217,6 @@ class LazyComponentManager {
       ]);
     });
 
-    // Preload function
     const preloadFn = async (): Promise<void> => {
       if (this.loadedComponents.has(name)) {
         return;
@@ -233,13 +240,9 @@ class LazyComponentManager {
       return preloadPromise;
     };
 
-    // Auto-preload if configured
     if (preload) {
-      // Delay preloading to not block initial render
       setTimeout(() => {
-        preloadFn().catch(() => {
-          // Ignore preload errors
-        });
+        preloadFn().catch(() => {});
       }, 100);
     }
 
@@ -269,10 +272,12 @@ class LazyComponentManager {
   }
 }
 
-// Global lazy component manager
+// ===================================================================
+// GLOBAL MANAGER & WRAPPER
+// ===================================================================
+
 export const lazyManager = new LazyComponentManager();
 
-// Enhanced lazy wrapper with error boundary and performance monitoring
 export const LazyWrapper: React.FC<{
   children: React.ReactNode;
   fallback?: React.ComponentType;
@@ -287,11 +292,6 @@ export const LazyWrapper: React.FC<{
   const [retryKey, setRetryKey] = React.useState(0);
 
   const handleRetry = React.useCallback(() => {
-    try {
-      performanceService.trackUserInteraction('component_retry', 0);
-    } catch (error) {
-      // Ignore performance service errors
-    }
     setRetryKey(prev => prev + 1);
   }, []);
 
@@ -309,106 +309,110 @@ export const LazyWrapper: React.FC<{
   );
 };
 
-// Create lazy components for the application
+// ===================================================================
+// LAZY COMPONENTS REGISTRY
+// ===================================================================
+
 export const LazyComponents = {
-  // Admin pages
+  // Admin Dashboard Components
   AdminDashboard: lazyManager.createLazyComponent(
-    () => import('../pages/admin/AdminDashboard'),
+    () => import('../../pages/admin/AdminDashboard'),
     'AdminDashboard',
-    { preload: true, skeleton: PageSkeleton }
+    { preload: true, skeleton: DashboardSkeleton }
   ),
   
+  SuperAdminDashboard: lazyManager.createLazyComponent(
+    () => import('../dashboards/SuperAdminDashboard'),
+    'SuperAdminDashboard',
+    { skeleton: DashboardSkeleton }
+  ),
+  
+  OperatorDashboard: lazyManager.createLazyComponent(
+    () => import('../dashboards/OperatorDashboard'),
+    'OperatorDashboard',
+    { skeleton: DashboardSkeleton }
+  ),
+
+  // Admin Management Pages
   WorkspaceManagement: lazyManager.createLazyComponent(
-    () => import('../pages/admin/WorkspaceManagement'),
+    () => import('../../pages/admin/WorkspaceManagement'),
     'WorkspaceManagement',
     { skeleton: PageSkeleton }
   ),
   
   MenuManagement: lazyManager.createLazyComponent(
-    () => import('../pages/admin/MenuManagement'),
+    () => import('../../pages/admin/MenuManagement'),
     'MenuManagement',
     { skeleton: PageSkeleton }
   ),
   
   UserManagement: lazyManager.createLazyComponent(
-    () => import('../pages/admin/UserManagement'),
+    () => import('../../pages/admin/UserManagement'),
     'UserManagement',
     { skeleton: PageSkeleton }
   ),
   
   OrdersManagement: lazyManager.createLazyComponent(
-    () => import('../pages/admin/OrdersManagement'),
+    () => import('../../pages/admin/OrdersManagement'),
     'OrdersManagement',
     { skeleton: PageSkeleton }
   ),
   
   TableManagement: lazyManager.createLazyComponent(
-    () => import('../pages/admin/TableManagement'),
+    () => import('../../pages/admin/TableManagement'),
     'TableManagement',
     { skeleton: PageSkeleton }
   ),
   
   VenueSettings: lazyManager.createLazyComponent(
-    () => import('../pages/admin/VenueSettings'),
+    () => import('../../pages/admin/VenueSettings'),
     'VenueSettings',
     { skeleton: PageSkeleton }
   ),
   
   UserPermissionsDashboard: lazyManager.createLazyComponent(
-    () => import('../pages/admin/UserPermissionsDashboard'),
+    () => import('../../pages/admin/UserPermissionsDashboard'),
     'UserPermissionsDashboard',
     { skeleton: PageSkeleton }
   ),
 
-  // Customer pages
+  // Customer Pages
   MenuPage: lazyManager.createLazyComponent(
-    () => import('../pages/MenuPage'),
+    () => import('../../pages/MenuPage'),
     'MenuPage',
     { preload: true, skeleton: PageSkeleton }
   ),
   
   CheckoutPage: lazyManager.createLazyComponent(
-    () => import('../pages/CheckoutPage'),
+    () => import('../../pages/CheckoutPage'),
     'CheckoutPage',
     { skeleton: PageSkeleton }
   ),
   
   OrderTrackingPage: lazyManager.createLazyComponent(
-    () => import('../pages/OrderTrackingPage'),
+    () => import('../../pages/OrderTrackingPage'),
     'OrderTrackingPage',
     { skeleton: PageSkeleton }
   ),
 
   RegistrationPage: lazyManager.createLazyComponent(
-    () => import('../pages/RegistrationPage'),
+    () => import('../../pages/RegistrationPage'),
     'RegistrationPage',
     { skeleton: PageSkeleton }
   ),
 
-  // Dashboard components
+  // Dashboard Components
   RealTimeDashboard: lazyManager.createLazyComponent(
-    () => import('../components/dashboards/RealTimeDashboard'),
+    () => import('../dashboards/RealTimeDashboard'),
     'RealTimeDashboard',
     { skeleton: CardSkeleton }
   ),
-  
-  SuperAdminDashboard: lazyManager.createLazyComponent(
-    () => import('../components/dashboards/SuperAdminDashboard'),
-    'SuperAdminDashboard',
-    { skeleton: PageSkeleton }
-  ),
-  
-  OperatorDashboard: lazyManager.createLazyComponent(
-    () => import('../components/dashboards/OperatorDashboard'),
-    'OperatorDashboard',
-    { skeleton: PageSkeleton }
-  ),
-
-  // Individual chart components can be imported directly
-  // Example: import { WeeklyRevenueChart } from '../components/charts/ChartComponents'
 };
 
-// Preload critical components
+// ===================================================================
+// UTILITY FUNCTIONS & HOOKS
+// ===================================================================
+
 export const preloadCriticalComponents = async (): Promise<void> => {
   const criticalComponents = [
     'AdminDashboard',
@@ -423,6 +427,36 @@ export const preloadCriticalComponents = async (): Promise<void> => {
   }
 };
 
+export const preloadAdminComponents = async (): Promise<void> => {
+  const adminComponents = [
+    'OrdersManagement',
+    'MenuManagement',
+    'TableManagement',
+    'UserManagement'
+  ];
+
+  try {
+    await lazyManager.preloadComponents(adminComponents);
+    console.log('Admin components preloaded successfully');
+  } catch (error) {
+    console.warn('Some admin components failed to preload:', error);
+  }
+};
+
+export const preloadPublicComponents = async (): Promise<void> => {
+  const publicComponents = [
+    'MenuPage',
+    'CheckoutPage'
+  ];
+
+  try {
+    await lazyManager.preloadComponents(publicComponents);
+    console.log('Public components preloaded successfully');
+  } catch (error) {
+    console.warn('Some public components failed to preload:', error);
+  }
+};
+
 // Hook for component preloading
 export const usePreloadComponents = (componentNames: string[]) => {
   React.useEffect(() => {
@@ -434,7 +468,6 @@ export const usePreloadComponents = (componentNames: string[]) => {
       }
     };
 
-    // Preload after a short delay to not block initial render
     const timer = setTimeout(preload, 500);
     return () => clearTimeout(timer);
   }, [componentNames]);
@@ -473,6 +506,18 @@ export const useIntersectionPreload = (
   }, [componentNames, options]);
 
   return ref;
+};
+
+// HOC for wrapping lazy components with Suspense
+export const withLazyLoading = <P extends Record<string, any>>(
+  LazyComponent: React.LazyExoticComponent<React.ComponentType<P>>,
+  fallbackMessage?: string
+) => {
+  return React.forwardRef<any, P>((props, ref) => (
+    <Suspense fallback={<DefaultLoadingFallback message={fallbackMessage} />}>
+      <LazyComponent {...props} ref={ref} />
+    </Suspense>
+  ));
 };
 
 export default LazyComponents;
