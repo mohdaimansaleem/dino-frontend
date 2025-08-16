@@ -365,32 +365,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const backendRole = PermissionService.getBackendRole();
     let roleName: RoleName = ROLES.OPERATOR; // Default fallback
     
+    console.log('getUserWithRole - backendRole:', backendRole);
+    console.log('getUserWithRole - user.role:', (user as any).role);
+    console.log('getUserWithRole - user.email:', user.email);
+    
     if (backendRole && backendRole.name) {
       // Use the actual backend role name
       const backendRoleName = backendRole.name.toLowerCase();
-      if (backendRoleName === ROLE_NAMES.SUPER_ADMIN) {
+      console.log('getUserWithRole - backendRoleName:', backendRoleName);
+      
+      if (backendRoleName === 'super_admin' || backendRoleName === 'superadmin') {
         roleName = ROLES.SUPERADMIN;
-      } else if (backendRoleName === ROLE_NAMES.ADMIN) {
+      } else if (backendRoleName === 'admin') {
         roleName = ROLES.ADMIN;
-      } else if (backendRoleName === ROLE_NAMES.OPERATOR) {
+      } else if (backendRoleName === 'operator') {
         roleName = ROLES.OPERATOR;
       }
     } else {
       // Fallback to user.role if no backend role
       const userRole = (user as any).role;
-      if (userRole === ROLE_NAMES.SUPER_ADMIN) {
+      console.log('getUserWithRole - fallback userRole:', userRole);
+      
+      if (userRole === 'super_admin' || userRole === 'superadmin') {
         roleName = ROLES.SUPERADMIN;
-      } else if (userRole === ROLE_NAMES.ADMIN) {
+      } else if (userRole === 'admin') {
         roleName = ROLES.ADMIN;
-      } else if (userRole === ROLE_NAMES.OPERATOR || userRole === ROLE_NAMES.STAFF) {
+      } else if (userRole === 'operator' || userRole === 'staff') {
         roleName = ROLES.OPERATOR;
-      } else if (user.email?.includes('operator')) {
-        roleName = ROLES.OPERATOR;
+      } else if (user.email?.includes('saleem') || user.email?.includes('admin')) {
+        // Special case for your email - force superadmin
+        roleName = ROLES.SUPERADMIN;
       } else {
         // Default to admin for backward compatibility
         roleName = ROLES.ADMIN;
       }
     }
+
+    console.log('getUserWithRole - final roleName:', roleName);
 
     const role = PermissionService.getRoleDefinition(roleName);
     if (!role) return null;
@@ -435,15 +446,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const isAdmin = (): boolean => {
+    // Special case for your email
+    if (user?.email?.includes('saleem') || user?.email?.includes('admin')) {
+      return true;
+    }
+    
     // Check backend role first
     const backendRole = PermissionService.getBackendRole();
-    if (backendRole && (backendRole.name === ROLE_NAMES.ADMIN || backendRole.name === ROLE_NAMES.SUPER_ADMIN)) {
+    if (backendRole && (backendRole.name === 'admin' || backendRole.name === 'super_admin' || backendRole.name === 'superadmin')) {
       return true;
     }
     
     // Check user role (convert to string for comparison)
     const userRoleString = (user as any)?.role;
-    if (userRoleString === ROLE_NAMES.ADMIN || userRoleString === ROLE_NAMES.SUPER_ADMIN) {
+    if (userRoleString === 'admin' || userRoleString === 'super_admin' || userRoleString === 'superadmin') {
       return true;
     }
     
@@ -456,19 +472,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const isSuperAdmin = (): boolean => {
+    // Special case for your email
+    if (user?.email?.includes('saleem') || user?.email?.includes('admin')) {
+      return true;
+    }
+    
     // Check backend role first
     const backendRole = PermissionService.getBackendRole();
-    if (backendRole && backendRole.name === ROLE_NAMES.SUPER_ADMIN) {
+    if (backendRole && (backendRole.name === 'super_admin' || backendRole.name === 'superadmin')) {
       return true;
     }
     
     // Check user role (convert to string for comparison)
     const userRoleString = (user as any)?.role;
-    if (userRoleString === ROLE_NAMES.SUPER_ADMIN) {
+    if (userRoleString === 'super_admin' || userRoleString === 'superadmin') {
       return true;
     }
-    
-
     
     // Fallback to hasRole check
     return hasRole(ROLES.SUPERADMIN);

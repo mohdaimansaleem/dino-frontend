@@ -14,7 +14,7 @@ export interface User {
 
 export interface UserRole {
   id: string;
-  name: RoleName;
+  name: RoleName | string;
   displayName: string;
   description: string;
   permissions: Permission[];

@@ -68,11 +68,13 @@ import {
   Email,
   Web,
   Refresh,
+  Store,
 } from '@mui/icons-material';
 import { venueService } from '../../services/venueService';
 import { useUserData } from '../../contexts/UserDataContext';
 import { CircularProgress } from '@mui/material';
 import StorageManager from '../../utils/storageManager';
+import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
 interface VenueSettings {
   name: string;
@@ -447,173 +449,306 @@ const VenueSettings: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
+      <Box sx={{ pt: { xs: '56px', sm: '64px' }, py: 4, width: '100%' }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <CircularProgress size={60} />
+          <Typography variant="h6" sx={{ ml: 2 }}>
+            Loading venue settings...
+          </Typography>
         </Box>
-      </Container>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-        <Box sx={{ textAlign: 'center' }}>
-          <Button 
-            variant="contained" 
-            onClick={() => window.location.reload()}
-            sx={{ mt: 2 }}
-          >
-            Reload Page
-          </Button>
-        </Box>
-      </Container>
+      <Box sx={{ pt: { xs: '56px', sm: '64px' }, py: 4, width: '100%' }}>
+        <Container maxWidth="xl">
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+          <Box sx={{ textAlign: 'center' }}>
+            <Button 
+              variant="contained" 
+              onClick={() => window.location.reload()}
+              sx={{ mt: 2 }}
+            >
+              Reload Page
+            </Button>
+          </Box>
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <Box>
-      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
-        <Box sx={{ py: { xs: 2, sm: 4 } }}>
-          <Box sx={{ mb: { xs: 3, md: 4 } }}>
-            <Paper 
-              elevation={2} 
-              className="card-responsive"
-              sx={{ 
-                p: { xs: 2, sm: 4 }, 
-                mb: { xs: 3, md: 4 }
-              }}
-            >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', md: 'center' }, mb: 2, flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 2, md: 0 } }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Avatar
-                  sx={{ 
-                    width: 64, 
-                    height: 64, 
-                    mr: 3,
-                    bgcolor: 'primary.main',
-                    fontSize: '2rem'
-                  }}
-                >
-                  🦕
-                </Avatar>
-                <Box>
-                  <Typography 
-                    variant="h4" 
-                    gutterBottom 
-                    fontWeight="600"
-                    sx={{ 
-                      fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
-                      letterSpacing: '-0.01em'
-                    }}
-                  >
-                    Venue Settings
-                  </Typography>
-                  <Typography variant="h6" color="text.secondary" fontWeight="500">
-                    {settings.name || 'Your Venue'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Configure your venue's information, features, and preferences
-                  </Typography>
-                </Box>
-              </Box>
-              <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column', alignItems: { xs: 'flex-start', md: 'flex-end' }, width: { xs: '100%', md: 'auto' } }}>
-                <Box sx={{ display: 'flex', gap: 2, width: { xs: '100%', md: 'auto' } }}>
-                  <Tooltip title={venueActive ? 'Deactivate venue operations' : 'Activate venue operations'}>
-                    <Button
-                      variant={venueActive ? "outlined" : "contained"}
-                      color={venueActive ? "error" : "success"}
-                      onClick={handleToggleVenueStatus}
-                      startIcon={<PowerSettingsNew />}
-                      size={isMobile ? "small" : "medium"}
-                      sx={{
-                        textTransform: 'none',
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                        px: { xs: 1.5, sm: 2 },
-                        py: { xs: 0.5, sm: 1 },
-                        minWidth: { xs: 'auto', sm: '140px' },
-                        width: { xs: 'auto', md: 'auto' }
-                      }}
-                    >
-                      {isMobile ? (venueActive ? 'Deactivate' : 'Activate') : (venueActive ? 'Deactivate Venue' : 'Activate Venue')}
-                    </Button>
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-                  <Chip 
-                    icon={venueActive ? <CheckCircle /> : <Cancel />}
-                    label={venueActive ? 'Active' : 'Inactive'} 
-                    color={venueActive ? 'success' : 'error'}
-                    size="small"
-                  />
-                </Box>
-              </Box>
-            </Box>
-          </Paper>
-        </Box>
-
-        {hasChanges && (
-          <Paper 
-            elevation={2} 
-            sx={{ 
-              p: 3, 
-              mb: 3, 
-              bgcolor: 'warning.light',
+    <Box
+      sx={{
+        minHeight: 'auto',
+        height: 'auto',
+        backgroundColor: '#f8f9fa',
+        padding: 0,
+        margin: 0,
+        width: '100%',
+        overflow: 'visible',
+        '& .MuiContainer-root': {
+          padding: '0 !important',
+          margin: '0 !important',
+          maxWidth: 'none !important',
+        },
+      }}
+    >
+      {/* Hero Section */}
+      <Box
+        sx={{
+          backgroundColor: 'grey.100',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          position: 'relative',
+          overflow: 'hidden',
+          color: 'text.primary',
+          padding: 0,
+          margin: 0,
+          width: '100%',
+        }}
+      >
+        <AnimatedBackground />
+        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2 }}>
+          <Box
+            sx={{
               display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: { xs: 'flex-start', md: 'center' },
+              gap: { xs: 2, md: 3 },
+              py: { xs: 3, sm: 4 },
+              px: { xs: 3, sm: 4 },
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Edit sx={{ color: 'warning.main' }} />
-              <Box>
-                <Typography variant="body1" color="warning.main" fontWeight="600">
-                  You have unsaved changes
+            {/* Header Content */}
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Settings sx={{ fontSize: 32, mr: 1.5, color: 'text.primary', opacity: 0.9 }} />
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  fontWeight="600"
+                  sx={{
+                    fontSize: { xs: '1.75rem', sm: '2rem' },
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.2,
+                    color: 'text.primary',
+                  }}
+                >
+                  Venue Settings
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Don't forget to save your modifications
+              </Box>
+              
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontWeight: 400,
+                  mb: 1,
+                  maxWidth: '500px',
+                  color: 'text.secondary',
+                }}
+              >
+                Configure your venue's information, features, and operational preferences
+              </Typography>
+
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                }}
+              >
+                <Restaurant sx={{ fontSize: 18, mr: 1, color: 'primary.main', opacity: 0.9 }} />
+                <Typography variant="body2" fontWeight="500" color="text.primary">
+                  {settings.name || 'Your Venue'}
                 </Typography>
               </Box>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button 
-                variant="outlined" 
-                onClick={handleReset}
+
+            {/* Action Buttons */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1.5,
+                flexDirection: { xs: 'row', sm: 'row' },
+                flexWrap: 'wrap',
+                alignItems: 'center',
+              }}
+            >
+              <Tooltip title={venueActive ? 'Deactivate venue operations' : 'Activate venue operations'}>
+                <Button
+                  variant={venueActive ? "outlined" : "contained"}
+                  color={venueActive ? "error" : "success"}
+                  onClick={handleToggleVenueStatus}
+                  startIcon={<PowerSettingsNew />}
+                  size="medium"
+                  sx={{
+                    backgroundColor: venueActive ? 'transparent' : 'success.main',
+                    color: venueActive ? 'error.main' : 'white',
+                    borderColor: venueActive ? 'error.main' : 'success.main',
+                    fontWeight: 600,
+                    px: 3,
+                    py: 1,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '0.875rem',
+                    boxShadow: venueActive ? 'none' : '0 2px 8px rgba(0, 0, 0, 0.15)',
+                    '&:hover': {
+                      backgroundColor: venueActive ? 'rgba(211, 47, 47, 0.1)' : 'success.dark',
+                      color: venueActive ? 'error.dark' : 'white',
+                      borderColor: venueActive ? 'error.dark' : 'success.dark',
+                      transform: 'translateY(-1px)',
+                      boxShadow: venueActive ? '0 2px 8px rgba(211, 47, 47, 0.3)' : '0 4px 12px rgba(46, 125, 50, 0.4)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  {venueActive ? 'Deactivate Venue' : 'Activate Venue'}
+                </Button>
+              </Tooltip>
+
+              <IconButton
+                onClick={handleRefreshSettings}
+                disabled={loading}
+                size="medium"
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  color: 'text.secondary',
+                  width: 40,
+                  height: 40,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 1)',
+                    color: 'primary.main',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+                title={loading ? 'Refreshing...' : 'Refresh settings'}
               >
-                Reset
-              </Button>
-              <Button 
-                variant="contained" 
-                startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Save />} 
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? 'Saving...' : 'Save Changes'}
-              </Button>
+                <Refresh />
+              </IconButton>
             </Box>
-          </Paper>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Main Content */}
+      <Box
+        sx={{
+          width: '100%',
+          padding: 0,
+          margin: 0,
+        }}
+      >
+
+
+        {/* Unsaved Changes Banner */}
+        {hasChanges && (
+          <Box sx={{ px: { xs: 3, sm: 4 }, mb: 3 }}>
+            <Paper 
+              elevation={2} 
+              sx={{ 
+                p: 3, 
+                bgcolor: 'rgba(255, 193, 7, 0.1)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: 'rgba(255, 193, 7, 0.3)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Edit sx={{ color: '#ed6c02' }} />
+                <Box>
+                  <Typography variant="body1" color="#ed6c02" fontWeight="600">
+                    You have unsaved changes
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Don't forget to save your modifications
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button 
+                  variant="outlined" 
+                  onClick={handleReset}
+                  sx={{
+                    borderColor: '#ed6c02',
+                    color: '#ed6c02',
+                    '&:hover': {
+                      borderColor: '#d32f2f',
+                      backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    },
+                  }}
+                >
+                  Reset
+                </Button>
+                <Button 
+                  variant="contained" 
+                  startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Save />} 
+                  onClick={handleSave}
+                  disabled={saving}
+                  sx={{
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: '#1565c0',
+                    },
+                  }}
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
         )}
 
-          <Paper elevation={2} className="card-responsive">
+        {/* Settings Tabs */}
+        <Box sx={{ px: { xs: 3, sm: 4 }, pt: { xs: 3, sm: 4 }, pb: 4 }}>
+          <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
             <Tabs 
               value={tabValue} 
-              onChange={(e, newValue) => setTabValue(newValue)}
+              onChange={(e, newValue) => {
+                // Only allow tab 0 (Basic Info) to be selected
+                if (newValue === 0) {
+                  setTabValue(newValue);
+                }
+              }}
               variant="scrollable"
               scrollButtons="auto"
               allowScrollButtonsMobile
               sx={{ 
                 borderBottom: '1px solid', 
                 borderColor: 'divider',
+                backgroundColor: 'grey.50',
                 '& .MuiTab-root': {
                   minHeight: { xs: 48, sm: 72 },
                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
                   fontWeight: 500,
                   textTransform: 'none',
                   minWidth: { xs: 'auto', sm: 120 },
-                  px: { xs: 1, sm: 2 }
+                  px: { xs: 1, sm: 2 },
+                  '&.Mui-selected': {
+                    backgroundColor: 'white',
+                    fontWeight: 600,
+                  },
                 }
               }}
             >
@@ -626,21 +761,25 @@ const VenueSettings: React.FC = () => {
                 icon={<Settings fontSize={isMobile ? "small" : "medium"} />} 
                 label="Features" 
                 iconPosition={isMobile ? "start" : "top"} 
+                disabled
               />
               <Tab 
                 icon={<Payment fontSize={isMobile ? "small" : "medium"} />} 
                 label="Payment" 
                 iconPosition={isMobile ? "start" : "top"} 
+                disabled
               />
               <Tab 
                 icon={<Notifications fontSize={isMobile ? "small" : "medium"} />} 
                 label={isMobile ? "Alerts" : "Notifications"} 
                 iconPosition={isMobile ? "start" : "top"} 
+                disabled
               />
               <Tab 
                 icon={<Security fontSize={isMobile ? "small" : "medium"} />} 
                 label="Advanced" 
                 iconPosition={isMobile ? "start" : "top"} 
+                disabled
               />
             </Tabs>
 
@@ -648,8 +787,8 @@ const VenueSettings: React.FC = () => {
             <Grid container spacing={3}>
               <Grid item xs={12} md={8}>
                 <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
+                  <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+                    <Typography variant="h5" gutterBottom fontWeight="600" sx={{ mb: 3 }}>
                       Basic Information
                     </Typography>
                     <Grid container spacing={3}>
@@ -659,6 +798,15 @@ const VenueSettings: React.FC = () => {
                           label="Venue Name"
                           value={settings.name}
                           onChange={(e) => handleSettingChange('name' as any, '', e.target.value)}
+                          sx={{
+                            '& .MuiInputLabel-root': {
+                              fontSize: '1rem',
+                              fontWeight: 500,
+                            },
+                            '& .MuiInputBase-input': {
+                              fontSize: '1rem',
+                            },
+                          }}
                         />
                       </Grid>
                       <Grid item xs={12}>
@@ -669,6 +817,15 @@ const VenueSettings: React.FC = () => {
                           rows={3}
                           value={settings.description}
                           onChange={(e) => handleSettingChange('description' as any, '', e.target.value)}
+                          sx={{
+                            '& .MuiInputLabel-root': {
+                              fontSize: '1rem',
+                              fontWeight: 500,
+                            },
+                            '& .MuiInputBase-input': {
+                              fontSize: '1rem',
+                            },
+                          }}
                         />
                       </Grid>
                       <Grid item xs={12}>
@@ -677,6 +834,15 @@ const VenueSettings: React.FC = () => {
                           label="Address"
                           value={settings.address}
                           onChange={(e) => handleSettingChange('address' as any, '', e.target.value)}
+                          sx={{
+                            '& .MuiInputLabel-root': {
+                              fontSize: '1rem',
+                              fontWeight: 500,
+                            },
+                            '& .MuiInputBase-input': {
+                              fontSize: '1rem',
+                            },
+                          }}
                         />
                       </Grid>
                       <Grid item xs={12} md={6}>
@@ -685,6 +851,15 @@ const VenueSettings: React.FC = () => {
                           label="Phone"
                           value={settings.phone}
                           onChange={(e) => handleSettingChange('phone' as any, '', e.target.value)}
+                          sx={{
+                            '& .MuiInputLabel-root': {
+                              fontSize: '1rem',
+                              fontWeight: 500,
+                            },
+                            '& .MuiInputBase-input': {
+                              fontSize: '1rem',
+                            },
+                          }}
                         />
                       </Grid>
                       <Grid item xs={12} md={6}>
@@ -694,6 +869,15 @@ const VenueSettings: React.FC = () => {
                           type="email"
                           value={settings.email}
                           onChange={(e) => handleSettingChange('email' as any, '', e.target.value)}
+                          sx={{
+                            '& .MuiInputLabel-root': {
+                              fontSize: '1rem',
+                              fontWeight: 500,
+                            },
+                            '& .MuiInputBase-input': {
+                              fontSize: '1rem',
+                            },
+                          }}
                         />
                       </Grid>
                     </Grid>
@@ -702,8 +886,8 @@ const VenueSettings: React.FC = () => {
               </Grid>
               <Grid item xs={12} md={4}>
                 <Card>
-                  <CardContent sx={{ textAlign: 'center' }}>
-                    <Typography variant="h6" gutterBottom>
+                  <CardContent sx={{ textAlign: 'center', p: { xs: 3, sm: 4 } }}>
+                    <Typography variant="h5" gutterBottom fontWeight="600" sx={{ mb: 3 }}>
                       Venue Logo
                     </Typography>
                     <Avatar
@@ -729,10 +913,15 @@ const VenueSettings: React.FC = () => {
                           severity: 'info' 
                         });
                       }}
+                      sx={{
+                        fontSize: '1rem',
+                        fontWeight: 500,
+                        py: 1.5,
+                      }}
                     >
                       Upload Logo
                     </Button>
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 2, display: 'block', fontSize: '0.875rem' }}>
                       Recommended: 512x512px, PNG or JPG
                     </Typography>
                   </CardContent>
@@ -1047,8 +1236,10 @@ const VenueSettings: React.FC = () => {
             </Card>
           </TabPanel>
           </Paper>
+        </Box>
+      </Box>
 
-          <Snackbar
+      <Snackbar
             open={snackbar.open}
             autoHideDuration={6000}
             onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
@@ -1073,8 +1264,6 @@ const VenueSettings: React.FC = () => {
               {snackbar.message}
             </Alert>
           </Snackbar>
-        </Box>
-      </Container>
     </Box>
   );
 };

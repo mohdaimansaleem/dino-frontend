@@ -16,6 +16,7 @@ import { tableService } from './tableService';
 import { orderService } from './orderService';
 import { dashboardService } from './dashboardService';
 import { validationService } from './validationService';
+import { permissionService } from './permissionService';
 
 // Core API service
 export { apiService } from './api';
@@ -469,6 +470,7 @@ export default {
   orderService,
   dashboardService,
   validationService,
+  permissionService,
   
   // Utilities
   serviceRegistry,

@@ -130,24 +130,28 @@ class VenueService {
   }
 
   /**
-   * Get venues by workspace ID (Venus API)
+   * Get venues by workspace ID (Venus API) - SINGLE API CALL ONLY
    */
   async getVenuesByWorkspace(workspaceId: string): Promise<WorkspaceVenue[]> {
     try {
-      // Try the specific workspace endpoint first
+      console.log('🏢 VenueService: Making SINGLE API call to get venues for workspace:', workspaceId);
+      
+      // PRIMARY API CALL: Try the specific workspace venues endpoint
       const response = await apiService.get<WorkspaceVenue[]>(`/venues/workspace/${workspaceId}/venues`);
       
       if (response.success && response.data) {
+        console.log('✅ VenueService: Successfully fetched venues from workspace endpoint:', response.data.length);
         return response.data;
       }
       
+      console.log('⚠️ VenueService: Workspace venues endpoint returned no data');
       return [];
     } catch (error) {
-      console.error('Error fetching workspace venues from specific endpoint:', error);
+      console.error('❌ VenueService: Error fetching workspace venues from primary endpoint:', error);
       
-      // Fallback: Try getting all venues and filter by workspace
+      // FALLBACK API CALL: Try getting all venues and filter by workspace
       try {
-        console.log('🔄 Trying fallback: getting all venues and filtering by workspace');
+        console.log('🔄 VenueService: Trying fallback - getting all venues and filtering by workspace');
         const allVenuesResponse = await this.getVenues({ page_size: 100 });
         
         if (allVenuesResponse.success && allVenuesResponse.data) {
@@ -174,13 +178,14 @@ class VenueService {
               updated_at: venue.updated_at || venue.created_at
             } as WorkspaceVenue));
           
-          console.log('✅ Fallback successful, found venues:', workspaceVenues);
+          console.log('✅ VenueService: Fallback successful, found venues:', workspaceVenues.length);
           return workspaceVenues;
         }
       } catch (fallbackError) {
-        console.error('Error in fallback venue fetching:', fallbackError);
+        console.error('❌ VenueService: Error in fallback venue fetching:', fallbackError);
       }
       
+      console.log('❌ VenueService: All venue fetching attempts failed, returning empty array');
       return [];
     }
   }

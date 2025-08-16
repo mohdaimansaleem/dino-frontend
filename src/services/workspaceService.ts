@@ -110,8 +110,9 @@ class WorkspaceService {
     }
   }
 
-  // Get workspace venues
+  // Get workspace venues - DEPRECATED: Use venueService.getVenuesByWorkspace() instead
   async getWorkspaceVenues(workspaceId: string): Promise<Venue[]> {
+    console.warn('⚠️ WorkspaceService.getWorkspaceVenues() is deprecated. Use venueService.getVenuesByWorkspace() instead.');
     try {
       const response = await apiService.get<Venue[]>(`/workspaces/${workspaceId}/venues`);
       return response.data || [];

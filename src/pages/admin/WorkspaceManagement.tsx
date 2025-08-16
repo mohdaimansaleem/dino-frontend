@@ -105,9 +105,20 @@ interface VenueFormData {
   isOpen: boolean;
 }
 
+/**
+ * WorkspaceManagement Component
+ * 
+ * This component ONLY calls the venues API when the user clicks on the workspace module.
+ * It does not make any other API calls for workspace data, user data, or other resources.
+ * 
+ * API Calls Made:
+ * - venueService.getVenuesByWorkspace(workspaceId) - Gets venues for the current workspace
+ * 
+ * All other data (workspace info, user data) comes from existing context/storage.
+ */
 const WorkspaceManagement: React.FC = () => {
   const { hasPermission, isSuperAdmin } = useAuth();
-  const { userData, loading: userDataLoading, refreshUserData } = useUserData();
+  const { userData, loading: userDataLoading } = useUserData(); // Removed refreshUserData to prevent API calls
   const location = useLocation();
   
   // State management
@@ -178,7 +189,7 @@ const WorkspaceManagement: React.FC = () => {
     isOpen: true,
   });
 
-  // Optimized venue loading with caching
+  // Optimized venue loading with caching - ONLY calls venues API
   const loadWorkspaceVenues = useCallback(async (forceRefresh = false) => {
     const workspaceId = userData?.workspace?.id;
     if (!workspaceId) {
@@ -201,8 +212,11 @@ const WorkspaceManagement: React.FC = () => {
 
     try {
       setLoadingVenues(true);
+      console.log('🏢 WorkspaceManagement: Calling ONLY venues API for workspace:', workspaceId);
       
+      // ONLY API CALL: Get venues by workspace (Venus API)
       const venues = await venueService.getVenuesByWorkspace(workspaceId);
+      console.log('✅ WorkspaceManagement: Venues API response:', venues);
       
       setWorkspaceVenues(venues || []);
       const now = Date.now();
@@ -214,6 +228,7 @@ const WorkspaceManagement: React.FC = () => {
         StorageManager.setItem(workspaceCacheKey, venues, 10 * 60 * 1000); // 10 minutes TTL
       }
     } catch (error) {
+      console.error('❌ WorkspaceManagement: Error calling venues API:', error);
       setSnackbar({
         open: true,
         message: 'Failed to load workspace venues',
@@ -237,9 +252,10 @@ const WorkspaceManagement: React.FC = () => {
   const loadWorkspaceVenuesRef = useRef(loadWorkspaceVenues);
   loadWorkspaceVenuesRef.current = loadWorkspaceVenues;
 
-  // Initial load when component mounts
+  // Initial load when component mounts - ONLY calls venues API
   useEffect(() => {
     if (userData?.workspace?.id && !userDataLoading) {
+      console.log('🏢 WorkspaceManagement: Component mounted, calling venues API for workspace:', userData.workspace.id);
       // Always force load on initial mount to ensure venues are displayed
       loadWorkspaceVenuesRef.current(true);
     }
@@ -259,14 +275,19 @@ const WorkspaceManagement: React.FC = () => {
     }
   }, [userData?.workspace?.id, userDataLoading, workspaceVenues.length, loadingVenues]);
 
-  // Route-based refresh (when navigating to workspace page)
+  // Route-based refresh (when navigating to workspace page) - ONLY calls venues API
   useEffect(() => {
     if ((location.pathname === '/admin/workspaces' || location.pathname === '/admin/workspace') && 
         userData?.workspace?.id && !userDataLoading) {
       
-      // If no venues are loaded or cache is stale, load venues
+      console.log('🏢 WorkspaceManagement: User clicked on workspace module, checking if venues API call needed');
+      
+      // If no venues are loaded or cache is stale, call ONLY venues API
       if (workspaceVenues.length === 0 || Date.now() - lastFetchTimeRef.current > 2 * 60 * 1000) {
+        console.log('🏢 WorkspaceManagement: Calling venues API due to route navigation');
         loadWorkspaceVenuesRef.current(true);
+      } else {
+        console.log('🏢 WorkspaceManagement: Using cached venues data, no API call needed');
       }
     }
   }, [location.pathname, userData?.workspace?.id, userDataLoading, workspaceVenues.length]);
@@ -354,8 +375,7 @@ const WorkspaceManagement: React.FC = () => {
       
       // Refresh venues list with force refresh
       await refreshWorkspaceVenues();
-      // Refresh user data to get updated venue info
-      await refreshUserData();
+      // Note: Not refreshing user data to avoid unnecessary API calls
       
       setDeleteModal({ open: false, venueId: '', venueName: '', loading: false });
     } catch (error: any) {
@@ -1507,9 +1527,6 @@ const WorkspaceManagement: React.FC = () => {
                 // Refresh venues list with force refresh
                 await refreshWorkspaceVenues();
                 
-                // Refresh user data to get updated venue info
-                await refreshUserData();
-                
                 // Reset form data
                 setVenueFormData({
                   name: '',
@@ -1624,9 +1641,6 @@ const WorkspaceManagement: React.FC = () => {
                 
                 // Refresh venues list with force refresh
                 await refreshWorkspaceVenues();
-                
-                // Refresh user data to get updated venue info
-                await refreshUserData();
                 
               } catch (error: any) {
                 setSnackbar({

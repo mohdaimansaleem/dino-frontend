@@ -53,6 +53,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
 import PermissionService from '../../services/permissionService';
 import { PERMISSIONS, ROLES } from '../../types/auth';
+import AnimatedBackground from '../../components/ui/AnimatedBackground';
+import PermissionDebug from '../../components/debug/PermissionDebug';
 
 const UserPermissionsDashboard: React.FC = () => {
   const { user, getUserWithRole, hasPermission, isSuperAdmin } = useAuth();
@@ -67,24 +69,63 @@ const UserPermissionsDashboard: React.FC = () => {
   // Users data will be loaded from API
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userStats, setUserStats] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    usersByRole: {} as Record<string, number>,
+    recentLogins: 0,
+  });
+
+  // Function to refresh users data
+  const refreshUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const usersData = await PermissionService.getVenueUsers(userData?.venue?.id);
+      // Get updated user statistics
+      const stats = await PermissionService.getUserStatistics(userData?.venue?.id);
+      setUsers(usersData);
+      setUserStats(stats);
+      
+
+    } catch (error: any) {
+      setError(error.message || 'Failed to load users. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load users from API
   useEffect(() => {
     const loadUsers = async () => {
       try {
         setLoading(true);
-        // TODO: Replace with actual API call
-        // const usersData = await userService.getUsers();
-        // setUsers(usersData);
-        setUsers([]); // Empty for now until API is implemented
-      } catch (error) {
-        } finally {
+        setError(null);
+        // Get users for the current venue with their permissions
+        const usersData = await PermissionService.getVenueUsers(userData?.venue?.id);
+        // Get user statistics
+        const stats = await PermissionService.getUserStatistics(userData?.venue?.id);
+        setUsers(usersData);
+        setUserStats(stats);
+        
+
+      } catch (error: any) {
+        setError(error.message || 'Failed to load users. Please try again.');
+        setUsers([]);
+      } finally {
         setLoading(false);
       }
     };
 
-    loadUsers();
-  }, []);
+    // Only load users if we have venue data or if user is superadmin
+    if (userData?.venue?.id || isSuperAdmin()) {
+      loadUsers();
+    } else {
+      setLoading(false);
+      setError('No venue selected. Please select a venue to view users.');
+    }
+  }, [userData?.venue?.id, isSuperAdmin]);
 
   const permissionCategories = [
     {
@@ -176,14 +217,8 @@ const UserPermissionsDashboard: React.FC = () => {
     }
     
     if (typeof role === 'string') {
-      const roleDefinition = PermissionService.getRoleDefinition(role);
-      
-      // Ensure we always return a string
-      if (typeof roleDefinition === 'object' && roleDefinition?.displayName) {
-        return String(roleDefinition.displayName);
-      }
-      
-      return String(role);
+      // Use PermissionService method for consistency
+      return PermissionService.getRoleDisplayName(role);
     }
     
     return 'Unknown Role';
@@ -312,8 +347,7 @@ const UserPermissionsDashboard: React.FC = () => {
     }));
     
     // In real app, this would generate and download a CSV/Excel file
-    console.log('Export data:', data);
-  };
+    };
 
   const currentUserAuth = getUserWithRole();
   const canViewAllUsers = isSuperAdmin() || hasPermission(PERMISSIONS.USERS_VIEW);
@@ -321,177 +355,351 @@ const UserPermissionsDashboard: React.FC = () => {
   // Add error handling for currentUserAuth
   if (!currentUserAuth && !userDataLoading) {
     return (
-      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
-        <Alert severity="error">
-          Unable to load user authentication data. Please try refreshing the page or contact support.
-        </Alert>
-      </Container>
+      <Box sx={{ pt: { xs: '56px', sm: '64px' }, py: 4, width: '100%' }}>
+        <Container maxWidth="xl">
+          <Alert severity="error">
+            Unable to load user authentication data. Please try refreshing the page or contact support.
+          </Alert>
+        </Container>
+      </Box>
     );
   }
 
   // Debug logging
-  console.log('currentUserAuth:', currentUserAuth);
-  console.log('currentUserAuth.role:', currentUserAuth?.role);
-
   if (!canViewAllUsers) {
     return (
-      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
-        <Alert severity="warning">
-          You don't have permission to view user permissions. Contact your administrator.
-        </Alert>
-      </Container>
+      <Box sx={{ pt: { xs: '56px', sm: '64px' }, py: 4, width: '100%' }}>
+        <Container maxWidth="xl">
+          <Alert severity="warning">
+            You don't have permission to view user permissions. Contact your administrator.
+          </Alert>
+        </Container>
+      </Box>
     );
   }
 
   // Don't render if currentUserAuth is still loading or null
   if (!currentUserAuth) {
     return (
-      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' }, py: 4 }}>
+      <Box sx={{ pt: { xs: '56px', sm: '64px' }, py: 4, width: '100%' }}>
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <Typography>Loading user permissions...</Typography>
         </Box>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
-      <Box sx={{ py: { xs: 2, sm: 4 } }}>
-        {/* Header */}
-        <Box sx={{ mb: { xs: 3, md: 4 } }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-            <Box>
-              <Typography 
-                variant="h4" 
-                component="h1" 
-                gutterBottom 
-                fontWeight="600"
-                sx={{ 
-                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                User Permissions Dashboard
-              </Typography>
-              <Typography 
-                variant="body1" 
-                color="text.secondary"
-                sx={{ 
+    <Box
+      sx={{
+        minHeight: 'auto',
+        height: 'auto',
+        backgroundColor: '#f8f9fa',
+        padding: 0,
+        margin: 0,
+        width: '100%',
+        overflow: 'visible',
+        '& .MuiContainer-root': {
+          padding: '0 !important',
+          margin: '0 !important',
+          maxWidth: 'none !important',
+        },
+      }}
+    >
+      {/* Hero Section */}
+      <Box
+        sx={{
+          backgroundColor: 'grey.100',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          position: 'relative',
+          overflow: 'hidden',
+          color: 'text.primary',
+          padding: 0,
+          margin: 0,
+          width: '100%',
+        }}
+      >
+        <AnimatedBackground />
+        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              gap: { xs: 2, md: 3 },
+              py: { xs: 3, sm: 4 },
+              px: { xs: 3, sm: 4 },
+            }}
+          >
+            {/* Header Content */}
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Security sx={{ fontSize: 32, mr: 1.5, color: 'text.primary', opacity: 0.9 }} />
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  fontWeight="600"
+                  sx={{
+                    fontSize: { xs: '1.75rem', sm: '2rem' },
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.2,
+                    color: 'text.primary',
+                  }}
+                >
+                  User Permissions
+                </Typography>
+              </Box>
+              
+              <Typography
+                variant="body1"
+                sx={{
                   fontSize: { xs: '0.875rem', sm: '1rem' },
-                  fontWeight: 400
+                  fontWeight: 400,
+                  mb: 1,
+                  maxWidth: '500px',
+                  color: 'text.secondary',
                 }}
               >
                 Monitor and manage user permissions across your organization
               </Typography>
-            </Box>
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 2,
-            flexWrap: 'wrap',
-            alignItems: 'center'
-          }}>
 
-          </Box>
-          </Box>
-        </Box>
-
-        {/* Filters and Search */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search />
-                    </InputAdornment>
-                  ),
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
                 }}
-              />
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <TextField
-                fullWidth
-                select
-                label="Filter by Role"
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                SelectProps={{ native: true }}
               >
-                <option value="all">All Roles</option>
-                <option value={ROLES.SUPERADMIN}>Super Admin</option>
-                <option value={ROLES.ADMIN}>Admin</option>
-                <option value={ROLES.OPERATOR}>Operator</option>
-              </TextField>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={showInactive}
-                    onChange={(e) => setShowInactive(e.target.checked)}
-                  />
-                }
-                label="Show Inactive Users"
-              />
-            </Grid>
-            <Grid item xs={12} md={2}>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Button
-              variant="outlined"
-              startIcon={<Visibility />}
-              onClick={() => handleViewPermissions({
-                ...(currentUserAuth || {}),
-                firstName: user?.first_name || user?.firstName,
-                lastName: user?.last_name || user?.lastName,
-                email: user?.email,
-                isActive: true,
-                lastLogin: new Date(),
-                cafeId: userData?.venue?.id,
-              })}
-              sx={{ 
-                minWidth: 'auto',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              My Permissions
-            </Button>
-
-            <IconButton
-              onClick={() => {
-                // Add refresh functionality here if needed
-                window.location.reload();
-              }}
-              size="large"
-              sx={{
-                backgroundColor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'divider',
-                color: 'text.primary',
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                  borderColor: 'primary.main',
-                  color: 'primary.main',
-                },
-              }}
-              title="Refresh permissions"
-            >
-              <Refresh />
-            </IconButton>
+                <Person sx={{ fontSize: 18, mr: 1, color: 'primary.main', opacity: 0.9 }} />
+                <Typography variant="body2" fontWeight="500" color="text.primary">
+                  {userData?.venue?.name || 'All Venues'}
+                </Typography>
               </Box>
+            </Box>
+
+            {/* Action Buttons */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1.5,
+                flexDirection: { xs: 'row', sm: 'row' },
+                flexWrap: 'wrap',
+                alignItems: 'center',
+              }}
+            >
+              <IconButton
+                onClick={refreshUsers}
+                size="medium"
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  color: 'text.secondary',
+                  width: 40,
+                  height: 40,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 1)',
+                    color: 'primary.main',
+                    transform: 'translateY(-1px)',
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+                title="Refresh permissions"
+              >
+                <Refresh />
+              </IconButton>
+            </Box>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Main Content */}
+      <Box
+        sx={{
+          width: '100%',
+          padding: 0,
+          margin: 0,
+        }}
+      >
+        {/* Content Area */}
+        <Box sx={{ px: { xs: 3, sm: 4 }, pt: { xs: 3, sm: 4 }, pb: 4 }}>
+
+
+
+          {/* Statistics Cards */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h4" fontWeight="600" color="primary.main">
+                        {userStats.totalUsers}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Users
+                      </Typography>
+                    </Box>
+                    <People sx={{ fontSize: 40, color: 'primary.main', opacity: 0.7 }} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h4" fontWeight="600" color="success.main">
+                        {userStats.activeUsers}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Active Users
+                      </Typography>
+                    </Box>
+                    <CheckCircle sx={{ fontSize: 40, color: 'success.main', opacity: 0.7 }} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h4" fontWeight="600" color="info.main">
+                        {userStats.recentLogins}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Recent Logins
+                      </Typography>
+                    </Box>
+                    <Security sx={{ fontSize: 40, color: 'info.main', opacity: 0.7 }} />
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+            
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h4" fontWeight="600" color="warning.main">
+                        {Object.keys(userStats.usersByRole).length}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Role Types
+                      </Typography>
+                    </Box>
+                    <Business sx={{ fontSize: 40, color: 'warning.main', opacity: 0.7 }} />
+                  </Box>
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
-        </CardContent>
-      </Card>
 
-      {/* Users Table */}
-      <Card>
-        <CardContent>
+          {/* Filters and Search */}
+          <Card sx={{ mb: 4, borderRadius: 2 }}>
+            <CardContent>
+              <Grid container spacing={3} alignItems="center">
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    placeholder="Search users..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Search />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Filter by Role"
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                    SelectProps={{ native: true }}
+                  >
+                    <option value="all">All Roles</option>
+                    <option value={ROLES.SUPERADMIN}>Super Admin</option>
+                    <option value={ROLES.ADMIN}>Admin</option>
+                    <option value={ROLES.OPERATOR}>Operator</option>
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={showInactive}
+                        onChange={(e) => setShowInactive(e.target.checked)}
+                      />
+                    }
+                    label="Show Inactive Users"
+                  />
+                </Grid>
+                <Grid item xs={12} md={2}>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Visibility />}
+                      onClick={() => handleViewPermissions({
+                        ...(currentUserAuth || {}),
+                        firstName: user?.first_name || user?.firstName,
+                        lastName: user?.last_name || user?.lastName,
+                        email: user?.email,
+                        isActive: true,
+                        lastLogin: new Date(),
+                        cafeId: userData?.venue?.id,
+                      })}
+                      sx={{ 
+                        minWidth: 'auto',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      My Permissions
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Error Display */}
+          {error && (
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              <Typography variant="body2" sx={{ mb: 2 }}>
+                {error}
+              </Typography>
+              <Button 
+                size="small" 
+                variant="outlined" 
+                onClick={refreshUsers}
+                sx={{ mt: 1 }}
+              >
+                Retry
+              </Button>
+            </Alert>
+          )}
+
+          {/* Users Table */}
+          <Card sx={{ borderRadius: 2 }}>
+            <CardContent>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
               <Typography>Loading users...</Typography>
@@ -564,25 +772,24 @@ const UserPermissionsDashboard: React.FC = () => {
                     ) : (
                       <TableRow>
                         <TableCell colSpan={5} align="center">
-                          <Box sx={{ py: 8, px: 4, textAlign: 'center', maxWidth: 500, mx: 'auto' }}>
+                          <Box sx={{ py: 8, px: 4, textAlign: 'center', maxWidth: 600, mx: 'auto' }}>
                             <Security sx={{ fontSize: 80, color: 'text.secondary', mb: 3 }} />
                             <Typography variant="h5" color="text.secondary" gutterBottom fontWeight="600">
-                              No Users Available
+                              No Users Found
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6, fontSize: '0.875rem' }}>
-                              The user management system is currently being set up. User permissions and roles will be displayed here once the backend API is implemented.
+                              No users found for this venue. Users will appear here once they are assigned to this venue.
                             </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ 
-                              backgroundColor: 'info.50', 
-                              p: 2, 
-                              borderRadius: 2,
-                              border: '1px solid',
-                              borderColor: 'info.200',
-                              fontSize: '0.75rem',
-                              display: 'block'
-                            }}>
-                              💡 This feature is coming soon. Contact your system administrator for more information.
-                            </Typography>
+                            {error && (
+                              <Button 
+                                variant="outlined" 
+                                size="small" 
+                                onClick={refreshUsers}
+                                startIcon={<Refresh />}
+                              >
+                                Retry
+                              </Button>
+                            )}
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -592,8 +799,10 @@ const UserPermissionsDashboard: React.FC = () => {
               </TableContainer>
             </>
           )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
 
       {/* Permissions Detail Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
@@ -742,10 +951,8 @@ const UserPermissionsDashboard: React.FC = () => {
             })}
           </Grid>
 
-          <Divider sx={{ my: 3 }} />
-
-          <Box>
-            <Typography variant="subtitle2" gutterBottom fontWeight="600">
+          <Box sx={{ mt: 6, mb: 3, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
+            <Typography variant="subtitle2" gutterBottom fontWeight="600" sx={{ mb: 2 }}>
               Permission Summary:
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -767,8 +974,7 @@ const UserPermissionsDashboard: React.FC = () => {
           <Button onClick={() => setOpenDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-      </Box>
-    </Container>
+    </Box>
   );
 };
 
