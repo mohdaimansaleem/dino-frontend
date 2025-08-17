@@ -28,6 +28,7 @@ import LoginPage from './pages/LoginPage';
 import MenuPage from './pages/MenuPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
+import OrderSuccessPage from './pages/OrderSuccessPage';
 
 
 
@@ -139,6 +140,7 @@ function App() {
                 <Route path="/checkout/:venueId/:tableId" element={<Layout><CheckoutPage /></Layout>} />
                 <Route path="/order-tracking/:orderId" element={<Layout><OrderTrackingPage /></Layout>} />
                 <Route path="/order/:orderId" element={<Layout><OrderTrackingPage /></Layout>} />
+                <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
                 
 
 

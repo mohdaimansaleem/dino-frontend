@@ -213,7 +213,7 @@ const CheckoutPage: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
-    console.log('Debug - actualCafeId:', actualCafeId, 'tableId:', tableId);
+    console.log('🔍 Debug - actualCafeId:', actualCafeId, 'tableId:', tableId);
     if (!actualCafeId || !tableId) {
       alert(`Missing venue or table information. CafeId: ${actualCafeId}, TableId: ${tableId}`);
       return;
@@ -239,18 +239,98 @@ const CheckoutPage: React.FC = () => {
         special_instructions: customerInfo.specialInstructions,
       };
 
+      console.log('🔍 Sending order data:', orderData);
       const response = await orderService.createPublicOrder(orderData);
+      console.log('🔍 Order response:', response);
       
-      if (response.success && response.data) {
-        setOrderId(response.data.order_number || response.data.id);
+      // Check for successful response
+      if (response && (response.success || response.data)) {
+        const orderResponseData = response.data;
+        const orderIdValue = orderResponseData?.order_number || orderResponseData?.id || orderResponseData?.order_id || 'ORDER_' + Date.now();
+        console.log('✅ Order placed successfully! Full response:', orderResponseData);
+        console.log('✅ Order ID:', orderIdValue);
+        
+        // Store the complete order response data
+        const completeOrderData = {
+          orderId: orderIdValue,
+          orderNumber: orderResponseData?.order_number || orderIdValue,
+          total: orderResponseData?.total_amount || orderResponseData?.total || total,
+          subtotal: orderResponseData?.subtotal || subtotal,
+          tax: orderResponseData?.tax_amount || tax,
+          deliveryFee: orderResponseData?.delivery_fee || deliveryFee,
+          customerInfo: {
+            name: orderResponseData?.customer?.name || customerInfo.name,
+            phone: orderResponseData?.customer?.phone || customerInfo.phone,
+            email: orderResponseData?.customer?.email || customerInfo.email,
+          },
+          tableId: orderResponseData?.table_id || tableId,
+          venueId: orderResponseData?.venue_id || actualCafeId,
+          status: orderResponseData?.status || 'pending',
+          estimatedTime: orderResponseData?.estimated_ready_time || orderResponseData?.estimated_minutes || 30,
+          items: orderResponseData?.items || items.map(item => ({
+            name: item.menuItem.name,
+            quantity: item.quantity,
+            price: item.menuItem.price,
+            total: item.menuItem.price * item.quantity
+          })),
+          createdAt: orderResponseData?.created_at || new Date().toISOString(),
+          paymentMethod: selectedPaymentMethod,
+          specialInstructions: orderResponseData?.special_instructions || customerInfo.specialInstructions
+        };
+        
+        console.log('📦 Complete order data prepared:', completeOrderData);
+        
+        // Store in component state and localStorage
+        setOrderId(orderIdValue);
         setOrderPlaced(true);
         clearCart();
         setActiveStep(3);
+        
+        // Store complete order data for success page
+        localStorage.setItem(`order_${orderIdValue}`, JSON.stringify(completeOrderData));
+        
+        // Navigate directly to OrderSuccessPage with complete data
+        setTimeout(() => {
+          navigate(`/order-success/${orderIdValue}`, { 
+            state: completeOrderData,
+            replace: true 
+          });
+        }, 1500); // Small delay to show success state briefly
+        
       } else {
-        throw new Error('Failed to create order');
+        console.error('❌ Order response indicates failure:', response);
+        throw new Error(response?.message || 'Order creation failed - invalid response');
       }
-    } catch (error) {
-      alert('Failed to place order. Please try again.');
+    } catch (error: any) {
+      console.error('❌ Order placement error:', error);
+      
+      // Better error handling
+      let errorMessage = 'Failed to place order. Please try again.';
+      
+      if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Check if it's actually a success but with different response format
+      if (error.response?.status === 200 || error.response?.status === 201) {
+        console.log('🔍 Order might have succeeded despite error. Checking response data...');
+        const responseData = error.response?.data;
+        
+        if (responseData && (responseData.id || responseData.order_number || responseData.order_id)) {
+          const orderIdValue = responseData.order_number || responseData.id || responseData.order_id;
+          console.log('✅ Order actually succeeded! Order ID:', orderIdValue);
+          
+          setOrderId(orderIdValue);
+          setOrderPlaced(true);
+          clearCart();
+          setActiveStep(3);
+          return;
+        }
+      }
+      
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -523,118 +603,12 @@ const CheckoutPage: React.FC = () => {
                 fontSize: { xs: '0.875rem', sm: '1rem' }
               }}
             >
-              Your order has been received and is being prepared. You'll receive updates on the status.
+              Redirecting to order details...
             </Typography>
             
-            <Box sx={{ 
-              mb: 4, 
-              p: { xs: 2, sm: 3 }, 
-              backgroundColor: 'grey.50', 
-              borderRadius: 2 
-            }}>
-              <Typography 
-                variant="h6" 
-                gutterBottom
-                sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-              >
-                Order Summary
-              </Typography>
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-              >
-                Total Amount: <strong>{formatPrice(total)}</strong>
-              </Typography>
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-              >
-                Estimated Time: <strong>25-30 minutes</strong>
-              </Typography>
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-              >
-                Table: <strong>{tableId}</strong>
-              </Typography>
-            </Box>
-
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: { xs: 2, sm: 2 },
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}>
-              <Button
-                variant="contained"
-                onClick={() => navigate(`/order-tracking/${orderId}`)}
-                startIcon={<Schedule />}
-                sx={{
-                  px: { xs: 3, sm: 4 },
-                  py: { xs: 1, sm: 1.5 },
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  borderRadius: 2,
-                  width: { xs: '100%', sm: 'auto' }
-                }}
-              >
-                Track Order
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => navigate(`/menu/${actualCafeId}/${tableId}`)}
-                startIcon={<Restaurant />}
-                sx={{
-                  px: { xs: 3, sm: 4 },
-                  py: { xs: 1, sm: 1.5 },
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  borderRadius: 2,
-                  width: { xs: '100%', sm: 'auto' }
-                }}
-              >
-                Order More
-              </Button>
-            </Box>
+            <CircularProgress size={40} />
           </Paper>
         </Container>
-        {/* Dashboard-style Footer */}
-        <Box 
-          sx={{ 
-            flexShrink: 0,
-            textAlign: 'center',
-            py: { xs: 2, lg: 3 },
-            px: { xs: 2, lg: 3 },
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            backgroundColor: 'background.paper',
-            mt: '2vh',
-          }}
-        >
-          <Typography 
-            variant="body2" 
-            color="text.secondary"
-            sx={{ 
-              fontSize: { xs: '0.75rem', sm: '0.875rem' },
-              fontWeight: 500 
-            }}
-          >
-            © 2024 Dino E-Menu. All rights reserved.
-          </Typography>
-          <Typography 
-            variant="caption" 
-            color="text.secondary"
-            sx={{ 
-              fontSize: { xs: '0.65rem', sm: '0.75rem' },
-              display: 'block',
-              mt: 0.5
-            }}
-          >
-            Digital Menu Revolution
-          </Typography>
-        </Box>
       </Box>
     );
   }

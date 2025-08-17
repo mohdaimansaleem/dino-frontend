@@ -83,9 +83,53 @@ class OrderService {
   // Create public order (from QR scan)
   async createPublicOrder(orderData: PublicOrderCreate): Promise<ApiResponse<any>> {
     try {
-      return await apiService.post<any>('/orders/public/create-order', orderData);
+      console.log('🔍 OrderService: Creating public order with data:', orderData);
+      const response = await apiService.post<any>('/orders/public/create-order', orderData);
+      console.log('🔍 OrderService: Raw API response:', response);
+      
+      // Handle different response formats
+      if (response && (response.success || response.data)) {
+        console.log('✅ OrderService: Order created successfully');
+        return response;
+      } else {
+        console.error('❌ OrderService: Invalid response format:', response);
+        throw new Error('Invalid response format from server');
+      }
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || error.message || 'Failed to create order');
+      console.error('❌ OrderService: Error creating order:', error);
+      
+      // Check if it's actually a successful response with different format
+      if (error.response?.status === 200 || error.response?.status === 201) {
+        console.log('🔍 OrderService: Checking if error is actually success...');
+        const responseData = error.response?.data;
+        
+        if (responseData && (responseData.id || responseData.order_number || responseData.order_id)) {
+          console.log('✅ OrderService: Order actually succeeded despite error format');
+          return {
+            success: true,
+            data: responseData,
+            message: 'Order created successfully'
+          };
+        }
+      }
+      
+      // Extract meaningful error message
+      let errorMessage = 'Failed to create order';
+      
+      if (error.response?.data?.detail) {
+        if (Array.isArray(error.response.data.detail)) {
+          // Handle validation errors
+          errorMessage = error.response.data.detail.map((err: any) => err.msg || err.message).join(', ');
+        } else {
+          errorMessage = error.response.data.detail;
+        }
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 
