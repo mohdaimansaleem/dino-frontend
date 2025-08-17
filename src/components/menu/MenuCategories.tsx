@@ -43,8 +43,6 @@ const MenuCategories: React.FC<MenuCategoriesProps> = ({
 }) => {
   const theme = useTheme();
 
-  if (categories.length === 0) return null;
-
   return (
     <Box sx={{ 
       py: { xs: 4, sm: 5 }, 
@@ -99,8 +97,45 @@ const MenuCategories: React.FC<MenuCategoriesProps> = ({
       </Box>
       
       {/* Categories Grid with enhanced spacing */}
-      <Grid container spacing={{ xs: 3, sm: 4 }}>
-        {categories.map(category => (
+      {categories.length === 0 ? (
+        // Empty state when no categories
+        <Box sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: 6,
+          textAlign: 'center'
+        }}>
+          <Category sx={{ 
+            fontSize: 64, 
+            color: 'text.disabled', 
+            mb: 2 
+          }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No Menu Categories Yet
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3, maxWidth: 400 }}>
+            Create your first menu category to organize your dishes. Categories help customers navigate your menu more easily.
+          </Typography>
+          <Button
+            variant="outlined"
+            startIcon={<Category />}
+            onClick={onAddCategory}
+            sx={{ 
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              fontWeight: 600,
+              fontSize: '0.875rem',
+            }}
+          >
+            Create First Category
+          </Button>
+        </Box>
+      ) : (
+        <Grid container spacing={{ xs: 3, sm: 4 }}>
+          {categories.map(category => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={category.id}>
             <Box 
               sx={{ 
@@ -208,8 +243,9 @@ const MenuCategories: React.FC<MenuCategoriesProps> = ({
               </Stack>
             </Box>
           </Grid>
-        ))}
-      </Grid>
+          ))}
+        </Grid>
+      )}
     </Box>
   );
 };
