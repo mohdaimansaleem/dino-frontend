@@ -120,13 +120,11 @@ function App() {
                 <Route path="/home" element={<Layout><HomePage /></Layout>} />
 
                 <Route path="/register" element={
-                  <Layout>
-                    <Suspense fallback={<LoadingFallback />}>
-                      {React.createElement(LazyComponents.RegistrationPage.component)}
-                    </Suspense>
-                  </Layout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    {React.createElement(LazyComponents.RegistrationPage.component)}
+                  </Suspense>
                 } />
-                <Route path="/login" element={<Layout><LoginPage /></Layout>} />
+                <Route path="/login" element={<LoginPage />} />
                 <Route path="/menu/:venueId/:tableId" element={<Layout><MenuPage /></Layout>} />
                 <Route path="/checkout/:venueId/:tableId" element={<Layout><CheckoutPage /></Layout>} />
                 <Route path="/order-tracking/:orderId" element={<Layout><OrderTrackingPage /></Layout>} />

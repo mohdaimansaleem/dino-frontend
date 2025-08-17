@@ -50,12 +50,17 @@ import {
   Payment,
   Today,
   AccessTime,
+  Business,
+  Refresh,
+  Dashboard as DashboardIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
 import { dashboardService } from '../../services/dashboardService';
 import { getUserFirstName } from '../../utils/userUtils';
 import { WeeklyRevenueChart, StatusPieChart, DonutChart, SimpleBarChart } from '../charts/ChartComponents';
+import AnimatedBackground from '../ui/AnimatedBackground';
+import { useMediaQuery, Stack, Container, LinearProgress, Snackbar } from '@mui/material';
 
 interface SuperAdminDashboardProps {
   className?: string;
@@ -272,149 +277,266 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
   }
 
   return (
-    <Box className={className} sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography 
-          variant="h4" 
-          gutterBottom 
-          sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1,
-            fontWeight: 600,
-            color: 'text.primary'
-          }}
-        >
-          <Store color="primary" sx={{ fontSize: 32 }} />
-          {dashboardTitle}
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Welcome back, {getUserFirstName(user)}! Here's your {dashboardData?.current_venue_id ? 'venue' : 'system-wide'} performance overview and analytics.
-        </Typography>
+    <Box
+      className={className}
+      sx={{
+        minHeight: 'auto',
+        height: 'auto',
+        backgroundColor: '#f8f9fa',
+        padding: 0,
+        margin: 0,
+        width: '100%',
+        overflow: 'visible',
+        '& .MuiContainer-root': {
+          padding: '0 !important',
+          margin: '0 !important',
+          maxWidth: 'none !important',
+        },
+      }}
+    >
+      {/* Hero Section */}
+      <Box
+        sx={{
+          backgroundColor: 'grey.100',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          position: 'relative',
+          overflow: 'hidden',
+          color: 'text.primary',
+          padding: 0,
+          margin: 0,
+          width: '100%',
+        }}
+      >
+        <AnimatedBackground />
+        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              gap: { xs: 2, md: 3 },
+              py: { xs: 3, sm: 4 },
+              px: { xs: 3, sm: 4 },
+            }}
+          >
+            {/* Header Content */}
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <DashboardIcon sx={{ fontSize: 32, mr: 1.5, color: 'text.primary', opacity: 0.9 }} />
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  fontWeight="600"
+                  sx={{
+                    fontSize: { xs: '1.75rem', sm: '2rem' },
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.2,
+                    color: 'text.primary',
+                  }}
+                >
+                  SuperAdmin Dashboard
+                </Typography>
+              </Box>
+              
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  fontWeight: 400,
+                  mb: 1,
+                  maxWidth: '500px',
+                  color: 'text.secondary',
+                }}
+              >
+                Welcome back, {getUserFirstName(user)}! Here's your system-wide performance overview and analytics.
+              </Typography>
+
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                }}
+              >
+                <Business sx={{ fontSize: 18, mr: 1, color: 'primary.main', opacity: 0.9 }} />
+                <Typography variant="body2" fontWeight="500" color="text.primary">
+                  System-wide Analytics & Management
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Action Buttons */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1.5,
+                flexDirection: { xs: 'row', sm: 'row' },
+                flexWrap: 'wrap',
+                alignItems: 'center',
+              }}
+            >
+              <IconButton
+                onClick={loadDashboardData}
+                disabled={loading}
+                size="medium"
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  color: 'text.secondary',
+                  width: 40,
+                  height: 40,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 1)',
+                    color: 'primary.main',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+                title={loading ? 'Refreshing...' : 'Refresh dashboard'}
+              >
+                <Refresh />
+              </IconButton>
+            </Box>
+          </Box>
+        </Container>
       </Box>
 
-      {/* Key Metrics Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            borderRadius: 2,
-            boxShadow: theme.shadows[1],
-            border: '1px solid',
-            borderColor: 'divider',
-            height: 140
-          }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
-                  <Today />
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="h4" fontWeight="600" color="text.primary">
-                    ₹{(stats?.todays_revenue || 0).toLocaleString()}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                    Today's Revenue
-                  </Typography>
-                  <Typography variant="caption" color="success.main" fontWeight="600">
-                    {stats?.todays_orders || 0} orders today
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Main Content */}
+      <Box
+        sx={{
+          width: '100%',
+          padding: 0,
+          margin: 0,
+        }}
+      >
+        {/* Dashboard Content Container */}
+        <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            borderRadius: 2,
-            boxShadow: theme.shadows[1],
-            border: '1px solid',
-            borderColor: 'divider',
-            height: 140
-          }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ bgcolor: 'success.main', width: 48, height: 48 }}>
-                  <ShoppingCart />
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="h4" fontWeight="600" color="text.primary">
-                    {stats?.active_orders || 0}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                    Active Orders
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <AccessTime sx={{ fontSize: 16, color: 'warning.main' }} />
-                    <Typography variant="caption" color="warning.main" fontWeight="600">
-                      In progress
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            borderRadius: 2,
-            boxShadow: theme.shadows[1],
-            border: '1px solid',
-            borderColor: 'divider',
-            height: 140
-          }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ bgcolor: 'info.main', width: 48, height: 48 }}>
-                  <TableRestaurant />
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="h4" fontWeight="600" color="text.primary">
-                    {stats?.table_occupancy_rate || 0}%
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                    Table Occupancy
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {stats?.total_tables || 0} total tables
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card sx={{ 
-            borderRadius: 2,
-            boxShadow: theme.shadows[1],
-            border: '1px solid',
-            borderColor: 'divider',
-            height: 140
-          }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ bgcolor: 'warning.main', width: 48, height: 48 }}>
-                  <MonetizationOn />
-                </Avatar>
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="h4" fontWeight="600" color="text.primary">
-                    ₹{stats?.avg_order_value || 0}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                    Avg Order Value
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {stats?.total_orders || 0} total orders
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+          {/* Dashboard Statistics */}
+          <Box sx={{ mb: 4 }}>
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+              {[
+                { 
+                  label: 'Today\'s Revenue', 
+                  value: `₹${(stats?.todays_revenue || 0).toLocaleString()}`, 
+                  color: '#2196F3', 
+                  icon: <Today />,
+                  description: `${stats?.todays_orders || 0} orders today`
+                },
+                { 
+                  label: 'Active Orders', 
+                  value: stats?.active_orders || 0, 
+                  color: '#4CAF50', 
+                  icon: <ShoppingCart />,
+                  description: 'Currently processing'
+                },
+                { 
+                  label: 'Table Occupancy', 
+                  value: `${stats?.table_occupancy_rate || 0}%`, 
+                  color: '#FF9800', 
+                  icon: <TableRestaurant />,
+                  description: `${stats?.total_tables || 0} total tables`
+                },
+                { 
+                  label: 'Avg Order Value', 
+                  value: `₹${stats?.avg_order_value || 0}`, 
+                  color: '#9C27B0', 
+                  icon: <MonetizationOn />,
+                  description: `${stats?.total_orders || 0} total orders`
+                },
+              ].map((stat, index) => (
+                <Grid item xs={6} md={3} key={index}>
+                  <Card
+                    sx={{
+                      p: { xs: 2.5, sm: 3 },
+                      borderRadius: 2,
+                      backgroundColor: `${stat.color}08`,
+                      border: `1px solid ${stat.color}33`,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 8px 25px ${stat.color}33`,
+                        backgroundColor: `${stat.color}12`,
+                      },
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                      {/* Icon on the left */}
+                      <Box
+                        sx={{
+                          width: { xs: 40, sm: 48 },
+                          height: { xs: 40, sm: 48 },
+                          borderRadius: 2,
+                          backgroundColor: stat.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {React.cloneElement(stat.icon, { 
+                          fontSize: 'large' 
+                        })}
+                      </Box>
+                      
+                      {/* Text content on the right */}
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography 
+                          variant="h4" 
+                          fontWeight="700" 
+                          color="text.primary"
+                          sx={{ 
+                            fontSize: { xs: '1.25rem', sm: '2rem' },
+                            lineHeight: 1.2,
+                            mb: 0.5
+                          }}
+                        >
+                          {stat.value}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          fontWeight="600"
+                          sx={{ 
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            lineHeight: 1.2,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {stat.label}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary"
+                          sx={{ 
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {stat.description}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
 
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -998,6 +1120,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
           </Grid>
         </Grid>
       </TabPanel>
+        </Box>
+      </Box>
     </Box>
   );
 };

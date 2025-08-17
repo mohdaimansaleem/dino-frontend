@@ -120,20 +120,24 @@ class ApiService {
     // Request interceptor
     this.axiosInstance.interceptors.request.use(
       async (config) => {
-        // Check if token needs refresh before making request
-        if (authService.shouldRefreshToken()) {
+        // Skip token refresh for auth endpoints to prevent loops
+        const isAuthEndpoint = config.url?.includes('/auth/');
+        
+        // Only check token refresh for non-auth endpoints
+        if (!isAuthEndpoint && authService.shouldRefreshToken()) {
           try {
+            console.log('🔄 Token needs refresh before request');
             await authService.refreshToken();
           } catch (error) {
-            }
+            console.error('❌ Pre-request token refresh failed:', error);
+          }
         }
         
         // Add authentication token
         const token = authService.getToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
-          } else {
-          }
+        }
 
         // Convert request data to snake_case
         if (config.data && typeof config.data === 'object') {
@@ -184,11 +188,20 @@ class ApiService {
 
         // Handle 401 errors (token refresh)
         if (error.response?.status === 401 && !originalRequest._retry) {
+          // Skip retry for auth endpoints to prevent infinite loops
+          const isAuthEndpoint = originalRequest.url?.includes('/auth/');
+          if (isAuthEndpoint) {
+            console.log('❌ 401 on auth endpoint, not retrying');
+            return Promise.reject(error);
+          }
+
           originalRequest._retry = true;
+          console.log('🔄 401 error, attempting token refresh and retry');
 
           try {
             const newToken = await authService.refreshToken();
             if (newToken && newToken.access_token) {
+              console.log('✅ Token refreshed, retrying original request');
               // Update the authorization header with new token
               originalRequest.headers.Authorization = `Bearer ${newToken.access_token}`;
               // Also update the default headers for future requests
@@ -196,12 +209,14 @@ class ApiService {
               // Retry the original request
               return this.axiosInstance(originalRequest);
             } else {
+              console.log('❌ No valid token received, logging out');
               // No valid token received, logout
               authService.logout();
               window.location.href = '/login';
               return Promise.reject(new Error('Token refresh failed'));
             }
           } catch (refreshError) {
+            console.error('❌ Token refresh failed, logging out:', refreshError);
             // Refresh failed, redirect to login
             authService.logout();
             window.location.href = '/login';

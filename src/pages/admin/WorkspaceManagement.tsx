@@ -32,6 +32,9 @@ import {
   CircularProgress,
   Skeleton,
   keyframes,
+  Stack,
+  alpha,
+  useTheme,
 } from '@mui/material';
 import {
   Add,
@@ -47,6 +50,22 @@ import {
   Store,
   Refresh,
   CachedOutlined,
+  Business,
+  CheckCircle,
+  Cancel,
+  TrendingUp,
+  LocalCafe,
+  Fastfood,
+  LocalBar,
+  LocalDining,
+  LocalShipping,
+  Kitchen,
+  MoreHoriz,
+  AttachMoney,
+  Public,
+  Home,
+  Apartment,
+  Map,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
@@ -86,6 +105,50 @@ const venueTypeOptions = [
   'other'
 ];
 
+// Function to get venue type icon
+const getVenueTypeIcon = (venueType: string) => {
+  switch (venueType?.toLowerCase()) {
+    case 'restaurant':
+    case 'fine_dining':
+      return <Store />;
+    case 'cafe':
+      return <LocalCafe />;
+    case 'bar':
+      return <LocalBar />;
+    case 'fast_food':
+    case 'food_truck':
+      return <Fastfood />;
+    case 'bakery':
+      return <LocalDining />;
+    case 'cloud_kitchen':
+      return <Kitchen />;
+    default:
+      return <Store />;
+  }
+};
+
+// Function to get venue type color
+const getVenueTypeColor = (venueType: string) => {
+  switch (venueType?.toLowerCase()) {
+    case 'restaurant':
+    case 'fine_dining':
+      return '#d32f2f';
+    case 'cafe':
+      return '#8d6e63';
+    case 'bar':
+      return '#7b1fa2';
+    case 'fast_food':
+    case 'food_truck':
+      return '#ff9800';
+    case 'bakery':
+      return '#f57c00';
+    case 'cloud_kitchen':
+      return '#455a64';
+    default:
+      return '#2196f3';
+  }
+};
+
 interface VenueFormData {
   name: string;
   description: string;
@@ -120,6 +183,7 @@ const WorkspaceManagement: React.FC = () => {
   const { hasPermission, isSuperAdmin } = useAuth();
   const { userData, loading: userDataLoading } = useUserData(); // Removed refreshUserData to prevent API calls
   const location = useLocation();
+  const theme = useTheme();
   
   // State management
   const [workspaceVenues, setWorkspaceVenues] = useState<any[]>([]);
@@ -581,105 +645,120 @@ const WorkspaceManagement: React.FC = () => {
       >
         {/* Stats Section */}
         {venues.length > 0 && (
-          <Box sx={{ mb: 4, px: { xs: 3, sm: 4 }, py: 2 }}>
-            <Grid container spacing={{ xs: 2, sm: 3 }}>
-              <Grid item xs={6} sm={3}>
-                <Card
-                  sx={{
-                    p: 2,
-                    textAlign: 'center',
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)',
-                    },
-                  }}
-                >
-                  <Typography variant="h4" fontWeight="700" color="primary.main" gutterBottom>
-                    {venues.length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" fontWeight="500">
-                    Total Venues
-                  </Typography>
-                </Card>
+          <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
+            <Box sx={{ 
+              px: { xs: 3, sm: 4 }, 
+              py: { xs: 3, sm: 4 }, 
+              backgroundColor: 'background.paper', 
+              borderRadius: 3, 
+              mb: 4,
+              border: `1px solid ${theme.palette.grey[100]}`,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+            }}>
+              <Typography variant="h6" fontWeight="700" color="text.primary" sx={{ mb: 3 }}>
+                Workspace Overview
+              </Typography>
+              
+              <Grid container spacing={{ xs: 2, sm: 3 }}>
+                {[
+                  { 
+                    label: 'Total Venues', 
+                    value: venues.length, 
+                    color: '#2196F3', 
+                    icon: <Business />,
+                    description: 'All workspace venues'
+                  },
+                  { 
+                    label: 'Active Venues', 
+                    value: venues.filter(v => v.is_active).length, 
+                    color: '#4CAF50', 
+                    icon: <CheckCircle />,
+                    description: 'Currently active'
+                  },
+                  { 
+                    label: 'Currently Open', 
+                    value: venues.filter(v => v.is_open).length, 
+                    color: '#FF9800', 
+                    icon: <Store />,
+                    description: 'Open for business'
+                  },
+                  { 
+                    label: 'Selected Venue', 
+                    value: currentVenue ? '1' : '0', 
+                    color: '#9C27B0', 
+                    icon: <TrendingUp />,
+                    description: 'Currently selected'
+                  },
+                ].map((stat, index) => (
+                  <Grid item xs={12} sm={6} md={3} key={index}>
+                    <Box
+                      sx={{
+                        p: { xs: 2.5, sm: 3 },
+                        borderRadius: 2,
+                        backgroundColor: alpha(stat.color, 0.05),
+                        border: `1px solid ${alpha(stat.color, 0.2)}`,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: `0 8px 25px ${alpha(stat.color, 0.2)}`,
+                          backgroundColor: alpha(stat.color, 0.08),
+                        },
+                      }}
+                    >
+                      <Stack direction="row" alignItems="center" spacing={2}>
+                        {/* Icon on the left */}
+                        <Box
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            borderRadius: 2,
+                            backgroundColor: stat.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {React.cloneElement(stat.icon, { fontSize: 'medium' })}
+                        </Box>
+                        
+                        {/* Text content on the right */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography 
+                            variant="h4" 
+                            fontWeight="700" 
+                            color="text.primary" 
+                            sx={{ 
+                              fontSize: { xs: '1.5rem', sm: '2rem' },
+                              lineHeight: 1.2,
+                              mb: 0.5
+                            }}
+                          >
+                            {stat.value}
+                          </Typography>
+                          <Typography 
+                            variant="body2" 
+                            color="text.secondary" 
+                            fontWeight="600"
+                            sx={{ 
+                              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                              lineHeight: 1.2,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {stat.label}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  </Grid>
+                ))}
               </Grid>
-              <Grid item xs={6} sm={3}>
-                <Card
-                  sx={{
-                    p: 2,
-                    textAlign: 'center',
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)',
-                    },
-                  }}
-                >
-                  <Typography variant="h4" fontWeight="700" color="success.main" gutterBottom>
-                    {venues.filter(v => v.is_active).length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" fontWeight="500">
-                    Active Venues
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <Card
-                  sx={{
-                    p: 2,
-                    textAlign: 'center',
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)',
-                    },
-                  }}
-                >
-                  <Typography variant="h4" fontWeight="700" color="info.main" gutterBottom>
-                    {venues.filter(v => v.is_open).length}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" fontWeight="500">
-                    Currently Open
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <Card
-                  sx={{
-                    p: 2,
-                    textAlign: 'center',
-                    borderRadius: 2,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)',
-                    },
-                  }}
-                >
-                  <Typography variant="h4" fontWeight="700" color="warning.main" gutterBottom>
-                    {currentVenue ? '1' : '0'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" fontWeight="500">
-                    Selected
-                  </Typography>
-                </Card>
-              </Grid>
-            </Grid>
+            </Box>
           </Box>
         )}
 
@@ -909,43 +988,53 @@ const WorkspaceManagement: React.FC = () => {
                       </Typography>
                     )}
                     
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        color: 'text.secondary',
-                        fontSize: '0.85rem',
-                        textTransform: 'capitalize',
-                        mb: 1.5,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {venue.venue_type?.replace('_', ' ') || 'Restaurant'}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      <Box
+                        sx={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: '50%',
+                          backgroundColor: 'grey.400',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {React.cloneElement(getVenueTypeIcon(venue.venue_type || 'restaurant'), {
+                          sx: { color: 'white', fontSize: 14 }
+                        })}
+                      </Box>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: 'text.secondary',
+                          fontSize: '0.85rem',
+                          textTransform: 'capitalize',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {venue.venue_type?.replace('_', ' ') || 'Restaurant'}
+                      </Typography>
+                    </Box>
 
                     {/* Status Icons */}
                     <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                        <Box
-                          sx={{
-                            width: 10,
-                            height: 10,
-                            borderRadius: '50%',
-                            backgroundColor: venue.is_active ? 'success.main' : 'grey.400',
-                          }}
-                        />
+                        {venue.is_active ? (
+                          <CheckCircle sx={{ fontSize: 16, color: 'success.main' }} />
+                        ) : (
+                          <Cancel sx={{ fontSize: 16, color: 'grey.400' }} />
+                        )}
                         <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', fontWeight: 400, textTransform: 'capitalize' }}>
                           {venue.is_active ? 'Active' : 'Inactive'}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                        <Box
-                          sx={{
-                            width: 10,
-                            height: 10,
-                            borderRadius: '50%',
-                            backgroundColor: venue.is_open ? 'success.main' : 'error.main',
-                          }}
-                        />
+                        {venue.is_open ? (
+                          <Visibility sx={{ fontSize: 16, color: 'success.main' }} />
+                        ) : (
+                          <VisibilityOff sx={{ fontSize: 16, color: 'error.main' }} />
+                        )}
                         <Typography variant="body2" sx={{ fontSize: '0.85rem', color: 'text.secondary', fontWeight: 400, textTransform: 'capitalize' }}>
                           {venue.is_open ? 'Open' : 'Closed'}
                         </Typography>
@@ -1190,9 +1279,12 @@ const WorkspaceManagement: React.FC = () => {
           <Grid container spacing={3}>
             {/* Basic Information */}
             <Grid item xs={12}>
-              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                Basic Information
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Business sx={{ color: 'primary.main', fontSize: 20 }} />
+                <Typography variant="subtitle1" fontWeight="600">
+                  Basic Information
+                </Typography>
+              </Box>
             </Grid>
             
             <Grid item xs={12} md={6}>
@@ -1224,7 +1316,24 @@ const WorkspaceManagement: React.FC = () => {
                 >
                   {venueTypeOptions.map((type) => (
                     <MenuItem key={type} value={type}>
-                      {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: '50%',
+                            backgroundColor: 'grey.400',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          {React.cloneElement(getVenueTypeIcon(type), {
+                            sx: { color: 'white', fontSize: 12 }
+                          })}
+                        </Box>
+                        {type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Box>
                     </MenuItem>
                   ))}
                 </Select>
@@ -1246,9 +1355,12 @@ const WorkspaceManagement: React.FC = () => {
             {/* Location Information */}
             <Grid item xs={12}>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                Location Details
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Map sx={{ color: 'primary.main', fontSize: 20 }} />
+                <Typography variant="subtitle1" fontWeight="600">
+                  Location Details
+                </Typography>
+              </Box>
             </Grid>
             
             <Grid item xs={12}>
@@ -1347,9 +1459,12 @@ const WorkspaceManagement: React.FC = () => {
             {/* Contact Information */}
             <Grid item xs={12}>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                Contact Information
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Phone sx={{ color: 'primary.main', fontSize: 20 }} />
+                <Typography variant="subtitle1" fontWeight="600">
+                  Contact Information
+                </Typography>
+              </Box>
             </Grid>
             
             <Grid item xs={12} md={6}>
@@ -1394,9 +1509,12 @@ const WorkspaceManagement: React.FC = () => {
             {/* Additional Settings */}
             <Grid item xs={12}>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle1" fontWeight="600" gutterBottom>
-                Additional Settings
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <AttachMoney sx={{ color: 'primary.main', fontSize: 20 }} />
+                <Typography variant="subtitle1" fontWeight="600">
+                  Additional Settings
+                </Typography>
+              </Box>
             </Grid>
             
             <Grid item xs={12} md={6}>

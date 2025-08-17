@@ -59,6 +59,10 @@ export { default as AnimatedCounter } from './AnimatedCounter';
 export { default as AnimatedCounterComponent } from './AnimatedCounter';
 export { default as MenuAnimatedBackground } from './MenuAnimatedBackground';
 export { default as MenuAnimatedBackgroundComponent } from './MenuAnimatedBackground';
+export { default as LoginAnimatedBackground } from './LoginAnimatedBackground';
+export { default as LoginAnimatedBackgroundComponent } from './LoginAnimatedBackground';
+export { default as SpaceLoginBackground } from './SpaceLoginBackground';
+export { default as SpaceLoginBackgroundComponent } from './SpaceLoginBackground';
 
 // ===================================================================
 // UTILITY EXPORTS

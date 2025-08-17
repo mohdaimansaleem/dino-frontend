@@ -298,7 +298,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
               '&:hover': {
                 backgroundColor: alpha(theme.palette.primary.main, 0.1),
                 borderColor: alpha(theme.palette.primary.main, 0.2),
-                color: 'white',
+                color: 'black',
                 transform: 'translateX(2px)',
               },
               '&:active': {
@@ -629,8 +629,35 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
         </Box>
       </Box>
 
-
-
+      {/* Dino Victory Image at Bottom Center */}
+      <Box
+        sx={{
+          flexShrink: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          p: showExpanded ? 2 : 1,
+          borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          mt: 'auto',
+        }}
+      >
+        <Box
+          component="img"
+          src="/img/dino_victory.png"
+          alt="Dino Victory"
+          sx={{
+            width: showExpanded ? (isTablet ? 120 : 160) : 48,
+            height: showExpanded ? (isTablet ? 120 : 160) : 48,
+            objectFit: 'contain',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))',
+            '&:hover': {
+              transform: 'scale(1.15) rotate(8deg)',
+              filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.2)) brightness(1.1)',
+            },
+          }}
+        />
+      </Box>
 
     </Box>
   );

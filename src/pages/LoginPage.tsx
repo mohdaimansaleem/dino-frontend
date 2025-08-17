@@ -7,12 +7,13 @@ import {
   Button,
   Typography,
   Alert,
-  Divider,
   CircularProgress,
   InputAdornment,
   IconButton,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
-import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Email, Lock, Visibility, VisibilityOff, Person } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import DinoLogo from '../components/DinoLogo';
@@ -25,6 +26,7 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -46,9 +48,13 @@ const LoginPage: React.FC = () => {
     setShowPassword(prev => !prev);
   }, []);
 
+  const handleRememberMeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setRememberMe(e.target.checked);
+  }, []);
+
   const validateForm = () => {
     if (!formData.email || !formData.password) {
-      setError('Email and password are required');
+      setError('Username and password are required');
       return false;
     }
     return true;
@@ -66,7 +72,7 @@ const LoginPage: React.FC = () => {
       await login(formData.email, formData.password);
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Invalid email or password');
+      setError(err.response?.data?.detail || err.message || 'Invalid username or password');
     } finally {
       setLoading(false);
     }
@@ -75,205 +81,322 @@ const LoginPage: React.FC = () => {
   return (
     <Box
       sx={{
-        height: '90vh',
-        width: '100vw',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        backgroundColor: 'background.default',
+        minHeight: '100vh',
+        height: '100vh',
+        width: '100%',
+        overflow: 'hidden', // This already prevents scrolling
+        position: 'relative',
+        backgroundColor: '#1976d2', // Fallback color
+        backgroundImage: 'url("/img/signin_bg.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
       }}
     >
-      <Container 
-        component="main" 
-        maxWidth="sm"
+      {/* Using background image only - no overlay component */}
+
+      {/* Login Form Container */}
+      <Box
         sx={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: { xs: '100%', md: '45%', lg: '40%' },
+          height: '100vh',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          px: { xs: 2, sm: 3 },
-          height: '100%',
-          overflow: 'hidden',
+          zIndex: 10,
+          px: { xs: 2, sm: 4 },
         }}
       >
-        <Paper
-          elevation={8}
-          sx={{
-            p: { xs: 3, sm: 4 },
-            borderRadius: 3,
-            backgroundColor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
-            width: '100%',
-            maxWidth: '100%',
-            maxHeight: { xs: 'calc(100vh - 32px)', sm: 'calc(100vh - 48px)' },
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-            transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          }}
-        >
-          {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: { xs: 2, sm: 3 }, flexShrink: 0 }}>
-            <DinoLogo size={40} animated={true} sx={{ mb: { xs: 1, sm: 1.5 } }} />
-            <Typography 
-              variant="h4" 
-              component="h1" 
-              gutterBottom 
-              fontWeight="bold"
-              sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}
-            >
-              Dino
-            </Typography>
-            <Typography 
-              variant="h6" 
-              color="text.secondary"
-              sx={{ fontSize: { xs: '0.9rem', sm: '1.1rem' } }}
-            >
-              Welcome Back!
-            </Typography>
-          </Box>
-
-          {/* Alerts */}
-          {error && (
-            <Alert severity="error" sx={{ mb: 2, flexShrink: 0 }}>
-              {error}
-            </Alert>
-          )}
-
-          {/* Form */}
-          <Box 
-            component="form" 
-            onSubmit={handleSubmit}
-            sx={{ 
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
+        <Container maxWidth="sm" sx={{ width: '100%' }}>
+          <Paper
+            elevation={24}
+            sx={{
+              p: { xs: 5, sm: 7, md: 8 },
+              borderRadius: 3,
+              backgroundColor: 'rgba(255, 255, 255, 0.9)', // Semi-transparent white
+              backdropFilter: 'blur(10px)', // Glass effect
+              WebkitBackdropFilter: 'blur(10px)', // Safari support
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+              maxWidth: '500px',
+              mx: 'auto',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)',
+              },
             }}
           >
-            <TextField
-              fullWidth
-              label="Email Address"
-              name="email"
-              type="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              margin="normal"
-              required
-              autoComplete="email"
-              size="small"
-              InputProps={{
-                startAdornment: <Email sx={{ mr: 1, color: 'text.secondary' }} />,
-              }}
-              sx={{ mb: 1 }}
-            />
-
-            <TextField
-              fullWidth
-              label="Password"
-              name="password"
-              type={showPassword ? 'text' : 'password'}
-              value={formData.password}
-              onChange={handleInputChange}
-              margin="normal"
-              required
-              autoComplete="current-password"
-              size="small"
-              InputProps={{
-                startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={togglePasswordVisibility}
-                      edge="end"
-                      size="small"
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      {showPassword ? <VisibilityOff /> : <Visibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{ mb: 2 }}
-            />
-
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
-              disabled={loading}
-              sx={{ 
-                mt: 1, 
-                mb: 1.5, 
-                py: 1.2,
-                fontWeight: 600,
-                borderRadius: 2,
-                transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                '&:hover': {
-                  transform: 'translateY(-1px)',
-                },
-                '&:active': {
-                  transform: 'translateY(0)',
-                },
-              }}
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Sign In'
-              )}
-            </Button>
-
-            <Divider sx={{ my: 1.5 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                OR
+            {/* Header */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 3 }}>
+                <DinoLogo size={48} animated={true} sx={{ mr: 2 }} />
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  fontWeight="700"
+                  sx={{
+                    fontSize: { xs: '1.75rem', sm: '2rem' },
+                    color: '#1976d2',
+                    fontWeight: 700,
+                  }}
+                >
+                  Welcome Back
+                </Typography>
+              </Box>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: '1rem',
+                  fontWeight: 400,
+                }}
+              >
+                Sign in to your space dashboard
               </Typography>
-            </Divider>
+            </Box>
 
-            <Box sx={{ textAlign: 'center', mt: 'auto' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5, fontSize: '0.85rem' }}>
-                Don't have an account?
-              </Typography>
-              <Button
-                variant="contained"
-                size="medium"
-                onClick={() => navigate('/register')}
+            {/* Error Alert */}
+            {error && (
+              <Alert 
+                severity="error" 
                 sx={{ 
-                  fontWeight: 600,
-                  backgroundColor: 'secondary.main',
-                  py: 1,
+                  mb: 3,
                   borderRadius: 2,
-                  transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                }}
+              >
+                {error}
+              </Alert>
+            )}
+
+            {/* Login Form */}
+            <Box component="form" onSubmit={handleSubmit}>
+              <TextField
+                fullWidth
+                label="Username"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                required
+                autoComplete="email"
+                margin="normal"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person sx={{ color: '#1976d2' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ 
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(5px)',
+                    WebkitBackdropFilter: 'blur(5px)',
+                    minHeight: '56px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                      },
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: '2px',
+                      },
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#1976d2',
+                    fontWeight: 500,
+                    fontSize: '1.1rem',
+                  },
+                  '& .MuiInputBase-input': {
+                    color: '#333333',
+                    fontWeight: 400,
+                    fontSize: '1.1rem',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(25, 118, 210, 0.3)',
+                  },
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleInputChange}
+                required
+                autoComplete="current-password"
+                margin="normal"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock sx={{ color: '#1976d2' }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={togglePasswordVisibility}
+                        edge="end"
+                        sx={{ color: '#1976d2' }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(5px)',
+                    WebkitBackdropFilter: 'blur(5px)',
+                    minHeight: '56px',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                      },
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976d2',
+                        borderWidth: '2px',
+                      },
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#1976d2',
+                    fontWeight: 500,
+                    fontSize: '1.1rem',
+                  },
+                  '& .MuiInputBase-input': {
+                    color: '#333333',
+                    fontWeight: 400,
+                    fontSize: '1.1rem',
+                  },
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'rgba(25, 118, 210, 0.3)',
+                  },
+                }}
+              />
+
+              {/* Remember Me Checkbox */}
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rememberMe}
+                    onChange={handleRememberMeChange}
+                    sx={{
+                      color: '#1976d2',
+                      '&.Mui-checked': {
+                        color: '#1976d2',
+                      },
+                    }}
+                  />
+                }
+                label={
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      color: '#1976d2',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Remember Me
+                  </Typography>
+                }
+                sx={{ mb: 4, mt: 1 }}
+              />
+
+              {/* Login Button */}
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+                sx={{ 
+                  py: 1.8,
+                  fontWeight: 700,
+                  borderRadius: 3,
+                  fontSize: '1.1rem',
+                  textTransform: 'none',
+                  background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+                  boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)',
+                  mb: 3,
                   '&:hover': {
-                    backgroundColor: 'secondary.dark',
-                    transform: 'translateY(-1px)',
+                    background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 12px 40px rgba(25, 118, 210, 0.5)',
                   },
                   '&:active': {
                     transform: 'translateY(0)',
                   },
+                  '&:disabled': {
+                    background: 'rgba(25, 118, 210, 0.3)',
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               >
-                Create Restaurant Account
+                {loading ? (
+                  <CircularProgress size={26} color="inherit" />
+                ) : (
+                  'Login'
+                )}
               </Button>
-            </Box>
-          </Box>
 
-          {/* Footer */}
-          <Box sx={{ textAlign: 'center', mt: 2, flexShrink: 0 }}>
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ fontSize: { xs: '0.7rem', sm: '0.8rem' } }}
-            >
-              © 2024 Dino. All rights reserved.
-            </Typography>
-          </Box>
-        </Paper>
-      </Container>
+              {/* Register Link */}
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Don't have an account?
+                </Typography>
+                <Button
+                  variant="text"
+                  onClick={() => navigate('/register')}
+                  sx={{ 
+                    fontWeight: 600,
+                    color: '#1976d2',
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    '&:hover': {
+                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                    },
+                  }}
+                >
+                  Create Account
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Footer */}
+            <Box sx={{ textAlign: 'center', mt: 4, pt: 3, borderTop: '1px solid rgba(0, 0, 0, 0.1)' }}>
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ fontSize: '0.8rem' }}
+              >
+                © 2024 Dino Space Management System
+              </Typography>
+            </Box>
+          </Paper>
+        </Container>
+      </Box>
     </Box>
   );
 };

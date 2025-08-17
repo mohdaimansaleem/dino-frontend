@@ -926,118 +926,110 @@ const UserManagement: React.FC = () => {
 
           {/* Statistics Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ 
-                borderRadius: 2, 
-                border: '1px solid', 
-                borderColor: 'divider',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  boxShadow: 3,
-                  transform: 'translateY(-2px)',
-                },
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600" color="primary.main">
-                        {users.length}
+            {[
+              {
+                label: 'Total Users',
+                value: users.length,
+                color: '#2196F3',
+                icon: <People />,
+                description: 'All registered users'
+              },
+              {
+                label: 'Active Users',
+                value: users.filter(user => user.status === 'active').length,
+                color: '#4CAF50',
+                icon: <CheckCircle />,
+                description: 'Currently active'
+              },
+              {
+                label: 'Recent Logins',
+                value: users.filter(user => {
+                  const sevenDaysAgo = new Date();
+                  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                  const lastLogin = user.last_logged_in ? new Date(user.last_logged_in) : null;
+                  return lastLogin && lastLogin > sevenDaysAgo;
+                }).length,
+                color: '#2196F3',
+                icon: <Business />,
+                description: 'Last 7 days'
+              },
+              {
+                label: 'Role Types',
+                value: [...new Set(users.map(user => user.role))].length,
+                color: '#FF9800',
+                icon: <Business />,
+                description: 'Different roles'
+              }
+            ].map((stat, index) => (
+              <Grid item xs={12} sm={6} md={3} key={index}>
+                <Card
+                  sx={{
+                    p: { xs: 2.5, sm: 3 },
+                    borderRadius: 2,
+                    backgroundColor: `${stat.color}08`,
+                    border: `1px solid ${stat.color}33`,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 8px 25px ${stat.color}33`,
+                      backgroundColor: `${stat.color}12`,
+                    },
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    {/* Icon on the left */}
+                    <Box
+                      sx={{
+                        width: { xs: 40, sm: 48 },
+                        height: { xs: 40, sm: 48 },
+                        borderRadius: 2,
+                        backgroundColor: stat.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {React.cloneElement(stat.icon, { 
+                        fontSize: isMobile ? 'medium' : 'large' 
+                      })}
+                    </Box>
+                    
+                    {/* Text content on the right */}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography 
+                        variant={isMobile ? "h6" : "h4"} 
+                        fontWeight="700" 
+                        color="text.primary"
+                        sx={{ 
+                          fontSize: { xs: '1.25rem', sm: '2rem' },
+                          lineHeight: 1.2,
+                          mb: 0.5
+                        }}
+                      >
+                        {stat.value}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Users
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        fontWeight="600"
+                        sx={{ 
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          lineHeight: 1.2,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {stat.label}
                       </Typography>
                     </Box>
-                    <People sx={{ fontSize: 40, color: 'primary.main', opacity: 0.7 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ 
-                borderRadius: 2, 
-                border: '1px solid', 
-                borderColor: 'divider',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  boxShadow: 3,
-                  transform: 'translateY(-2px)',
-                },
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600" color="success.main">
-                        {users.filter(user => user.status === 'active').length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Active Users
-                      </Typography>
-                    </Box>
-                    <CheckCircle sx={{ fontSize: 40, color: 'success.main', opacity: 0.7 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ 
-                borderRadius: 2, 
-                border: '1px solid', 
-                borderColor: 'divider',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  boxShadow: 3,
-                  transform: 'translateY(-2px)',
-                },
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600" color="info.main">
-                        {users.filter(user => {
-                          const sevenDaysAgo = new Date();
-                          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                          const lastLogin = user.last_logged_in ? new Date(user.last_logged_in) : null;
-                          return lastLogin && lastLogin > sevenDaysAgo;
-                        }).length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Recent Logins
-                      </Typography>
-                    </Box>
-                    <Business sx={{ fontSize: 40, color: 'info.main', opacity: 0.7 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ 
-                borderRadius: 2, 
-                border: '1px solid', 
-                borderColor: 'divider',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  boxShadow: 3,
-                  transform: 'translateY(-2px)',
-                },
-              }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600" color="warning.main">
-                        {[...new Set(users.map(user => user.role))].length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Role Types
-                      </Typography>
-                    </Box>
-                    <Business sx={{ fontSize: 40, color: 'warning.main', opacity: 0.7 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                  </Stack>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
 
           {/* Filters and Search */}

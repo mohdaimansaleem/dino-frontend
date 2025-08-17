@@ -281,7 +281,24 @@ class AuthService {
     }
   }
 
+  private refreshPromise: Promise<AuthToken | null> | null = null;
+  private lastRefreshAttempt: number = 0;
+  private readonly REFRESH_COOLDOWN = 30000; // 30 seconds cooldown between refresh attempts
+
   async refreshToken(): Promise<AuthToken | null> {
+    // If a refresh is already in progress, return the existing promise
+    if (this.refreshPromise) {
+      console.log('🔄 Token refresh already in progress, waiting...');
+      return this.refreshPromise;
+    }
+
+    // Check cooldown period to prevent too frequent refresh attempts
+    const now = Date.now();
+    if (now - this.lastRefreshAttempt < this.REFRESH_COOLDOWN) {
+      console.log('🚫 Token refresh on cooldown, skipping...');
+      return null;
+    }
+
     try {
       const refreshToken = this.getRefreshToken();
       if (!refreshToken) {
@@ -290,24 +307,44 @@ class AuthService {
         return null;
       }
 
-      console.log('Attempting to refresh token...');
-      const response = await apiService.post<AuthToken>('/auth/refresh', {
-        refresh_token: refreshToken
-      });
+      this.lastRefreshAttempt = now;
+      console.log('🔄 Starting token refresh...');
       
-      if (response.success && response.data && response.data.access_token) {
-        console.log('Token refreshed successfully');
-        this.setTokens(response.data);
-        return response.data;
-      }
-      
-      console.warn('Token refresh failed: Invalid response');
-      this.clearTokens();
-      return null;
-    } catch (error: any) {
-      console.error('Token refresh error:', error);
-      this.clearTokens();
-      return null;
+      // Create the refresh promise using direct axios to avoid interceptor loops
+      this.refreshPromise = (async () => {
+        try {
+          // Import axios directly to bypass interceptors
+          const axios = (await import('axios')).default;
+          const response = await axios.post(`${(apiService as any).axiosInstance.defaults.baseURL}/auth/refresh`, {
+            refresh_token: refreshToken
+          }, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (response.data && response.data.access_token) {
+            console.log('✅ Token refreshed successfully');
+            const tokenData = response.data;
+            this.setTokens(tokenData);
+            return tokenData;
+          }
+          
+          console.warn('❌ Token refresh failed: Invalid response');
+          this.clearTokens();
+          return null;
+        } catch (error: any) {
+          console.error('❌ Token refresh error:', error);
+          this.clearTokens();
+          return null;
+        }
+      })();
+
+      const result = await this.refreshPromise;
+      return result;
+    } finally {
+      // Clear the promise when done
+      this.refreshPromise = null;
     }
   }
 
@@ -357,20 +394,15 @@ class AuthService {
       const now = Date.now();
       const timeUntilExpiry = expiry - now;
       
-      // If token expires in less than 5 minutes, try to refresh
-      if (timeUntilExpiry < 5 * 60 * 1000 && timeUntilExpiry > 0) {
-        console.log('🔄 Token expires soon, attempting proactive refresh...');
-        this.refreshToken().catch(error => {
-          console.error('Proactive token refresh failed:', error);
-        });
-      }
-      
       // If token is already expired, return false
       if (timeUntilExpiry <= 0) {
         console.warn('🚨 Token has expired');
         this.clearTokens();
         return false;
       }
+      
+      // Note: Removed proactive refresh from isAuthenticated to prevent loops
+      // Token refresh will be handled by the API interceptor when needed
     }
     
     return true;
@@ -413,11 +445,13 @@ class AuthService {
   }
 
   /**
-   * Check if token needs refresh (expires in less than 10 minutes)
+   * Check if token needs refresh (expires in less than 5 minutes)
    */
   shouldRefreshToken(): boolean {
     const { expiresIn } = this.getTokenExpiryInfo();
-    return expiresIn > 0 && expiresIn < 10 * 60 * 1000; // Less than 10 minutes
+    // Only refresh if token expires in less than 5 minutes but more than 1 minute
+    // This prevents constant refreshing while ensuring we refresh before expiry
+    return expiresIn > 60 * 1000 && expiresIn < 5 * 60 * 1000; // Between 1-5 minutes
   }
 
   /**
@@ -435,11 +469,24 @@ class AuthService {
     console.log('Has Refresh Token:', !!refreshToken);
     console.log('Token Expiry Info:', expiryInfo);
     console.log('Is Authenticated:', this.isAuthenticated());
+    console.log('Should Refresh Token:', this.shouldRefreshToken());
+    console.log('Refresh In Progress:', !!this.refreshPromise);
+    console.log('Last Refresh Attempt:', new Date(this.lastRefreshAttempt).toISOString());
+    console.log('Cooldown Remaining:', Math.max(0, this.REFRESH_COOLDOWN - (Date.now() - this.lastRefreshAttempt)));
     if (user) {
       console.log('User Role:', user.role);
       console.log('User Email:', user.email);
     }
     console.groupEnd();
+  }
+
+  /**
+   * Force clear refresh state (for debugging)
+   */
+  clearRefreshState(): void {
+    this.refreshPromise = null;
+    this.lastRefreshAttempt = 0;
+    console.log('🧹 Refresh state cleared');
   }
 }
 

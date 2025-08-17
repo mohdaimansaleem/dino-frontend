@@ -33,6 +33,7 @@ import {
   useTheme,
   useMediaQuery,
   Stack,
+  keyframes,
 } from '@mui/material';
 import {
   Restaurant,
@@ -47,6 +48,13 @@ import {
   Search,
   Timer,
   TableRestaurant,
+  Kitchen,
+  Notifications,
+  TrendingUp,
+  AccessTime,
+  Store,
+  CachedOutlined,
+  Cancel,
 } from '@mui/icons-material';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -61,6 +69,31 @@ import {
   PAGE_TITLES,
   PLACEHOLDERS,
 } from '../../constants';
+import AnimatedBackground from '../../components/ui/AnimatedBackground';
+
+// Animation for refresh icon
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+// Pulse animation for urgent orders
+const pulse = keyframes`
+  0% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(244, 67, 54, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+  }
+`;
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -194,6 +227,19 @@ const OrdersManagement: React.FC = () => {
     return filteredOrders.filter(order => order.status === 'served' || order.status === 'delivered');
   };
 
+  const getCancelledOrders = () => {
+    return filteredOrders.filter(order => order.status === 'cancelled');
+  };
+
+  const getUrgentOrders = () => {
+    const now = new Date();
+    return getActiveOrders().filter(order => {
+      const orderTime = new Date(order.created_at);
+      const diffInMinutes = Math.floor((now.getTime() - orderTime.getTime()) / (1000 * 60));
+      return diffInMinutes > 30; // Orders older than 30 minutes
+    });
+  };
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'pending': '#f59e0b',
@@ -259,6 +305,13 @@ const OrdersManagement: React.FC = () => {
     return `${days}d ago`;
   };
 
+  const isOrderUrgent = (orderTime: string) => {
+    const now = new Date();
+    const orderDate = new Date(orderTime);
+    const diffInMinutes = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60));
+    return diffInMinutes > 30;
+  };
+
   const handleStatusUpdate = async (orderId: string, newStatus: OrderStatus) => {
     try {
       await orderService.updateOrderStatus(orderId, newStatus);
@@ -310,430 +363,677 @@ const OrdersManagement: React.FC = () => {
     setOpenOrderDialog(true);
   };
 
-  const renderOrderCard = (order: Order) => (
-    <Card 
-      key={order.id}
-      sx={{ 
-        mb: 2, 
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid', 
-        borderColor: 'divider',
-        backgroundColor: 'background.paper',
-        borderLeft: `4px solid ${getStatusColor(order.status)}`,
-        transition: 'all 0.2s ease-in-out',
-        '&:hover': { 
-          borderColor: 'primary.main',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-        }
-      }}
-    >
-      <CardContent sx={{ 
-        p: { xs: 2, sm: 3 }, 
-        flexGrow: 1, 
-        display: 'flex', 
-        flexDirection: 'column', 
-        minHeight: { xs: 320, sm: 400 }
-      }}>
-        <Stack 
-          direction="row"
-          justifyContent="space-between" 
-          alignItems="flex-start" 
-          spacing={1}
-          sx={{ mb: 2 }}
-        >
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography 
-              variant={isMobile ? "body1" : "h6"} 
-              fontWeight="600" 
-              color="text.primary"
-              noWrap
-            >
-              {order.order_number || order.id}
-            </Typography>
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }}
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              spacing={{ xs: 0.5, sm: 1 }}
-              sx={{ mt: 0.5 }}
-            >
-              <Stack direction="row" alignItems="center" spacing={0.5}>
-                <TableRestaurant fontSize="small" color="action" />
-                <Typography variant="body2" color="text.secondary">
-                  Table {getTableNumber(order)}
+  const renderOrderCard = (order: Order) => {
+    const isUrgent = isOrderUrgent(order.created_at);
+    
+    return (
+      <Card 
+        key={order.id}
+        sx={{ 
+          mb: 2, 
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          border: '1px solid', 
+          borderColor: isUrgent ? 'error.main' : 'divider',
+          backgroundColor: 'background.paper',
+          borderLeft: `4px solid ${getStatusColor(order.status)}`,
+          transition: 'all 0.2s ease-in-out',
+          animation: isUrgent ? `${pulse} 2s infinite` : 'none',
+          '&:hover': { 
+            borderColor: 'primary.main',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            transform: 'translateY(-1px)'
+          }
+        }}
+      >
+        <CardContent sx={{ 
+          p: { xs: 2, sm: 3 }, 
+          flexGrow: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          minHeight: { xs: 320, sm: 400 }
+        }}>
+          <Stack 
+            direction="row"
+            justifyContent="space-between" 
+            alignItems="flex-start" 
+            spacing={1}
+            sx={{ mb: 2 }}
+          >
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                <Typography 
+                  variant={isMobile ? "body1" : "h6"} 
+                  fontWeight="600" 
+                  color="text.primary"
+                  noWrap
+                >
+                  {order.order_number || order.id}
+                </Typography>
+                {isUrgent && (
+                  <Chip 
+                    label="URGENT" 
+                    size="small" 
+                    color="error" 
+                    sx={{ 
+                      fontSize: '0.65rem',
+                      height: 20,
+                      fontWeight: 600
+                    }} 
+                  />
+                )}
+              </Stack>
+              <Stack 
+                direction={{ xs: 'column', sm: 'row' }}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                spacing={{ xs: 0.5, sm: 1 }}
+                sx={{ mt: 0.5 }}
+              >
+                <Stack direction="row" alignItems="center" spacing={0.5}>
+                  <TableRestaurant fontSize="small" color="action" />
+                  <Typography variant="body2" color="text.secondary">
+                    Table {getTableNumber(order)}
+                  </Typography>
+                </Stack>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{ display: { xs: 'none', sm: 'block' } }}
+                >
+                  • {formatTime(order.created_at)}
+                </Typography>
+                <Typography 
+                  variant="body2" 
+                  color={isUrgent ? "error.main" : "text.secondary"}
+                  fontWeight={isUrgent ? 600 : 400}
+                >
+                  {isMobile ? formatTime(order.created_at) : `• ${getTimeSinceOrder(order.created_at)}`}
                 </Typography>
               </Stack>
-              <Typography 
-                variant="body2" 
-                color="text.secondary"
-                sx={{ display: { xs: 'none', sm: 'block' } }}
-              >
-                • {formatTime(order.created_at)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {isMobile ? formatTime(order.created_at) : `• ${getTimeSinceOrder(order.created_at)}`}
-              </Typography>
-            </Stack>
-          </Box>
-          <Chip 
-            icon={getStatusIcon(order.status)}
-            label={orderService.formatOrderStatus(order.status)}
-            size="small"
-            sx={{ 
-              backgroundColor: getStatusColor(order.status),
-              color: 'white',
-              '& .MuiChip-icon': { color: 'white' },
-              fontSize: { xs: '0.7rem', sm: '0.75rem' }
-            }}
-          />
-        </Stack>
+            </Box>
+            <Chip 
+              icon={getStatusIcon(order.status)}
+              label={orderService.formatOrderStatus(order.status)}
+              size="small"
+              sx={{ 
+                backgroundColor: getStatusColor(order.status),
+                color: 'white',
+                '& .MuiChip-icon': { color: 'white' },
+                fontSize: { xs: '0.7rem', sm: '0.75rem' }
+              }}
+            />
+          </Stack>
 
-        <Box sx={{ mb: 2 }}>
-          <Typography 
-            variant={isMobile ? "body2" : "subtitle2"} 
-            fontWeight="600" 
-            color="text.primary" 
-            sx={{ mb: 1 }}
-          >
-            Items ({order.items.length})
-          </Typography>
-          {order.items.slice(0, isMobile ? 1 : 2).map((item, index) => (
-            <Stack 
-              key={index}
-              direction="row"
-              justifyContent="space-between" 
-              alignItems="center" 
-              spacing={1}
-              sx={{ mb: 0.5 }}
+          <Box sx={{ mb: 2 }}>
+            <Typography 
+              variant={isMobile ? "body2" : "subtitle2"} 
+              fontWeight="600" 
+              color="text.primary" 
+              sx={{ mb: 1 }}
             >
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1, minWidth: 0 }}>
-                <Box
-                  sx={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: '50%',
-                    backgroundColor: '#4CAF50', // Default to veg, would need menu item data for actual veg/non-veg
-                    flexShrink: 0
-                  }}
-                />
+              Items ({order.items.length})
+            </Typography>
+            {order.items.slice(0, isMobile ? 2 : 3).map((item, index) => (
+              <Stack 
+                key={index}
+                direction="row"
+                justifyContent="space-between" 
+                alignItems="center" 
+                spacing={1}
+                sx={{ mb: 0.5 }}
+              >
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: '#4CAF50', // Default to veg, would need menu item data for actual veg/non-veg
+                      flexShrink: 0
+                    }}
+                  />
+                  <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{ 
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {item.quantity}x {item.menu_item_name}
+                  </Typography>
+                </Stack>
                 <Typography 
                   variant="body2" 
                   color="text.secondary"
                   sx={{ 
                     fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
+                    flexShrink: 0
                   }}
                 >
-                  {item.quantity}x {item.menu_item_name}
+                  {formatCurrency(item.total_price)}
                 </Typography>
               </Stack>
+            ))}
+            {order.items.length > (isMobile ? 2 : 3) && (
               <Typography 
                 variant="body2" 
-                color="text.secondary"
+                color="primary.main" 
                 sx={{ 
+                  cursor: 'pointer',
                   fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                  flexShrink: 0
+                  '&:hover': { textDecoration: 'underline' }
                 }}
+                onClick={() => handleViewOrder(order)}
               >
-                {formatCurrency(item.total_price)}
+                +{order.items.length - (isMobile ? 2 : 3)} more items
               </Typography>
-            </Stack>
-          ))}
-          {order.items.length > (isMobile ? 1 : 2) && (
-            <Typography 
-              variant="body2" 
-              color="primary.main" 
-              sx={{ 
-                cursor: 'pointer',
-                fontSize: { xs: '0.75rem', sm: '0.875rem' }
-              }}
-            >
-              +{order.items.length - (isMobile ? 1 : 2)} more items
-            </Typography>
-          )}
-        </Box>
+            )}
+          </Box>
 
-        <Box sx={{ mt: 'auto' }}>
-          <Box sx={{ mb: 2 }}>
-            <Typography 
-              variant={isMobile ? "body1" : "h6"} 
-              fontWeight="600" 
-              color="text.primary"
-              sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
-            >
-              Total: {formatCurrency(order.total_amount)}
-            </Typography>
-            <Stack 
-              direction={{ xs: 'column', sm: 'row' }}
-              alignItems={{ xs: 'flex-start', sm: 'center' }}
-              spacing={1} 
-              sx={{ mt: 0.5 }}
-            >
-              <Chip 
-                label={orderService.formatPaymentStatus(order.payment_status)} 
-                size="small" 
-                color={order.payment_status === 'paid' ? 'success' : 'warning'}
-                variant="outlined"
-                sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
-              />
-              {order.payment_method && (
+          <Box sx={{ mt: 'auto' }}>
+            <Box sx={{ mb: 2 }}>
+              <Typography 
+                variant={isMobile ? "body1" : "h6"} 
+                fontWeight="600" 
+                color="text.primary"
+                sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}
+              >
+                Total: {formatCurrency(order.total_amount)}
+              </Typography>
+              <Stack 
+                direction={{ xs: 'column', sm: 'row' }}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                spacing={1} 
+                sx={{ mt: 0.5 }}
+              >
                 <Chip 
-                  label={order.payment_method.toUpperCase()} 
+                  label={orderService.formatPaymentStatus(order.payment_status)} 
                   size="small" 
+                  color={order.payment_status === 'paid' ? 'success' : 'warning'}
                   variant="outlined"
                   sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
                 />
+                {order.payment_method && (
+                  <Chip 
+                    label={order.payment_method.toUpperCase()} 
+                    size="small" 
+                    variant="outlined"
+                    sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                  />
+                )}
+              </Stack>
+            </Box>
+            
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1} 
+              justifyContent="center"
+            >
+              {/* View button only for admin */}
+              {isAdmin() && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => handleViewOrder(order)}
+                  startIcon={<Visibility />}
+                  className="btn-responsive"
+                  fullWidth={isMobile}
+                  sx={{ 
+                    flex: { xs: 'none', sm: isOperator() ? 0 : 1 },
+                    borderColor: 'divider',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      backgroundColor: 'primary.50'
+                    }
+                  }}
+                >
+                  View
+                </Button>
+              )}
+              {order.status !== 'served' && order.status !== 'cancelled' && (
+                <FormControl 
+                  size="small" 
+                  className="input-responsive"
+                  sx={{ flex: { xs: 'none', sm: 1 }, width: { xs: '100%', sm: 'auto' } }}
+                >
+                  <Select
+                    value={order.status}
+                    onChange={(e) => handleStatusUpdate(order.id, e.target.value as OrderStatus)}
+                    size="small"
+                    disabled={!hasPermission(PERMISSIONS.ORDERS_UPDATE)}
+                    sx={{
+                      '& .MuiSelect-select': {
+                        backgroundColor: getStatusColor(order.status),
+                        color: 'white',
+                        fontWeight: 600,
+                        '&:focus': {
+                          backgroundColor: getStatusColor(order.status),
+                        }
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: getStatusColor(order.status),
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: getStatusColor(order.status),
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: getStatusColor(order.status),
+                      }
+                    }}
+                  >
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="confirmed">Confirmed</MenuItem>
+                    <MenuItem value="preparing">Preparing</MenuItem>
+                    <MenuItem value="ready">Ready</MenuItem>
+                    <MenuItem value="served">Served</MenuItem>
+                  </Select>
+                </FormControl>
               )}
             </Stack>
           </Box>
-          
-          <Stack 
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1} 
-            justifyContent="center"
-          >
-            {/* View button only for admin */}
-            {isAdmin() && (
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => handleViewOrder(order)}
-                startIcon={<Visibility />}
-                className="btn-responsive"
-                fullWidth={isMobile}
-                sx={{ flex: { xs: 'none', sm: isOperator() ? 0 : 1 } }}
-              >
-                View
-              </Button>
-            )}
-            {order.status !== 'served' && order.status !== 'cancelled' && (
-              <FormControl 
-                size="small" 
-                className="input-responsive"
-                sx={{ flex: { xs: 'none', sm: 1 }, width: { xs: '100%', sm: 'auto' } }}
-              >
-                <Select
-                  value={order.status}
-                  onChange={(e) => handleStatusUpdate(order.id, e.target.value as OrderStatus)}
-                  size="small"
-                  disabled={!hasPermission(PERMISSIONS.ORDERS_UPDATE)}
-                >
-                  <MenuItem value="pending">Pending</MenuItem>
-                  <MenuItem value="confirmed">Confirmed</MenuItem>
-                  <MenuItem value="preparing">Preparing</MenuItem>
-                  <MenuItem value="ready">Ready</MenuItem>
-                  <MenuItem value="served">Served</MenuItem>
-                </Select>
-              </FormControl>
-            )}
-          </Stack>
-        </Box>
 
-        {order.estimated_ready_time && order.status !== 'served' && (
-          <Stack 
-            direction="row"
-            alignItems="center" 
-            spacing={1} 
-            sx={{ 
-              mt: 2, 
-              p: { xs: 1, sm: 1.5 }, 
-              backgroundColor: 'info.50', 
-              borderRadius: 1 
-            }}
-          >
-            <Timer fontSize="small" color="info" />
-            <Typography 
-              variant="body2" 
-              color="info.main"
-              sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+          {order.estimated_ready_time && order.status !== 'served' && (
+            <Stack 
+              direction="row"
+              alignItems="center" 
+              spacing={1} 
+              sx={{ 
+                mt: 2, 
+                p: { xs: 1, sm: 1.5 }, 
+                backgroundColor: 'info.50', 
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'info.200'
+              }}
             >
-              Estimated ready time: {formatTime(order.estimated_ready_time)}
-            </Typography>
-          </Stack>
-        )}
-      </CardContent>
-    </Card>
-  );
+              <Timer fontSize="small" color="info" />
+              <Typography 
+                variant="body2" 
+                color="info.main"
+                fontWeight="500"
+                sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+              >
+                Estimated ready: {formatTime(order.estimated_ready_time)}
+              </Typography>
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   if (loading) {
     return (
-      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
-        <Box sx={{ py: { xs: 2, sm: 4 } }}>
-          <Grid container spacing={{ xs: 2, sm: 3 }}>
-            {[...Array(6)].map((_, index) => (
-              <Grid item xs={12} md={6} lg={4} key={index}>
-                <Card className="card-responsive">
-                  <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
-                    <Skeleton variant="text" height={isMobile ? 28 : 32} />
-                    <Skeleton variant="text" height={isMobile ? 20 : 24} />
-                    <Skeleton variant="rectangular" height={isMobile ? 100 : 120} sx={{ mt: 2 }} />
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-      </Container>
+      <Box
+        sx={{
+          minHeight: 'auto',
+          height: 'auto',
+          backgroundColor: '#f8f9fa',
+          padding: 0,
+          margin: 0,
+          width: '100%',
+          overflow: 'visible',
+        }}
+      >
+        <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
+          <Box sx={{ py: { xs: 2, sm: 4 } }}>
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+              {[...Array(6)].map((_, index) => (
+                <Grid item xs={12} md={6} lg={4} key={index}>
+                  <Card className="card-responsive">
+                    <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                      <Skeleton variant="text" height={isMobile ? 28 : 32} />
+                      <Skeleton variant="text" height={isMobile ? 20 : 24} />
+                      <Skeleton variant="rectangular" height={isMobile ? 100 : 120} sx={{ mt: 2 }} />
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        </Container>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
-        <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
-          <Typography 
-            variant={isMobile ? "body1" : "h6"} 
-            color="error" 
-            gutterBottom
-            fontWeight="600"
-          >
-            {error}
-          </Typography>
-          <Button 
-            variant="contained" 
-            onClick={handleRefreshOrders} 
-            className="btn-responsive"
-            sx={{ mt: 2 }}
-          >
-            Try Again
-          </Button>
-        </Box>
-      </Container>
+      <Box
+        sx={{
+          minHeight: 'auto',
+          height: 'auto',
+          backgroundColor: '#f8f9fa',
+          padding: 0,
+          margin: 0,
+          width: '100%',
+          overflow: 'visible',
+        }}
+      >
+        <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
+          <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
+            <Typography 
+              variant={isMobile ? "body1" : "h6"} 
+              color="error" 
+              gutterBottom
+              fontWeight="600"
+            >
+              {error}
+            </Typography>
+            <Button 
+              variant="contained" 
+              onClick={handleRefreshOrders} 
+              className="btn-responsive"
+              sx={{ mt: 2 }}
+            >
+              Try Again
+            </Button>
+          </Box>
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="xl" sx={{ pt: { xs: '56px', sm: '64px' } }}>
-      <Box sx={{ py: { xs: 2, sm: 4 } }}>
-        {/* Header */}
-        <Box sx={{ mb: { xs: 3, md: 4 } }}>
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'flex-start', 
-            mb: 2
-          }}>
+    <Box
+      sx={{
+        minHeight: 'auto',
+        height: 'auto',
+        backgroundColor: '#f8f9fa',
+        padding: 0,
+        margin: 0,
+        width: '100%',
+        overflow: 'visible',
+        '& .MuiContainer-root': {
+          padding: '0 !important',
+          margin: '0 !important',
+          maxWidth: 'none !important',
+        },
+      }}
+    >
+      {/* Hero Section */}
+      <Box
+        sx={{
+          backgroundColor: 'grey.100',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          position: 'relative',
+          overflow: 'hidden',
+          color: 'text.primary',
+          padding: 0,
+          margin: 0,
+          width: '100%',
+        }}
+      >
+        <AnimatedBackground />
+        <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', md: 'center' },
+              gap: { xs: 2, md: 3 },
+              py: { xs: 3, sm: 4 },
+              px: { xs: 3, sm: 4 },
+            }}
+          >
+            {/* Header Content */}
             <Box sx={{ flex: 1 }}>
-              <Typography 
-                variant="h4" 
-                component="h1"
-                sx={{ 
-                  fontSize: { xs: '1.75rem', sm: '2rem', md: '2.125rem' },
-                  fontWeight: 600,
-                  color: 'text.primary',
-                  mb: 1,
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                {isOperator() ? 'Kitchen Dashboard' : 'Orders Management'}
-              </Typography>
-              <Typography 
-                variant="body1" 
-                color="text.secondary"
-                sx={{ 
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <Kitchen sx={{ fontSize: 32, mr: 1.5, color: 'text.primary', opacity: 0.9 }} />
+                <Typography
+                  variant="h4"
+                  component="h1"
+                  fontWeight="600"
+                  sx={{
+                    fontSize: { xs: '1.75rem', sm: '2rem' },
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.2,
+                    color: 'text.primary',
+                  }}
+                >
+                  {isOperator() ? 'Kitchen Dashboard' : 'Orders Management'}
+                </Typography>
+              </Box>
+              
+              <Typography
+                variant="body1"
+                sx={{
                   fontSize: { xs: '0.875rem', sm: '1rem' },
-                  fontWeight: 400
+                  fontWeight: 400,
+                  mb: 1,
+                  maxWidth: '500px',
+                  color: 'text.secondary',
                 }}
               >
                 {isOperator() 
-                  ? `View and update order status for ${getVenueDisplayName()}` 
-                  : `Manage and track all orders for ${getVenueDisplayName()}`
+                  ? `Real-time order tracking and kitchen workflow for ${getVenueDisplayName()}` 
+                  : `Comprehensive order management and analytics for ${getVenueDisplayName()}`
                 }
               </Typography>
-            </Box>
-            <Button
-              onClick={handleRefreshOrders}
-              variant="outlined"
-              startIcon={<Refresh />}
-              sx={{ 
-                borderColor: 'divider',
-                color: 'text.secondary',
-                '&:hover': { 
-                  borderColor: 'primary.main',
-                  backgroundColor: 'primary.50'
-                }
-              }}
-            >
-              Refresh
-            </Button>
-          </Box>
-        </Box>
 
-        {/* Kitchen Statistics */}
-        <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 3, md: 4 } }}>
-          {[
-            { label: 'Total Orders Today', value: orders.length, color: '#2196F3', icon: <Assignment /> },
-            { label: 'Active Orders', value: getActiveOrders().length, color: '#FF9800', icon: <Restaurant /> },
-            { label: 'Ready to Serve', value: orders.filter(o => o.status === 'ready').length, color: '#4CAF50', icon: <CheckCircle /> },
-            { 
-              label: 'Avg Prep Time', 
-              value: orders.length > 0 ? '25 min' : '0 min', // Would calculate from actual data
-              color: '#9C27B0', 
-              icon: <Timer /> 
-            },
-          ].map((stat, index) => (
-            <Grid item xs={6} md={3} key={index}>
-              <Paper 
-                sx={{ 
-                  p: 3, 
-                  border: '1px solid', 
-                  borderColor: 'divider',
-                  backgroundColor: 'background.paper'
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
                 }}
               >
-                <Stack 
-                  direction={{ xs: 'column', sm: 'row' }}
-                  alignItems={{ xs: 'center', sm: 'flex-start' }}
-                  spacing={{ xs: 1, sm: 2 }}
-                  textAlign={{ xs: 'center', sm: 'left' }}
-                >
-                  <Avatar sx={{ 
-                    backgroundColor: stat.color, 
-                    width: { xs: 40, sm: 48 }, 
-                    height: { xs: 40, sm: 48 } 
-                  }}>
-                    {React.cloneElement(stat.icon, { 
-                      fontSize: isMobile ? 'medium' : 'large' 
-                    })}
-                  </Avatar>
-                  <Box>
-                    <Typography 
-                      variant={isMobile ? "h6" : "h5"} 
-                      fontWeight="bold" 
-                      color="text.primary"
-                      sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
-                    >
-                      {typeof stat.value === 'string' ? stat.value : stat.value}
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
-                    >
-                      {stat.label}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Paper>
-            </Grid>
-          ))}
-        </Grid>
+                <Store sx={{ fontSize: 18, mr: 1, color: 'primary.main', opacity: 0.9 }} />
+                <Typography variant="body2" fontWeight="500" color="text.primary">
+                  {getVenueDisplayName()}
+                </Typography>
+              </Box>
+            </Box>
 
-        {/* Controls */}
+            {/* Action Buttons */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1.5,
+                flexDirection: { xs: 'row', sm: 'row' },
+                flexWrap: 'wrap',
+                alignItems: 'center',
+              }}
+            >
+              {getUrgentOrders().length > 0 && (
+                <Button
+                  variant="outlined"
+                  startIcon={<Notifications />}
+                  size="medium"
+                  sx={{
+                    backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(244, 67, 54, 0.3)',
+                    color: 'error.main',
+                    fontWeight: 600,
+                    px: 3,
+                    py: 1,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '0.875rem',
+                    '&:hover': {
+                      backgroundColor: 'rgba(244, 67, 54, 0.2)',
+                      borderColor: 'error.main',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(244, 67, 54, 0.4)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  {getUrgentOrders().length} Urgent
+                </Button>
+              )}
+
+              <IconButton
+                onClick={handleRefreshOrders}
+                disabled={loading}
+                size="medium"
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  color: 'text.secondary',
+                  width: 40,
+                  height: 40,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 1)',
+                    color: 'primary.main',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:disabled': {
+                    opacity: 0.5,
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                }}
+                title={loading ? 'Refreshing...' : 'Refresh orders'}
+              >
+                {loading ? (
+                  <CachedOutlined sx={{ animation: `${spin} 1s linear infinite` }} />
+                ) : (
+                  <Refresh />
+                )}
+              </IconButton>
+            </Box>
+          </Box>
+        </Container>
+      </Box>
+
+      {/* Main Content */}
+      <Box
+        sx={{
+          width: '100%',
+          padding: 0,
+          margin: 0,
+        }}
+      >
+        {/* Kitchen Statistics */}
+        <Box sx={{ mb: 4, px: { xs: 3, sm: 4 }, py: 2 }}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
+            {[
+              { 
+                label: 'Total Orders Today', 
+                value: orders.length, 
+                color: '#2196F3', 
+                icon: <Assignment />,
+                description: 'All orders received'
+              },
+              { 
+                label: 'Active Orders', 
+                value: getActiveOrders().length, 
+                color: '#FF9800', 
+                icon: <Restaurant />,
+                description: 'Currently processing'
+              },
+              { 
+                label: 'Ready to Serve', 
+                value: orders.filter(o => o.status === 'ready').length, 
+                color: '#4CAF50', 
+                icon: <CheckCircle />,
+                description: 'Awaiting pickup'
+              },
+              { 
+                label: 'Urgent Orders', 
+                value: getUrgentOrders().length, 
+                color: '#F44336', 
+                icon: <Timer />,
+                description: 'Over 30 minutes'
+              },
+            ].map((stat, index) => (
+              <Grid item xs={6} md={3} key={index}>
+                <Card
+                  sx={{
+                    p: { xs: 2.5, sm: 3 },
+                    borderRadius: 2,
+                    backgroundColor: `${stat.color}08`,
+                    border: `1px solid ${stat.color}33`,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: `0 8px 25px ${stat.color}33`,
+                      backgroundColor: `${stat.color}12`,
+                    },
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    {/* Icon on the left */}
+                    <Box
+                      sx={{
+                        width: { xs: 40, sm: 48 },
+                        height: { xs: 40, sm: 48 },
+                        borderRadius: 2,
+                        backgroundColor: stat.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {React.cloneElement(stat.icon, { 
+                        fontSize: isMobile ? 'medium' : 'large' 
+                      })}
+                    </Box>
+                    
+                    {/* Text content on the right */}
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography 
+                        variant={isMobile ? "h6" : "h4"} 
+                        fontWeight="700" 
+                        color="text.primary"
+                        sx={{ 
+                          fontSize: { xs: '1.25rem', sm: '2rem' },
+                          lineHeight: 1.2,
+                          mb: 0.5
+                        }}
+                      >
+                        {stat.value}
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        fontWeight="600"
+                        sx={{ 
+                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                          lineHeight: 1.2,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {stat.label}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+
+        {/* Enhanced Controls */}
         <Paper 
           sx={{ 
             p: 3, 
             mb: 4, 
             border: '1px solid', 
             borderColor: 'divider',
-            backgroundColor: 'background.paper'
+            backgroundColor: 'background.paper',
+            mx: { xs: 3, sm: 4 }
           }}
         >
           <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 className="input-responsive"
@@ -746,7 +1046,7 @@ const OrdersManagement: React.FC = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={8}>
+            <Grid item xs={12} md={6}>
               <FormControl fullWidth className="input-responsive">
                 <InputLabel>Filter by Status</InputLabel>
                 <Select
@@ -772,7 +1072,8 @@ const OrdersManagement: React.FC = () => {
         <Paper sx={{ 
           border: '1px solid', 
           borderColor: 'divider',
-          backgroundColor: 'background.paper'
+          backgroundColor: 'background.paper',
+          mx: { xs: 3, sm: 4 }
         }}>
           <Tabs 
             value={tabValue} 
@@ -809,30 +1110,92 @@ const OrdersManagement: React.FC = () => {
               label={isMobile ? "Served" : "Served Orders"}
               iconPosition={isMobile ? "top" : "start"}
             />
+            <Tab 
+              icon={
+                <Badge badgeContent={getCancelledOrders().length} color="error">
+                  <Cancel fontSize={isMobile ? "small" : "medium"} />
+                </Badge>
+              } 
+              label={isMobile ? "Cancelled" : "Cancelled Orders"}
+              iconPosition={isMobile ? "top" : "start"}
+            />
           </Tabs>
 
           {/* Active Orders Tab */}
           <TabPanel value={tabValue} index={0}>
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
               {getActiveOrders().length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
-                  <Restaurant sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.secondary', mb: 2 }} />
-                  <Typography 
-                    variant={isMobile ? "body1" : "h6"} 
-                    color="text.secondary" 
-                    fontWeight="600"
-                    gutterBottom
-                  >
-                    No Active Orders
-                  </Typography>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary"
-                    sx={{ maxWidth: 400, mx: 'auto' }}
-                  >
-                    All orders have been served or there are no new orders.
-                  </Typography>
-                </Box>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    border: '2px dashed',
+                    borderColor: 'primary.light',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    textAlign: 'center',
+                    py: { xs: 4, sm: 6 },
+                    px: { xs: 2, sm: 3 },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'linear-gradient(45deg, transparent 30%, rgba(0, 0, 0, 0.02) 50%, transparent 70%)',
+                    },
+                  }}
+                >
+                  <Box sx={{ position: 'relative', zIndex: 1 }}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #bbdefb 0%, #90caf9 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mx: 'auto',
+                        mb: 3,
+                        border: '2px solid',
+                        borderColor: 'primary.main',
+                      }}
+                    >
+                      <Restaurant
+                        sx={{
+                          fontSize: 40,
+                          color: '#1565c0',
+                        }}
+                      />
+                    </Box>
+                    
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="600" 
+                      gutterBottom 
+                      color="text.primary"
+                      sx={{ fontSize: { xs: '1.25rem', sm: '1.375rem' } }}
+                    >
+                      No Active Orders
+                    </Typography>
+                    
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary"
+                      sx={{ 
+                        mb: 3,
+                        maxWidth: '400px',
+                        mx: 'auto',
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      All orders have been served or there are no new orders. The kitchen is ready for the next wave!
+                    </Typography>
+                  </Box>
+                </Card>
               ) : (
                 <Grid container spacing={{ xs: 2, sm: 3 }}>
                   {getActiveOrders().map(order => (
@@ -849,27 +1212,167 @@ const OrdersManagement: React.FC = () => {
           <TabPanel value={tabValue} index={1}>
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
               {getServedOrders().length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: { xs: 6, sm: 8 } }}>
-                  <CheckCircle sx={{ fontSize: { xs: 48, sm: 64 }, color: 'text.secondary', mb: 2 }} />
-                  <Typography 
-                    variant={isMobile ? "body1" : "h6"} 
-                    color="text.secondary" 
-                    fontWeight="600"
-                    gutterBottom
-                  >
-                    No Served Orders
-                  </Typography>
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary"
-                    sx={{ maxWidth: 400, mx: 'auto' }}
-                  >
-                    Completed orders will appear here.
-                  </Typography>
-                </Box>
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    border: '2px dashed',
+                    borderColor: 'success.light',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    textAlign: 'center',
+                    py: { xs: 4, sm: 6 },
+                    px: { xs: 2, sm: 3 },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'linear-gradient(45deg, transparent 30%, rgba(0, 0, 0, 0.02) 50%, transparent 70%)',
+                    },
+                  }}
+                >
+                  <Box sx={{ position: 'relative', zIndex: 1 }}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mx: 'auto',
+                        mb: 3,
+                        border: '2px solid',
+                        borderColor: 'success.main',
+                      }}
+                    >
+                      <CheckCircle
+                        sx={{
+                          fontSize: 40,
+                          color: '#2e7d32',
+                        }}
+                      />
+                    </Box>
+                    
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="600" 
+                      gutterBottom 
+                      color="text.primary"
+                      sx={{ fontSize: { xs: '1.25rem', sm: '1.375rem' } }}
+                    >
+                      No Served Orders
+                    </Typography>
+                    
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary"
+                      sx={{ 
+                        mb: 3,
+                        maxWidth: '400px',
+                        mx: 'auto',
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      Completed orders will appear here. Start serving some delicious meals!
+                    </Typography>
+                  </Box>
+                </Card>
               ) : (
                 <Grid container spacing={{ xs: 2, sm: 3 }}>
                   {getServedOrders().map(order => (
+                    <Grid item xs={12} md={6} lg={4} key={order.id}>
+                      {renderOrderCard(order)}
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Box>
+          </TabPanel>
+
+          {/* Cancelled Orders Tab */}
+          <TabPanel value={tabValue} index={2}>
+            <Box sx={{ p: { xs: 2, sm: 3 } }}>
+              {getCancelledOrders().length === 0 ? (
+                <Card
+                  sx={{
+                    borderRadius: 3,
+                    border: '2px dashed',
+                    borderColor: 'error.light',
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    textAlign: 'center',
+                    py: { xs: 4, sm: 6 },
+                    px: { xs: 2, sm: 3 },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'linear-gradient(45deg, transparent 30%, rgba(0, 0, 0, 0.02) 50%, transparent 70%)',
+                    },
+                  }}
+                >
+                  <Box sx={{ position: 'relative', zIndex: 1 }}>
+                    <Box
+                      sx={{
+                        width: 80,
+                        height: 80,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mx: 'auto',
+                        mb: 3,
+                        border: '2px solid',
+                        borderColor: 'error.main',
+                      }}
+                    >
+                      <Cancel
+                        sx={{
+                          fontSize: 40,
+                          color: '#c62828',
+                        }}
+                      />
+                    </Box>
+                    
+                    <Typography 
+                      variant="h6" 
+                      fontWeight="600" 
+                      gutterBottom 
+                      color="text.primary"
+                      sx={{ fontSize: { xs: '1.25rem', sm: '1.375rem' } }}
+                    >
+                      No Cancelled Orders
+                    </Typography>
+                    
+                    <Typography 
+                      variant="body1" 
+                      color="text.secondary"
+                      sx={{ 
+                        mb: 3,
+                        maxWidth: '400px',
+                        mx: 'auto',
+                        fontSize: { xs: '0.875rem', sm: '1rem' },
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      Cancelled orders will appear here. Keep up the great service to minimize cancellations!
+                    </Typography>
+                  </Box>
+                </Card>
+              ) : (
+                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                  {getCancelledOrders().map(order => (
                     <Grid item xs={12} md={6} lg={4} key={order.id}>
                       {renderOrderCard(order)}
                     </Grid>
@@ -1088,7 +1591,7 @@ const OrdersManagement: React.FC = () => {
           </Alert>
         </Snackbar>
       </Box>
-    </Container>
+    </Box>
   );
 };
 

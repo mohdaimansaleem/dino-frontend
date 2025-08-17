@@ -39,6 +39,7 @@ import { getUserFirstName } from '../../../utils/userUtils';
 import { isAdminLevel } from '../../../constants/roles';
 import { useUserData } from '../../../contexts/UserDataContext';
 import { venueService } from '../../../services/venueService';
+import { LogoutConfirmationModal } from '../../modals';
 
 interface AppHeaderProps {
   onSectionScroll?: (sectionId: string) => void;
@@ -60,6 +61,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
     venueName: string;
   } | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   
   // Feature flags
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
@@ -196,9 +198,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
   }, [isHomePage, homeNavItems]);
 
   const handleLogout = () => {
+    setLogoutModalOpen(true);
+  };
+
+  const confirmLogout = () => {
     logout();
     navigate('/');
     setMobileMenuOpen(false);
+    setLogoutModalOpen(false);
   };
 
   const handleMobileMenuToggle = () => {
@@ -593,6 +600,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
         }}
         isHomePage={isHomePage}
         isAdminRoute={isAdminRoute}
+      />
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        open={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={confirmLogout}
+        userName={getUserFirstName(user) || user?.email}
       />
     </>
   );

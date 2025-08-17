@@ -22,7 +22,6 @@ import {
   Block,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 
 interface ErrorPageProps {
   error?: Error | string;
@@ -58,7 +57,9 @@ const ErrorPage: React.FC<ErrorPageProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  
+  // Default to false for authentication state to avoid hook dependency issues
+  const isAuthenticated = false;
 
   // Determine error type and configuration
   const getErrorConfig = (): ErrorConfig => {

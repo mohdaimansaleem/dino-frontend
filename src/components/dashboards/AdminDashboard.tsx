@@ -18,7 +18,7 @@ import {
   Alert,
   CircularProgress,
   LinearProgress,
-
+  Stack,
   Snackbar,
   useTheme,
   useMediaQuery,
@@ -34,7 +34,7 @@ import {
   Dashboard as DashboardIcon,
   Today,
   PieChart as PieChartIcon,
-
+  Business,
   Settings,
   Refresh,
 } from '@mui/icons-material';
@@ -49,6 +49,7 @@ import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
 import { getUserFirstName } from '../../utils/userUtils';
 import DashboardTour from '../tour/DashboardTour';
 import VenueStatusDebug from '../VenueStatusDebug';
+import AnimatedBackground from '../ui/AnimatedBackground';
 
 /**
  * AdminDashboard Component
@@ -458,349 +459,288 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       <Box 
         className={className} 
         sx={{ 
-          display: 'flex',
-          flexDirection: 'column',
+          minHeight: 'auto',
+          height: 'auto',
+          backgroundColor: '#f8f9fa',
+          padding: 0,
+          margin: 0,
           width: '100%',
-          maxWidth: '100%',
-          overflow: 'hidden'
+          overflow: 'visible',
         }}
       >
+        {/* Hero Section */}
+        <Box
+          sx={{
+            backgroundColor: 'grey.100',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            position: 'relative',
+            overflow: 'hidden',
+            color: 'text.primary',
+            padding: 0,
+            margin: 0,
+            width: '100%',
+          }}
+        >
+          <AnimatedBackground />
+          <Box sx={{ position: 'relative', zIndex: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                justifyContent: 'space-between',
+                alignItems: { xs: 'flex-start', md: 'center' },
+                gap: { xs: 2, md: 3 },
+                py: { xs: 3, sm: 4 },
+                px: { xs: 3, sm: 4 },
+              }}
+            >
+              {/* Header Content */}
+              <Box sx={{ flex: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <DashboardIcon sx={{ fontSize: 32, mr: 1.5, color: 'text.primary', opacity: 0.9 }} />
+                  <Typography
+                    variant="h4"
+                    component="h1"
+                    fontWeight="600"
+                    sx={{
+                      fontSize: { xs: '1.75rem', sm: '2rem' },
+                      letterSpacing: '-0.01em',
+                      lineHeight: 1.2,
+                      color: 'text.primary',
+                    }}
+                  >
+                    Admin Dashboard
+                  </Typography>
+                </Box>
+                
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    fontWeight: 400,
+                    mb: 1,
+                    maxWidth: '500px',
+                    color: 'text.secondary',
+                  }}
+                >
+                  Welcome back, {getUserFirstName(user)}! Here's your comprehensive venue overview and analytics.
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(10px)',
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                  }}
+                >
+                  <Business sx={{ fontSize: 18, mr: 1, color: 'primary.main', opacity: 0.9 }} />
+                  <Typography variant="body2" fontWeight="500" color="text.primary">
+                    Real-time Analytics & Management
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Action Buttons */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 1.5,
+                  flexDirection: { xs: 'row', sm: 'row' },
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                }}
+              >
+                <IconButton
+                  onClick={refreshDashboard}
+                  disabled={loading || chartLoading}
+                  size="medium"
+                  sx={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    color: 'text.secondary',
+                    width: 40,
+                    height: 40,
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 1)',
+                      color: 'primary.main',
+                      transform: 'translateY(-1px)',
+                    },
+                    '&:disabled': {
+                      opacity: 0.5,
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                  title={loading || chartLoading ? 'Refreshing...' : 'Refresh dashboard'}
+                >
+                  <Refresh />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Main Content */}
+        <Box
+          sx={{
+            width: '100%',
+            padding: 0,
+            margin: 0,
+          }}
+        >
 
         
 
 
-        {/* Header */}
-        <Box sx={{ mb: 4, flexShrink: 0 }} data-tour="dashboard-header">
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'flex-start', 
-            mb: 3
-          }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography 
-                variant="h4" 
-                sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 2, 
-                  mb: 1,
-                  fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
-                  fontWeight: 600,
-                  color: 'text.primary',
-                  letterSpacing: '-0.01em'
-                }}
-              >
-                <DashboardIcon 
-                  color="primary" 
-                  sx={{ 
-                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' }
-                  }} 
-                />
-                Admin Dashboard
-              </Typography>
-              <Typography 
-                variant="body1" 
-                color="text.secondary"
-                sx={{ 
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  fontWeight: 400,
-                  lineHeight: 1.5
-                }}
-              >
-                Welcome back, {getUserFirstName(user)}! Here's your venue overview for today.
-              </Typography>
+
+
+
+
+          {/* Dashboard Content Container */}
+          <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
+            {/* Show message if user lacks venue management permissions */}
+            {currentVenue && !canManageVenue() && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  <strong>Permission Required:</strong> Venue status controls require venue management permissions.
+                  <br/>Your current role: {user?.role || 'Unknown'}
+                </Typography>
+              </Alert>
+            )}
+
+            {/* Dashboard Statistics */}
+            <Box sx={{ mb: 4 }}>
+              <Grid container spacing={{ xs: 2, sm: 3 }}>
+                {[
+                  { 
+                    label: 'Today\'s Orders', 
+                    value: displayStats.today_orders || 0, 
+                    color: '#2196F3', 
+                    icon: <Today />,
+                    description: 'Total orders received today'
+                  },
+                  { 
+                    label: 'Today\'s Revenue', 
+                    value: `₹${(displayStats.today_revenue || 0).toLocaleString()}`, 
+                    color: '#4CAF50', 
+                    icon: <TrendingUp />,
+                    description: 'Revenue generated today'
+                  },
+                  { 
+                    label: 'Tables Occupied', 
+                    value: `${displayStats.occupied_tables || 0}/${displayStats.total_tables || 0}`, 
+                    color: '#FF9800', 
+                    icon: <TableRestaurant />,
+                    description: 'Current table occupancy',
+                    progress: tableOccupancyPercentage
+                  },
+                  { 
+                    label: 'Menu Items Active', 
+                    value: `${displayStats.active_menu_items || 0}/${displayStats.total_menu_items || 0}`, 
+                    color: '#9C27B0', 
+                    icon: <Restaurant />,
+                    description: 'Available menu items',
+                    progress: menuActivePercentage
+                  },
+                ].map((stat, index) => (
+                  <Grid item xs={6} md={3} key={index}>
+                    <Card
+                      sx={{
+                        p: { xs: 2.5, sm: 3 },
+                        borderRadius: 2,
+                        backgroundColor: `${stat.color}08`,
+                        border: `1px solid ${stat.color}33`,
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: `0 8px 25px ${stat.color}33`,
+                          backgroundColor: `${stat.color}12`,
+                        },
+                      }}
+                      data-tour="stats-cards"
+                    >
+                      <Stack direction="row" alignItems="center" spacing={2}>
+                        {/* Icon on the left */}
+                        <Box
+                          sx={{
+                            width: { xs: 40, sm: 48 },
+                            height: { xs: 40, sm: 48 },
+                            borderRadius: 2,
+                            backgroundColor: stat.color,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {React.cloneElement(stat.icon, { 
+                            fontSize: isSmallScreen ? 'medium' : 'large' 
+                          })}
+                        </Box>
+                        
+                        {/* Text content on the right */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography 
+                            variant={isSmallScreen ? "h6" : "h4"} 
+                            fontWeight="700" 
+                            color="text.primary"
+                            sx={{ 
+                              fontSize: { xs: '1.25rem', sm: '2rem' },
+                              lineHeight: 1.2,
+                              mb: 0.5
+                            }}
+                          >
+                            {stat.value}
+                          </Typography>
+                          <Typography 
+                            variant="body2" 
+                            color="text.secondary"
+                            fontWeight="600"
+                            sx={{ 
+                              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                              lineHeight: 1.2,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {stat.label}
+                          </Typography>
+                          {stat.progress !== undefined && (
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={stat.progress} 
+                              sx={{ 
+                                height: 4,
+                                borderRadius: 2,
+                                backgroundColor: 'rgba(255,255,255,0.3)',
+                                mt: 1,
+                                '& .MuiLinearProgress-bar': {
+                                  borderRadius: 2,
+                                  backgroundColor: stat.color
+                                }
+                              }}
+                            />
+                          )}
+                        </Box>
+                      </Stack>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
             </Box>
-            <Button
-              onClick={refreshDashboard}
-              disabled={loading || chartLoading}
-              variant="outlined"
-              startIcon={<Refresh />}
-              sx={{ 
-                borderColor: 'divider',
-                color: 'text.secondary',
-                '&:hover': { 
-                  borderColor: 'primary.main',
-                  backgroundColor: 'primary.50'
-                },
-                '&:disabled': {
-                  borderColor: 'divider',
-                  color: 'text.disabled'
-                }
-              }}
-            >
-              Refresh
-            </Button>
-          </Box>
-        </Box>
 
-
-
-        {/* Show message if user lacks venue management permissions */}
-        {currentVenue && !canManageVenue() && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2">
-              <strong>Permission Required:</strong> Venue status controls require venue management permissions.
-              <br/>Your current role: {user?.role || 'Unknown'}
-            </Typography>
-          </Alert>
-        )}
-
-        {/* Dashboard Content Container */}
-        <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: { xs: 3, lg: 2 } }}>
-          {/* Row 1: Quick Stats */}
-          <Grid container spacing={3} data-tour="stats-cards">
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ 
-                height: '140px',
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                }
-              }}>
-                <CardContent sx={{ 
-                  p: 3,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ 
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      Today's Orders
-                    </Typography>
-                    <Today 
-                      sx={{ 
-                        fontSize: 24, 
-                        color: 'primary.main'
-                      }} 
-                    />
-                  </Box>
-                  <Typography 
-                    variant="h3" 
-                    fontWeight="700" 
-                    sx={{ 
-                      fontSize: '2rem',
-                      color: 'text.primary',
-                      lineHeight: 1
-                    }}
-                  >
-                    {displayStats.today_orders || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ 
-                height: '140px',
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  borderColor: 'success.main',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                }
-              }}>
-                <CardContent sx={{ 
-                  p: 3,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ 
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      Today's Revenue
-                    </Typography>
-                    <TrendingUp 
-                      sx={{ 
-                        fontSize: 24, 
-                        color: 'success.main'
-                      }} 
-                    />
-                  </Box>
-                  <Typography 
-                    variant="h3" 
-                    fontWeight="700" 
-                    sx={{ 
-                      fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                      color: 'text.primary',
-                      lineHeight: 1
-                    }}
-                  >
-                    ₹{displayStats.today_revenue?.toLocaleString() || 0}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ 
-                height: '140px',
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  borderColor: 'warning.main',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                }
-              }}>
-                <CardContent sx={{ 
-                  p: 3,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ 
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      Tables Occupied
-                    </Typography>
-                    <TableRestaurant 
-                      sx={{ 
-                        fontSize: 24, 
-                        color: 'warning.main'
-                      }} 
-                    />
-                  </Box>
-                  <Box>
-                    <Typography 
-                      variant="h3" 
-                      fontWeight="700" 
-                      sx={{ 
-                        fontSize: '1.75rem',
-                        color: 'text.primary',
-                        lineHeight: 1,
-                        mb: 1
-                      }}
-                    >
-                      {displayStats.occupied_tables || 0}/{displayStats.total_tables || 0}
-                    </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={tableOccupancyPercentage} 
-                      sx={{ 
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: 'grey.200',
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: 3,
-                          backgroundColor: 'warning.main'
-                        }
-                      }}
-                    />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ 
-                height: '140px',
-                border: '1px solid',
-                borderColor: 'divider',
-                backgroundColor: 'background.paper',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  borderColor: 'info.main',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-                }
-              }}>
-                <CardContent sx={{ 
-                  p: 3,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Typography 
-                      variant="body2" 
-                      color="text.secondary"
-                      sx={{ 
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      Menu Items Active
-                    </Typography>
-                    <Restaurant 
-                      sx={{ 
-                        fontSize: 24, 
-                        color: 'info.main'
-                      }} 
-                    />
-                  </Box>
-                  <Box>
-                    <Typography 
-                      variant="h3" 
-                      fontWeight="700" 
-                      sx={{ 
-                        fontSize: '1.75rem',
-                        color: 'text.primary',
-                        lineHeight: 1,
-                        mb: 1
-                      }}
-                    >
-                      {displayStats.active_menu_items || 0}/{displayStats.total_menu_items || 0}
-                    </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={menuActivePercentage} 
-                      sx={{ 
-                        height: 6,
-                        borderRadius: 3,
-                        backgroundColor: 'grey.200',
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: 3,
-                          backgroundColor: 'info.main'
-                        }
-                      }}
-                    />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          {/* Row 2: Order Status Chart */}
-          <Grid container spacing={3}>
+          {/* Charts Section */}
+          <Box sx={{ mb: 4 }}>
+            <Grid container spacing={3}>
             {/* Order Status Chart */}
             <Grid item xs={12} md={6}>
               <Card sx={{ 
@@ -922,11 +862,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                 </CardContent>
               </Card>
             </Grid>
-          </Grid>
+            </Grid>
+          </Box>
 
-
-
-          {/* Recent Orders */}
+          {/* Recent Orders Section */}
+          <Box sx={{ mb: 4 }}>
           <Card sx={{ 
             border: '1px solid',
             borderColor: 'divider',
@@ -1204,8 +1144,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
               </TableContainer>
             </CardContent>
           </Card>
+          </Box>
 
-          {/* Quick Actions - Full Width */}
+          {/* Quick Actions Section */}
+          <Box sx={{ mb: 4 }}>
           <Card sx={{ 
             flexShrink: 0, 
             mb: 4,
@@ -1346,6 +1288,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
               </Grid>
             </CardContent>
           </Card>
+          </Box>
+        </Box>
         </Box>
       </Box>
     );

@@ -219,9 +219,45 @@ const UserProfile: React.FC = () => {
       minHeight: '100vh',
       pt: { xs: '80px', sm: '88px', md: '96px' }, // Add top padding to avoid navbar
       pb: { xs: 4, sm: 6, md: 8 },
-      backgroundColor: 'background.default'
+      backgroundColor: 'background.default',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      <Container maxWidth="md">
+      {/* Dino Hello Background Image */}
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: { xs: 0, sm: 0, md: 0 },
+          right: { xs: 0, sm: 0, md: 0 },
+          width: { xs: 300, sm: 400, md: 500 },
+          height: { xs: 300, sm: 400, md: 500 },
+          backgroundImage: 'url(/img/dino_hello.png)',
+          backgroundSize: 'contain',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'bottom right',
+          opacity: 1,
+          zIndex: 0,
+          pointerEvents: 'none',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            opacity: 0.6,
+            transform: 'scale(1.02)',
+          }
+        }}
+      />
+      
+      <Container 
+        maxWidth="lg" 
+        sx={{ 
+          position: 'relative', 
+          zIndex: 1,
+          ml: { xs: 0, sm: 0, md: 0 },
+          mr: { xs: 0, sm: 6, md: 12 },
+          maxWidth: { xs: 'md', sm: 'md', md: 'lg' },
+          pl: { xs: 2, sm: 3, md: 4 },
+          pr: { xs: 2, sm: 2, md: 2 }
+        }}
+      >
       {/* Header */}
       <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={3} alignItems="center">

@@ -45,6 +45,7 @@ import { useUserData } from '../../../contexts/UserDataContext';
 import { venueService } from '../../../services/venueService';
 import { usePermissionCheck } from '../../PermissionGate';
 import { PERMISSIONS } from '../../../types/auth';
+import { LogoutConfirmationModal } from '../../modals';
 
 interface MobileMenuProps {
   open: boolean;
@@ -85,6 +86,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
     venueName: string;
   } | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -167,6 +169,15 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   const handleNavigate = (path: string) => {
     onNavigate(path);
     onClose();
+  };
+
+  const handleLogout = () => {
+    setLogoutModalOpen(true);
+  };
+
+  const confirmLogout = () => {
+    onLogout();
+    setLogoutModalOpen(false);
   };
 
   // Force drawer to take full height from top
@@ -385,7 +396,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                   variant="outlined"
                   color="error"
                   startIcon={<ExitToApp sx={{ fontSize: 16 }} />}
-                  onClick={onLogout}
+                  onClick={handleLogout}
                   sx={{ 
                     flex: 1, 
                     textTransform: 'none',
@@ -856,6 +867,14 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
 
 
       </Box>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        open={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={confirmLogout}
+        userName={getUserFirstName(user) || user?.email}
+      />
     </Drawer>
   );
 };

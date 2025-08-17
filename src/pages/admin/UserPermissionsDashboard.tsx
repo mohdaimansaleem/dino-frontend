@@ -534,79 +534,119 @@ const UserPermissionsDashboard: React.FC = () => {
 
 
           {/* Statistics Cards */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600" color="primary.main">
-                        {userStats.totalUsers}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Total Users
-                      </Typography>
-                    </Box>
-                    <People sx={{ fontSize: 40, color: 'primary.main', opacity: 0.7 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+          <Box sx={{ 
+            px: { xs: 3, sm: 4 }, 
+            py: { xs: 3, sm: 4 }, 
+            backgroundColor: 'background.paper', 
+            borderRadius: 3, 
+            mb: 4,
+            border: '1px solid #e0e0e0',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+          }}>
+            <Typography variant="h6" fontWeight="700" color="text.primary" sx={{ mb: 3 }}>
+              User Overview
+            </Typography>
             
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600" color="success.main">
-                        {userStats.activeUsers}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Active Users
-                      </Typography>
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+              {[
+                {
+                  label: 'Total Users',
+                  value: userStats.totalUsers,
+                  color: '#2196F3',
+                  icon: <People />,
+                  description: 'All registered users'
+                },
+                {
+                  label: 'Active Users',
+                  value: userStats.activeUsers,
+                  color: '#4CAF50',
+                  icon: <CheckCircle />,
+                  description: 'Currently active'
+                },
+                {
+                  label: 'Recent Logins',
+                  value: userStats.recentLogins,
+                  color: '#FF9800',
+                  icon: <Security />,
+                  description: 'Last 7 days'
+                },
+                {
+                  label: 'Role Types',
+                  value: Object.keys(userStats.usersByRole).length,
+                  color: '#9C27B0',
+                  icon: <Business />,
+                  description: 'Different roles'
+                }
+              ].map((stat, index) => (
+                <Grid item xs={12} sm={6} md={3} key={index}>
+                  <Box
+                    sx={{
+                      p: { xs: 2.5, sm: 3 },
+                      borderRadius: 2,
+                      backgroundColor: `${stat.color}08`,
+                      border: `1px solid ${stat.color}33`,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 8px 25px ${stat.color}33`,
+                        backgroundColor: `${stat.color}12`,
+                      },
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      {/* Icon on the left */}
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 2,
+                          backgroundColor: stat.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {React.cloneElement(stat.icon, { fontSize: 'medium' })}
+                      </Box>
+                      
+                      {/* Text content on the right */}
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography 
+                          variant="h4" 
+                          fontWeight="700" 
+                          color="text.primary" 
+                          sx={{ 
+                            fontSize: { xs: '1.5rem', sm: '2rem' },
+                            lineHeight: 1.2,
+                            mb: 0.5
+                          }}
+                        >
+                          {stat.value}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary" 
+                          fontWeight="600"
+                          sx={{ 
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            lineHeight: 1.2,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {stat.label}
+                        </Typography>
+                      </Box>
                     </Box>
-                    <CheckCircle sx={{ fontSize: 40, color: 'success.main', opacity: 0.7 }} />
                   </Box>
-                </CardContent>
-              </Card>
+                </Grid>
+              ))}
             </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600" color="info.main">
-                        {userStats.recentLogins}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Recent Logins
-                      </Typography>
-                    </Box>
-                    <Security sx={{ fontSize: 40, color: 'info.main', opacity: 0.7 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-            
-            <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography variant="h4" fontWeight="600" color="warning.main">
-                        {Object.keys(userStats.usersByRole).length}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Role Types
-                      </Typography>
-                    </Box>
-                    <Business sx={{ fontSize: 40, color: 'warning.main', opacity: 0.7 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
+          </Box>
 
           {/* Filters and Search */}
           <Card sx={{ mb: 4, borderRadius: 2 }}>
