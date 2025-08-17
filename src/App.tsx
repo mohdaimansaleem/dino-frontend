@@ -1,5 +1,7 @@
 // Import immediate cleanup to remove workspace venue cache entries FIRST
 import './utils/immediateCleanup';
+// Import debug utilities for authentication testing
+import './utils/debugAuth';
 
 import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';

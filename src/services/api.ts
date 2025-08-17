@@ -137,6 +137,9 @@ class ApiService {
         const token = authService.getToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
+          console.log('🔐 Added Authorization header for request to:', config.url);
+        } else {
+          console.warn('⚠️ No token available for request to:', config.url);
         }
 
         // Convert request data to snake_case
@@ -249,17 +252,26 @@ class ApiService {
       
       // Check if request is already in progress
       if (this.requestQueue.has(cacheKey)) {
+        console.log('🔄 Request deduplication: Using cached promise for', url);
         return await this.requestQueue.get(cacheKey);
       }
 
-      // Make request
-      const requestPromise = this.axiosInstance.get<ApiResponse<T>>(url, config);
+      // Make request and process response
+      const requestPromise = (async () => {
+        const response = await this.axiosInstance.get<ApiResponse<T>>(url, config);
+        return this.handleResponse(response);
+      })();
+      
       this.requestQueue.set(cacheKey, requestPromise);
 
-      const response = await requestPromise;
-      this.requestQueue.delete(cacheKey);
-
-      return this.handleResponse(response);
+      try {
+        const result = await requestPromise;
+        this.requestQueue.delete(cacheKey);
+        return result;
+      } catch (error) {
+        this.requestQueue.delete(cacheKey);
+        throw error;
+      }
     } catch (error) {
       throw this.handleError(error);
     }

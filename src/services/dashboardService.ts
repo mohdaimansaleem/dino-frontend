@@ -74,122 +74,66 @@ interface OperatorDashboard {
 
 class DashboardService {
 
-
   async getSuperAdminDashboard(): Promise<SuperAdminDashboardResponse> {
-    return dashboardCache.getOrSet(
-      CacheKeys.dashboardData('superadmin-v2'),
-      async () => {
-        try {
-          // Get user's assigned venue ID - both Admin and SuperAdmin should have venue assigned
-          const userDataResponse = await apiService.get<any>('/auth/user-data');
-          
-          console.log('🔍 Full user data response:', userDataResponse);
-          console.log('🔍 Response data field:', userDataResponse.data);
-          console.log('🔍 Venue field:', userDataResponse.data?.venue);
-          console.log('🔍 Venue ID:', userDataResponse.data?.venue?.id);
-          
-          // Check different possible paths
-          const responseData = userDataResponse.data as any;
-          const venueId = responseData?.venue?.id || 
-                         responseData?.data?.venue?.id ||
-                         (userDataResponse as any).venue?.id;
-          
-          if (!venueId) {
-            console.error('❌ No venue ID found in any expected path');
-            console.error('❌ Full response structure:', JSON.stringify(userDataResponse, null, 2));
-            throw new Error('No venue assigned to your account. Please contact your administrator.');
-          }
-          console.log('🏢 Using venue ID for dashboard:', venueId);
-          
-          // Only call venue dashboard API - backend will return appropriate data based on user role
-          console.log('🌐 Making API call to:', `/dashboard/venue/${venueId}`);
-          
-          // Let's also make a direct axios call to see the raw response
-          try {
-            const directResponse = await fetch(`https://dino-backend-api-867506203789.us-central1.run.app/api/v1/dashboard/venue/${venueId}`, {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-                'Content-Type': 'application/json'
-              }
-            });
-            const directData = await directResponse.json();
-            console.log('🔍 Direct fetch response:', directData);
-          } catch (directError) {
-            console.log('❌ Direct fetch failed:', directError);
-          }
-          
-          const response = await apiService.get<SuperAdminDashboardResponse>(`/dashboard/venue/${venueId}`);
-          console.log('📡 Raw API response:', response);
-          
-          console.log('🔍 Response analysis:', {
-            responseExists: !!response,
-            hasSuccess: 'success' in response,
-            successValue: response?.success,
-            hasData: 'data' in response,
-            dataValue: response?.data,
-            dataType: typeof response?.data,
-            isDataNull: response?.data === null,
-            isDataUndefined: response?.data === undefined,
-            responseKeys: response ? Object.keys(response) : [],
-            dataKeys: response?.data ? Object.keys(response.data) : []
-          });
-          
-          if (response.success && response.data) {
-            console.log('🔍 Dashboard API response received:', {
-              success: response.success,
-              hasData: !!response.data,
-              dataKeys: Object.keys(response.data || {}),
-              hasSystemStats: !!response.data.system_stats,
-              hasWorkspaces: !!response.data.workspaces,
-              hasVenuePerformance: !!response.data.venue_performance,
-              fullResponse: response.data
-            });
-            
-            // Validate SuperAdmin response structure - check for system_stats as primary indicator
-            if (response.data.system_stats) {
-              const responseData = userDataResponse.data as any;
-              const venueName = responseData?.venue?.name || 
-                               responseData?.data?.venue?.name || 
-                               (userDataResponse as any).venue?.name || 
-                               'Unknown Venue';
-              
-              console.log('✅ SuperAdmin dashboard data loaded from venue API:', {
-                venueId: venueId,
-                venueName: venueName,
-                todayOrders: response.data.system_stats?.total_orders_today,
-                todayRevenue: response.data.system_stats?.total_revenue_today,
-                totalVenues: response.data.system_stats?.total_venues,
-                totalWorkspaces: response.data.system_stats?.total_workspaces,
-                hasWorkspaces: !!response.data.workspaces,
-                hasVenuePerformance: !!response.data.venue_performance
-              });
-              return response.data;
-            }
-            
-            // Fallback: if we have any data structure that looks like a dashboard response, accept it
-            console.log('⚠️ Response structure doesn\'t match expected format, but accepting anyway');
-            return response.data;
-          }
-          
-          console.log('❌ No response data received');
-          throw new Error('No dashboard data received from API');
-        } catch (error: any) {
-          console.error('❌ SuperAdmin dashboard API failed:', error);
-          
-          // Check for specific error types
-          if (error.response?.status === 404) {
-            throw new Error('Dashboard endpoint not found. Please ensure the backend API is properly configured.');
-          } else if (error.response?.status === 403) {
-            throw new Error('Access denied. You may not have permission to view dashboard data.');
-          } else if (error.response?.status === 400 && error.response?.data?.detail?.includes('venue')) {
-            throw new Error('No venue assigned to your account. Please contact your administrator.');
-          }
-          
-          throw new Error(error.message || 'Failed to load SuperAdmin dashboard data');
-        }
-      },
-      2 * 60 * 1000 // 2 minutes TTL for dashboard data
-    );
+    console.log('🔄 getSuperAdminDashboard called - bypassing cache for debugging');
+    
+    try {
+      console.log('🔍 Step 1: Getting user data...');
+      const userDataResponse = await apiService.get<any>('/auth/user-data');
+      console.log('✅ Step 1 complete - User data response:', userDataResponse);
+      
+      // Check different possible paths for venue ID
+      const responseData = userDataResponse.data as any;
+      const venueId = responseData?.venue?.id || 
+                     responseData?.data?.venue?.id ||
+                     (userDataResponse as any).venue?.id;
+      
+      if (!venueId) {
+        console.error('❌ Step 1 failed: No venue ID found');
+        throw new Error('No venue assigned to your account. Please contact your administrator.');
+      }
+      
+      console.log('✅ Step 1 complete - Using venue ID:', venueId);
+      
+      console.log('🔍 Step 2: Making dashboard API call...');
+      const response = await apiService.get<SuperAdminDashboardResponse>(`/dashboard/venue/${venueId}`);
+      console.log('✅ Step 2 complete - API response received:', {
+        success: response.success,
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        dataKeys: response.data ? Object.keys(response.data) : []
+      });
+      
+      console.log('🔍 Step 3: Validating response...');
+      
+      // Strict validation - require both success and data
+      if (response.success && response.data) {
+        console.log('✅ Step 3 complete - Response validation passed');
+        console.log('🎯 Returning dashboard data with keys:', Object.keys(response.data));
+        return response.data;
+      }
+      
+      console.error('❌ Step 3 failed: Response validation failed');
+      console.error('Response details:', {
+        success: response.success,
+        hasData: !!response.data,
+        data: response.data,
+        responseType: typeof response,
+        responseKeys: Object.keys(response)
+      });
+      throw new Error('No dashboard data received from API');
+      
+    } catch (error: any) {
+      console.error('❌ getSuperAdminDashboard failed at some step:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      });
+      
+      // Re-throw the original error to preserve the message
+      throw error;
+    }
   }
 
   /**
@@ -399,7 +343,6 @@ class DashboardService {
       return `${days}d ago`;
     }
   }
-
 
 }
 
