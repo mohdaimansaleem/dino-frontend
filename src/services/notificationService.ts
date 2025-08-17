@@ -14,7 +14,8 @@ class NotificationService {
   private isConnecting = false;
 
   constructor() {
-    this.connect();
+    // Temporarily disable auto-connect to prevent loops
+    // this.connect();
   }
 
   private connect() {
@@ -23,16 +24,25 @@ class NotificationService {
     }
 
     this.isConnecting = true;
-    const token = localStorage.getItem('dino_token');
+    const tokenItem = localStorage.getItem('dino_token');
     
-    if (!token) {
+    if (!tokenItem) {
       this.isConnecting = false;
       return;
     }
 
     try {
+      // Parse the token from StorageManager format
+      let token: string;
+      try {
+        const parsedToken = JSON.parse(tokenItem);
+        token = parsedToken.data || tokenItem; // Extract actual token
+      } catch {
+        token = tokenItem; // Fallback to raw token
+      }
+
       const wsUrl = API_CONFIG.WS_URL;
-      this.ws = new WebSocket(`${wsUrl}?token=${token}`);
+      this.ws = new WebSocket(`${wsUrl}?token=${encodeURIComponent(token)}`);
 
       this.ws.onopen = () => {
         this.isConnecting = false;

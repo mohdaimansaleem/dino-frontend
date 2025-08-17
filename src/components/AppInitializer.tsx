@@ -12,10 +12,12 @@ interface AppInitializerProps {
 const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
   const initStatus = useUserDataInitializer();
 
-  // Log initialization status for debugging
+  // Log initialization status for debugging (reduced frequency)
   React.useEffect(() => {
-    console.log('🔄 AppInitializer: Status update', initStatus);
-  }, [initStatus]);
+    if (initStatus.retryCount === 0) {
+      console.log('🔄 AppInitializer: Status update', initStatus);
+    }
+  }, [initStatus.isInitialized, initStatus.retryCount]); // Only log on meaningful changes
 
   return <>{children}</>;
 };

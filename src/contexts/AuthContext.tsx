@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { UserProfile, UserRegistration } from '../types/api';
 import { User as AuthUser, ROLES, PermissionName, RoleName } from '../types/auth';
 import { authService } from '../services/authService';
@@ -157,7 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         firstName: response.user.first_name || response.user.firstName,
         lastName: response.user.last_name || response.user.lastName,
         phone: response.user.phone,
-        role: response.user.role,
+        role: response.user.role || 'operator', // Ensure role is always set
         workspace_id: response.user.workspace_id || response.user.workspaceId,
         workspaceId: response.user.workspace_id || response.user.workspaceId,
         venue_id: response.user.venue_id || response.user.venueId,
@@ -357,22 +357,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Convert UserProfile to AuthUser with role information
-  const getUserWithRole = (): AuthUser | null => {
+  // Convert UserProfile to AuthUser with role information - memoized to prevent excessive calls
+  const getUserWithRole = useMemo((): AuthUser | null => {
     if (!user) return null;
 
     // Get role from backend permissions if available
     const backendRole = PermissionService.getBackendRole();
     let roleName: RoleName = ROLES.OPERATOR; // Default fallback
     
-    console.log('getUserWithRole - backendRole:', backendRole);
-    console.log('getUserWithRole - user.role:', (user as any).role);
-    console.log('getUserWithRole - user.email:', user.email);
-    
     if (backendRole && backendRole.name) {
       // Use the actual backend role name
       const backendRoleName = backendRole.name.toLowerCase();
-      console.log('getUserWithRole - backendRoleName:', backendRoleName);
       
       if (backendRoleName === 'super_admin' || backendRoleName === 'superadmin') {
         roleName = ROLES.SUPERADMIN;
@@ -384,7 +379,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } else {
       // Fallback to user.role if no backend role
       const userRole = (user as any).role;
-      console.log('getUserWithRole - fallback userRole:', userRole);
       
       if (userRole === 'super_admin' || userRole === 'superadmin') {
         roleName = ROLES.SUPERADMIN;
@@ -401,8 +395,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     }
 
-    console.log('getUserWithRole - final roleName:', roleName);
-
     const role = PermissionService.getRoleDefinition(roleName);
     if (!role) return null;
 
@@ -417,33 +409,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-  };
+  }, [user, userPermissions]); // Depend on user and userPermissions
 
   // Role-based access control methods
-  const hasPermission = (permission: PermissionName): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.hasPermission(authUser, permission);
-  };
+  const hasPermission = useCallback((permission: PermissionName): boolean => {
+    return PermissionService.hasPermission(getUserWithRole, permission);
+  }, [getUserWithRole]);
 
-  const hasRole = (role: string): boolean => {
+  const hasRole = useCallback((role: string): boolean => {
     // First check backend role if available
     const backendRole = PermissionService.getBackendRole();
     
     if (backendRole && backendRole.name) {
-      const hasRoleResult = backendRole.name.toLowerCase() === role.toLowerCase();
-      return hasRoleResult;
+      return backendRole.name.toLowerCase() === role.toLowerCase();
     }
     
     // Fallback to static role checking
-    const authUser = getUserWithRole();
-    const staticResult = PermissionService.hasRole(authUser, role);
-    return staticResult;
-  };
+    return PermissionService.hasRole(getUserWithRole, role);
+  }, [getUserWithRole, userPermissions]);
 
-  const canAccessRoute = (route: string): boolean => {
-    const authUser = getUserWithRole();
-    return PermissionService.canAccessRoute(authUser, route);
-  };
+  const canAccessRoute = useCallback((route: string): boolean => {
+    return PermissionService.canAccessRoute(getUserWithRole, route);
+  }, [getUserWithRole]);
 
   const isAdmin = (): boolean => {
     // Special case for your email
@@ -493,16 +480,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return hasRole(ROLES.SUPERADMIN);
   };
 
-  // Permission management methods
-  const refreshPermissions = async (): Promise<void> => {
-    try {
-      const permissionsData = await authService.refreshUserPermissions();
-      setUserPermissions(permissionsData);
-      StorageManager.setPermissions(permissionsData);
-    } catch (error) {
-      throw error;
+  // Permission management methods with circuit breaker
+  const refreshPermissionsRef = useRef<Promise<void> | null>(null);
+  const lastRefreshAttempt = useRef<number>(0);
+  const refreshCooldown = 30000; // 30 seconds cooldown
+  
+  const refreshPermissions = useCallback(async (): Promise<void> => {
+    // Circuit breaker: prevent too frequent calls
+    const now = Date.now();
+    if (now - lastRefreshAttempt.current < refreshCooldown) {
+      console.log('🚫 Permission refresh on cooldown, skipping...');
+      return;
     }
-  };
+
+    // Prevent multiple simultaneous calls
+    if (refreshPermissionsRef.current) {
+      console.log('🔄 Permission refresh already in progress, waiting...');
+      return refreshPermissionsRef.current;
+    }
+
+    try {
+      lastRefreshAttempt.current = now;
+      console.log('🔄 Starting permission refresh...');
+      
+      refreshPermissionsRef.current = (async () => {
+        const permissionsData = await authService.refreshUserPermissions();
+        setUserPermissions(permissionsData);
+        StorageManager.setPermissions(permissionsData);
+        console.log('✅ Permission refresh completed');
+      })();
+      
+      await refreshPermissionsRef.current;
+    } catch (error) {
+      console.error('❌ Permission refresh failed:', error);
+      throw error;
+    } finally {
+      refreshPermissionsRef.current = null;
+    }
+  }, []);
 
   const getPermissionsList = (): string[] => {
     if (!userPermissions?.permissions) return [];
@@ -521,29 +536,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const savedPermissions = StorageManager.getPermissions();
         if (savedPermissions) {
           setUserPermissions(savedPermissions);
+          return; // Exit early if we have cached permissions
         }
         
-        // If user is logged in but no permissions cached, fetch them (but only if token is valid)
-        if (user && !savedPermissions) {
+        // Only fetch permissions if we don't have any cached and user is authenticated
+        if (user && !savedPermissions && !userPermissions) {
           const token = StorageManager.getItem(STORAGE_KEYS.TOKEN);
           if (token && typeof token === 'string' && !isTokenExpired(token)) {
             try {
+              console.log('🔄 Fetching user permissions (no cache available)');
               const permissionsData = await authService.getUserPermissions();
               setUserPermissions(permissionsData);
               StorageManager.setPermissions(permissionsData);
-              } catch (error) {
+            } catch (error) {
+              console.warn('⚠️ Failed to fetch permissions:', error);
               // Don't logout on permission fetch failure
             }
           }
         }
       } catch (error) {
-        }
+        console.warn('⚠️ Permission initialization error:', error);
+      }
     };
 
     if (!loading) {
       initializePermissions();
     }
-  }, [user, loading]);
+  }, [user, loading]); // Removed userPermissions from dependencies to prevent loops
 
   const value: AuthContextType = {
     user,
@@ -561,7 +580,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAdmin,
     isOperator,
     isSuperAdmin,
-    getUserWithRole,
+    getUserWithRole: () => getUserWithRole,
     userPermissions,
     refreshPermissions,
     getPermissionsList,

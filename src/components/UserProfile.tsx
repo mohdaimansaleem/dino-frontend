@@ -33,6 +33,7 @@ import {
   Save
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useDinoAvatar } from '../contexts/DinoAvatarContext';
 import { authService } from '../services/authService';
 import UserPermissions from './UserPermissions';
 import { getUserFirstName, getUserLastName, getUserProfileImageUrl, getUserCreatedAt } from '../utils/userUtils';
@@ -60,6 +61,7 @@ function TabPanel(props: TabPanelProps) {
 
 const UserProfile: React.FC = () => {
   const { user, updateUser } = useAuth();
+  const { dinoAvatar, dinoName, generateNewAvatar, isLoading: avatarLoading } = useDinoAvatar();
   const [tabValue, setTabValue] = useState(0);
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -68,10 +70,6 @@ const UserProfile: React.FC = () => {
   
   // Profile data
   const [profileData, setProfileData] = useState<Partial<any>>({});
-  
-  // Random dinosaur avatar
-  const [dinoAvatar, setDinoAvatar] = useState<string>('');
-  const [avatarLoading, setAvatarLoading] = useState<boolean>(true);
   
   // Dialog states
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
@@ -83,50 +81,10 @@ const UserProfile: React.FC = () => {
     confirmPassword: ''
   });
 
-  // Generate random dinosaur avatar
-  const generateDinosaurAvatar = () => {
-    const dinosaurNames = [
-      'trex', 'stegosaurus', 'triceratops', 'velociraptor', 'brontosaurus', 
-      'allosaurus', 'ankylosaurus', 'parasaurolophus', 'spinosaurus', 'diplodocus',
-      'carnotaurus', 'compsognathus', 'deinonychus', 'gallimimus', 'iguanodon',
-      'kentrosaurus', 'lambeosaurus', 'maiasaura', 'nodosaurus', 'ouranosaurus',
-      'pachycephalosaurus', 'quetzalcoatlus', 'raptorex', 'styracosaurus', 'therizinosaurus',
-      'utahraptor', 'vulcanodon', 'wannanosaurus', 'xenotarsosaurus', 'yangchuanosaurus',
-      'zuniceratops', 'albertosaurus', 'baryonyx', 'ceratosaurus', 'dracorex',
-      'edmontosaurus', 'fukuiraptor', 'giganotosaurus', 'herrerasaurus', 'irritator'
-    ];
-    
-    // Use a more reliable dinosaur-specific avatar style
-    const randomDino = dinosaurNames[Math.floor(Math.random() * dinosaurNames.length)];
-    const randomSeed = Math.random().toString(36).substring(2, 8);
-    const timestamp = Date.now();
-    
-    // Try multiple avatar styles to ensure one works
-    const avatarStyles = [
-      `https://api.dicebear.com/7.x/bottts/svg?seed=${randomDino}${randomSeed}${timestamp}&backgroundColor=65c3c8&radius=50`,
-      `https://api.dicebear.com/7.x/identicon/svg?seed=${randomDino}${randomSeed}${timestamp}&backgroundColor=4CAF50&radius=50`,
-      `https://api.dicebear.com/7.x/shapes/svg?seed=${randomDino}${randomSeed}${timestamp}&backgroundColor=2196F3&radius=50`,
-      `https://api.dicebear.com/7.x/pixel-art/svg?seed=${randomDino}${randomSeed}${timestamp}&backgroundColor=FF9800&radius=50`
-    ];
-    
-    const dinoAvatarUrl = avatarStyles[Math.floor(Math.random() * avatarStyles.length)];
-    
-    console.log('🦕 Generated Dino Avatar:', randomDino, dinoAvatarUrl);
-    setAvatarLoading(true);
-    setDinoAvatar(dinoAvatarUrl);
-    
-    // Store in localStorage so navbar can access it
-    localStorage.setItem('dinoAvatar', dinoAvatarUrl);
-    localStorage.setItem('dinoName', randomDino);
-    
-    // Dispatch custom event to notify navbar
-    window.dispatchEvent(new Event('dinoAvatarUpdated'));
-    
-    // Also set success message to confirm generation
-    setSuccess(`🦕 New ${randomDino} avatar generated!`);
-    
-    // Set loading to false after a short delay to allow image to load
-    setTimeout(() => setAvatarLoading(false), 1000);
+  // Handle avatar generation with success message
+  const handleGenerateNewAvatar = () => {
+    generateNewAvatar();
+    setSuccess(`🦕 New ${dinoName} avatar generated!`);
   };
 
   useEffect(() => {
@@ -135,23 +93,7 @@ const UserProfile: React.FC = () => {
     }
   }, [user]);
 
-  useEffect(() => {
-    // Check if there's already an avatar in localStorage
-    const savedAvatar = localStorage.getItem('dinoAvatar');
-    if (savedAvatar) {
-      console.log('🦕 Found saved avatar, using it:', savedAvatar);
-      setDinoAvatar(savedAvatar);
-    } else {
-      console.log('🦕 No saved avatar, generating new one...');
-      generateDinosaurAvatar();
-    }
-  }, []);
 
-  // Generate new avatar on every page refresh (not just component mount)
-  useEffect(() => {
-    console.log('🦕 UserProfile mounted, generating fresh dinosaur avatar...');
-    generateDinosaurAvatar();
-  }, []);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -276,11 +218,9 @@ const UserProfile: React.FC = () => {
                 }}
                 onLoad={() => {
                   console.log('🦕 Avatar loaded successfully');
-                  setAvatarLoading(false);
                 }}
                 onError={() => {
                   console.log('🦕 Avatar failed to load:', dinoAvatar);
-                  setAvatarLoading(false);
                   // Don't clear avatar, just show fallback
                 }}
               >
@@ -297,6 +237,25 @@ const UserProfile: React.FC = () => {
                   fontSize: '0.7rem'
                 }}
               />
+              <IconButton
+                onClick={handleGenerateNewAvatar}
+                disabled={avatarLoading}
+                sx={{
+                  position: 'absolute',
+                  top: -8,
+                  right: -8,
+                  backgroundColor: 'background.paper',
+                  boxShadow: 1,
+                  '&:hover': {
+                    backgroundColor: 'primary.light',
+                    color: 'white'
+                  }
+                }}
+                size="small"
+                title="Generate new avatar"
+              >
+                🎲
+              </IconButton>
             </Box>
           </Grid>
           <Grid item xs>

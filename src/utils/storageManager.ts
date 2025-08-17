@@ -25,7 +25,6 @@ export class StorageManager {
     MENU_CACHE: 'dino_menu_cache',
     SETTINGS: 'dino_user_settings',
     THEME: 'dino_theme',
-    LAST_ACTIVITY: 'dino_last_activity',
   } as const;
 
   // Cache TTL configurations (in milliseconds)
@@ -52,7 +51,6 @@ export class StorageManager {
       };
       
       localStorage.setItem(key, JSON.stringify(item));
-      this.updateLastActivity();
     } catch (error) {
       console.error('Failed to set storage item:', error);
       // If storage is full, try to clean up and retry
@@ -90,7 +88,6 @@ export class StorageManager {
         return null;
       }
 
-      this.updateLastActivity();
       return item.data;
     } catch (error) {
       console.error(`Failed to get storage item ${key}:`, error);
@@ -343,16 +340,7 @@ export class StorageManager {
     console.log(`Emergency cleanup: removed ${itemsToRemove.length} oldest items`);
   }
 
-  /**
-   * Update last activity timestamp
-   */
-  private static updateLastActivity(): void {
-    try {
-      localStorage.setItem(this.KEYS.LAST_ACTIVITY, Date.now().toString());
-    } catch (error) {
-      // Ignore errors for activity tracking
-    }
-  }
+
 
   /**
    * Get storage usage statistics
@@ -361,7 +349,6 @@ export class StorageManager {
     totalItems: number;
     dinoItems: number;
     estimatedSize: number;
-    lastActivity: Date | null;
   } {
     let totalItems = 0;
     let dinoItems = 0;
@@ -380,14 +367,10 @@ export class StorageManager {
       }
     }
 
-    const lastActivityStr = localStorage.getItem(this.KEYS.LAST_ACTIVITY);
-    const lastActivity = lastActivityStr ? new Date(parseInt(lastActivityStr)) : null;
-
     return {
       totalItems,
       dinoItems,
       estimatedSize,
-      lastActivity,
     };
   }
 

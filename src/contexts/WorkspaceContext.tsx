@@ -1,10 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Workspace, PricingPlan } from '../types/auth';
-import { Venue } from '../types/api';
+import { Venue, PriceRange } from '../types/api';
 import { workspaceService } from '../services/workspaceService';
 import { useAuth } from './AuthContext';
-import { useApiCache, useWorkspaceCache, useVenueCache } from '../hooks/useApiCache';
-import { apiCache } from '../services/cacheService';
+
 
 interface WorkspaceContextType {
   // Current workspace and venue
@@ -26,6 +25,7 @@ interface WorkspaceContextType {
   switchVenue: (venueId: string) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
   refreshVenues: () => Promise<void>;
+  refreshPricingPlans: () => Promise<void>;
   initializeVenueFromUser: () => Promise<void>;
   
   // Workspace management
@@ -59,105 +59,155 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   
   const [loading, setLoading] = useState(false);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
-  const [venuesLoading, setVenuesLoading] = useState(false);
 
-  // Cached pricing plans (static data)
-  const {
-    data: cachedPricingPlans,
-  } = useApiCache(
-    () => workspaceService.getPricingPlans(),
-    [],
-    {
-      cacheKey: 'pricing_plans',
-      ttl: 30 * 60 * 1000, // 30 minutes for static data
-      refetchOnMount: false,
+  // Load pricing plans directly when needed (no caching)
+  const [pricingPlansLoading, setPricingPlansLoading] = useState(false);
+
+  const loadPricingPlans = useCallback(async () => {
+    if (pricingPlansLoading) return;
+    
+    setPricingPlansLoading(true);
+    try {
+      const plans = await workspaceService.getPricingPlans();
+      setPricingPlans(plans);
+    } catch (error) {
+      console.error('Error loading pricing plans:', error);
+      setPricingPlans([]);
+    } finally {
+      setPricingPlansLoading(false);
     }
-  );
+  }, [pricingPlansLoading]);
 
-  // Cached venues for current workspace
-  const {
-    data: cachedVenues,
-    loading: venuesCacheLoading,
-    refetch: refetchVenues,
-    invalidate: invalidateVenues,
-  } = useWorkspaceCache(
-    () => user?.workspace_id ? workspaceService.getVenues(user.workspace_id) : Promise.resolve([]),
-    user?.workspace_id,
-    'workspace_venues',
-    [user?.workspace_id],
-    {
-      enabled: !!user?.workspace_id && isAuthenticated,
-      ttl: 5 * 60 * 1000, // 5 minutes
-      onSuccess: (venueList) => {
-        // Convert API venues to internal format
-        const mappedVenues = venueList.map((venue: any) => ({
+  // Load venues directly when needed (no caching)
+  const [venuesLoading, setVenuesLoadingState] = useState(false);
+
+  const loadVenues = useCallback(async () => {
+    if (!user?.workspace_id || !isAuthenticated || venuesLoading) return;
+    
+    setVenuesLoadingState(true);
+    try {
+      const venueList = await workspaceService.getVenues(user.workspace_id);
+      // Convert API venues to Venue format
+      const mappedVenues: Venue[] = venueList.map((venue: any) => {
+        // Handle location mapping properly
+        const location = venue.location ? venue.location : {
+          address: venue.address || '',
+          city: '',
+          state: '',
+          country: '',
+          postal_code: undefined,
+          landmark: undefined,
+          latitude: undefined,
+          longitude: undefined
+        };
+
+        return {
           id: venue.id,
           name: venue.name,
           description: venue.description || '',
-          address: venue.location?.address || '',
+          location: location,
           phone: venue.phone || '',
           email: venue.email || '',
+          cuisine_types: venue.cuisine_types || [],
+          price_range: venue.price_range || 'mid_range',
+          rating: venue.rating,
+          total_reviews: venue.total_reviews,
+          is_active: venue.is_active !== undefined ? venue.is_active : true,
+          is_open: venue.is_open !== undefined ? venue.is_open : venue.is_active,
+          status: venue.status,
+          workspace_id: venue.workspace_id,
+          owner_id: venue.owner_id || '',
+          operating_hours: venue.operating_hours,
+          subscription_status: venue.subscription_status,
+          created_at: venue.created_at,
+          updated_at: venue.updated_at,
+          // Legacy compatibility fields
+          address: location.address,
           ownerId: venue.owner_id || '',
           workspaceId: venue.workspace_id,
-          logo: '',
           isActive: venue.is_active !== undefined ? venue.is_active : true,
           isOpen: venue.is_open !== undefined ? venue.is_open : venue.is_active,
-          settings: {},
-          createdAt: new Date(venue.created_at),
-          updatedAt: new Date(venue.updated_at || venue.created_at),
-          _apiData: venue
-        }));
-        setVenues(mappedVenues);
-      },
+          createdAt: venue.created_at,
+          updatedAt: venue.updated_at
+        } as Venue;
+      });
+      setVenues(mappedVenues);
+      
+      // Auto-select first active venue if none selected
+      if (!currentVenue && mappedVenues.length > 0) {
+        const activeVenue = mappedVenues.find((venue: any) => venue.isActive) || mappedVenues[0];
+        setCurrentVenue(activeVenue);
+      }
+    } catch (error) {
+      console.error('Error loading venues:', error);
+      setVenues([]);
+    } finally {
+      setVenuesLoadingState(false);
     }
-  );
+  }, [user?.workspace_id, isAuthenticated, venuesLoading, currentVenue]);
 
-  // Cached current venue data
-  const {
-    refetch: refetchCurrentVenue,
-  } = useVenueCache(
-    () => {
-      const venueId = user?.venueId || user?.venue_id;
-      return venueId ? workspaceService.getVenue(venueId) : Promise.resolve(null);
-    },
-    user?.venueId || user?.venue_id,
-    'current_venue',
-    [user?.venueId, user?.venue_id],
-    {
-      enabled: !!(user?.venueId || user?.venue_id) && isAuthenticated,
-      onSuccess: (venue) => {
-        if (venue) {
-          const venueData = {
-            id: venue.id,
-            name: venue.name,
-            description: venue.description || '',
-            address: venue.location?.address || '',
-            phone: venue.phone || '',
-            email: venue.email || '',
-            ownerId: user?.id || '',
-            workspaceId: venue.workspace_id,
-            logo: '',
-            isActive: venue.is_active !== undefined ? venue.is_active : true,
-            isOpen: venue.is_open !== undefined ? venue.is_open : venue.is_active,
-            settings: {},
-            createdAt: new Date(venue.created_at),
-            updatedAt: new Date(venue.updated_at || venue.created_at),
-            _apiData: venue
-          };
-          setCurrentVenue(venueData as any);
-        }
-      },
+  // Load current venue directly when needed (no caching)
+  const loadCurrentVenue = useCallback(async () => {
+    const venueId = user?.venueId || user?.venue_id;
+    if (!venueId || !isAuthenticated) return;
+    
+    try {
+      const venue = await workspaceService.getVenue(venueId);
+      if (venue) {
+        // Handle location mapping properly
+        const location = venue.location ? venue.location : {
+          address: venue.address || '',
+          city: '',
+          state: '',
+          country: '',
+          postal_code: undefined,
+          landmark: undefined,
+          latitude: undefined,
+          longitude: undefined
+        };
+
+        const venueData: Venue = {
+          id: venue.id,
+          name: venue.name,
+          description: venue.description || '',
+          location: location,
+          phone: venue.phone || '',
+          email: venue.email || '',
+          cuisine_types: venue.cuisine_types || [],
+          price_range: venue.price_range || 'mid_range' as PriceRange,
+          rating: venue.rating,
+          total_reviews: venue.total_reviews,
+          is_active: venue.is_active !== undefined ? venue.is_active : true,
+          is_open: venue.is_open !== undefined ? venue.is_open : venue.is_active,
+          status: venue.status,
+          workspace_id: venue.workspace_id,
+          owner_id: user?.id || '',
+          operating_hours: venue.operating_hours,
+          subscription_status: venue.subscription_status,
+          created_at: venue.created_at,
+          updated_at: venue.updated_at,
+          // Legacy compatibility fields
+          address: location.address,
+          ownerId: user?.id || '',
+          workspaceId: venue.workspace_id,
+          isActive: venue.is_active !== undefined ? venue.is_active : true,
+          isOpen: venue.is_open !== undefined ? venue.is_open : venue.is_active,
+          createdAt: venue.created_at,
+          updatedAt: venue.updated_at
+        };
+        setCurrentVenue(venueData);
+      }
+    } catch (error) {
+      console.error('Error loading current venue:', error);
     }
-  );
+  }, [user?.venueId, user?.venue_id, user?.id, isAuthenticated]);
 
-  // Optimized venue loading - now handled by cache hooks
+  // Load venues for workspace directly (no caching)
   const loadVenuesForWorkspace = useCallback(async (workspaceId: string) => {
-    // This function is now primarily for manual refresh
-    // The actual loading is handled by the cached hooks above
     if (workspaceId) {
-      await refetchVenues();
+      await loadVenues();
     }
-  }, [refetchVenues]);
+  }, [loadVenues]);
 
   // Optimized initialization - now uses cached data
   const initializeWorkspaceData = useCallback(async () => {
@@ -168,9 +218,9 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
 
     setLoading(true);
     try {
-      // Set pricing plans from cache
-      if (cachedPricingPlans) {
-        setPricingPlans(cachedPricingPlans);
+      // Load pricing plans if needed
+      if (pricingPlans.length === 0) {
+        await loadPricingPlans();
       }
 
       // Set current workspace from user data (no API call needed)
@@ -189,14 +239,17 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         setWorkspaces([localWorkspace as any]);
       }
 
-      // Current venue will be set by the cached hook
-      // No need for manual API calls here
+      // Load venues and current venue
+      if (user?.workspace_id) {
+        await loadVenues();
+      }
+      await loadCurrentVenue();
     } catch (error) {
       console.error('Error initializing workspace data:', error);
     } finally {
       setLoading(false);
     }
-  }, [user, isAuthenticated, cachedPricingPlans]);
+  }, [user, isAuthenticated, pricingPlans.length, loadPricingPlans, loadVenues, loadCurrentVenue]);
 
   // Initialize workspace data when user is authenticated
   useEffect(() => {
@@ -208,28 +261,23 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       setCurrentVenue(null);
       setWorkspaces([]);
       setVenues([]);
-      // Clear cache on logout
-      apiCache.invalidatePattern('.*');
+      setPricingPlans([]);
     }
   }, [isAuthenticated, user, initializeWorkspaceData]);
 
-  // Update loading states based on cache loading
+  // Load venues when user changes
   useEffect(() => {
-    setVenuesLoading(venuesCacheLoading);
-  }, [venuesCacheLoading]);
-
-  // Set venues when cache data is available
-  useEffect(() => {
-    if (cachedVenues) {
-      setVenues(cachedVenues);
-      
-      // Auto-select first active venue if none selected
-      if (!currentVenue && cachedVenues.length > 0) {
-        const activeVenue = cachedVenues.find((venue: any) => venue.isActive) || cachedVenues[0];
-        setCurrentVenue(activeVenue);
-      }
+    if (isAuthenticated && user?.workspace_id) {
+      loadVenues();
     }
-  }, [cachedVenues, currentVenue]);
+  }, [isAuthenticated, user?.workspace_id, loadVenues]);
+
+  // Load current venue when user changes
+  useEffect(() => {
+    if (isAuthenticated && (user?.venueId || user?.venue_id)) {
+      loadCurrentVenue();
+    }
+  }, [isAuthenticated, user?.venueId, user?.venue_id, loadCurrentVenue]);
 
   const refreshWorkspaces = async () => {
     setWorkspacesLoading(true);
@@ -261,8 +309,8 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   };
 
   const refreshVenues = async () => {
-    // Use cached refetch function for optimized refresh
-    await refetchVenues();
+    // Refresh venues directly
+    await loadVenues();
   };
 
 
@@ -369,8 +417,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
         workspaceId: currentWorkspace?.id || ''
       });
       if (response.success && response.data) {
-        // Invalidate venue cache to force refresh
-        invalidateVenues();
+        // Refresh venues directly
         await refreshVenues();
         // Auto-switch to new venue
         await switchVenue(response.data.id);
@@ -386,12 +433,9 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     try {
       const response = await workspaceService.updateVenue(venueId, venueData);
       if (response.success) {
-        // Invalidate both venue list and current venue cache
-        invalidateVenues();
-        apiCache.delete(`current_venue_${venueId}`);
-        
+        // Refresh venues and current venue directly
         await refreshVenues();
-        await refetchCurrentVenue();
+        await loadCurrentVenue();
       } else {
         throw new Error(response.message || 'Failed to update venue');
       }
@@ -404,10 +448,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     try {
       const response = await workspaceService.deleteVenue(venueId);
       if (response.success) {
-        // Invalidate all venue-related cache
-        invalidateVenues();
-        apiCache.delete(`current_venue_${venueId}`);
-        
+        // Refresh venues directly
         await refreshVenues();
         // If current venue was deleted, switch to first available
         if (currentVenue?.id === venueId) {
@@ -430,11 +471,9 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     try {
       const response = await workspaceService.activateVenue(venueId);
       if (response.success) {
-        // Invalidate cache for immediate update
-        invalidateVenues();
-        apiCache.delete(`current_venue_${venueId}`);
+        // Refresh venues and current venue directly
         await refreshVenues();
-        await refetchCurrentVenue();
+        await loadCurrentVenue();
       } else {
         throw new Error(response.message || 'Failed to activate venue');
       }
@@ -447,11 +486,9 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     try {
       const response = await workspaceService.deactivateVenue(venueId);
       if (response.success) {
-        // Invalidate cache for immediate update
-        invalidateVenues();
-        apiCache.delete(`current_venue_${venueId}`);
+        // Refresh venues and current venue directly
         await refreshVenues();
-        await refetchCurrentVenue();
+        await loadCurrentVenue();
       } else {
         throw new Error(response.message || 'Failed to deactivate venue');
       }
@@ -464,11 +501,9 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     try {
       const response = await workspaceService.toggleVenueStatus(venueId, isOpen);
       if (response.success) {
-        // Invalidate cache for immediate update
-        invalidateVenues();
-        apiCache.delete(`current_venue_${venueId}`);
+        // Refresh venues and current venue directly
         await refreshVenues();
-        await refetchCurrentVenue();
+        await loadCurrentVenue();
       } else {
         throw new Error(response.message || 'Failed to toggle venue status');
       }
@@ -490,25 +525,48 @@ return;
     try {
       const venue = await workspaceService.getVenue(venueId);
       if (venue) {
-        const venueData = {
+        // Handle location mapping properly
+        const location = venue.location ? venue.location : {
+          address: venue.address || '',
+          city: '',
+          state: '',
+          country: '',
+          postal_code: undefined,
+          landmark: undefined,
+          latitude: undefined,
+          longitude: undefined
+        };
+
+        const venueData: Venue = {
           id: venue.id,
           name: venue.name,
           description: venue.description || '',
-          address: venue.location?.address || '',
+          location: location,
           phone: venue.phone || '',
           email: venue.email || '',
+          cuisine_types: venue.cuisine_types || [],
+          price_range: venue.price_range || 'mid_range' as PriceRange,
+          rating: venue.rating,
+          total_reviews: venue.total_reviews,
+          is_active: venue.is_active !== undefined ? venue.is_active : true,
+          is_open: venue.is_open !== undefined ? venue.is_open : venue.is_active,
+          status: venue.status,
+          workspace_id: venue.workspace_id,
+          owner_id: user.id,
+          operating_hours: venue.operating_hours,
+          subscription_status: venue.subscription_status,
+          created_at: venue.created_at,
+          updated_at: venue.updated_at,
+          // Legacy compatibility fields
+          address: location.address,
           ownerId: user.id,
           workspaceId: venue.workspace_id,
-          logo: '',
           isActive: venue.is_active !== undefined ? venue.is_active : true,
           isOpen: venue.is_open !== undefined ? venue.is_open : venue.is_active,
-          settings: {},
-          createdAt: new Date(venue.created_at),
-          updatedAt: new Date(venue.updated_at || venue.created_at),
-          // Store original API data for reference
-          _apiData: venue
+          createdAt: venue.created_at,
+          updatedAt: venue.updated_at
         };
-        setCurrentVenue(venueData as any);
+        setCurrentVenue(venueData);
       } else {
         }
     } catch (error) {
@@ -525,11 +583,12 @@ return;
     pricingPlans,
     loading,
     workspacesLoading,
-    venuesLoading,
+    venuesLoading: venuesLoading,
     switchWorkspace,
     switchVenue,
     refreshWorkspaces,
     refreshVenues,
+    refreshPricingPlans: loadPricingPlans,
     createWorkspace,
     updateWorkspace,
     deleteWorkspace,

@@ -25,7 +25,10 @@ export const useUserDataInitializer = () => {
 
       // If we already have data, no need to retry
       if (userData) {
-        console.log('✅ UserDataInitializer: User data already available');
+        // Reduced logging to prevent spam
+        if (!initAttempted.current) {
+          console.log('✅ UserDataInitializer: User data already available');
+        }
         initAttempted.current = true;
         retryCount.current = 0;
         return;
@@ -33,7 +36,7 @@ export const useUserDataInitializer = () => {
 
       // If currently loading, wait - this prevents duplicate calls
       if (loading) {
-        console.log('🔄 UserDataInitializer: Data is loading, waiting...');
+        // Reduced logging to prevent spam
         return;
       }
 

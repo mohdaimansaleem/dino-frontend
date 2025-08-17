@@ -1,197 +1,238 @@
 /**
  * Storage Cleanup Utility
- * Removes legacy and corrupted data from localStorage
+ * Removes redundant storage items and migrates to new format
  */
 
-export class StorageCleanup {
-  private static readonly LEGACY_PREFIXES = [
-    'demo_',
-    'dino_demo_',
-    'sample_',
-    'test_',
-    'mock_',
-    'fake_',
-    'example_',
-  ];
+import StorageManager from './storageManager';
 
-  private static readonly LEGACY_KEYS = [
-    'dino_demo_user',
-    'dino_demo_venue',
-    'dino_demo_workspace',
-    'dino_demo_menu',
-    'dino_demo_orders',
-    'dino_demo_tables',
-    'dino_sample_data',
-    'dino_test_data',
-    'demo_mode',
-    'demo_enabled',
-    'sample_venue',
-    'test_venue',
-    'mock_data',
-  ];
-
+class StorageCleanup {
   /**
-   * Remove all legacy data from localStorage
+   * Remove redundant token expiry storage
+   * JWT tokens already contain expiry information in their payload
    */
-  static cleanupLegacyData(): void {
+  static removeRedundantTokenExpiry(): void {
     try {
-      const keysToRemove: string[] = [];
-      
-      // Get all localStorage keys
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          // Check if key matches legacy patterns
-          const isLegacyPrefix = this.LEGACY_PREFIXES.some(pattern => key.includes(pattern));
-          const isLegacyKey = this.LEGACY_KEYS.includes(key);
-          
-          if (isLegacyPrefix || isLegacyKey) {
-            keysToRemove.push(key);
-          }
-        }
-      }
-
-      // Remove identified keys
-      keysToRemove.forEach(key => {
-        localStorage.removeItem(key);
-        console.log(`Removed legacy key: ${key}`);
-      });
-
-      if (keysToRemove.length > 0) {
-        console.log(`Cleaned up ${keysToRemove.length} legacy storage items`);
-      }
+      // Remove the redundant dino_token_expiry item
+      StorageManager.removeItem('dino_token_expiry');
+      console.log('✅ Removed redundant dino_token_expiry from storage');
     } catch (error) {
-      console.error('Error during storage cleanup:', error);
+      console.warn('⚠️ Failed to remove dino_token_expiry:', error);
     }
   }
 
   /**
-   * Remove all cache data (useful for fresh start)
+   * Remove activity tracking storage
+   * Activity tracking has been removed from the app
    */
-  static cleanupCacheData(): void {
+  static removeActivityTracking(): void {
     try {
-      const cacheKeysToRemove: string[] = [];
-      
-      // Get all localStorage keys
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('dino_cache_')) {
-          cacheKeysToRemove.push(key);
-        }
-      }
-
-      // Remove cache keys
-      cacheKeysToRemove.forEach(key => {
-        localStorage.removeItem(key);
-      });
-
-      if (cacheKeysToRemove.length > 0) {
-        console.log(`Cleaned up ${cacheKeysToRemove.length} cache items`);
+      // Remove the dino_last_activity item
+      if (localStorage.getItem('dino_last_activity')) {
+        localStorage.removeItem('dino_last_activity');
+        console.log('✅ Removed dino_last_activity from storage');
       }
     } catch (error) {
-      console.error('Error during cache cleanup:', error);
+      console.warn('⚠️ Failed to remove dino_last_activity:', error);
     }
   }
 
   /**
-   * Validate and clean up corrupted storage data
+   * Remove all cache storage entries
+   * Caching has been disabled to prevent localStorage usage
    */
-  static validateAndCleanStorage(): void {
+  static removeCacheStorage(): void {
     try {
-      const corruptedKeys: string[] = [];
-      
-      // Check each localStorage item for corruption
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('dino_')) {
-          try {
-            const value = localStorage.getItem(key);
-            if (value) {
-              // Try to parse JSON values
-              if (value.startsWith('{') || value.startsWith('[')) {
-                JSON.parse(value);
-              }
-            }
-          } catch (parseError) {
-            corruptedKeys.push(key);
-          }
-        }
-      }
-
-      // Remove corrupted keys
-      corruptedKeys.forEach(key => {
+      const cacheKeys = Object.keys(localStorage).filter(key => key.startsWith('dino_cache_'));
+      cacheKeys.forEach(key => {
         localStorage.removeItem(key);
-        console.warn(`Removed corrupted storage key: ${key}`);
+        console.log(`✅ Removed cache storage: ${key}`);
       });
-
-      if (corruptedKeys.length > 0) {
-        console.log(`Cleaned up ${corruptedKeys.length} corrupted storage items`);
+      if (cacheKeys.length > 0) {
+        console.log(`✅ Removed ${cacheKeys.length} cache entries from storage`);
       }
     } catch (error) {
-      console.error('Error during storage validation:', error);
+      console.warn('⚠️ Failed to remove cache storage:', error);
     }
   }
 
   /**
-   * Complete storage cleanup - removes legacy data, cache, and validates remaining data
+   * Clean up any other legacy storage items
    */
-  static performCompleteCleanup(): void {
-    console.log('Starting complete storage cleanup...');
-    
-    this.cleanupLegacyData();
-    this.cleanupCacheData();
-    this.validateAndCleanStorage();
-    
-    console.log('Storage cleanup completed');
+  static cleanupLegacyItems(): void {
+    const legacyKeys = [
+      'dino_token_expiry', // Redundant - JWT contains expiry
+      'dino_last_activity', // Removed - unnecessary activity tracking
+      'sidebarCollapsed', // Moved to React state
+      'dino_sidebar_collapsed', // Moved to React state
+      'dinoAvatar', // Moved to React Context (session-based)
+      'dinoName', // Moved to React Context (session-based)
+      'auth_token_expiry', // Old naming convention
+      'token_expiry', // Generic naming
+    ];
+
+    legacyKeys.forEach(key => {
+      try {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+          console.log(`✅ Removed legacy storage item: ${key}`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Failed to remove legacy item ${key}:`, error);
+      }
+    });
+
+    // Remove all cache entries with dino_cache_ prefix
+    try {
+      const cacheKeys = Object.keys(localStorage).filter(key => key.startsWith('dino_cache_'));
+      cacheKeys.forEach(key => {
+        localStorage.removeItem(key);
+        console.log(`✅ Removed cache storage item: ${key}`);
+      });
+    } catch (error) {
+      console.warn('⚠️ Failed to remove cache items:', error);
+    }
+
+    // Remove workspace venue cache entries
+    try {
+      const workspaceVenueKeys = Object.keys(localStorage).filter(key => key.startsWith('workspace_venues_'));
+      workspaceVenueKeys.forEach(key => {
+        localStorage.removeItem(key);
+        console.log(`✅ Removed workspace venue cache: ${key}`);
+      });
+    } catch (error) {
+      console.warn('⚠️ Failed to remove workspace venue cache:', error);
+    }
   }
 
   /**
-   * Get storage usage statistics
+   * Perform complete storage cleanup
    */
-  static getStorageStats(): {
-    totalKeys: number;
-    dinoKeys: number;
-    cacheKeys: number;
-    estimatedSize: number;
+  static performCleanup(): void {
+    console.log('🧹 Starting storage cleanup...');
+    this.removeRedundantTokenExpiry();
+    this.removeActivityTracking();
+    this.removeCacheStorage();
+    this.cleanupLegacyItems();
+    console.log('✅ Storage cleanup completed');
+  }
+
+  /**
+   * Get current storage usage info
+   */
+  static getStorageInfo(): {
+    totalItems: number;
+    dinoItems: number;
+    storageSize: number;
+    items: string[];
   } {
-    let totalKeys = 0;
-    let dinoKeys = 0;
-    let cacheKeys = 0;
-    let estimatedSize = 0;
+    const items: string[] = [];
+    let dinoItems = 0;
+    let storageSize = 0;
 
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          totalKeys++;
-          const value = localStorage.getItem(key) || '';
-          estimatedSize += key.length + value.length;
-
-          if (key.startsWith('dino_')) {
-            dinoKeys++;
-            if (key.startsWith('dino_cache_')) {
-              cacheKeys++;
-            }
-          }
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) {
+        items.push(key);
+        if (key.startsWith('dino_')) {
+          dinoItems++;
+        }
+        const value = localStorage.getItem(key);
+        if (value) {
+          storageSize += key.length + value.length;
         }
       }
-    } catch (error) {
-      console.error('Error getting storage stats:', error);
     }
 
     return {
-      totalKeys,
-      dinoKeys,
-      cacheKeys,
-      estimatedSize,
+      totalItems: items.length,
+      dinoItems,
+      storageSize,
+      items: items.sort()
     };
+  }
+
+  /**
+   * Debug storage contents
+   */
+  static debugStorage(): void {
+    const info = this.getStorageInfo();
+    
+    console.group('🔍 Storage Debug Info');
+    console.log('Total Items:', info.totalItems);
+    console.log('Dino Items:', info.dinoItems);
+    console.log('Storage Size (chars):', info.storageSize);
+    console.log('All Items:', info.items);
+    
+    // Show dino-specific items
+    const dinoItems = info.items.filter(key => key.startsWith('dino_'));
+    if (dinoItems.length > 0) {
+      console.log('Dino Storage Items:');
+      dinoItems.forEach(key => {
+        const value = localStorage.getItem(key);
+        const size = value ? value.length : 0;
+        console.log(`  ${key}: ${size} chars`);
+      });
+    }
+    console.groupEnd();
   }
 }
 
-// Auto-cleanup on module load (runs once when app starts)
+// Auto-cleanup on module load
 if (typeof window !== 'undefined') {
-  // Run cleanup on app initialization
-  StorageCleanup.performCompleteCleanup();
+  // Force immediate removal of activity tracking, avatar storage, and all cache entries
+  try {
+    if (localStorage.getItem('dino_last_activity')) {
+      localStorage.removeItem('dino_last_activity');
+      console.log('🗑️ Immediately removed dino_last_activity');
+    }
+    if (localStorage.getItem('dinoAvatar')) {
+      localStorage.removeItem('dinoAvatar');
+      console.log('🗑️ Immediately removed dinoAvatar');
+    }
+    if (localStorage.getItem('dinoName')) {
+      localStorage.removeItem('dinoName');
+      console.log('🗑️ Immediately removed dinoName');
+    }
+    
+    // Remove all dino_cache_ entries
+    const cacheKeys = Object.keys(localStorage).filter(key => key.startsWith('dino_cache_'));
+    cacheKeys.forEach(key => {
+      localStorage.removeItem(key);
+      console.log(`🗑️ Immediately removed cache entry: ${key}`);
+    });
+    
+    // Remove workspace venue cache entries
+    const workspaceVenueKeys = Object.keys(localStorage).filter(key => key.startsWith('workspace_venues_'));
+    workspaceVenueKeys.forEach(key => {
+      localStorage.removeItem(key);
+      console.log(`🗑️ Immediately removed workspace venue cache: ${key}`);
+    });
+  } catch (error) {
+    console.warn('⚠️ Failed immediate cleanup:', error);
+  }
+  
+  // Run full cleanup immediately and after a short delay
+  StorageCleanup.performCleanup();
+  setTimeout(() => {
+    StorageCleanup.performCleanup();
+  }, 1000);
 }
 
 export default StorageCleanup;
+
+// Make available globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).StorageCleanup = StorageCleanup;
+  
+  // Add a global function to force cleanup
+  (window as any).forceStorageCleanup = () => {
+    StorageCleanup.performCleanup();
+    console.log('🧹 Manual storage cleanup completed');
+  };
+  
+  // Add a function to specifically remove activity tracking
+  (window as any).removeActivityTracking = () => {
+    StorageCleanup.removeActivityTracking();
+    console.log('🗑️ Activity tracking removed');
+  };
+}

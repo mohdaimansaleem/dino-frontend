@@ -34,6 +34,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useUserData } from '../../../contexts/UserDataContext';
+import { useSidebar } from '../../../contexts/SidebarContext';
 import { venueService } from '../../../services/venueService';
 import PermissionService from '../../../services/permissionService';
 import { PERMISSIONS } from '../../../types/auth';
@@ -61,27 +62,9 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
   const theme = useTheme();
   const { user, hasPermission, isOperator } = useAuth();
   const { userData, refreshUserData } = useUserData();
+  const { isCollapsed, toggleCollapsed, getSidebarWidth } = useSidebar();
   
-  // Sidebar state
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [statusLoading, setStatusLoading] = useState(false);
-  
-  // Load collapsed state from localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem('sidebarCollapsed');
-    if (savedState !== null) {
-      setIsCollapsed(JSON.parse(savedState));
-    }
-  }, []);
-
-  // Save collapsed state to localStorage
-  const toggleCollapsed = () => {
-    const newState = !isCollapsed;
-    setIsCollapsed(newState);
-    localStorage.setItem('sidebarCollapsed', JSON.stringify(newState));
-    // Dispatch custom event for same-tab updates
-    window.dispatchEvent(new Event('sidebarStateChanged'));
-  };
 
   // Determine if sidebar should show expanded content
   const showExpanded = !isCollapsed;
@@ -172,7 +155,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
     venueName: userData.venue.name || 'Current Venue'
   } : null;
 
-  const sidebarWidth = showExpanded ? (isTablet ? 200 : 280) : 72;
+  const sidebarWidth = getSidebarWidth(isTablet);
 
   // Handle venue status toggle
   const handleToggleVenueOpen = async () => {

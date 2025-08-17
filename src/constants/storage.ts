@@ -13,7 +13,6 @@ export const STORAGE_KEYS = {
   // User Preferences
   THEME: 'dino_theme',
   LANGUAGE: 'dino_language',
-  SIDEBAR_COLLAPSED: 'dino_sidebar_collapsed',
   
   // Application State
   CURRENT_WORKSPACE: 'dino_current_workspace',
@@ -34,7 +33,10 @@ export const STORAGE_KEYS = {
   
   // Session
   SESSION_ID: 'dino_session_id',
-  LAST_ACTIVITY: 'dino_last_activity',
+  
+  // Legacy keys (for cleanup only - no longer used)
+  DINO_AVATAR: 'dinoAvatar',
+  DINO_NAME: 'dinoName',
 } as const;
 
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];

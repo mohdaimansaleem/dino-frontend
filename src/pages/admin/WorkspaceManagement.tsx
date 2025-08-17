@@ -72,7 +72,7 @@ import { useUserData } from '../../contexts/UserDataContext';
 import { PERMISSIONS } from '../../types/auth';
 import { venueService } from '../../services/venueService';
 import { PriceRange } from '../../types/api';
-import StorageManager from '../../utils/storageManager';
+
 import { DeleteConfirmationModal } from '../../components/modals';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
@@ -207,11 +207,7 @@ const WorkspaceManagement: React.FC = () => {
     loading: false
   });
 
-  // Cache key for workspace venues
-  const workspaceCacheKey = useMemo(() => 
-    userData?.workspace?.id ? `workspace_venues_${userData.workspace.id}` : null, 
-    [userData?.workspace?.id]
-  );
+
 
   // Extract venue data with caching
   const currentVenue = userData?.venue;
@@ -253,7 +249,7 @@ const WorkspaceManagement: React.FC = () => {
     isOpen: true,
   });
 
-  // Optimized venue loading with caching - ONLY calls venues API
+  // Load workspace venues directly (no caching) - ONLY calls venues API
   const loadWorkspaceVenues = useCallback(async (forceRefresh = false) => {
     const workspaceId = userData?.workspace?.id;
     if (!workspaceId) {
@@ -262,21 +258,9 @@ const WorkspaceManagement: React.FC = () => {
       return;
     }
 
-    // Check cache first (unless force refresh)
-    if (!forceRefresh && workspaceCacheKey) {
-      const cachedVenues = StorageManager.getItem(workspaceCacheKey);
-      const timeSinceLastFetch = Date.now() - lastFetchTimeRef.current;
-      
-      if (cachedVenues && Array.isArray(cachedVenues) && timeSinceLastFetch < 2 * 60 * 1000) { // 2 minutes cache
-        setWorkspaceVenues(cachedVenues);
-        setLoadingVenues(false);
-        return;
-      }
-    }
-
     try {
       setLoadingVenues(true);
-      console.log('🏢 WorkspaceManagement: Calling ONLY venues API for workspace:', workspaceId);
+      console.log('🏢 WorkspaceManagement: Calling venues API for workspace:', workspaceId);
       
       // ONLY API CALL: Get venues by workspace (Venus API)
       const venues = await venueService.getVenuesByWorkspace(workspaceId);
@@ -286,11 +270,6 @@ const WorkspaceManagement: React.FC = () => {
       const now = Date.now();
       setLastFetchTime(now);
       lastFetchTimeRef.current = now;
-      
-      // Cache the results
-      if (workspaceCacheKey && venues) {
-        StorageManager.setItem(workspaceCacheKey, venues, 10 * 60 * 1000); // 10 minutes TTL
-      }
     } catch (error) {
       console.error('❌ WorkspaceManagement: Error calling venues API:', error);
       setSnackbar({
@@ -302,15 +281,12 @@ const WorkspaceManagement: React.FC = () => {
     } finally {
       setLoadingVenues(false);
     }
-  }, [userData?.workspace?.id, workspaceCacheKey]);
+  }, [userData?.workspace?.id]);
 
   // Manual refresh function
   const refreshWorkspaceVenues = useCallback(async () => {
-    if (workspaceCacheKey) {
-      StorageManager.removeItem(workspaceCacheKey); // Clear cache
-    }
     await loadWorkspaceVenuesRef.current(true);
-  }, [workspaceCacheKey]);
+  }, []);
 
   // Stable reference to avoid infinite loops
   const loadWorkspaceVenuesRef = useRef(loadWorkspaceVenues);
@@ -432,12 +408,7 @@ const WorkspaceManagement: React.FC = () => {
         severity: 'success'
       });
       
-      // Clear cache to force fresh data
-      if (workspaceCacheKey) {
-        StorageManager.removeItem(workspaceCacheKey);
-      }
-      
-      // Refresh venues list with force refresh
+      // Refresh venues list
       await refreshWorkspaceVenues();
       // Note: Not refreshing user data to avoid unnecessary API calls
       
@@ -1637,12 +1608,7 @@ const WorkspaceManagement: React.FC = () => {
                   });
                 }
 
-                // Clear cache to force fresh data
-                if (workspaceCacheKey) {
-                  StorageManager.removeItem(workspaceCacheKey);
-                }
-                
-                // Refresh venues list with force refresh
+                // Refresh venues list
                 await refreshWorkspaceVenues();
                 
                 // Reset form data
@@ -1752,12 +1718,7 @@ const WorkspaceManagement: React.FC = () => {
                   severity: 'success'
                 });
                 
-                // Clear cache to force fresh data
-                if (workspaceCacheKey) {
-                  StorageManager.removeItem(workspaceCacheKey);
-                }
-                
-                // Refresh venues list with force refresh
+                // Refresh venues list
                 await refreshWorkspaceVenues();
                 
               } catch (error: any) {

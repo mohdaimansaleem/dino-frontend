@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useDinoAvatar } from '../../../contexts/DinoAvatarContext';
 import DinoLogo from '../../DinoLogo';
 import NotificationCenter from '../../NotificationCenter';
 import ThemeToggle from '../../ThemeToggle';
@@ -51,10 +52,10 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, logout, isAdmin, isSuperAdmin } = useAuth();
+  const { dinoAvatar } = useDinoAvatar();
   const { userData } = useUserData();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
-  const [dinoAvatar, setDinoAvatar] = useState<string>('');
   const [venueStatus, setVenueStatus] = useState<{
     isActive: boolean;
     isOpen: boolean;
@@ -66,30 +67,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
   // Feature flags
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
 
-  // Load dinosaur avatar from localStorage
-  useEffect(() => {
-    const savedAvatar = localStorage.getItem('dinoAvatar');
-    if (savedAvatar) {
-      setDinoAvatar(savedAvatar);
-    }
-    
-    // Listen for avatar updates
-    const handleStorageChange = () => {
-      const newAvatar = localStorage.getItem('dinoAvatar');
-      if (newAvatar) {
-        setDinoAvatar(newAvatar);
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    // Also listen for custom events from the profile page
-    window.addEventListener('dinoAvatarUpdated', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('dinoAvatarUpdated', handleStorageChange);
-    };
-  }, []);
+
 
   // REMOVED: Unnecessary API call to load venue status
   // The venue status is already available in UserDataContext from /auth/user-data

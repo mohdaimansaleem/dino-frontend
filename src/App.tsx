@@ -1,3 +1,6 @@
+// Import immediate cleanup to remove workspace venue cache entries FIRST
+import './utils/immediateCleanup';
+
 import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -7,6 +10,8 @@ import { UserDataProvider } from './contexts/UserDataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { SidebarProvider } from './contexts/SidebarContext';
+import { DinoAvatarProvider } from './contexts/DinoAvatarContext';
 import { TourProvider } from './contexts/TourContext';
 import { WebSocketProvider } from './contexts/WebSocketContext';
 import { validatePasswordHashingSetup } from './utils/passwordValidation';
@@ -41,7 +46,7 @@ import { PERMISSIONS } from './types/auth';
 import AppInitializer from './components/AppInitializer';
 import { logger } from './utils/logger';
 import { RUNTIME_CONFIG as config, isDevelopment } from './config/runtime';
-import { StorageCleanup } from './utils/storageCleanup';
+import StorageCleanup from './utils/storageCleanup';
 import { tokenRefreshScheduler } from './utils/tokenRefreshScheduler';
 import { apiService } from './services/api';
 import { initializePerformanceMonitoring } from './utils/performance';
@@ -70,7 +75,7 @@ function App() {
   useEffect(() => {
     try {
       // Clean up legacy data from localStorage
-      StorageCleanup.performCompleteCleanup();
+      StorageCleanup.performCleanup();
       logger.info('Storage cleanup completed successfully');
       
       // Validate password hashing setup
@@ -105,15 +110,18 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <ToastProvider>
-          <AuthProvider>
-            <TourProvider>
-              <PermissionSync autoRefreshInterval={0} showSyncStatus={false}>
-                <UserDataProvider>
-                  <AppInitializer>
-                    <WorkspaceProvider>
-                      <NotificationProvider>
-                        <WebSocketProvider>
-                          <CartProvider>
+          <SidebarProvider defaultCollapsed={false}>
+            <DinoAvatarProvider>
+              <AuthProvider>
+                <TourProvider>
+                  <PermissionSync autoRefreshInterval={0} showSyncStatus={false}>
+                    <UserDataProvider>
+                      <AppInitializer>
+                        <WorkspaceProvider>
+                          <NotificationProvider>
+                            {/* Temporarily disabled WebSocket to prevent connection loops */}
+                            {/* <WebSocketProvider> */}
+                            <CartProvider>
               <Routes>
                 {/* Routes with Layout */}
                 <Route path="/" element={<Layout><HomePage /></Layout>} />
@@ -219,15 +227,17 @@ function App() {
                 {/* Standalone 404 Page - No Layout */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
-                          </CartProvider>
-                        </WebSocketProvider>
-                      </NotificationProvider>
-                    </WorkspaceProvider>
-                  </AppInitializer>
-                </UserDataProvider>
-              </PermissionSync>
-            </TourProvider>
-          </AuthProvider>
+                            </CartProvider>
+                            {/* </WebSocketProvider> */}
+                          </NotificationProvider>
+                        </WorkspaceProvider>
+                      </AppInitializer>
+                    </UserDataProvider>
+                  </PermissionSync>
+                </TourProvider>
+              </AuthProvider>
+            </DinoAvatarProvider>
+          </SidebarProvider>
         </ToastProvider>
       </ThemeProvider>
     </ErrorBoundary>

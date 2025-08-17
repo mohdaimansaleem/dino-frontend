@@ -30,7 +30,7 @@ import { PERMISSIONS } from '../types/auth';
 import NotificationCenter from './NotificationCenter';
 import ThemeToggle from './ThemeToggle';
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
-import { useSidebarState } from '../hooks/useSidebarState';
+import { useSidebar } from '../contexts/SidebarContext';
 import AppHeader from './layout/AppHeader';
 import MobileMenu from './layout/MobileMenu';
 import EnhancedSidebar from './layout/EnhancedSidebar';
@@ -61,7 +61,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
   
   // Sidebar state
-  const { getSidebarWidth } = useSidebarState();
+  const { getSidebarWidth } = useSidebar();
 
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isPublicMenuRoute = location.pathname.includes('/menu/');

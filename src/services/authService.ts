@@ -368,11 +368,7 @@ class AuthService {
       console.warn('⚠️ No refresh token provided in response');
     }
     
-    // Store token expiry time for proactive refresh
-    if (tokenData.expires_in) {
-      const expiryTime = Date.now() + (tokenData.expires_in * 1000);
-      StorageManager.setItem('dino_token_expiry', expiryTime.toString());
-    }
+    // No need to store separate expiry - JWT contains expiry in payload
   }
 
   private clearTokens(): void {
@@ -380,29 +376,18 @@ class AuthService {
     StorageManager.removeItem(this.TOKEN_KEY);
     StorageManager.removeItem(this.USER_KEY);
     StorageManager.removeItem(this.REFRESH_TOKEN_KEY);
-    StorageManager.removeItem('dino_token_expiry');
   }
 
   isAuthenticated(): boolean {
     const token = this.getToken();
     if (!token) return false;
     
-    // Check if token is expired
-    const expiryTime = StorageManager.getItem<string>('dino_token_expiry');
-    if (expiryTime) {
-      const expiry = parseInt(expiryTime);
-      const now = Date.now();
-      const timeUntilExpiry = expiry - now;
-      
-      // If token is already expired, return false
-      if (timeUntilExpiry <= 0) {
-        console.warn('🚨 Token has expired');
-        this.clearTokens();
-        return false;
-      }
-      
-      // Note: Removed proactive refresh from isAuthenticated to prevent loops
-      // Token refresh will be handled by the API interceptor when needed
+    // Check if token is expired by parsing JWT
+    const { isExpired } = this.getTokenExpiryInfo();
+    if (isExpired) {
+      console.warn('🚨 Token has expired');
+      this.clearTokens();
+      return false;
     }
     
     return true;
@@ -425,23 +410,30 @@ class AuthService {
   }
 
   /**
-   * Get token expiry information
+   * Get token expiry information by parsing JWT
    */
   getTokenExpiryInfo(): { isExpired: boolean; expiresIn: number; expiryTime: number | null } {
-    const expiryTime = StorageManager.getItem<string>('dino_token_expiry');
-    if (!expiryTime) {
+    const token = this.getToken();
+    if (!token) {
       return { isExpired: true, expiresIn: 0, expiryTime: null };
     }
     
-    const expiry = parseInt(expiryTime);
-    const now = Date.now();
-    const expiresIn = expiry - now;
-    
-    return {
-      isExpired: expiresIn <= 0,
-      expiresIn: Math.max(0, expiresIn),
-      expiryTime: expiry
-    };
+    try {
+      // Parse JWT payload to get expiry
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expiryTime = payload.exp * 1000; // Convert to milliseconds
+      const now = Date.now();
+      const expiresIn = expiryTime - now;
+      
+      return {
+        isExpired: expiresIn <= 0,
+        expiresIn: Math.max(0, expiresIn),
+        expiryTime: expiryTime
+      };
+    } catch (error) {
+      console.error('❌ Failed to parse JWT token:', error);
+      return { isExpired: true, expiresIn: 0, expiryTime: null };
+    }
   }
 
   /**
@@ -467,7 +459,7 @@ class AuthService {
     console.log('Has Token:', !!token);
     console.log('Has User:', !!user);
     console.log('Has Refresh Token:', !!refreshToken);
-    console.log('Token Expiry Info:', expiryInfo);
+    console.log('Token Expiry Info (from JWT):', expiryInfo);
     console.log('Is Authenticated:', this.isAuthenticated());
     console.log('Should Refresh Token:', this.shouldRefreshToken());
     console.log('Refresh In Progress:', !!this.refreshPromise);
@@ -476,6 +468,19 @@ class AuthService {
     if (user) {
       console.log('User Role:', user.role);
       console.log('User Email:', user.email);
+    }
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('JWT Payload:', {
+          exp: payload.exp,
+          iat: payload.iat,
+          sub: payload.sub,
+          expiryDate: new Date(payload.exp * 1000).toISOString()
+        });
+      } catch (e) {
+        console.log('Failed to parse JWT payload');
+      }
     }
     console.groupEnd();
   }

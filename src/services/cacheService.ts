@@ -20,7 +20,7 @@ class CacheService {
   private cache = new Map<string, CacheItem<any>>();
   private defaultTTL = 5 * 60 * 1000; // 5 minutes
   private maxSize = 100;
-  private persistent = true;
+  private persistent = false;
 
   constructor(options: CacheOptions = {}) {
     this.defaultTTL = options.ttl || this.defaultTTL;
@@ -353,7 +353,7 @@ class CacheService {
 // Create cache instances for different types of data
 export const apiCache = new CacheService({
   ttl: 5 * 60 * 1000, // 5 minutes for API responses
-  persistent: true,
+  persistent: false, // Disable localStorage persistence
   maxSize: 50,
 });
 
@@ -365,13 +365,13 @@ export const dashboardCache = new CacheService({
 
 export const staticCache = new CacheService({
   ttl: 30 * 60 * 1000, // 30 minutes for static data
-  persistent: true,
+  persistent: false, // Disable localStorage persistence
   maxSize: 100,
 });
 
 export const userCache = new CacheService({
   ttl: 10 * 60 * 1000, // 10 minutes for user data
-  persistent: true,
+  persistent: false, // Disable localStorage persistence
   maxSize: 10,
 });
 
@@ -439,17 +439,7 @@ export const cacheUtils = {
   preloadCriticalData: async (userId: string, venueId?: string): Promise<void> => {
     const preloadTasks: Promise<void>[] = [];
 
-    // Preload user permissions
-    preloadTasks.push(
-      userCache.preload(
-        CacheKeys.userPermissions(userId),
-        () => import('../services/authService').then(({ authService }) => 
-          authService.getUserPermissions()
-        )
-      )
-    );
-
-    // Preload dashboard data if venue is available
+    // Preload dashboard data if venue is available (no user permissions caching)
     if (venueId) {
       preloadTasks.push(
         dashboardCache.preload(

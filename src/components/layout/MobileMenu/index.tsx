@@ -40,6 +40,7 @@ import {
 import DinoLogo from '../../DinoLogo';
 import { getUserFirstName } from '../../../utils/userUtils';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useDinoAvatar } from '../../../contexts/DinoAvatarContext';
 import PermissionService from '../../../services/permissionService';
 import { useUserData } from '../../../contexts/UserDataContext';
 import { venueService } from '../../../services/venueService';
@@ -76,7 +77,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   isHomePage,
   isAdminRoute = false,
 }) => {
-  const [dinoAvatar, setDinoAvatar] = useState<string>('');
+  const { dinoAvatar } = useDinoAvatar();
   const { userData } = useUserData();
   const { isAdmin, isSuperAdmin } = useAuth();
   const { checkPermission } = usePermissionCheck();
@@ -90,29 +91,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Load dinosaur avatar from localStorage
-  useEffect(() => {
-    const savedAvatar = localStorage.getItem('dinoAvatar');
-    if (savedAvatar) {
-      setDinoAvatar(savedAvatar);
-    }
-    
-    // Listen for avatar updates
-    const handleStorageChange = () => {
-      const newAvatar = localStorage.getItem('dinoAvatar');
-      if (newAvatar) {
-        setDinoAvatar(newAvatar);
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('dinoAvatarUpdated', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('dinoAvatarUpdated', handleStorageChange);
-    };
-  }, []);
+
 
   // Load venue status from UserDataContext
   useEffect(() => {
