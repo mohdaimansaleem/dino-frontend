@@ -53,7 +53,7 @@ import CustomerNavbar from '../components/CustomerNavbar';
 import VenueNotAcceptingOrdersPage from '../components/VenueNotAcceptingOrdersPage';
 import { SmartLoading } from '../components/ui/LoadingStates';
 import { MenuError } from '../components/ErrorStates';
-import { useMenuData, type MenuItemType } from '../hooks/useMenuData';
+import { useMenuData as useMenuData, type MenuItemType } from '../hooks/useMenuData';
 
 // Enhanced interfaces - now imported from the hook
 
@@ -331,6 +331,14 @@ const MenuPage: React.FC = () => {
     }))
     .filter(group => group.items.length > 0);
 
+  // Debug the grouping
+  console.log('🔍 Grouping Debug:', {
+    categories: categories.map(c => ({ id: c.id, name: c.name })),
+    menuItems: menuItems.map(m => ({ id: m.id, name: m.name, category: m.category })),
+    filteredItems: filteredItems.map(m => ({ id: m.id, name: m.name, category: m.category })),
+    groupedMenuItems: groupedMenuItems.map(g => ({ id: g.id, name: g.name, itemsCount: g.items.length }))
+  });
+
   // Set initial active category
   useEffect(() => {
     if (groupedMenuItems.length > 0 && !activeCategory) {
@@ -393,6 +401,18 @@ const MenuPage: React.FC = () => {
     setSortBy(SORT_OPTIONS.POPULAR);
   };
 
+  // Debug info (remove in production)
+  console.log('🔍 MenuPage Debug:', {
+    loading,
+    venueId,
+    tableId,
+    restaurant: !!restaurant,
+    categoriesCount: categories.length,
+    menuItemsCount: menuItems.length,
+    error,
+    venueNotAcceptingOrders
+  });
+
   // Loading state
   if (loading) {
     return (
@@ -413,6 +433,14 @@ const MenuPage: React.FC = () => {
             type="menu" 
             message="Loading delicious menu items for you..."
           />
+          
+          {/* Debug info - remove in production */}
+          <Box sx={{ mt: 4, p: 2, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              Debug: venueId={venueId}, tableId={tableId}, restaurant={!!restaurant}, 
+              categories={categories.length}, menuItems={menuItems.length}
+            </Typography>
+          </Box>
         </Container>
       </Box>
     );
@@ -841,8 +869,41 @@ const MenuPage: React.FC = () => {
             </Box>
           ))}
 
+          {/* Debug: Show all items if no grouped items */}
+          {groupedMenuItems.length === 0 && menuItems.length > 0 && (
+            <Box sx={{ 
+              backgroundColor: 'background.paper',
+              borderRadius: 3,
+              p: { xs: 2, sm: 3 },
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+              border: `1px solid ${theme.palette.grey[100]}`,
+              mb: 4
+            }}>
+              <Typography variant="h5" fontWeight="600" sx={{ mb: 2, color: 'text.primary' }}>
+                All Menu Items (Debug Mode)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Categories not matching - showing all items for debugging
+              </Typography>
+              <Grid container spacing={{ xs: 2, sm: 3 }}>
+                {menuItems.map((item) => (
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
+                    <EnhancedMenuItemCard 
+                      item={item} 
+                      onAddToCart={handleAddToCart}
+                      onToggleFavorite={toggleFavorite}
+                      isFavorite={favorites.has(item.id)}
+                      quantityInCart={getItemQuantityInCart(item.id)}
+                      isMobile={isMobile}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          )}
+
           {/* Empty State */}
-          {filteredItems.length === 0 && (
+          {filteredItems.length === 0 && menuItems.length === 0 && (
             <Box sx={{ 
               textAlign: 'center', 
               py: 8,

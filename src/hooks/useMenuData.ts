@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useVenueCache } from './useApiCache';
 import { menuService } from '../services/menuService';
 import { venueService } from '../services/venueService';
 import { tableService } from '../services/tableService';
@@ -102,6 +101,9 @@ export function useMenuData(options: UseMenuDataOptions = {}): UseMenuDataResult
   const [restaurant, setRestaurant] = useState<Venue | null>(null);
   const [tableName, setTableName] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [menuLoading, setMenuLoading] = useState(false);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [restaurantLoading, setRestaurantLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [venueNotAcceptingOrders, setVenueNotAcceptingOrders] = useState<{
     show: boolean;
@@ -110,165 +112,172 @@ export function useMenuData(options: UseMenuDataOptions = {}): UseMenuDataResult
     message?: string;
   }>({ show: false });
 
-  // Cached restaurant data
-  const {
-    loading: restaurantLoading,
-    error: restaurantError,
-    refetch: refetchRestaurant,
-  } = useVenueCache(
-    () => venueId ? venueService.getPublicVenue(venueId) : Promise.resolve(null),
-    venueId,
-    'public_venue',
-    [venueId],
-    {
-      enabled: !!venueId,
-      ttl: 10 * 60 * 1000, // 10 minutes for restaurant data
-      onSuccess: (venueData) => {
-        if (venueData) {
-          setRestaurant(venueData);
-          logger.info('Restaurant data loaded successfully', { venueName: venueData.name });
-        }
-      },
-      onError: (err) => {
-        logger.error('Failed to load restaurant data', { venueId, error: err });
+  console.log('🔍 useMenuDataSimple called with:', { venueId, tableId, enableAutoRefresh });
+
+  // Helper function to get category icon
+  const getCategoryIcon = (categoryName: string): string => {
+    const name = categoryName.toLowerCase();
+    if (name.includes('starter') || name.includes('appetizer')) return '🥗';
+    if (name.includes('main') || name.includes('curry')) return '🍛';
+    if (name.includes('dessert') || name.includes('sweet')) return '🍰';
+    if (name.includes('drink') || name.includes('beverage')) return '🥤';
+    if (name.includes('pizza')) return '🍕';
+    if (name.includes('burger')) return '🍔';
+    if (name.includes('noodle') || name.includes('pasta')) return '🍜';
+    if (name.includes('rice')) return '🍚';
+    if (name.includes('bread') || name.includes('roti')) return '🍞';
+    return '🍽️';
+  };
+
+  // Load restaurant data
+  const loadRestaurant = useCallback(async () => {
+    if (!venueId) return;
+    
+    console.log('🔍 Loading restaurant data for venueId:', venueId);
+    setRestaurantLoading(true);
+    
+    try {
+      const venueData = await venueService.getPublicVenue(venueId);
+      console.log('🏪 Restaurant data loaded:', venueData);
+      
+      if (venueData) {
+        setRestaurant(venueData);
+        logger.info('Restaurant data loaded successfully', { venueName: venueData.name });
+      } else {
         setError('Restaurant not found. Please check the QR code or link.');
-      },
+      }
+    } catch (err: any) {
+      console.error('❌ Restaurant loading error:', err);
+      logger.error('Failed to load restaurant data', { venueId, error: err });
+      setError('Restaurant not found. Please check the QR code or link.');
+    } finally {
+      setRestaurantLoading(false);
     }
-  );
+  }, [venueId]);
 
-  // Cached categories data
-  const {
-    loading: categoriesLoading,
-    refetch: refetchCategories,
-  } = useVenueCache(
-    () => venueId ? menuService.getVenueCategories(venueId, tableId) : Promise.resolve([]),
-    venueId,
-    'venue_categories',
-    [venueId, tableId],
-    {
-      enabled: !!venueId,
-      ttl: 5 * 60 * 1000, // 5 minutes for categories
-      onSuccess: (categoriesData) => {
-        const mappedCategories: CategoryType[] = categoriesData.map((cat: any, index: number) => ({
-          id: cat.id,
-          name: cat.name,
-          description: cat.description || '',
-          order: index + 1,
-          active: cat.is_active,
-          icon: getCategoryIcon(cat.name),
-          itemCount: 0, // Will be calculated after menu items are loaded
-        }));
-        setCategories(mappedCategories);
-        logger.info('Categories loaded successfully', { count: mappedCategories.length });
-      },
-      onError: (err) => {
-        logger.error('Failed to load categories', { venueId, error: err });
-      },
-    }
-  );
-
-  // Cached menu items data
-  const {
-    loading: menuLoading,
-    refetch: refetchMenuItems,
-  } = useVenueCache(
-    () => venueId ? menuService.getVenueMenuItems(venueId, undefined, tableId) : Promise.resolve([]),
-    venueId,
-    'venue_menu_items',
-    [venueId, tableId],
-    {
-      enabled: !!venueId,
-      ttl: 3 * 60 * 1000, // 3 minutes for menu items (more frequent updates)
-      onSuccess: (menuData) => {
-        const mappedMenuItems: MenuItemType[] = menuData.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description || '',
-          price: item.base_price,
-          category: item.category_id,
-          image: item.image_urls?.[0] || '',
-          isAvailable: item.is_available,
-          preparationTime: item.preparation_time_minutes || 15,
-          calories: item.calories || undefined,
-          spicyLevel: item.spicy_level || 0,
-          isVeg: item.is_vegetarian || false,
-          rating: item.rating || undefined,
-          reviewCount: item.review_count || 0,
-          isPopular: item.is_popular || false,
-          isNew: item.is_new || false,
-          isTrending: item.is_trending || false,
-          originalPrice: item.original_price || undefined,
-          discount: item.discount_percentage || undefined,
-          nutritionInfo: item.nutrition_info ? {
-            protein: item.nutrition_info.protein || undefined,
-            carbs: item.nutrition_info.carbs || undefined,
-            fat: item.nutrition_info.fat || undefined,
-          } : undefined,
-          allergens: item.allergens || [],
-          customizations: item.customizations || [],
-        }));
-        
-        setMenuItems(mappedMenuItems);
-        
-        // Update category item counts
-        setCategories(prev => prev.map(category => ({
-          ...category,
-          itemCount: mappedMenuItems.filter(item => item.category === category.id).length,
-        })));
-        
-        logger.info('Menu items loaded successfully', { count: mappedMenuItems.length });
-      },
-      onError: (err) => {
-        logger.error('Failed to load menu items', { venueId, error: err });
-        
-        // Handle specific error types
-        if (err.type === 'venue_not_accepting_orders') {
-          setVenueNotAcceptingOrders({
-            show: true,
-            venueName: err.venueName,
-            message: err.message
-          });
-        } else {
-          handleMenuError(err);
-        }
-      },
-    }
-  );
-
-  // Load table information
-  useEffect(() => {
-    if (tableId) {
-      const loadTableData = async () => {
-        try {
-          const tableData = await tableService.getTable(tableId);
-          if (tableData) {
-            setTableName(tableData.table_number || tableData.id);
-          } else {
-            setTableName(tableId);
-          }
-        } catch (tableError) {
-          logger.warn('Failed to load table data', { tableId, error: tableError });
-          setTableName(tableId);
-        }
-      };
+  // Load categories data
+  const loadCategories = useCallback(async () => {
+    if (!venueId) return;
+    
+    console.log('🔍 Loading categories data for venueId:', venueId, 'tableId:', tableId);
+    setCategoriesLoading(true);
+    
+    try {
+      const categoriesData = await menuService.getVenueCategories(venueId, tableId);
+      console.log('📂 Categories data loaded:', categoriesData);
       
-      loadTableData();
-    }
-  }, [tableId]);
-
-  // Validate venue access
-  useEffect(() => {
-    if (venueId && user && userData) {
-      debugVenueAssignment(userData, user, 'useMenuData');
+      const mappedCategories: CategoryType[] = categoriesData.map((cat: any, index: number) => ({
+        id: cat.id,
+        name: cat.name,
+        description: cat.description || '',
+        order: index + 1,
+        active: cat.is_active,
+        icon: getCategoryIcon(cat.name),
+        itemCount: 0, // Will be calculated after menu items are loaded
+      }));
       
-      if (!canUserAccessVenue(userData, user, venueId)) {
-        logger.warn('User may not have access to this venue, but continuing with public access', {
-          userId: user.id,
-          venueId,
+      setCategories(mappedCategories);
+      logger.info('Categories loaded successfully', { count: mappedCategories.length });
+    } catch (err: any) {
+      console.error('❌ Categories loading error:', err);
+      logger.error('Failed to load categories', { venueId, error: err });
+      
+      // Handle specific error types
+      if (err.type === 'venue_not_accepting_orders') {
+        setVenueNotAcceptingOrders({
+          show: true,
+          venueName: err.venueName,
+          message: err.message
         });
       }
+    } finally {
+      setCategoriesLoading(false);
     }
-  }, [venueId, user, userData]);
+  }, [venueId, tableId]);
+
+  // Load menu items data
+  const loadMenuItems = useCallback(async () => {
+    if (!venueId) return;
+    
+    console.log('🔍 Loading menu items data for venueId:', venueId, 'tableId:', tableId);
+    setMenuLoading(true);
+    
+    try {
+      const menuData = await menuService.getVenueMenuItems(venueId, undefined, tableId);
+      console.log('🍽️ Menu items data loaded:', menuData);
+      
+      const mappedMenuItems: MenuItemType[] = menuData.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description || '',
+        price: item.base_price,
+        category: item.category_id, // This maps to the category ID
+        image: item.image_urls?.[0] || '',
+        isAvailable: item.is_available,
+        preparationTime: item.preparation_time_minutes || 15,
+        calories: item.calories || undefined,
+        spicyLevel: item.spice_level === 'mild' ? 1 : item.spice_level === 'medium' ? 2 : item.spice_level === 'hot' ? 3 : 0,
+        isVeg: item.is_vegetarian || false,
+        rating: item.average_rating || undefined,
+        reviewCount: item.rating_count || 0,
+        isPopular: item.is_popular || false,
+        isNew: item.is_new || false,
+        isTrending: item.is_trending || false,
+        originalPrice: item.original_price || undefined,
+        discount: item.discount_percentage || undefined,
+        nutritionInfo: item.nutrition_info ? {
+          protein: item.nutrition_info.protein || undefined,
+          carbs: item.nutrition_info.carbs || undefined,
+          fat: item.nutrition_info.fat || undefined,
+        } : undefined,
+        allergens: item.allergens || [],
+        customizations: item.customizations || [],
+      }));
+      
+      setMenuItems(mappedMenuItems);
+      
+      // Update category item counts
+      setCategories(prev => prev.map(category => ({
+        ...category,
+        itemCount: mappedMenuItems.filter(item => item.category === category.id).length,
+      })));
+      
+      logger.info('Menu items loaded successfully', { count: mappedMenuItems.length });
+    } catch (err: any) {
+      console.error('❌ Menu items loading error:', err);
+      logger.error('Failed to load menu items', { venueId, error: err });
+      
+      // Handle specific error types
+      if (err.type === 'venue_not_accepting_orders') {
+        setVenueNotAcceptingOrders({
+          show: true,
+          venueName: err.venueName,
+          message: err.message
+        });
+      } else {
+        handleMenuError(err);
+      }
+    } finally {
+      setMenuLoading(false);
+    }
+  }, [venueId, tableId]);
+
+  // Load table information
+  const loadTable = useCallback(async () => {
+    if (!tableId) return;
+    
+    try {
+      const tableData = await tableService.getTable(tableId);
+      if (tableData) {
+        setTableName(tableData.table_number || tableData.id);
+      } else {
+        setTableName(tableId);
+      }
+    } catch (tableError) {
+      logger.warn('Failed to load table data', { tableId, error: tableError });
+      setTableName(tableId);
+    }
+  }, [tableId]);
 
   // Handle menu loading errors
   const handleMenuError = useCallback((err: any) => {
@@ -287,18 +296,48 @@ export function useMenuData(options: UseMenuDataOptions = {}): UseMenuDataResult
     setError(errorMessage);
   }, []);
 
-  // Update loading state
-  useEffect(() => {
-    const isLoading = restaurantLoading || categoriesLoading || menuLoading;
-    setLoading(isLoading);
-  }, [restaurantLoading, categoriesLoading, menuLoading]);
-
-  // Handle errors
-  useEffect(() => {
-    if (restaurantError && !error) {
-      setError('Restaurant not found. Please check the QR code or link.');
+  // Load all data
+  const loadAllData = useCallback(async () => {
+    if (!venueId) return;
+    
+    setLoading(true);
+    setError(null);
+    setVenueNotAcceptingOrders({ show: false });
+    
+    try {
+      await Promise.all([
+        loadRestaurant(),
+        loadCategories(),
+        loadMenuItems(),
+        loadTable(),
+      ]);
+    } catch (err) {
+      console.error('Error loading menu data:', err);
+    } finally {
+      setLoading(false);
     }
-  }, [restaurantError, error]);
+  }, [venueId, loadRestaurant, loadCategories, loadMenuItems, loadTable]);
+
+  // Initial load
+  useEffect(() => {
+    if (venueId) {
+      loadAllData();
+    }
+  }, [venueId, loadAllData]);
+
+  // Validate venue access
+  useEffect(() => {
+    if (venueId && user && userData) {
+      debugVenueAssignment(userData, user, 'useMenuDataSimple');
+      
+      if (!canUserAccessVenue(userData, user, venueId)) {
+        logger.warn('User may not have access to this venue, but continuing with public access', {
+          userId: user.id,
+          venueId,
+        });
+      }
+    }
+  }, [venueId, user, userData]);
 
   // Auto-refresh functionality
   useEffect(() => {
@@ -306,50 +345,45 @@ export function useMenuData(options: UseMenuDataOptions = {}): UseMenuDataResult
 
     const interval = setInterval(() => {
       logger.debug('Auto-refreshing menu data');
-      refetchMenuItems();
+      loadMenuItems();
     }, refreshInterval);
 
     return () => clearInterval(interval);
-  }, [enableAutoRefresh, venueId, refreshInterval, refetchMenuItems]);
+  }, [enableAutoRefresh, venueId, refreshInterval, loadMenuItems]);
 
-  // Helper function to get category icon
-  const getCategoryIcon = (categoryName: string): string => {
-    const name = categoryName.toLowerCase();
-    if (name.includes('starter') || name.includes('appetizer')) return '🥗';
-    if (name.includes('main') || name.includes('curry')) return '🍛';
-    if (name.includes('dessert') || name.includes('sweet')) return '🍰';
-    if (name.includes('drink') || name.includes('beverage')) return '🥤';
-    if (name.includes('pizza')) return '🍕';
-    if (name.includes('burger')) return '🍔';
-    if (name.includes('noodle') || name.includes('pasta')) return '🍜';
-    if (name.includes('rice')) return '🍚';
-    if (name.includes('bread') || name.includes('roti')) return '🍞';
-    return '🍽️';
-  };
+  // Update overall loading state
+  useEffect(() => {
+    const isLoading = restaurantLoading || categoriesLoading || menuLoading;
+    console.log('🔍 Loading state update:', {
+      restaurantLoading,
+      categoriesLoading,
+      menuLoading,
+      combinedLoading: isLoading,
+      venueId,
+      tableId,
+      hasRestaurant: !!restaurant,
+      categoriesCount: categories.length,
+      menuItemsCount: menuItems.length
+    });
+    setLoading(isLoading);
+  }, [restaurantLoading, categoriesLoading, menuLoading, venueId, tableId, restaurant, categories.length, menuItems.length]);
 
   // Refetch functions
   const refetch = useCallback(async () => {
-    setError(null);
-    setVenueNotAcceptingOrders({ show: false });
-    
-    await Promise.all([
-      refetchRestaurant(),
-      refetchCategories(),
-      refetchMenuItems(),
-    ]);
-  }, [refetchRestaurant, refetchCategories, refetchMenuItems]);
+    await loadAllData();
+  }, [loadAllData]);
 
   const refreshMenu = useCallback(async () => {
-    await refetchMenuItems();
-  }, [refetchMenuItems]);
+    await loadMenuItems();
+  }, [loadMenuItems]);
 
   const refreshCategories = useCallback(async () => {
-    await refetchCategories();
-  }, [refetchCategories]);
+    await loadCategories();
+  }, [loadCategories]);
 
   const refreshRestaurant = useCallback(async () => {
-    await refetchRestaurant();
-  }, [refetchRestaurant]);
+    await loadRestaurant();
+  }, [loadRestaurant]);
 
   return {
     // Data
