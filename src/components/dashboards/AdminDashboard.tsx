@@ -48,8 +48,10 @@ import { AdminDashboardResponse, SuperAdminDashboardResponse } from '../../types
 import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
 import { getUserFirstName } from '../../utils/userUtils';
 import DashboardTour from '../tour/DashboardTour';
+import { useTour } from '../../contexts/TourContext';
 import VenueStatusDebug from '../VenueStatusDebug';
 import AnimatedBackground from '../ui/AnimatedBackground';
+
 
 /**
  * AdminDashboard Component
@@ -80,6 +82,7 @@ interface ChartData {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const { user, hasPermission, hasBackendPermission } = useAuth();
   const { userData } = useUserData();
+  const { startTour, tourStatus, shouldShowTour } = useTour();
   const navigate = useNavigate();
   const theme = useTheme();
   // const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -496,7 +499,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
               }}
             >
               {/* Header Content */}
-              <Box sx={{ flex: 1 }}>
+              <Box sx={{ flex: 1 }} data-tour="dashboard-header">
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <DashboardIcon sx={{ fontSize: 32, mr: 1.5, color: 'text.primary', opacity: 0.9 }} />
                   <Typography
@@ -604,6 +607,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
 
           {/* Dashboard Content Container */}
           <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
+            
+
+            {/* Dashboard Tour */}
+            <DashboardTour />
             {/* Show message if user lacks venue management permissions */}
             {currentVenue && !canManageVenue() && (
               <Alert severity="info" sx={{ mb: 2 }}>
@@ -663,7 +670,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                           backgroundColor: `${stat.color}12`,
                         },
                       }}
-                      data-tour="stats-cards"
+                      data-tour={index < 2 ? "stats-cards" : undefined}
                     >
                       <Stack direction="row" alignItems="center" spacing={2}>
                         {/* Icon on the left */}
@@ -1299,9 +1306,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     <VenueAssignmentCheck showFullPage={true}>
       <VenueStatusDebug />
       {renderDashboardContent()}
-      
-      {/* Dashboard Tour */}
-      <DashboardTour />
       
       {/* Status Update Snackbar */}
       <Snackbar

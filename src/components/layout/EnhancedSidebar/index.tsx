@@ -378,6 +378,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
             p: 2,
             borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
           }}
+          data-tour="venue-status"
         >
           <Box
             sx={{
@@ -510,6 +511,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
             },
           },
         }}
+        data-tour="sidebar-navigation"
       >
         <Typography
           variant="overline"

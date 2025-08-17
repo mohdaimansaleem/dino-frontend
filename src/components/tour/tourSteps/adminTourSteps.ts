@@ -18,14 +18,7 @@ export const adminTourSteps: TourStep[] = [
     placement: 'bottom',
     nextButtonText: 'Show Me More',
   },
-  {
-    id: 'revenue-chart',
-    title: 'Weekly Revenue Trends 📈',
-    content: 'This chart shows your revenue and order trends over the past week. Use this to identify peak days and plan your operations accordingly. You can see both revenue amounts and order counts.',
-    target: '[data-tour="revenue-chart"]',
-    placement: 'top',
-    nextButtonText: 'Next Feature',
-  },
+
   {
     id: 'order-status',
     title: 'Order Status Breakdown 🍽️',
@@ -98,14 +91,7 @@ export const adminTourSteps: TourStep[] = [
     placement: 'right',
     nextButtonText: 'Analytics',
   },
-  {
-    id: 'analytics',
-    title: 'Business Analytics & Reports 📊',
-    content: 'Access detailed reports on sales, popular items, peak hours, and customer trends. Use these insights to make data-driven decisions about your menu, pricing, and operations.',
-    target: '[data-tour="analytics-nav"]',
-    placement: 'right',
-    nextButtonText: 'Settings',
-  },
+
   {
     id: 'settings',
     title: 'Venue Settings & Configuration ⚙️',

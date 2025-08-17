@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { WorkspaceRegistration } from '../types/api';
 import DinoLogo from '../components/DinoLogo';
+import { useToast } from '../contexts/ToastContext';
 
 
 // Import registration components
@@ -103,6 +104,7 @@ const RegistrationPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { showSuccess, showError } = useToast();
   
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -341,15 +343,22 @@ const RegistrationPage: React.FC = () => {
 
       await authService.registerWorkspace(registrationData);
       
-      // Success - redirect to login
-      navigate('/login', { 
-        state: { 
-          message: 'Registration successful! Please sign in with your credentials.' 
-        } 
-      });
+      // Show success toast notification
+      showSuccess('Workspace created successfully! Redirecting to login...');
+      
+      // Success - redirect to login after a short delay to show the toast
+      setTimeout(() => {
+        navigate('/login', { 
+          state: { 
+            message: 'Registration successful! Please sign in with your credentials.' 
+          } 
+        });
+      }, 2000); // 2 second delay to show the toast
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.response?.data?.detail || err.message || 'Registration failed. Please try again.');
+      const errorMessage = err.response?.data?.detail || err.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }

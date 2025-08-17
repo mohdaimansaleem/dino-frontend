@@ -57,6 +57,16 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ className }) => {
     if (!isActive || !currentStepData) return;
 
     const updatePosition = () => {
+      // Handle center placement (no highlighting)
+      if (currentStepData.target === 'center' || currentStepData.placement === 'center') {
+        setHighlightPosition(null);
+        setTooltipPosition({
+          top: window.innerHeight / 2 - 150 + (window.pageYOffset || document.documentElement.scrollTop),
+          left: window.innerWidth / 2 - 200
+        });
+        return;
+      }
+
       const targetElement = document.querySelector(currentStepData.target);
       if (targetElement) {
         const rect = targetElement.getBoundingClientRect();
@@ -92,7 +102,8 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ className }) => {
             tooltipTop = position.top + position.height / 2 - 150;
             tooltipLeft = position.left + position.width + 20;
             break;
-          case 'center':
+          default:
+            // This handles 'center' and any other cases
             tooltipTop = window.innerHeight / 2 - 150 + scrollTop;
             tooltipLeft = window.innerWidth / 2 - 200;
             break;
@@ -120,7 +131,9 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ className }) => {
           });
         }, 100);
       } else {
-        console.warn(`Tour target element not found: ${currentStepData.target}`);
+        console.warn(`🚫 Tour target element not found: ${currentStepData.target}`);
+        console.log('🔍 Available elements with data-tour attributes:', 
+          Array.from(document.querySelectorAll('[data-tour]')).map(el => el.getAttribute('data-tour')));
       }
     };
 
@@ -174,9 +187,20 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ className }) => {
   }, [isActive, currentStep, nextStep, previousStep, skipTour, completeTour, isLastStep]);
 
   // Don't render if tour is not active or missing data
+  console.log('🎭 TourOverlay render check:', {
+    isActive,
+    hasCurrentStepData: !!currentStepData,
+    currentStep,
+    totalSteps: steps.length,
+    currentStepData
+  });
+
   if (!isActive || !currentStepData) {
+    console.log('🚫 TourOverlay not rendering:', { isActive, hasCurrentStepData: !!currentStepData });
     return null;
   }
+
+  console.log('✅ TourOverlay rendering with step:', currentStepData.title);
 
   const overlayContent = (
     <Box 
@@ -191,7 +215,7 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ className }) => {
         pointerEvents: 'none',
       }}
     >
-      {/* Dark backdrop with cutout */}
+      {/* Modern backdrop with blur and cutout */}
       <Box
         sx={{
           position: 'absolute',
@@ -199,50 +223,72 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ className }) => {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          backdropFilter: 'blur(1px)',
+          background: 'linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          ...(highlightPosition && {
+            clipPath: `polygon(
+              0% 0%, 
+              0% 100%, 
+              ${highlightPosition.left - 8}px 100%, 
+              ${highlightPosition.left - 8}px ${highlightPosition.top - 8}px, 
+              ${highlightPosition.left + highlightPosition.width + 8}px ${highlightPosition.top - 8}px, 
+              ${highlightPosition.left + highlightPosition.width + 8}px ${highlightPosition.top + highlightPosition.height + 8}px, 
+              ${highlightPosition.left - 8}px ${highlightPosition.top + highlightPosition.height + 8}px, 
+              ${highlightPosition.left - 8}px 100%, 
+              100% 100%, 
+              100% 0%
+            )`,
+          }),
         }}
       />
 
-      {/* Highlight cutout */}
+      {/* Blue outline highlight */}
       {highlightPosition && (
         <Box
           sx={{
             position: 'absolute',
-            top: `${highlightPosition.top - 8}px`,
-            left: `${highlightPosition.left - 8}px`,
-            width: `${highlightPosition.width + 16}px`,
-            height: `${highlightPosition.height + 16}px`,
-            border: '3px solid',
-            borderColor: 'primary.main',
+            top: `${highlightPosition.top - 4}px`,
+            left: `${highlightPosition.left - 4}px`,
+            width: `${highlightPosition.width + 8}px`,
+            height: `${highlightPosition.height + 8}px`,
             borderRadius: 2,
-            backgroundColor: 'white',
+            border: '3px solid',
+            borderColor: theme.palette.primary.main,
+            background: 'transparent',
+            pointerEvents: 'none',
             boxShadow: `
-              0 0 0 8px rgba(255, 255, 255, 0.1),
-              0 0 20px rgba(0, 0, 0, 0.3),
-              inset 0 0 0 3px ${theme.palette.primary.main}
+              0 0 0 2px rgba(255, 255, 255, 0.8),
+              0 0 20px ${theme.palette.primary.main}60,
+              0 4px 20px rgba(0, 0, 0, 0.1)
             `,
-            animation: 'tourPulse 2s infinite',
+            animation: 'tourPulse 2s ease-in-out infinite',
             '@keyframes tourPulse': {
               '0%': {
+                transform: 'scale(1)',
+                borderColor: theme.palette.primary.main,
                 boxShadow: `
-                  0 0 0 0 ${theme.palette.primary.main}40,
-                  0 0 20px rgba(0, 0, 0, 0.3),
-                  inset 0 0 0 3px ${theme.palette.primary.main}
+                  0 0 0 2px rgba(255, 255, 255, 0.8),
+                  0 0 20px ${theme.palette.primary.main}60,
+                  0 4px 20px rgba(0, 0, 0, 0.1)
                 `,
               },
-              '70%': {
+              '50%': {
+                transform: 'scale(1.02)',
+                borderColor: theme.palette.primary.light,
                 boxShadow: `
-                  0 0 0 10px ${theme.palette.primary.main}00,
-                  0 0 20px rgba(0, 0, 0, 0.3),
-                  inset 0 0 0 3px ${theme.palette.primary.main}
+                  0 0 0 3px rgba(255, 255, 255, 0.9),
+                  0 0 30px ${theme.palette.primary.main}80,
+                  0 6px 25px rgba(0, 0, 0, 0.15)
                 `,
               },
               '100%': {
+                transform: 'scale(1)',
+                borderColor: theme.palette.primary.main,
                 boxShadow: `
-                  0 0 0 0 ${theme.palette.primary.main}00,
-                  0 0 20px rgba(0, 0, 0, 0.3),
-                  inset 0 0 0 3px ${theme.palette.primary.main}
+                  0 0 0 2px rgba(255, 255, 255, 0.8),
+                  0 0 20px ${theme.palette.primary.main}60,
+                  0 4px 20px rgba(0, 0, 0, 0.1)
                 `,
               },
             },
@@ -254,54 +300,76 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ className }) => {
       {tooltipPosition && (
         <Fade in={true} timeout={300}>
           <Paper
-            elevation={16}
+            elevation={0}
             sx={{
               position: 'absolute',
               top: `${tooltipPosition.top}px`,
               left: `${tooltipPosition.left}px`,
-              width: isMobile ? 'calc(100vw - 40px)' : '400px',
+              width: isMobile ? 'calc(100vw - 40px)' : '420px',
               maxWidth: 'calc(100vw - 40px)',
               pointerEvents: 'auto',
-              borderRadius: 3,
+              borderRadius: 4,
               overflow: 'hidden',
-              border: '2px solid',
-              borderColor: 'primary.main',
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.9) 100%)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid',
+              borderColor: 'rgba(255, 255, 255, 0.3)',
+              boxShadow: `
+                0 20px 60px rgba(0, 0, 0, 0.15),
+                0 8px 25px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8)
+              `,
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '1px',
+                background: `linear-gradient(90deg, transparent, ${theme.palette.primary.main}40, transparent)`,
+              },
             }}
           >
-            {/* Progress bar */}
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              sx={{
-                height: 4,
-                backgroundColor: 'grey.200',
-                '& .MuiLinearProgress-bar': {
-                  backgroundColor: 'primary.main',
-                },
-              }}
-            />
+            {/* Modern progress bar */}
+            <Box sx={{ position: 'relative', height: 6, backgroundColor: 'rgba(0, 0, 0, 0.05)' }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  height: '100%',
+                  width: `${progress}%`,
+                  background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                  borderRadius: '0 3px 3px 0',
+                  transition: 'width 0.3s ease-in-out',
+                  boxShadow: `0 0 10px ${theme.palette.primary.main}40`,
+                }}
+              />
+            </Box>
 
-            {/* Header */}
+            {/* Modern header */}
             <Box
               sx={{
-                p: 2,
-                pb: 1,
+                p: 3,
+                pb: 2,
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                backgroundColor: 'primary.50',
-                borderBottom: '1px solid',
-                borderColor: 'primary.100',
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
               }}
             >
               <Box sx={{ flex: 1, mr: 1 }}>
                 <Typography
                   variant="h6"
                   sx={{
-                    fontSize: '1.1rem',
-                    fontWeight: 600,
-                    color: 'primary.main',
+                    fontSize: '1.2rem',
+                    fontWeight: 700,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
                     mb: 0.5,
                     lineHeight: 1.3,
                   }}
@@ -335,7 +403,7 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ className }) => {
             </Box>
 
             {/* Content */}
-            <Box sx={{ p: 3, pt: 2 }}>
+            <Box sx={{ p: 3, pt: 2.5 }}>
               <Typography
                 variant="body1"
                 sx={{
@@ -408,20 +476,28 @@ const TourOverlay: React.FC<TourOverlayProps> = ({ className }) => {
                     </Button>
                   )}
 
-                  {/* Next/Complete button */}
+                  {/* Modern Next/Complete button */}
                   <Button
                     variant="contained"
-                    size="small"
+                    size="medium"
                     endIcon={isLastStep ? <CheckCircle /> : <ArrowForward />}
                     onClick={isLastStep ? completeTour : nextStep}
                     sx={{
                       minWidth: 'auto',
-                      px: 3,
+                      px: 4,
+                      py: 1,
                       fontWeight: 600,
-                      backgroundColor: 'primary.main',
+                      borderRadius: 3,
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                      boxShadow: `0 4px 15px ${theme.palette.primary.main}40`,
+                      textTransform: 'none',
+                      fontSize: '0.95rem',
                       '&:hover': {
-                        backgroundColor: 'primary.dark',
+                        background: `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
+                        boxShadow: `0 6px 20px ${theme.palette.primary.main}50`,
+                        transform: 'translateY(-1px)',
                       },
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
                     {isLastStep ? 'Complete' : currentStepData.nextButtonText || 'Next'}

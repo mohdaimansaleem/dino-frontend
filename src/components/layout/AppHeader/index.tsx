@@ -297,7 +297,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
     if (user) {
       return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <NotificationCenter />
+          <Box data-tour="notifications">
+            <NotificationCenter />
+          </Box>
           <Button
             color="inherit"
             onClick={() => navigate(isAdminLevel(user.role) ? '/admin' : '/profile')}
@@ -336,6 +338,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                 transform: 'translateY(0)',
               },
             }}
+            data-tour="user-profile"
           >
             {getUserFirstName(user) || user.email}
           </Button>
@@ -526,7 +529,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({ onSectionScroll }) => {
                   
                   {/* Theme Toggle */}
                   {isThemeToggleEnabled && (
-                    <ThemeToggle variant="switch" size="small" />
+                    <Box data-tour="quick-settings">
+                      <ThemeToggle variant="switch" size="small" />
+                    </Box>
                   )}
                   
                   {/* User Actions */}

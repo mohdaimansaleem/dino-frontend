@@ -61,6 +61,8 @@ import { getUserFirstName } from '../../utils/userUtils';
 import { WeeklyRevenueChart, StatusPieChart, DonutChart, SimpleBarChart } from '../charts/ChartComponents';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import { useMediaQuery, Stack, Container, LinearProgress, Snackbar } from '@mui/material';
+import DashboardTour from '../tour/DashboardTour';
+
 
 interface SuperAdminDashboardProps {
   className?: string;
@@ -322,7 +324,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
             }}
           >
             {/* Header Content */}
-            <Box sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1 }} data-tour="dashboard-header">
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <DashboardIcon sx={{ fontSize: 32, mr: 1.5, color: 'text.primary', opacity: 0.9 }} />
                 <Typography
@@ -422,6 +424,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
       >
         {/* Dashboard Content Container */}
         <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
+          
+
+          {/* Dashboard Tour */}
+          <DashboardTour />
 
           {/* Dashboard Statistics */}
           <Box sx={{ mb: 4 }}>
@@ -470,6 +476,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
                         backgroundColor: `${stat.color}12`,
                       },
                     }}
+                    data-tour="stats-cards"
                   >
                     <Stack direction="row" alignItems="center" spacing={2}>
                       {/* Icon on the left */}
@@ -539,7 +546,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
           </Box>
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }} data-tour="quick-actions">
         <Tabs 
           value={currentTab} 
           onChange={(e, newValue) => setCurrentTab(newValue)}
@@ -564,7 +571,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Weekly Revenue & Orders
@@ -595,7 +602,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Order Status Today
@@ -628,7 +635,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Venue Insights
@@ -660,7 +667,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Recent Activity
@@ -715,7 +722,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Sales by Category
@@ -748,7 +755,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Top Selling Items
@@ -798,7 +805,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Sales Performance Metrics
@@ -856,7 +863,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -970,7 +977,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
@@ -1065,7 +1072,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Payment Methods Distribution
@@ -1085,7 +1092,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ className }) 
               boxShadow: theme.shadows[1],
               border: '1px solid',
               borderColor: 'divider'
-            }}>
+            }} data-tour="order-status-chart">
               <CardContent>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
                   Payment Summary

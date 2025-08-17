@@ -52,30 +52,42 @@ export const TourProvider: React.FC<TourProviderProps> = ({ children }) => {
 
   // Load tour status when user is authenticated
   useEffect(() => {
+    console.log('🎯 TourContext useEffect - auth state changed:', {
+      isAuthenticated,
+      hasUser: !!user,
+      userId: user?.id
+    });
+    
     if (isAuthenticated && user) {
+      console.log('🎯 Loading tour status for authenticated user');
       refreshTourStatus();
     }
   }, [isAuthenticated, user]);
 
   const refreshTourStatus = async () => {
     try {
+      console.log('🎯 Refreshing tour status...');
       setLoading(true);
       const status = await tourService.getTourStatus();
+      console.log('🎯 Tour status received from API:', status);
       setTourStatus(status);
-      console.log('🎯 Tour status loaded:', status);
+      console.log('🎯 Tour status set in context:', status);
     } catch (error) {
-      console.error('Failed to load tour status:', error);
+      console.error('❌ Failed to load tour status:', error);
       setTourStatus(null);
     } finally {
       setLoading(false);
+      console.log('🎯 Tour status loading completed');
     }
   };
 
   const startTour = (tourSteps: TourStep[]) => {
+    console.log('🎬 Starting tour with', tourSteps.length, 'steps');
+    console.log('🎯 Tour steps:', tourSteps.map(step => ({ id: step.id, target: step.target })));
     setSteps(tourSteps);
     setCurrentStep(0);
     setIsActive(true);
-    console.log('🎬 Tour started with', tourSteps.length, 'steps');
+    console.log('✅ Tour state updated - isActive:', true);
   };
 
   const nextStep = () => {
