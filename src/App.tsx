@@ -135,7 +135,7 @@ function App() {
                   <Suspense fallback={<LoadingFallback />}>
                     {React.createElement(LazyComponents.RegistrationPage.component)}
                   </Suspense>
-                } />
+                } /> 
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/menu/:venueId/:tableId" element={<Layout><MenuPage /></Layout>} />
                 <Route path="/checkout/:venueId/:tableId" element={<Layout><CheckoutPage /></Layout>} />

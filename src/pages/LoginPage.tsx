@@ -29,11 +29,12 @@ const LoginPage: React.FC = () => {
   // const [rememberMe, setRememberMe] = useState(false); // Hidden - Remember Me functionality disabled
 
   const [formData, setFormData] = useState({
-    email: '',
+    email: location.state?.email || '', // Pre-fill email from registration success
     password: '',
   });
 
   const from = location.state?.from?.pathname || '/admin';
+  const successMessage = location.state?.message;
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -159,6 +160,19 @@ const LoginPage: React.FC = () => {
                 Sign in to your space dashboard
               </Typography>
             </Box>
+
+            {/* Success Message from Registration */}
+            {successMessage && (
+              <Alert 
+                severity="success" 
+                sx={{ 
+                  mb: 3,
+                  borderRadius: 2,
+                }}
+              >
+                {successMessage}
+              </Alert>
+            )}
 
             {/* Error Alert */}
             {error && (

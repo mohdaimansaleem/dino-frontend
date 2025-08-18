@@ -17,11 +17,12 @@ import {
   styled
 } from '@mui/material';
 import { Business } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { WorkspaceRegistration } from '../types/api';
 import DinoLogo from '../components/DinoLogo';
 import { useToast } from '../contexts/ToastContext';
+import RegistrationResult from '../components/RegistrationResult';
 
 
 // Import registration components
@@ -102,6 +103,7 @@ const ResponsiveStepLabel = styled(StepLabel)(({ theme }) => ({
 
 const RegistrationPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { showSuccess, showError } = useToast();
@@ -112,9 +114,18 @@ const RegistrationPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  const [formData, setFormData] = useState<RegistrationFormData>(initialFormData);
+  const [formData, setFormData] = useState<RegistrationFormData>(
+    location.state?.formData || initialFormData
+  );
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [backendErrors, setBackendErrors] = useState<Record<string, string>>({});
+  
+  // Registration result state
+  const [showResult, setShowResult] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [registrationError, setRegistrationError] = useState<string>('');
+  const [registrationErrorCode, setRegistrationErrorCode] = useState<number | undefined>();
+  const [registrationData, setRegistrationData] = useState<WorkspaceRegistration | null>(null);
 
   // Helper function to get error message for a field (backend errors take priority)
   const getFieldError = (fieldName: string): string => {
@@ -315,6 +326,18 @@ const RegistrationPage: React.FC = () => {
     }
   }, [validationErrors, backendErrors]);
 
+  const handleRetry = () => {
+    setShowResult(false);
+    setRegistrationSuccess(false);
+    setRegistrationError('');
+    setRegistrationErrorCode(undefined);
+    setRegistrationData(null);
+    setError(null);
+    setBackendErrors({});
+    // Reset to last step to allow user to review and modify
+    setActiveStep(steps.length - 1);
+  };
+
   const handleSubmit = async () => {
     if (!validateStep(2)) return;
 
@@ -322,43 +345,42 @@ const RegistrationPage: React.FC = () => {
     setError(null);
     setBackendErrors({});
 
-    try {
-      const registrationData: WorkspaceRegistration = {
-        workspace_name: formData.workspaceName,
-        workspace_description: formData.workspaceDescription,
-        venue_name: formData.venueName,
-        venue_description: formData.venueDescription,
-        venue_location: formData.venueLocation,
-        venue_phone: formData.venuePhone,
-        venue_email: formData.venueEmail,
-        price_range: formData.priceRange,
-        venue_type: formData.venueType,
-        owner_email: formData.ownerEmail,
-        owner_phone: formData.ownerPhone,
-        owner_first_name: formData.ownerFirstName,
-        owner_last_name: formData.ownerLastName,
-        owner_password: formData.ownerPassword,
-        confirm_password: formData.confirmPassword
-      };
+    // Prepare registration data outside try block so it's accessible in catch
+    const registrationData: WorkspaceRegistration = {
+      workspace_name: formData.workspaceName,
+      workspace_description: formData.workspaceDescription,
+      venue_name: formData.venueName,
+      venue_description: formData.venueDescription,
+      venue_location: formData.venueLocation,
+      venue_phone: formData.venuePhone,
+      venue_email: formData.venueEmail,
+      price_range: formData.priceRange,
+      venue_type: formData.venueType,
+      owner_email: formData.ownerEmail,
+      owner_phone: formData.ownerPhone,
+      owner_first_name: formData.ownerFirstName,
+      owner_last_name: formData.ownerLastName,
+      owner_password: formData.ownerPassword,
+      confirm_password: formData.confirmPassword
+    };
 
+    try {
       await authService.registerWorkspace(registrationData);
       
-      // Show success toast notification
-      showSuccess('Workspace created successfully! Redirecting to login...');
-      
-      // Success - redirect to login after a short delay to show the toast
-      setTimeout(() => {
-        navigate('/login', { 
-          state: { 
-            message: 'Registration successful! Please sign in with your credentials.' 
-          } 
-        });
-      }, 2000); // 2 second delay to show the toast
+      // Success - show success result
+      setRegistrationData(registrationData);
+      setRegistrationSuccess(true);
+      setShowResult(true);
     } catch (err: any) {
       console.error('Registration error:', err);
       const errorMessage = err.response?.data?.detail || err.message || 'Registration failed. Please try again.';
-      setError(errorMessage);
-      showError(errorMessage);
+      
+      // Show failure result
+      setRegistrationData(registrationData);
+      setRegistrationError(errorMessage);
+      setRegistrationErrorCode(err.response?.status);
+      setRegistrationSuccess(false);
+      setShowResult(true);
     } finally {
       setLoading(false);
     }
@@ -392,6 +414,19 @@ const RegistrationPage: React.FC = () => {
         return null;
     }
   };
+
+  // Show result component if registration is complete
+  if (showResult) {
+    return (
+      <RegistrationResult
+        isSuccess={registrationSuccess}
+        workspaceData={registrationData}
+        error={registrationError}
+        errorCode={registrationErrorCode}
+        onRetry={handleRetry}
+      />
+    );
+  }
 
   return (
     <Box
