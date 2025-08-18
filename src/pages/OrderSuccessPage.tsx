@@ -27,6 +27,8 @@ import {
 } from '@mui/icons-material';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import CustomerNavbar from '../components/CustomerNavbar';
+import { OrderStatusUpdate } from '../components/orders';
+import { OrderStatus } from '../services/orderService';
 
 interface OrderSuccessState {
   orderId: string;
@@ -337,11 +339,36 @@ const OrderSuccessPage: React.FC = () => {
                   {orderData.status && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <CheckCircle sx={{ color: 'success.main', fontSize: 20 }} />
-                      <Box>
+                      <Box sx={{ flex: 1 }}>
                         <Typography variant="body2" color="text.secondary">Status</Typography>
-                        <Typography variant="body1" fontWeight="500" sx={{ textTransform: 'capitalize' }}>
-                          {orderData.status}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
+                          <Typography variant="body1" fontWeight="500" sx={{ textTransform: 'capitalize' }}>
+                            {orderData.status}
+                          </Typography>
+                          {/* Status Update Component - Inline variant for clean display */}
+                          <OrderStatusUpdate
+                            orderId={orderData.orderId}
+                            currentStatus={orderData.status as OrderStatus}
+                            orderNumber={orderData.orderNumber}
+                            onStatusUpdated={(newStatus: OrderStatus) => {
+                              setOrderData(prev => prev ? { ...prev, status: newStatus } : null);
+                              // Update localStorage as well
+                              if (orderId) {
+                                const storedData = localStorage.getItem(`order_${orderId}`);
+                                if (storedData) {
+                                  const parsed = JSON.parse(storedData);
+                                  parsed.status = newStatus;
+                                  localStorage.setItem(`order_${orderId}`, JSON.stringify(parsed));
+                                }
+                              }
+                            }}
+                            onError={(error: string) => {
+                              console.error('Status update error:', error);
+                            }}
+                            variant="inline"
+                            showCurrentStatus={false}
+                          />
+                        </Box>
                       </Box>
                     </Box>
                   )}

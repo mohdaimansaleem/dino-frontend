@@ -23,7 +23,7 @@ import {
 // Remove duplicate type definitions - they're now in types/api.ts
 
 class OrderService {
-  // Get orders with filtering
+  // Get orders with filtering (excluding cancelled orders)
   async getOrders(filters?: OrderFilters): Promise<PaginatedResponse<Order>> {
     try {
       const params = new URLSearchParams();
@@ -37,7 +37,18 @@ class OrderService {
 
       const response = await apiService.get<PaginatedResponse<Order>>(`/orders?${params.toString()}`);
       
-      return response.data || {
+      if (response.data) {
+        // Filter out cancelled orders from the data
+        const filteredData = response.data.data.filter(order => order.status !== 'cancelled');
+        
+        return {
+          ...response.data,
+          data: filteredData,
+          total: filteredData.length
+        };
+      }
+      
+      return {
         success: true,
         data: [],
         total: 0,
@@ -145,8 +156,12 @@ class OrderService {
   // Update order status
   async updateOrderStatus(orderId: string, status: OrderStatus): Promise<ApiResponse<void>> {
     try {
-      return await apiService.put<void>(`/orders/${orderId}/status`, { new_status: status });
+      console.log(`🔍 OrderService: Updating order ${orderId} status to ${status}`);
+      const response = await apiService.put<void>(`/orders/${orderId}/status?new_status=${status}`);
+      console.log('✅ OrderService: Order status updated successfully');
+      return response;
     } catch (error: any) {
+      console.error('❌ OrderService: Failed to update order status:', error);
       throw new Error(error.response?.data?.detail || error.message || 'Failed to update order status');
     }
   }
@@ -171,7 +186,7 @@ class OrderService {
     }
   }
 
-  // Get venue orders
+  // Get venue orders (excluding cancelled orders)
   async getVenueOrders(venueId: string, filters?: {
     status?: OrderStatus;
     limit?: number;
@@ -182,7 +197,10 @@ class OrderService {
       if (filters?.limit) params.append('limit', filters.limit.toString());
 
       const response = await apiService.get<Order[]>(`/orders/venues/${venueId}/orders?${params.toString()}`);
-      return response.data || [];
+      const orders = response.data || [];
+      
+      // Filter out cancelled orders
+      return orders.filter(order => order.status !== 'cancelled');
     } catch (error) {
       return [];
     }
@@ -323,7 +341,7 @@ class OrderService {
 
   // Get order status color
   getOrderStatusColor(status: OrderStatus): string {
-    const colors = {
+    const colors: Record<OrderStatus, string> = {
       pending: '#f59e0b',
       confirmed: '#3b82f6',
       preparing: '#f97316',
@@ -351,7 +369,7 @@ class OrderService {
 
   // Format order status for display
   formatOrderStatus(status: OrderStatus): string {
-    const labels = {
+    const labels: Record<OrderStatus, string> = {
       pending: 'Pending',
       confirmed: 'Confirmed',
       preparing: 'Preparing',

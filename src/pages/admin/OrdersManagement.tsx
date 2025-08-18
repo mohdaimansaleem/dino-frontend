@@ -54,7 +54,6 @@ import {
   AccessTime,
   Store,
   CachedOutlined,
-  Cancel,
 } from '@mui/icons-material';
 
 import { useAuth } from '../../contexts/AuthContext';
@@ -192,7 +191,7 @@ const OrdersManagement: React.FC = () => {
     }
   }, [userData?.venue?.id]);
 
-  // Filter orders based on search and status
+  // Filter orders based on search and status (cancelled orders are already excluded from API)
   useEffect(() => {
     let filtered = orders;
 
@@ -227,9 +226,7 @@ const OrdersManagement: React.FC = () => {
     return filteredOrders.filter(order => order.status === 'served' || order.status === 'delivered');
   };
 
-  const getCancelledOrders = () => {
-    return filteredOrders.filter(order => order.status === 'cancelled');
-  };
+  // Removed getCancelledOrders function - cancelled orders are no longer displayed
 
   const getUrgentOrders = () => {
     const now = new Date();
@@ -594,7 +591,7 @@ const OrdersManagement: React.FC = () => {
                   View
                 </Button>
               )}
-              {order.status !== 'served' && order.status !== 'cancelled' && (
+              {order.status !== 'served' && (
                 <FormControl 
                   size="small" 
                   className="input-responsive"
@@ -1061,7 +1058,6 @@ const OrdersManagement: React.FC = () => {
                   <MenuItem value="preparing">Preparing</MenuItem>
                   <MenuItem value="ready">Ready</MenuItem>
                   <MenuItem value="served">Served</MenuItem>
-                  <MenuItem value="cancelled">Cancelled</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -1108,15 +1104,6 @@ const OrdersManagement: React.FC = () => {
                 </Badge>
               } 
               label={isMobile ? "Served" : "Served Orders"}
-              iconPosition={isMobile ? "top" : "start"}
-            />
-            <Tab 
-              icon={
-                <Badge badgeContent={getCancelledOrders().length} color="error">
-                  <Cancel fontSize={isMobile ? "small" : "medium"} />
-                </Badge>
-              } 
-              label={isMobile ? "Cancelled" : "Cancelled Orders"}
               iconPosition={isMobile ? "top" : "start"}
             />
           </Tabs>
@@ -1295,92 +1282,7 @@ const OrdersManagement: React.FC = () => {
             </Box>
           </TabPanel>
 
-          {/* Cancelled Orders Tab */}
-          <TabPanel value={tabValue} index={2}>
-            <Box sx={{ p: { xs: 2, sm: 3 } }}>
-              {getCancelledOrders().length === 0 ? (
-                <Card
-                  sx={{
-                    borderRadius: 3,
-                    border: '2px dashed',
-                    borderColor: 'error.light',
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
-                    textAlign: 'center',
-                    py: { xs: 4, sm: 6 },
-                    px: { xs: 2, sm: 3 },
-                    position: 'relative',
-                    overflow: 'hidden',
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      background: 'linear-gradient(45deg, transparent 30%, rgba(0, 0, 0, 0.02) 50%, transparent 70%)',
-                    },
-                  }}
-                >
-                  <Box sx={{ position: 'relative', zIndex: 1 }}>
-                    <Box
-                      sx={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mx: 'auto',
-                        mb: 3,
-                        border: '2px solid',
-                        borderColor: 'error.main',
-                      }}
-                    >
-                      <Cancel
-                        sx={{
-                          fontSize: 40,
-                          color: '#c62828',
-                        }}
-                      />
-                    </Box>
-                    
-                    <Typography 
-                      variant="h6" 
-                      fontWeight="600" 
-                      gutterBottom 
-                      color="text.primary"
-                      sx={{ fontSize: { xs: '1.25rem', sm: '1.375rem' } }}
-                    >
-                      No Cancelled Orders
-                    </Typography>
-                    
-                    <Typography 
-                      variant="body1" 
-                      color="text.secondary"
-                      sx={{ 
-                        mb: 3,
-                        maxWidth: '400px',
-                        mx: 'auto',
-                        fontSize: { xs: '0.875rem', sm: '1rem' },
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      Cancelled orders will appear here. Keep up the great service to minimize cancellations!
-                    </Typography>
-                  </Box>
-                </Card>
-              ) : (
-                <Grid container spacing={{ xs: 2, sm: 3 }}>
-                  {getCancelledOrders().map(order => (
-                    <Grid item xs={12} md={6} lg={4} key={order.id}>
-                      {renderOrderCard(order)}
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-            </Box>
-          </TabPanel>
+          {/* Cancelled Orders Tab Removed - Cancelled orders are no longer displayed */}
         </Paper>
 
         {/* Order Details Dialog */}
@@ -1552,7 +1454,7 @@ const OrdersManagement: React.FC = () => {
               >
                 Close
               </Button>
-              {selectedOrder && selectedOrder.status !== 'served' && selectedOrder.status !== 'cancelled' && (
+              {selectedOrder && selectedOrder.status !== 'served' && (
                 <FormControl 
                   size="small" 
                   className="input-responsive"

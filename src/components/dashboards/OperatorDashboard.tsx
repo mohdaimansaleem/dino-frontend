@@ -77,7 +77,9 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
         });
         
         setDashboardData(data);
-        setActiveOrders(data.active_orders || []);
+        // Filter out cancelled orders from active orders
+        const filteredActiveOrders = (data.active_orders || []).filter(order => order.status !== 'cancelled');
+        setActiveOrders(filteredActiveOrders);
       } else {
         setDashboardData(null);
         setActiveOrders([]);
@@ -116,7 +118,6 @@ const OperatorDashboard: React.FC<OperatorDashboardProps> = ({ className }) => {
       case 'preparing': return 'primary';
       case 'ready': return 'success';
       case 'served': return 'success';
-      case 'cancelled': return 'error';
       default: return 'default';
     }
   };

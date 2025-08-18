@@ -30,6 +30,37 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { trackingService, OrderTracking } from '../services/trackingService';
+import { OrderStatusUpdate } from '../components/orders';
+import { OrderStatus } from '../services/orderService';
+
+// Mapping function to convert between OrderTrackingStatus and OrderStatus
+const mapTrackingStatusToOrderStatus = (trackingStatus: string): OrderStatus => {
+  const mapping: Record<string, OrderStatus> = {
+    'placed': 'pending',
+    'confirmed': 'confirmed',
+    'preparing': 'preparing',
+    'ready': 'ready',
+    'out_for_delivery': 'out_for_delivery',
+    'delivered': 'delivered',
+    'served': 'served',
+    'cancelled': 'cancelled'
+  };
+  return mapping[trackingStatus] || 'pending';
+};
+
+const mapOrderStatusToTrackingStatus = (orderStatus: OrderStatus): string => {
+  const mapping: Record<OrderStatus, string> = {
+    'pending': 'placed',
+    'confirmed': 'confirmed',
+    'preparing': 'preparing',
+    'ready': 'ready',
+    'out_for_delivery': 'out_for_delivery',
+    'delivered': 'delivered',
+    'served': 'served',
+    'cancelled': 'cancelled'
+  };
+  return mapping[orderStatus] || 'placed';
+};
 
 // Default order structure for loading states
 const defaultOrder: OrderTracking = {
@@ -341,23 +372,41 @@ const OrderTrackingPage: React.FC = () => {
                 alignItems: { xs: 'center', md: 'flex-end' },
                 gap: { xs: 2, md: 0 }
               }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<Refresh />}
-                  onClick={handleRefresh}
-                  disabled={loading}
-                  sx={{ 
-                    mb: { xs: 0, md: 2 },
-                    px: { xs: 2, sm: 3 },
-                    py: { xs: 0.75, sm: 1 },
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    borderRadius: 1,
-                    fontWeight: 500,
-                    textTransform: 'none'
-                  }}
-                >
-                  Refresh
-                </Button>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<Refresh />}
+                    onClick={handleRefresh}
+                    disabled={loading}
+                    sx={{ 
+                      px: { xs: 2, sm: 3 },
+                      py: { xs: 0.75, sm: 1 },
+                      fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                      borderRadius: 1,
+                      fontWeight: 500,
+                      textTransform: 'none'
+                    }}
+                  >
+                    Refresh
+                  </Button>
+                  
+                  {/* Order Status Update - Only show for staff/admin */}
+                  <OrderStatusUpdate
+                    orderId={order.order_id}
+                    currentStatus={mapTrackingStatusToOrderStatus(order.status)}
+                    orderNumber={order.order_number}
+                    onStatusUpdated={(newStatus: OrderStatus) => {
+                      const trackingStatus = mapOrderStatusToTrackingStatus(newStatus);
+                      setOrder(prev => ({ ...prev, status: trackingStatus as any }));
+                      handleRefresh(); // Refresh to get updated data
+                    }}
+                    onError={(error: string) => {
+                      console.error('Status update error:', error);
+                      // You could show a toast notification here
+                    }}
+                    variant="button"
+                  />
+                </Box>
                 <Typography 
                   variant="h5" 
                   sx={{ 

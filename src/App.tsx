@@ -29,6 +29,7 @@ import MenuPage from './pages/MenuPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderTrackingPage from './pages/OrderTrackingPage';
 import OrderSuccessPage from './pages/OrderSuccessPage';
+import OrderStatusDemo from './pages/OrderStatusDemo';
 
 
 
@@ -141,6 +142,7 @@ function App() {
                 <Route path="/order-tracking/:orderId" element={<Layout><OrderTrackingPage /></Layout>} />
                 <Route path="/order/:orderId" element={<Layout><OrderTrackingPage /></Layout>} />
                 <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
+                <Route path="/order-status-demo" element={<OrderStatusDemo />} />
                 
 
 

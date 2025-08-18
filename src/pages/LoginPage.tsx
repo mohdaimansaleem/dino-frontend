@@ -10,8 +10,8 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
-  FormControlLabel,
-  Checkbox,
+  // FormControlLabel,
+  // Checkbox,
 } from '@mui/material';
 import { Email, Lock, Visibility, VisibilityOff, Person } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -26,7 +26,7 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  // const [rememberMe, setRememberMe] = useState(false); // Hidden - Remember Me functionality disabled
 
   const [formData, setFormData] = useState({
     email: '',
@@ -48,9 +48,9 @@ const LoginPage: React.FC = () => {
     setShowPassword(prev => !prev);
   }, []);
 
-  const handleRememberMeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setRememberMe(e.target.checked);
-  }, []);
+  // const handleRememberMeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setRememberMe(e.target.checked);
+  // }, []); // Hidden - Remember Me functionality disabled
 
   const validateForm = () => {
     if (!formData.email || !formData.password) {
@@ -296,7 +296,8 @@ const LoginPage: React.FC = () => {
                 }}
               />
 
-              {/* Remember Me Checkbox */}
+              {/* Remember Me Checkbox - Hidden */}
+              {/* 
               <FormControlLabel
                 control={
                   <Checkbox
@@ -323,6 +324,7 @@ const LoginPage: React.FC = () => {
                 }
                 sx={{ mb: 4, mt: 1 }}
               />
+              */}
 
               {/* Login Button */}
               <Button

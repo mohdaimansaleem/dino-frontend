@@ -288,7 +288,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       case 'preparing': return 'primary';
       case 'ready': return 'success';
       case 'served': return 'success';
-      case 'cancelled': return 'error';
       default: return 'default';
     }
   };
@@ -311,7 +310,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
       case 'ready': return '#C8E6C9';
       case 'served': return '#E1BEE7';
       case 'delivered': return '#A5D6A7';
-      case 'cancelled': return '#FFAB91';
       default: return '#F5F5F5';
     }
   };
@@ -377,14 +375,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     }
   })();
 
-  // Extract recent orders (handle both formats)
+  // Extract recent orders (handle both formats) - exclude cancelled orders
   const recentOrders = (() => {
     if (!dashboardData) return [];
+    
+    let orders: any[] = [];
     
     if ('system_stats' in dashboardData) {
       // SuperAdmin format - use recent_activity and convert to order format
       const superAdminData = dashboardData as SuperAdminDashboardResponse;
-      return (superAdminData.recent_activity || []).map(activity => ({
+      orders = (superAdminData.recent_activity || []).map(activity => ({
         id: activity.id,
         order_number: activity.order_number,
         table_number: activity.table_number || 'N/A',
@@ -398,8 +398,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
     } else {
       // Admin format
       const adminData = dashboardData as AdminDashboardResponse;
-      return adminData.recent_orders || [];
+      orders = adminData.recent_orders || [];
     }
+    
+    // Filter out cancelled orders
+    return orders.filter((order: any) => order.status !== 'cancelled');
   })();
 
   const tableOccupancyPercentage = displayStats.total_tables > 0 ? 
@@ -1011,7 +1014,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      recentOrders.slice(0, 4).map((order, index) => (
+                      recentOrders.slice(0, 4).map((order: any, index: number) => (
                         <TableRow 
                           key={order.id}
                           sx={{
