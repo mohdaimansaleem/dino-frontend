@@ -34,8 +34,6 @@ export {
   CORE_FEATURES,
   MANAGEMENT_FEATURES,
   ADVANCED_FEATURES,
-  PRICING_PLANS,
-  PRICING_ADDONS,
   TESTIMONIALS,
   SUCCESS_STORIES,
   BENEFITS,
@@ -47,7 +45,6 @@ export {
   FOOTER_FEATURES,
   CONTENT,
   TESTIMONIAL_STATS,
-  PRICING_BENEFITS,
 } from '../data/info';
 
 // Type exports for better TypeScript support

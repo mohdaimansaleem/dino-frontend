@@ -196,63 +196,7 @@ class WorkspaceService {
     return this.getWorkspaceVenues(workspaceId);
   }
 
-  // Pricing Plans - Removed API call, using static plans only
-  async getPricingPlans(): Promise<any[]> {
-    return this.getDefaultPricingPlans();
-  }
 
-  private getDefaultPricingPlans(): any[] {
-    return [
-      {
-        id: 'basic',
-        name: 'basic',
-        displayName: 'Basic',
-        price: 999,
-        maxVenues: 1,
-        maxUsers: 5,
-        features: [
-          'QR Code Ordering',
-          'Basic Analytics',
-          'Menu Management',
-          'Order Management',
-          'Email Support'
-        ]
-      },
-      {
-        id: 'premium',
-        name: 'premium',
-        displayName: 'Premium',
-        price: 2999,
-        maxVenues: 5,
-        maxUsers: 25,
-        features: [
-          'Everything in Basic',
-          'Advanced Analytics',
-          'Real-time Notifications',
-          'Custom Branding',
-          'Priority Support',
-          'Multi-location Management'
-        ]
-      },
-      {
-        id: 'enterprise',
-        name: 'enterprise',
-        displayName: 'Enterprise',
-        price: 9999,
-        maxVenues: -1, // Unlimited
-        maxUsers: -1, // Unlimited
-        features: [
-          'Everything in Premium',
-          'White-label Solution',
-          'API Access',
-          'Custom Integrations',
-          'Dedicated Support',
-          'Advanced Security',
-          'Custom Reports'
-        ]
-      }
-    ];
-  }
 
   // Get workspace statistics
   async getWorkspaceStatistics(workspaceId: string): Promise<WorkspaceStatistics | null> {

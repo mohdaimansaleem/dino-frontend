@@ -10,8 +10,6 @@ import {
   QrCode, 
   Dashboard,
   Restaurant,
-  Business,
-  CorporateFare,
   ShoppingCart,
   ThumbUp,
   CloudDone
@@ -206,83 +204,7 @@ export const ADVANCED_FEATURES = [
   }
 ] as const;
 
-// ===================================================================
-// PRICING & PLANS
-// ===================================================================
 
-export const PRICING_PLANS = [
-  {
-    name: 'Starter',
-    price: 999,
-    monthlyPrice: 999,
-    period: 'month',
-    description: 'Perfect for small restaurants',
-    icon: Restaurant,
-    color: 'primary',
-    features: [
-      'Digital menu for 1 location',
-      'QR code ordering',
-      'Basic analytics',
-      'Email support',
-      'Up to 50 menu items'
-    ],
-    popular: false
-  },
-  {
-    name: 'Professional',
-    price: 2499,
-    monthlyPrice: 2499,
-    period: 'month',
-    description: 'Ideal for growing businesses',
-    icon: Business,
-    color: 'secondary',
-    features: [
-      'Digital menu for 3 locations',
-      'Advanced analytics',
-      'Staff management',
-      'Priority support',
-      'Unlimited menu items',
-      'Custom branding'
-    ],
-    popular: true
-  },
-  {
-    name: 'Enterprise',
-    price: 4999,
-    monthlyPrice: 4999,
-    period: 'month',
-    description: 'For large restaurant chains',
-    icon: CorporateFare,
-    color: 'success',
-    features: [
-      'Unlimited locations',
-      'Advanced integrations',
-      'Dedicated account manager',
-      '24/7 phone support',
-      'Custom features',
-      'White-label solution'
-    ],
-    popular: false
-  }
-] as const;
-
-export const PRICING_ADDONS = [
-  {
-    name: 'Advanced Analytics',
-    price: 499,
-    description: 'Detailed insights and reporting'
-  },
-  {
-    name: 'Custom Integration',
-    price: 1999,
-    description: 'Connect with your existing systems'
-  },
-  {
-    name: 'Priority Support',
-    price: 299,
-    description: '24/7 priority customer support'
-  }
-] as const;
 
 // ===================================================================
 // TESTIMONIALS & SUCCESS STORIES
@@ -612,7 +534,6 @@ export const NAVIGATION = {
   home: [
     { id: 'hero', label: 'Home', icon: 'Home' },
     { id: 'features', label: 'Features', icon: 'Star' },
-    { id: 'pricing', label: 'Pricing', icon: 'AttachMoney' },
     { id: 'testimonials', label: 'Reviews', icon: 'Reviews' },
     { id: 'contact', label: 'Contact', icon: 'ContactMail' },
   ],
@@ -682,13 +603,7 @@ export const CONTENT = {
     title: 'Everything You Need to Run Your Restaurant',
     subtitle: 'Comprehensive tools designed for modern restaurants'
   },
-  
-  pricing: {
-    title: 'Simple, Transparent Pricing',
-    subtitle: 'Choose the perfect plan for your restaurant',
-    trialInfo: 'All plans include a 14-day free trial. No setup fees.',
-    customPlan: 'Need a custom plan? Contact us'
-  },
+
   
   benefits: {
     title: 'Why Choose Dino E-Menu?',
@@ -728,9 +643,3 @@ export const TESTIMONIAL_STATS = {
   UPTIME: '99.9%',
 } as const;
 
-// Pricing Benefits
-export const PRICING_BENEFITS = {
-  BASIC: ['Digital Menu', 'QR Code Ordering', 'Basic Analytics'],
-  PROFESSIONAL: ['Everything in Basic', 'Advanced Analytics', 'Multi-location Support'],
-  ENTERPRISE: ['Everything in Professional', 'Custom Integrations', '24/7 Support'],
-} as const;

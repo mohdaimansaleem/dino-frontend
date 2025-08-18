@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { Workspace, PricingPlan } from '../types/auth';
+import { Workspace } from '../types/auth';
 import { Venue, PriceRange } from '../types/api';
 import { workspaceService } from '../services/workspaceService';
 import { useAuth } from './AuthContext';
@@ -13,7 +13,6 @@ interface WorkspaceContextType {
   // Available workspaces and venues
   workspaces: Workspace[];
   venues: Venue[];
-  pricingPlans: PricingPlan[];
   
   // Loading states
   loading: boolean;
@@ -25,7 +24,7 @@ interface WorkspaceContextType {
   switchVenue: (venueId: string) => Promise<void>;
   refreshWorkspaces: () => Promise<void>;
   refreshVenues: () => Promise<void>;
-  refreshPricingPlans: () => Promise<void>;
+
   initializeVenueFromUser: () => Promise<void>;
   
   // Workspace management
@@ -55,28 +54,12 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
   const [currentVenue, setCurrentVenue] = useState<Venue | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [pricingPlans, setPricingPlans] = useState<PricingPlan[]>([]);
+
   
   const [loading, setLoading] = useState(false);
   const [workspacesLoading, setWorkspacesLoading] = useState(false);
 
-  // Load pricing plans directly when needed (no caching)
-  const [pricingPlansLoading, setPricingPlansLoading] = useState(false);
 
-  const loadPricingPlans = useCallback(async () => {
-    if (pricingPlansLoading) return;
-    
-    setPricingPlansLoading(true);
-    try {
-      const plans = await workspaceService.getPricingPlans();
-      setPricingPlans(plans);
-    } catch (error) {
-      console.error('Error loading pricing plans:', error);
-      setPricingPlans([]);
-    } finally {
-      setPricingPlansLoading(false);
-    }
-  }, [pricingPlansLoading]);
 
   // Load venues directly when needed (no caching)
   const [venuesLoading, setVenuesLoadingState] = useState(false);
@@ -218,11 +201,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
 
     setLoading(true);
     try {
-      // Load pricing plans if needed
-      if (pricingPlans.length === 0) {
-        await loadPricingPlans();
-      }
-
       // Set current workspace from user data (no API call needed)
       if (user?.workspace_id) {
         const localWorkspace = {
@@ -231,7 +209,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
           description: '',
           ownerId: user.id,
           isActive: true,
-          pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxVenues: 1, maxUsers: 5 },
           createdAt: new Date(),
           updatedAt: new Date()
         };
@@ -249,7 +226,7 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
     } finally {
       setLoading(false);
     }
-  }, [user, isAuthenticated, pricingPlans.length, loadPricingPlans, loadVenues, loadCurrentVenue]);
+  }, [user, isAuthenticated, loadVenues, loadCurrentVenue]);
 
   // Initialize workspace data when user is authenticated
   useEffect(() => {
@@ -261,7 +238,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
       setCurrentVenue(null);
       setWorkspaces([]);
       setVenues([]);
-      setPricingPlans([]);
     }
   }, [isAuthenticated, user, initializeWorkspaceData]);
 
@@ -290,7 +266,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
           description: '',
           ownerId: user.id,
           isActive: true,
-          pricingPlan: { id: 'basic', name: 'basic', displayName: 'Basic', price: 0, features: [], maxVenues: 1, maxUsers: 5 },
           createdAt: new Date(),
           updatedAt: new Date()
         };
@@ -372,7 +347,6 @@ export const WorkspaceProvider: React.FC<WorkspaceProviderProps> = ({ children }
             ...response.data,
             ownerId: response.data.owner_id || '',
             isActive: response.data.is_active,
-            pricingPlan: currentWorkspace.pricingPlan, // Keep existing pricing plan
             createdAt: response.data.created_at,
             updatedAt: response.data.updated_at || response.data.created_at
           };
@@ -580,7 +554,6 @@ return;
     currentVenue,
     workspaces,
     venues,
-    pricingPlans,
     loading,
     workspacesLoading,
     venuesLoading: venuesLoading,
@@ -588,7 +561,6 @@ return;
     switchVenue,
     refreshWorkspaces,
     refreshVenues,
-    refreshPricingPlans: loadPricingPlans,
     createWorkspace,
     updateWorkspace,
     deleteWorkspace,

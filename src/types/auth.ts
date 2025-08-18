@@ -116,7 +116,6 @@ export interface Workspace {
   description?: string;
   ownerId: string;
   isActive: boolean;
-  pricingPlan: PricingPlan;
   createdAt: string;
   updatedAt: string;
 }
@@ -155,12 +154,3 @@ export interface VenueSettings {
   requireCustomerInfo: boolean;
 }
 
-export interface PricingPlan {
-  id: string;
-  name: 'basic' | 'premium' | 'enterprise';
-  displayName: string;
-  price: number;
-  features: string[];
-  maxVenues: number;
-  maxUsers: number;
-}

@@ -42,10 +42,8 @@ import Footer from '../components/layout/Footer';
 
 import AnimatedBackground from '../components/ui/AnimatedBackground';
 
-import { formatINR } from '../utils/formatters';
 import { 
   CORE_FEATURES, 
-  PRICING_PLANS, 
   TESTIMONIALS, 
   COMPANY_STATS, 
   BENEFITS,
@@ -60,7 +58,6 @@ const HomePage: React.FC = () => {
   // Refs for smooth scrolling
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
-  const pricingRef = useRef<HTMLDivElement>(null);
   const testimonialsRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
 
@@ -95,22 +92,7 @@ const HomePage: React.FC = () => {
     stats: feature.stats,
   })), []);
 
-  const pricingPlans = useMemo(() => PRICING_PLANS.map(plan => ({
-    name: plan.name,
-    price: plan.monthlyPrice,
-    period: 'month',
-    description: plan.description,
-    icon: React.createElement(plan.icon, { 
-      sx: { 
-        fontSize: 40, 
-        color: `${plan.color}.main`,
-        transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-      } 
-    }),
-    features: plan.features.slice(0, 6), // Take first 6 features for home page
-    popular: plan.popular,
-    color: plan.color,
-  })), []);
+
 
   const testimonials = useMemo(() => TESTIMONIALS.slice(0, 6).map(testimonial => ({
     name: testimonial.name,
@@ -463,145 +445,7 @@ const HomePage: React.FC = () => {
         </Grid>
       </Container>
 
-      {/* Pricing Section */}
-      <Box sx={{ py: { xs: 6, md: 10 }, backgroundColor: 'grey.50' }} ref={pricingRef} id="pricing">
-        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
-          <Box sx={{ textAlign: 'center', mb: { xs: 6, md: 8 } }}>
-            <Typography 
-              variant="h2" 
-              gutterBottom 
-              fontWeight="600" 
-              color="text.primary"
-              sx={{
-                fontSize: { xs: '1.75rem', sm: '2.25rem', md: '3rem' },
-                mb: { xs: 2, md: 3 }
-              }}
-            >
-              {CONTENT.pricing.title}
-            </Typography>
-            <Typography 
-              variant="h6" 
-              color="text.secondary" 
-              sx={{ 
-                maxWidth: 600, 
-                mx: 'auto',
-                fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
-                px: { xs: 2, sm: 0 }
-              }}
-            >
-              {CONTENT.pricing.subtitle}
-            </Typography>
-          </Box>
 
-          <Grid container spacing={{ xs: 3, md: 4 }} justifyContent="center">
-            {pricingPlans.map((plan, index) => (
-              <Grid item xs={12} md={4} key={index}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    position: 'relative',
-                    border: plan.popular ? '2px solid' : '1px solid',
-                    borderColor: plan.popular ? 'secondary.main' : 'divider',
-                    '&:hover': {
-                      boxShadow: '0 25px 50px rgba(0,0,0,0.2)',
-                      transform: 'translateY(-15px) scale(1.03)',
-                      borderColor: plan.popular ? 'secondary.main' : 'primary.main',
-                    },
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {plan.popular && (
-                    <Chip
-                      label="Most Popular"
-                      color="secondary"
-                      sx={{
-                        position: 'absolute',
-                        top: -12,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        fontWeight: 600,
-                      }}
-                    />
-                  )}
-                  
-                  <CardContent sx={{ p: { xs: 3, md: 4 }, textAlign: 'center' }}>
-                    <Box sx={{ mb: 3 }}>
-                      {plan.icon}
-                    </Box>
-                    
-                    <Typography variant="h5" gutterBottom fontWeight="600" color="text.primary">
-                      {plan.name}
-                    </Typography>
-                    
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                      {plan.description}
-                    </Typography>
-                    
-                    <Box sx={{ mb: 4 }}>
-                      <Typography variant="h3" fontWeight="bold" color="primary.main" component="span">
-                        {formatINR(plan.price)}
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary" component="span">
-                        /{plan.period}
-                      </Typography>
-                    </Box>
-                    
-                    <List sx={{ mb: 4 }}>
-                      {plan.features.map((feature, featureIndex) => (
-                        <ListItem key={featureIndex} sx={{ px: 0, py: 0.5 }}>
-                          <ListItemIcon sx={{ minWidth: 32 }}>
-                            <CheckCircle color="primary" fontSize="small" />
-                          </ListItemIcon>
-                          <ListItemText 
-                            primary={feature}
-                            primaryTypographyProps={{
-                              variant: 'body2',
-                              color: 'text.primary',
-                            }}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
-                    
-                    <Button
-                      variant={plan.popular ? 'contained' : 'outlined'}
-                      color={plan.color as any}
-                      fullWidth
-                      size="large"
-                      onClick={() => navigate('/register')}
-                      sx={{ 
-                        py: { xs: 1.2, sm: 1.5 },
-                        minHeight: { xs: 44, sm: 48 },
-                        fontSize: { xs: '0.9rem', sm: '1rem' },
-                        '&:active': {
-                          transform: 'scale(0.98)',
-                        },
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      Get Started
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-
-          <Box sx={{ textAlign: 'center', mt: 6 }}>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-              {CONTENT.pricing.trialInfo}
-            </Typography>
-            <Button
-              variant="text"
-              onClick={() => scrollToSection(contactRef)}
-              sx={{ textDecoration: 'underline' }}
-            >
-              {CONTENT.pricing.customPlan}
-            </Button>
-          </Box>
-        </Container>
-      </Box>
 
       {/* Benefits Section */}
       <Box sx={{ py: { xs: 6, md: 10 } }}>
