@@ -3,11 +3,11 @@ import { API_CONFIG as CENTRALIZED_API_CONFIG } from '../config/api';
 
 // Application Configuration
 export const APP_CONFIG = {
-  NAME: 'Dino E-Menu',
+  NAME: 'Dino',
   VERSION: '1.0.0',
   DESCRIPTION: 'Revolutionizing restaurant ordering',
-  COPYRIGHT: '© 2024 Dino E-Menu. All rights reserved.',
-  COMPANY: 'Dino E-Menu',
+  COPYRIGHT: '© 2025 Dino. All rights reserved.',
+  COMPANY: 'Dino',
 } as const;
 
 // Local Storage Keys

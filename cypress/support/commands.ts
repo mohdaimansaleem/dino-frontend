@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-// Custom commands for Dino E-Menu testing
+// Custom commands for Dino testing
 
 declare global {
   namespace Cypress {

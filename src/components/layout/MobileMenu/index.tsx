@@ -257,7 +257,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 color="text.primary"
                 sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}
               >
-                Dino E-Menu
+                Dino
               </Typography>
               <Typography 
                 variant="caption" 

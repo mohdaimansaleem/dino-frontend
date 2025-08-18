@@ -893,7 +893,7 @@ const OrderTrackingPage: React.FC = () => {
             fontWeight: 500 
           }}
         >
-          © 2024 Dino E-Menu. All rights reserved.
+          © 2024 Dino. All rights reserved.
         </Typography>
         <Typography 
           variant="caption" 

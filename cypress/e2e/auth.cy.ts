@@ -51,7 +51,7 @@ describe('Authentication Flow', () => {
   it('should display login page', () => {
     cy.visit('/login');
     
-    cy.get('h4').should('contain', 'Dino E-Menu');
+    cy.get('h4').should('contain', 'Dino');
     cy.get('input[name="email"]').should('be.visible');
     cy.get('input[name="password"]').should('be.visible');
     cy.get('button[type="submit"]').should('contain', 'Sign In');

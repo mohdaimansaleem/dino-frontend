@@ -111,7 +111,7 @@ const OrderSuccessPage: React.FC = () => {
   const handleShare = async () => {
     const shareData = {
       title: 'Order Placed Successfully!',
-      text: `My order #${orderId} has been placed successfully at Dino E-Menu. Total: ${orderData ? formatPrice(orderData.total) : 'N/A'}`,
+      text: `My order #${orderId} has been placed successfully at Dino. Total: ${orderData ? formatPrice(orderData.total) : 'N/A'}`,
       url: window.location.href,
     };
 
@@ -155,7 +155,7 @@ const OrderSuccessPage: React.FC = () => {
         pt: { xs: '56px', sm: '64px' },
       }}>
         <CustomerNavbar 
-          restaurantName="Dino E-Menu"
+          restaurantName="Dino"
           tableId="Loading..."
           showBackButton={false}
           showCart={false}
@@ -196,7 +196,7 @@ const OrderSuccessPage: React.FC = () => {
       pt: { xs: '56px', sm: '64px' },
     }}>
       <CustomerNavbar 
-        restaurantName="Dino E-Menu"
+        restaurantName="Dino"
         tableId={orderData?.tableId || 'N/A'}
         showBackButton={false}
         showCart={false}
@@ -565,7 +565,7 @@ const OrderSuccessPage: React.FC = () => {
           {/* Thank You Message */}
           <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
             <Typography variant="body1" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-              Thank you for choosing Dino E-Menu! 🦕
+              Thank you for choosing Dino! 🦕
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               We hope you enjoy your meal!
@@ -594,7 +594,7 @@ const OrderSuccessPage: React.FC = () => {
             fontWeight: 500 
           }}
         >
-          © 2024 Dino E-Menu. All rights reserved.
+          © 2024 Dino. All rights reserved.
         </Typography>
         <Typography 
           variant="caption" 

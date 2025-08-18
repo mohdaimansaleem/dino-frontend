@@ -280,7 +280,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       </head>
       <body>
         <div class="qr-container">
-          <div class="header">🦕 Dino E-Menu</div>
+          <div class="header">🦕 Dino</div>
           <div class="cafe-name">${qrData?.venueName || qrData?.cafeName}</div>
           <div class="table-number">Table ${qrData?.tableNumber}</div>
           
@@ -393,7 +393,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       </head>
       <body>
         <div class="qr-container">
-          <div class="header">🦕 Dino E-Menu</div>
+          <div class="header">🦕 Dino</div>
           <div class="cafe-name">${qrData?.venueName || qrData?.cafeName}</div>
           <div class="table-number">Table ${qrData?.tableNumber}</div>
           
@@ -509,7 +509,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       </head>
       <body>
         <div class="qr-container">
-          <div class="header">🦕 Dino E-Menu</div>
+          <div class="header">🦕 Dino</div>
           <div class="cafe-name">${qrData?.venueName || qrData?.cafeName}</div>
           <div class="table-number">Table ${qrData?.tableNumber}</div>
           
@@ -592,7 +592,7 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
       </head>
       <body>
         <div class="qr-container">
-          <div class="header">DINO E-MENU</div>
+          <div class="header">DINO</div>
           <div class="cafe-name">${qrData?.venueName || qrData?.cafeName}</div>
           <div class="table-number">Table ${qrData?.tableNumber}</div>
           

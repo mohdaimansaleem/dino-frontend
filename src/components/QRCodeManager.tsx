@@ -304,7 +304,7 @@ const QRCodeManager: React.FC<QRCodeManagerProps> = ({
       </head>
       <body>
         <div class="qr-container">
-          <div class="header">🦕 Dino E-Menu</div>
+          <div class="header">🦕 Dino</div>
           <div class="venue-name">${qrData.venueName}</div>
           <div class="table-number">Table ${qrData.tableNumber}</div>
           

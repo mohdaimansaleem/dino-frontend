@@ -1,4 +1,4 @@
-# 🦕 Dino E-Menu - Production Ready Restaurant Management System
+# 🦕 Dino - Production Ready Restaurant Management System
 
 A comprehensive, production-ready restaurant management application built with React, TypeScript, and Material-UI. Dino provides a complete solution for modern restaurants with QR code ordering, real-time notifications, workspace management, and role-based access control.
 
@@ -373,4 +373,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for modern restaurants**
 
-*Dino E-Menu - Transforming restaurant operations with technology*
+*Dino - Transforming restaurant operations with technology*

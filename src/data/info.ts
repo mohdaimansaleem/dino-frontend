@@ -2,7 +2,7 @@
  * Application Information and Content
  * 
  * This file contains all user-facing content, messages, and information
- * used throughout the Dino E-Menu application.
+ * used throughout the Dino application.
  */
 
 import { 
@@ -20,7 +20,7 @@ import {
 // ===================================================================
 
 export const COMPANY_INFO = {
-  name: 'Dino E-Menu',
+  name: 'Dino',
   tagline: 'Revolutionizing Restaurant Ordering',
   description: 'Digital menu solutions for modern restaurants',
   website: 'https://dino-emenu.com',
@@ -40,7 +40,7 @@ export const COMPANY_INFO = {
     linkedin: 'dino-emenu'
   },
   legal: {
-    copyright: '© 2024 Dino E-Menu. All rights reserved.',
+    copyright: '© 2024 Dino. All rights reserved.',
     privacy: 'Privacy Policy',
     terms: 'Terms of Service'
   },
@@ -217,8 +217,8 @@ export const TESTIMONIALS = [
     restaurant: 'Spice Garden',
     location: 'Mumbai',
     rating: 5,
-    text: 'Dino E-Menu transformed our restaurant operations. Orders are faster, more accurate, and our customers love the digital experience.',
-    comment: 'Dino E-Menu transformed our restaurant operations. Orders are faster, more accurate, and our customers love the digital experience.',
+    text: 'Dino transformed our restaurant operations. Orders are faster, more accurate, and our customers love the digital experience.',
+    comment: 'Dino transformed our restaurant operations. Orders are faster, more accurate, and our customers love the digital experience.',
     image: '/testimonials/rajesh.jpg',
     avatar: '/testimonials/rajesh.jpg'
   },
@@ -228,8 +228,8 @@ export const TESTIMONIALS = [
     restaurant: 'Cafe Delight',
     location: 'Delhi',
     rating: 5,
-    text: 'The analytics dashboard gives us incredible insights. We\'ve increased our revenue by 30% since implementing Dino E-Menu.',
-    comment: 'The analytics dashboard gives us incredible insights. We\'ve increased our revenue by 30% since implementing Dino E-Menu.',
+    text: 'The analytics dashboard gives us incredible insights. We\'ve increased our revenue by 30% since implementing Dino.',
+    comment: 'The analytics dashboard gives us incredible insights. We\'ve increased our revenue by 30% since implementing Dino.',
     image: '/testimonials/priya.jpg',
     avatar: '/testimonials/priya.jpg'
   },
@@ -404,7 +404,7 @@ export const PAGE_TITLES = {
 
 // App Titles
 export const APP_TITLES = {
-  MAIN: 'Dino E-Menu',
+  MAIN: 'Dino',
   ADMIN: 'Admin Dashboard',
   OPERATOR: 'Operator Dashboard',
   CUSTOMER: 'Customer Portal',
@@ -606,7 +606,7 @@ export const CONTENT = {
 
   
   benefits: {
-    title: 'Why Choose Dino E-Menu?',
+    title: 'Why Choose Dino?',
     subtitle: 'Join thousands of restaurants already transforming their business',
     stats: {
       processing: {

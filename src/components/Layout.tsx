@@ -495,7 +495,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     fontWeight: 500 
                   }}
                 >
-                  © 2024 Dino E-Menu. All rights reserved.
+                  © 2025 Dino. All rights reserved.
                 </Typography>
                 <Typography 
                   variant="caption" 
