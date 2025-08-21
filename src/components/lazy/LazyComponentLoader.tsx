@@ -375,6 +375,12 @@ export const LazyComponents = {
     'UserPermissionsDashboard',
     { skeleton: PageSkeleton }
   ),
+  
+  CouponsManagement: lazyManager.createLazyComponent(
+    () => import('../../features/coupons/pages/CouponsManagement'),
+    'CouponsManagement',
+    { skeleton: PageSkeleton }
+  ),
 
   // Customer Pages
   MenuPage: lazyManager.createLazyComponent(
@@ -432,7 +438,8 @@ export const preloadAdminComponents = async (): Promise<void> => {
     'OrdersManagement',
     'MenuManagement',
     'TableManagement',
-    'UserManagement'
+    'UserManagement',
+    'CouponsManagement'
   ];
 
   try {

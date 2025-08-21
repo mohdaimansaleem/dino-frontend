@@ -1,8 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import PermissionService from '../../services/permissionService';
-import PermissionGate from '../PermissionGate';
+
 import { usePermissions } from '../RoleBasedComponent';
 import { PERMISSIONS } from '../../types/auth';
 
@@ -32,8 +31,7 @@ const PermissionBasedNavigation: React.FC<PermissionBasedNavigationProps> = ({
   compact = false
 }) => {
   const location = useLocation();
-  const { user } = useAuth();
-  const { hasPermission, hasRole, isSuperAdmin, isAdmin, isOperator } = usePermissions();
+  const { hasPermission, hasRole } = usePermissions();
 
   // Define navigation structure based on roles and permissions
   // Reordered according to user request: Dashboard, Orders, Menu, Tables, Users, Permissions, Settings, Workspace

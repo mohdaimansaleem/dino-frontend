@@ -34,7 +34,7 @@ import { useSidebar } from '../contexts/SidebarContext';
 import AppHeader from './layout/AppHeader';
 import MobileMenu from './layout/MobileMenu';
 import EnhancedSidebar from './layout/EnhancedSidebar';
-import VenueStatusControl from './VenueStatusControl';
+// import VenueStatusControl from './VenueStatusControl'; // Unused
 // import DinoLogo from './DinoLogo'; // Unused
 import { getUserFirstName } from '../utils/userUtils';
 import { LogoutConfirmationModal } from './modals';
@@ -85,6 +85,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setMobileDrawerOpen(!mobileDrawerOpen);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderNavigation = () => {
     if (isPublicMenuRoute) {
       // Extract venueId and tableId from current path for proper routing

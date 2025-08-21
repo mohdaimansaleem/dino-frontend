@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   IconButton,
   Typography,
   Button,
   Tooltip,
-  Divider,
   Collapse,
   useTheme,
   alpha,
@@ -26,10 +25,9 @@ import {
   Security,
   Settings,
   Business,
-  Store,
   CheckCircle,
   Cancel,
-  Menu as MenuIcon,
+  LocalOffer,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -39,7 +37,7 @@ import { venueService } from '../../../services/venueService';
 import PermissionService from '../../../services/permissionService';
 import { PERMISSIONS } from '../../../types/auth';
 
-import DinoLogo from '../../DinoLogo';
+
 import { getUserFirstName } from '../../../utils/userUtils';
 import './EnhancedSidebar.css';
 
@@ -60,7 +58,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const { user, hasPermission, isOperator } = useAuth();
+  const { user, hasPermission } = useAuth();
   const { userData, refreshUserData } = useUserData();
   const { isCollapsed, toggleCollapsed, getSidebarWidth } = useSidebar();
   
@@ -98,6 +96,13 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
       icon: <TableRestaurant />, 
       permission: PERMISSIONS.TABLES_VIEW,
       roles: ['admin'] 
+    },
+    { 
+      label: 'Coupons', 
+      path: '/admin/coupons', 
+      icon: <LocalOffer />, 
+      permission: PERMISSIONS.TABLES_VIEW,
+      roles: ['admin', 'superadmin'] 
     },
     { 
       label: 'Users', 

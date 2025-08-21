@@ -1,11 +1,11 @@
 import React from 'react';
-import { Box, Typography, Card, CardContent, Chip, Divider } from '@mui/material';
+import { Box, Typography, Card, CardContent, Chip } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import PermissionService from '../../services/permissionService';
 import StorageManager from '../../utils/storageManager';
 
 const PermissionDebug: React.FC = () => {
-  const { user, userPermissions, isSuperAdmin, isAdmin, isOperator, getUserWithRole } = useAuth();
+  const { user, isSuperAdmin, isAdmin, isOperator, getUserWithRole } = useAuth();
 
   const backendRole = PermissionService.getBackendRole();
   const backendPermissions = PermissionService.getBackendPermissions();

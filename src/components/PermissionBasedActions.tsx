@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from './ui/Button';
 import PermissionGate from './PermissionGate';
-import { usePermissions } from './RoleBasedComponent';
+
 
 interface ActionButtonProps {
   permission?: string;

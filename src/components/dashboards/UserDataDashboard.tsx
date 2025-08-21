@@ -22,7 +22,7 @@ import {
   useTheme,
   useMediaQuery,
   Stack,
-  Divider,
+
 } from '@mui/material';
 import {
   TrendingUp,
@@ -37,7 +37,7 @@ import {
   People,
 } from '@mui/icons-material';
 import { useUserData } from '../../contexts/UserDataContext';
-import { useAuth } from '../../contexts/AuthContext';
+
 import { ROLE_NAMES, getRoleDisplayName, isAdminLevel } from '../../constants/roles';
 
 interface UserDataDashboardProps {
@@ -45,7 +45,6 @@ interface UserDataDashboardProps {
 }
 
 const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
-  const { user } = useAuth();
   const {
     userData,
     loading,
@@ -53,14 +52,10 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
     hasPermission,
     getUserRole,
     isSuperAdmin,
-    isAdmin,
     getVenueDisplayName,
-    getWorkspaceDisplayName,
     getUserDisplayName,
     getVenueStatsSummary,
     getStatistics,
-    getMenuItems,
-    getTables,
     getRecentOrders,
     getUsers,
   } = useUserData();
@@ -68,7 +63,6 @@ const UserDataDashboard: React.FC<UserDataDashboardProps> = ({ className }) => {
   const [currentTab, setCurrentTab] = useState(0);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
   if (loading) {
     return (

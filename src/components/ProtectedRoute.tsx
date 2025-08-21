@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
 import { Lock, ArrowBack } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { ROLE_NAMES, isAdminLevel } from '../constants/roles';
+import { /* ROLE_NAMES, */ isAdminLevel } from '../constants/roles';
 
 interface ProtectedRouteProps {
   children: ReactNode;

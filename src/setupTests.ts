@@ -2,6 +2,12 @@
 import { TextEncoder, TextDecoder } from 'util';
 import 'whatwg-fetch';
 
+// jest-dom adds custom jest matchers for asserting on DOM nodes.
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
+// learn more: https://github.com/testing-library/jest-dom
+import '@testing-library/jest-dom';
+
 // Add TextEncoder/TextDecoder polyfills
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder as any;
@@ -22,12 +28,6 @@ if (typeof global.Response === 'undefined') {
 if (typeof global.Headers === 'undefined') {
   global.Headers = require('node-fetch').Headers;
 }
-
-// jest-dom adds custom jest matchers for asserting on DOM nodes.
-// allows you to do things like:
-// expect(element).toHaveTextContent(/react/i)
-// learn more: https://github.com/testing-library/jest-dom
-import '@testing-library/jest-dom';
 
 // Mock WebSocket for tests
 global.WebSocket = jest.fn(() => ({

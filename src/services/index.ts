@@ -18,6 +18,9 @@ import { dashboardService } from './dashboardService';
 import { validationService } from './validationService';
 import { permissionService } from './permissionService';
 
+// Import centralized API configuration
+import { API_CONFIG } from '../config/api';
+
 // Core API service
 export { apiService } from './api';
 
@@ -213,9 +216,6 @@ export const checkServiceHealth = async (): Promise<{
 
   return results;
 };
-
-// Import centralized API configuration
-import { API_CONFIG } from '../config/api';
 
 /**
  * Service Configuration

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -23,7 +23,7 @@ const ApiTestComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [rawResponse, setRawResponse] = useState<any>(null);
 
-  const testUsersApi = async () => {
+  const testUsersApi = useCallback(async () => {
     if (!userData?.venue?.id) {
       setError('No venue ID available');
       return;
@@ -51,7 +51,7 @@ const ApiTestComponent: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userData?.venue?.id]);
 
   const testApiDirectly = async () => {
     if (!userData?.venue?.id) {
@@ -83,7 +83,7 @@ const ApiTestComponent: React.FC = () => {
     if (userData?.venue?.id) {
       testUsersApi();
     }
-  }, [userData?.venue?.id]);
+  }, [userData?.venue?.id, testUsersApi]);
 
   return (
     <Box sx={{ p: 3 }}>

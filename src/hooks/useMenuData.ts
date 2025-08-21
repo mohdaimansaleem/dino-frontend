@@ -129,6 +129,23 @@ export function useMenuData(options: UseMenuDataOptions = {}): UseMenuDataResult
     return '🍽️';
   };
 
+  // Handle menu loading errors
+  const handleMenuError = useCallback((err: any) => {
+    let errorMessage = 'Unable to load menu items at this time.';
+    
+    if (err.response?.status === 404) {
+      errorMessage = 'Menu not found for this restaurant. Please check if you scanned the correct QR code.';
+    } else if (err.response?.status === 403) {
+      errorMessage = 'You don\'t have permission to view this menu. Please contact the restaurant staff.';
+    } else if (err.response?.status >= 500) {
+      errorMessage = 'Our servers are experiencing issues. Please try again in a few minutes.';
+    } else if (err.message?.includes('Network')) {
+      errorMessage = 'Connection problem. Please check your internet connection and try again.';
+    }
+    
+    setError(errorMessage);
+  }, []);
+
   // Load restaurant data
   const loadRestaurant = useCallback(async () => {
     if (!venueId) return;
@@ -189,11 +206,13 @@ export function useMenuData(options: UseMenuDataOptions = {}): UseMenuDataResult
           venueName: err.venueName,
           message: err.message
         });
+      } else {
+        handleMenuError(err);
       }
     } finally {
       setCategoriesLoading(false);
     }
-  }, [venueId, tableId]);
+  }, [venueId, tableId, handleMenuError]);
 
   // Load menu items data
   const loadMenuItems = useCallback(async () => {
@@ -260,7 +279,7 @@ export function useMenuData(options: UseMenuDataOptions = {}): UseMenuDataResult
     } finally {
       setMenuLoading(false);
     }
-  }, [venueId, tableId]);
+  }, [venueId, tableId, handleMenuError]);
 
   // Load table information
   const loadTable = useCallback(async () => {
@@ -278,23 +297,6 @@ export function useMenuData(options: UseMenuDataOptions = {}): UseMenuDataResult
       setTableName(tableId);
     }
   }, [tableId]);
-
-  // Handle menu loading errors
-  const handleMenuError = useCallback((err: any) => {
-    let errorMessage = 'Unable to load menu items at this time.';
-    
-    if (err.response?.status === 404) {
-      errorMessage = 'Menu not found for this restaurant. Please check if you scanned the correct QR code.';
-    } else if (err.response?.status === 403) {
-      errorMessage = 'You don\'t have permission to view this menu. Please contact the restaurant staff.';
-    } else if (err.response?.status >= 500) {
-      errorMessage = 'Our servers are experiencing issues. Please try again in a few minutes.';
-    } else if (err.message?.includes('Network')) {
-      errorMessage = 'Connection problem. Please check your internet connection and try again.';
-    }
-    
-    setError(errorMessage);
-  }, []);
 
   // Load all data
   const loadAllData = useCallback(async () => {

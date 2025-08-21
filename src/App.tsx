@@ -15,7 +15,6 @@ import { ToastProvider } from './contexts/ToastContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { DinoAvatarProvider } from './contexts/DinoAvatarContext';
 import { TourProvider } from './contexts/TourContext';
-import { WebSocketProvider } from './contexts/WebSocketContext';
 import { validatePasswordHashingSetup } from './utils/passwordValidation';
 
 // Public Pages
@@ -225,6 +224,15 @@ function App() {
                     <RoleProtectedRoute requiredPermissions={[PERMISSIONS.USERS_VIEW]}>
                       <Suspense fallback={<LoadingFallback />}>
                         {React.createElement(LazyComponents.UserPermissionsDashboard.component)}
+                      </Suspense>
+                    </RoleProtectedRoute>
+                  </Layout>
+                } />
+                <Route path="/admin/coupons" element={
+                  <Layout>
+                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.COUPONS_MANAGE]}>
+                      <Suspense fallback={<LoadingFallback />}>
+                        {React.createElement(LazyComponents.CouponsManagement.component)}
                       </Suspense>
                     </RoleProtectedRoute>
                   </Layout>

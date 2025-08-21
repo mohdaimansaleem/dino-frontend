@@ -79,7 +79,7 @@ const DashboardTour: React.FC<DashboardTourProps> = ({ className }) => {
         tourStatusDetails: tourStatus
       });
     }
-  }, [loading, shouldShowTour, user, tourStatus, isActive]);
+  }, [loading, shouldShowTour, user, tourStatus, isActive, startTour]);
 
   // Don't render anything if tour shouldn't be shown
   if (loading || !shouldShowTour || !user) {

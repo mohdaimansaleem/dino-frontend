@@ -64,6 +64,9 @@ export const PERMISSIONS = {
   MENU_CREATE: 'menu.create',
   MENU_DELETE: 'menu.delete',
   
+  // Coupons permissions
+  COUPONS_MANAGE: 'coupon.manage',
+  
   // Tables permissions
   TABLES_VIEW: 'table.read',
   TABLES_UPDATE: 'table.update',

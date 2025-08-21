@@ -8,8 +8,6 @@ import {
   Stack,
   Alert,
   Collapse,
-  IconButton,
-  useTheme,
 } from '@mui/material';
 import {
   ErrorOutline,
@@ -17,8 +15,6 @@ import {
   Home,
   ExpandMore,
   ExpandLess,
-  BugReport,
-  Feedback,
 } from '@mui/icons-material';
 import { logger } from '../../utils/logger';
 

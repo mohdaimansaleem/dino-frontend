@@ -7,23 +7,13 @@ import {
   Stack,
   Chip,
   useTheme,
-  TextField,
   Button,
-  InputAdornment,
-  Collapse,
   alpha,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem
 } from '@mui/material';
 import { 
   Edit, 
   Delete, 
   Category, 
-  Search, 
-  Clear, 
-  FilterList 
 } from '@mui/icons-material';
 
 interface MenuCategoriesProps {

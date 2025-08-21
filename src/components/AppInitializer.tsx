@@ -17,7 +17,7 @@ const AppInitializer: React.FC<AppInitializerProps> = ({ children }) => {
     if (initStatus.retryCount === 0) {
       console.log('🔄 AppInitializer: Status update', initStatus);
     }
-  }, [initStatus.isInitialized, initStatus.retryCount]); // Only log on meaningful changes
+  }, [initStatus]); // Only log on meaningful changes
 
   return <>{children}</>;
 };

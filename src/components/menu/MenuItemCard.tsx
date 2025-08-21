@@ -17,8 +17,6 @@ import {
   Visibility,
   VisibilityOff,
   Schedule,
-  Nature,
-  LocalDining,
   Upload,
   Restaurant
 } from '@mui/icons-material';
