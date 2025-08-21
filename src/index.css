@@ -899,6 +899,30 @@ img {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Hide number input spinners globally */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Material-UI TextField number input spinners */
+.MuiTextField-root input::-webkit-outer-spin-button,
+.MuiTextField-root input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.MuiTextField-root input[type=number] {
+  -moz-appearance: textfield;
+}
+
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -26,7 +26,7 @@ export interface QRGenerationRequest {
     logoUrl?: string;
     primaryColor?: string;
     secondaryColor?: string;
-    template?: 'classic' | 'modern' | 'elegant' | 'minimal';
+    template?: 'classic' | 'modern' | 'elegant' | 'minimal' | 'premium' | 'colorful' | 'retro' | 'tech' | 'nature' | 'artistic' | 'corporate' | 'festive' | 'business' | 'simple' | 'professional' | 'clean' | 'standard';
   };
   // Legacy compatibility
   cafeId?: string;
@@ -189,7 +189,7 @@ class QRService {
   }
 
   // Generate print-ready QR template
-  async generatePrintTemplate(qrData: QRCodeData, template: 'classic' | 'modern' | 'elegant' | 'minimal' = 'classic'): Promise<string> {
+  async generatePrintTemplate(qrData: QRCodeData, template: 'classic' | 'modern' | 'elegant' | 'minimal' | 'premium' | 'colorful' | 'retro' | 'tech' | 'nature' | 'artistic' | 'corporate' | 'festive' | 'business' | 'simple' | 'professional' | 'clean' | 'standard' = 'classic'): Promise<string> {
     try {
       return `
         <!DOCTYPE html>
