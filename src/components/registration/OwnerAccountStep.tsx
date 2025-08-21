@@ -102,7 +102,12 @@ const OwnerAccountStep: React.FC<OwnerAccountStepProps> = ({
           fullWidth
           label="Phone Number"
           value={formData.ownerPhone}
-          onChange={(e) => onInputChange('ownerPhone', e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === '' || /^[0-9]+$/.test(value)) {
+              onInputChange('ownerPhone', value);
+            }
+          }}
           error={!!errors.ownerPhone}
           helperText={errors.ownerPhone || 'Required: Exactly 10 digits'}
           required

@@ -1452,7 +1452,18 @@ const UserManagement: React.FC = () => {
                 fullWidth
                 label="Phone"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^[0-9]+$/.test(value)) {
+                    setFormData({ ...formData, phone: value });
+                  }
+                }}
+                placeholder="e.g., 9876543210"
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                  maxLength: 10
+                }}
                 size={isMobile ? "medium" : "medium"}
               />
               <FormControl fullWidth required size={isMobile ? "medium" : "medium"}>

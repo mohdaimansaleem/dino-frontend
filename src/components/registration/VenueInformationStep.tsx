@@ -150,7 +150,12 @@ const VenueInformationStep: React.FC<VenueInformationStepProps> = ({
           fullWidth
           label="Postal Code"
           value={formData.venueLocation.postal_code}
-          onChange={(e) => onInputChange('venueLocation.postal_code', e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === '' || /^[0-9]+$/.test(value)) {
+              onInputChange('venueLocation.postal_code', value);
+            }
+          }}
           error={!!errors.postal_code}
           required
           helperText={errors.postal_code || 'Enter 6-digit postal code'}
@@ -201,7 +206,12 @@ const VenueInformationStep: React.FC<VenueInformationStepProps> = ({
           fullWidth
           label="Venue Phone"
           value={formData.venuePhone}
-          onChange={(e) => onInputChange('venuePhone', e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === '' || /^[0-9]+$/.test(value)) {
+              onInputChange('venuePhone', value);
+            }
+          }}
           error={!!errors.venuePhone}
           helperText={errors.venuePhone || 'Required: Exactly 10 digits'}
           required

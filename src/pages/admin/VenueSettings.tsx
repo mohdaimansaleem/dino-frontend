@@ -1181,9 +1181,25 @@ const VenueSettings: React.FC = () => {
                         <TextField
                           fullWidth
                           label="Order Timeout (minutes)"
-                          type="number"
-                          value={settings.advanced.orderTimeout}
-                          onChange={(e) => handleSettingChange('advanced', 'orderTimeout', parseInt(e.target.value))}
+                          type="text"
+                          value={settings.advanced.orderTimeout === 0 ? '' : settings.advanced.orderTimeout.toString()}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || /^\d+$/.test(value)) {
+                              const numValue = value === '' ? 30 : parseInt(value) || 30;
+                              handleSettingChange('advanced', 'orderTimeout', numValue);
+                            }
+                          }}
+                          onFocus={(e) => {
+                            if (e.target.value === '0') {
+                              e.target.select();
+                            }
+                          }}
+                          placeholder="Enter timeout in minutes"
+                          inputProps={{
+                            inputMode: 'numeric',
+                            pattern: '[0-9]*'
+                          }}
                           InputProps={{
                             startAdornment: <AccessTime sx={{ mr: 1, color: 'text.secondary' }} />
                           }}
@@ -1194,9 +1210,25 @@ const VenueSettings: React.FC = () => {
                         <TextField
                           fullWidth
                           label="Max Orders Per Table"
-                          type="number"
-                          value={settings.advanced.maxOrdersPerTable}
-                          onChange={(e) => handleSettingChange('advanced', 'maxOrdersPerTable', parseInt(e.target.value))}
+                          type="text"
+                          value={settings.advanced.maxOrdersPerTable === 0 ? '' : settings.advanced.maxOrdersPerTable.toString()}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === '' || /^\d+$/.test(value)) {
+                              const numValue = value === '' ? 5 : parseInt(value) || 5;
+                              handleSettingChange('advanced', 'maxOrdersPerTable', numValue);
+                            }
+                          }}
+                          onFocus={(e) => {
+                            if (e.target.value === '0') {
+                              e.target.select();
+                            }
+                          }}
+                          placeholder="Enter max orders"
+                          inputProps={{
+                            inputMode: 'numeric',
+                            pattern: '[0-9]*'
+                          }}
                           InputProps={{
                             startAdornment: <Restaurant sx={{ mr: 1, color: 'text.secondary' }} />
                           }}

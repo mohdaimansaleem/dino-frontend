@@ -74,7 +74,7 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({
         category: '',
         isVeg: true,
         available: true,
-        preparationTime: 15,
+        preparationTime: 0,
       });
       setImagePreview('');
     }
@@ -159,16 +159,48 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({
                   <TextField
                     fullWidth
                     label="Price (₹)"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => handleChange('price', parseFloat(e.target.value) || 0)}
+                    type="text"
+                    value={formData.price === 0 ? '' : formData.price.toString()}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                        const numValue = value === '' ? 0 : parseFloat(value) || 0;
+                        handleChange('price', numValue);
+                      }
+                    }}
+                    onFocus={(e) => {
+                      if (e.target.value === '0') {
+                        e.target.select();
+                      }
+                    }}
+                    placeholder="Enter price"
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*\\.?[0-9]*'
+                    }}
                   />
                   <TextField
                     fullWidth
                     label="Prep Time (min)"
-                    type="number"
-                    value={formData.preparationTime}
-                    onChange={(e) => handleChange('preparationTime', parseInt(e.target.value) || 15)}
+                    type="text"
+                    value={formData.preparationTime === 0 ? '' : formData.preparationTime.toString()}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || /^\d+$/.test(value)) {
+                        const numValue = value === '' ? 0 : parseInt(value) || 0;
+                        handleChange('preparationTime', numValue);
+                      }
+                    }}
+                    onFocus={(e) => {
+                      if (e.target.value === '0') {
+                        e.target.select();
+                      }
+                    }}
+                    placeholder="e.g., 15"
+                    inputProps={{
+                      inputMode: 'numeric',
+                      pattern: '[0-9]*'
+                    }}
                   />
                 </Stack>
                 <FormControl fullWidth>
@@ -317,18 +349,50 @@ const MenuItemDialog: React.FC<MenuItemDialogProps> = ({
             <TextField
               fullWidth
               label="Price (₹)"
-              type="number"
-              value={formData.price}
-              onChange={(e) => handleChange('price', parseFloat(e.target.value) || 0)}
+              type="text"
+              value={formData.price === 0 ? '' : formData.price.toString()}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                  const numValue = value === '' ? 0 : parseFloat(value) || 0;
+                  handleChange('price', numValue);
+                }
+              }}
+              onFocus={(e) => {
+                if (e.target.value === '0') {
+                  e.target.select();
+                }
+              }}
+              placeholder="Enter price"
+              inputProps={{
+                inputMode: 'decimal',
+                pattern: '[0-9]*\\.?[0-9]*'
+              }}
             />
           </Grid>
           <Grid item xs={12} md={4}>
             <TextField
               fullWidth
               label="Preparation Time (minutes)"
-              type="number"
-              value={formData.preparationTime}
-              onChange={(e) => handleChange('preparationTime', parseInt(e.target.value) || 15)}
+              type="text"
+              value={formData.preparationTime === 0 ? '' : formData.preparationTime.toString()}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^\d+$/.test(value)) {
+                  const numValue = value === '' ? 0 : parseInt(value) || 0;
+                  handleChange('preparationTime', numValue);
+                }
+              }}
+              onFocus={(e) => {
+                if (e.target.value === '0') {
+                  e.target.select();
+                }
+              }}
+              placeholder="e.g., 15"
+              inputProps={{
+                inputMode: 'numeric',
+                pattern: '[0-9]*'
+              }}
             />
           </Grid>
           <Grid item xs={12} md={4}>

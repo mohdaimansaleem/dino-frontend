@@ -114,17 +114,12 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
       setCodeValidation(null);
     } else {
       // Reset form for new coupon
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const nextMonth = new Date();
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-
       setFormData({
         code: '',
         discountType: 'percentage',
         discountValue: '',
-        startDate: new Date().toISOString().split('T')[0],
-        expiryDate: nextMonth.toISOString().split('T')[0],
+        startDate: '',
+        expiryDate: '',
         minOrderAmount: '',
         maxClaims: '',
         isActive: true,
@@ -303,9 +298,19 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
                     <TextField
                       fullWidth
                       label="Discount Value"
-                      type="number"
+                      type="text"
                       value={formData.discountValue}
-                      onChange={(e) => handleChange('discountValue', e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          handleChange('discountValue', value);
+                        }
+                      }}
+                      placeholder="e.g., 20 for 20% or 10 for $10"
+                      inputProps={{
+                        inputMode: 'decimal',
+                        pattern: '[0-9]*\\.?[0-9]*'
+                      }}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -326,11 +331,12 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
                   <Stack direction="row" spacing={2}>
                     <DatePicker
                       label="Start Date"
-                      value={new Date(formData.startDate)}
+                      value={formData.startDate ? new Date(formData.startDate) : null}
                       onChange={(date) => handleChange('startDate', date?.toISOString().split('T')[0] || '')}
                       slotProps={{
                         textField: {
                           fullWidth: true,
+                          placeholder: "Select start date",
                           error: !!validation.errors.find(e => e.includes('Start date')),
                           helperText: validation.errors.find(e => e.includes('Start date'))
                         }
@@ -339,11 +345,12 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
 
                     <DatePicker
                       label="Expiry Date"
-                      value={new Date(formData.expiryDate)}
+                      value={formData.expiryDate ? new Date(formData.expiryDate) : null}
                       onChange={(date) => handleChange('expiryDate', date?.toISOString().split('T')[0] || '')}
                       slotProps={{
                         textField: {
                           fullWidth: true,
+                          placeholder: "Select expiry date",
                           error: !!validation.errors.find(e => e.includes('Expiry date')),
                           helperText: validation.errors.find(e => e.includes('Expiry date'))
                         }
@@ -355,9 +362,19 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
                   <TextField
                     fullWidth
                     label="Minimum Order Amount (Optional)"
-                    type="number"
+                    type="text"
                     value={formData.minOrderAmount}
-                    onChange={(e) => handleChange('minOrderAmount', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                        handleChange('minOrderAmount', value);
+                      }
+                    }}
+                    placeholder="e.g., 50.00"
+                    inputProps={{
+                      inputMode: 'decimal',
+                      pattern: '[0-9]*\\.?[0-9]*'
+                    }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -371,9 +388,19 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
                   <TextField
                     fullWidth
                     label="Maximum Claims (Optional)"
-                    type="number"
+                    type="text"
                     value={formData.maxClaims}
-                    onChange={(e) => handleChange('maxClaims', e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '' || /^\d+$/.test(value)) {
+                        handleChange('maxClaims', value);
+                      }
+                    }}
+                    placeholder="e.g., 100"
+                    inputProps={{
+                      inputMode: 'numeric',
+                      pattern: '[0-9]*'
+                    }}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
@@ -546,9 +573,19 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
               <TextField
                 fullWidth
                 label="Discount Value"
-                type="number"
+                type="text"
                 value={formData.discountValue}
-                onChange={(e) => handleChange('discountValue', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleChange('discountValue', value);
+                  }
+                }}
+                placeholder="e.g., 20 for 20% or 10 for $10"
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*\\.?[0-9]*'
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -569,11 +606,12 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
             <Grid item xs={12} md={6}>
               <DatePicker
                 label="Start Date"
-                value={new Date(formData.startDate)}
+                value={formData.startDate ? new Date(formData.startDate) : null}
                 onChange={(date) => handleChange('startDate', date?.toISOString().split('T')[0] || '')}
                 slotProps={{
                   textField: {
                     fullWidth: true,
+                    placeholder: "Select start date",
                     error: !!validation.errors.find(e => e.includes('Start date')),
                     helperText: validation.errors.find(e => e.includes('Start date'))
                   }
@@ -584,11 +622,12 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
             <Grid item xs={12} md={6}>
               <DatePicker
                 label="Expiry Date"
-                value={new Date(formData.expiryDate)}
+                value={formData.expiryDate ? new Date(formData.expiryDate) : null}
                 onChange={(date) => handleChange('expiryDate', date?.toISOString().split('T')[0] || '')}
                 slotProps={{
                   textField: {
                     fullWidth: true,
+                    placeholder: "Select expiry date",
                     error: !!validation.errors.find(e => e.includes('Expiry date')),
                     helperText: validation.errors.find(e => e.includes('Expiry date'))
                   }
@@ -601,9 +640,19 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
               <TextField
                 fullWidth
                 label="Minimum Order Amount (Optional)"
-                type="number"
+                type="text"
                 value={formData.minOrderAmount}
-                onChange={(e) => handleChange('minOrderAmount', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                    handleChange('minOrderAmount', value);
+                  }
+                }}
+                placeholder="e.g., 50.00"
+                inputProps={{
+                  inputMode: 'decimal',
+                  pattern: '[0-9]*\\.?[0-9]*'
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -619,9 +668,19 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
               <TextField
                 fullWidth
                 label="Maximum Claims (Optional)"
-                type="number"
+                type="text"
                 value={formData.maxClaims}
-                onChange={(e) => handleChange('maxClaims', e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || /^\d+$/.test(value)) {
+                    handleChange('maxClaims', value);
+                  }
+                }}
+                placeholder="e.g., 100"
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*'
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">

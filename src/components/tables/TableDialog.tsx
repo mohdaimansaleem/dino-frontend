@@ -45,8 +45,8 @@ const TableDialog: React.FC<TableDialogProps> = ({
   isMobile = false
 }) => {
   const [formData, setFormData] = useState({
-    table_number: '1',
-    capacity: 2,
+    table_number: '',
+    capacity: 0,
     location: '',
     table_status: 'available',
     is_active: true,
@@ -73,8 +73,8 @@ const TableDialog: React.FC<TableDialogProps> = ({
       }
       
       setFormData({
-        table_number: nextNumber.toString(),
-        capacity: 2,
+        table_number: '',
+        capacity: 0,
         location: '',
         table_status: 'available',
         is_active: true,
@@ -154,7 +154,17 @@ const TableDialog: React.FC<TableDialogProps> = ({
                   label="Table Number"
                   type="text"
                   value={formData.table_number}
-                  onChange={(e) => handleChange('table_number', e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || /^[0-9]+$/.test(value)) {
+                      handleChange('table_number', value);
+                    }
+                  }}
+                  placeholder="e.g., 1"
+                  inputProps={{
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*'
+                  }}
                   error={!table && tables.some(t => t.table_number === formData.table_number.trim() && t.is_active)}
                   size="medium"
                 />
@@ -266,9 +276,18 @@ const TableDialog: React.FC<TableDialogProps> = ({
               fullWidth
               label="Table Number"
               type="text"
-              value={formData.table_number || '1'}
-              onChange={(e) => handleChange('table_number', e.target.value)}
-              helperText={!table ? `Next available: ${formData.table_number}` : ''}
+              value={formData.table_number}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || /^[0-9]+$/.test(value)) {
+                  handleChange('table_number', value);
+                }
+              }}
+              placeholder="e.g., 1"
+              inputProps={{
+                inputMode: 'numeric',
+                pattern: '[0-9]*'
+              }}
               error={!table && tables.some(t => t.table_number === formData.table_number.trim() && t.is_active)}
             />
           </Grid>
