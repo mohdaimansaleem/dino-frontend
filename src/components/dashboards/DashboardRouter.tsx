@@ -45,16 +45,7 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ className }) => {
     );
   }
 
-  // Debug: Log the role checks
-  console.log('🔍 DashboardRouter - Role checks:', {
-    user: user,
-    userRole: user?.role,
-    isSuperAdmin: isSuperAdmin(),
-    isAdmin: isAdmin(),
-    isOperator: isOperator()
-  });
 
-  console.log('🚀 DashboardRouter: Rendering UnifiedDashboard');
 
   // For now, let's allow all authenticated users to access the dashboard
   // The UnifiedDashboard will handle role-based content rendering

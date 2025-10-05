@@ -10,6 +10,23 @@ import {
   ArcElement,
 } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+  useTheme,
+  Chip,
+  Stack,
+} from '@mui/material';
+import {
+  TrendingUp,
+  TrendingDown,
+  ShowChart,
+  PieChart,
+  BarChart,
+} from '@mui/icons-material';
 import { getConfigValue } from '../../config/runtime';
 
 // Register Chart.js components
@@ -434,6 +451,390 @@ export const SimpleBarChart: React.FC<{ data: Array<{ name: string; value: numbe
     <div style={{ height: `${height}px` }}>
       <Bar key={animationKey} data={chartData} options={options} />
     </div>
+  );
+};
+
+// Enhanced Chart Wrapper Components
+interface EnhancedRevenueChartProps {
+  data: any;
+  stats: any;
+}
+
+interface EnhancedOrderStatusChartProps {
+  data: any;
+  stats: any;
+}
+
+interface EnhancedSalesMetricsProps {
+  data: any;
+  stats: any;
+}
+
+interface EnhancedPerformanceChartProps {
+  data: any;
+  stats: any;
+}
+
+export const EnhancedRevenueChart: React.FC<EnhancedRevenueChartProps> = ({ data, stats }) => {
+  const theme = useTheme();
+
+  const revenueData = data?.venue_performance?.map((venue: any) => ({
+    day: venue.name,
+    revenue: venue.total_revenue,
+    orders: venue.total_orders
+  })) || [];
+
+  const totalRevenue = revenueData.reduce((sum: number, item: any) => sum + item.revenue, 0);
+  const totalOrders = revenueData.reduce((sum: number, item: any) => sum + item.orders, 0);
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+  return (
+    <Card sx={{ 
+      borderRadius: 3,
+      boxShadow: theme.shadows[2],
+      border: '1px solid',
+      borderColor: 'divider',
+      height: '100%'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ShowChart sx={{ color: 'primary.main', fontSize: 28 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              Revenue & Orders Analytics
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Chip 
+              label={`₹${totalRevenue.toLocaleString()}`} 
+              color="success" 
+              variant="outlined"
+              size="small"
+            />
+            <Chip 
+              label={`${totalOrders} orders`} 
+              color="primary" 
+              variant="outlined"
+              size="small"
+            />
+          </Stack>
+        </Box>
+
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={4}>
+            <Box sx={{ textAlign: 'center', p: 1.5, backgroundColor: 'success.50', borderRadius: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                ₹{totalRevenue.toLocaleString()}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">Total Revenue</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={4}>
+            <Box sx={{ textAlign: 'center', p: 1.5, backgroundColor: 'primary.50', borderRadius: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                {totalOrders}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">Total Orders</Typography>
+            </Box>
+          </Grid>
+          <Grid item xs={4}>
+            <Box sx={{ textAlign: 'center', p: 1.5, backgroundColor: 'warning.50', borderRadius: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                ₹{Math.round(avgOrderValue)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">Avg Order</Typography>
+            </Box>
+          </Grid>
+        </Grid>
+
+        <Box sx={{ height: 400 }}>
+          {revenueData.length > 0 ? (
+            <WeeklyRevenueChart data={revenueData} height={400} />
+          ) : (
+            <Box sx={{ 
+              height: '100%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              backgroundColor: 'grey.50',
+              borderRadius: 2,
+              border: '2px dashed',
+              borderColor: 'grey.300'
+            }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <ShowChart sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
+                <Typography variant="h6" color="text.secondary">No Revenue Data</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Revenue trends will appear here once data is available
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+export const EnhancedOrderStatusChart: React.FC<EnhancedOrderStatusChartProps> = ({ data, stats }) => {
+  const theme = useTheme();
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending': return '#FFF176';
+      case 'confirmed': return '#FFCC02';
+      case 'preparing': return '#81D4FA';
+      case 'ready': return '#C8E6C9';
+      case 'served': return '#E1BEE7';
+      case 'delivered': return '#A5D6A7';
+      case 'cancelled': return '#FFAB91';
+      default: return '#F5F5F5';
+    }
+  };
+
+  const orderStatusData = data?.analytics?.order_status_breakdown ? 
+    Object.entries(data.analytics.order_status_breakdown)
+      .filter(([_, count]) => (count as number) > 0)
+      .map(([status, count]) => ({
+        name: status.charAt(0).toUpperCase() + status.slice(1),
+        value: count as number,
+        color: getStatusColor(status)
+      })) : [];
+
+  const totalOrders = orderStatusData.reduce((sum, item) => sum + item.value, 0);
+
+  return (
+    <Card sx={{ 
+      borderRadius: 3,
+      boxShadow: theme.shadows[2],
+      border: '1px solid',
+      borderColor: 'divider',
+      height: '100%'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <PieChart sx={{ color: 'primary.main', fontSize: 28 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              Order Status Distribution
+            </Typography>
+          </Box>
+          <Chip 
+            label={`${totalOrders} total`} 
+            color="primary" 
+            variant="outlined"
+            size="small"
+          />
+        </Box>
+
+        <Box sx={{ height: 350 }}>
+          {orderStatusData.length > 0 ? (
+            <DonutChart data={orderStatusData} height={350} />
+          ) : (
+            <Box sx={{ 
+              height: '100%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              backgroundColor: 'grey.50',
+              borderRadius: 2,
+              border: '2px dashed',
+              borderColor: 'grey.300'
+            }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <PieChart sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
+                <Typography variant="h6" color="text.secondary">No Order Data</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Order status distribution will appear here
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+export const EnhancedSalesMetrics: React.FC<EnhancedSalesMetricsProps> = ({ data, stats }) => {
+  const theme = useTheme();
+
+  const metrics = [
+    {
+      title: 'Average Order Value',
+      value: `₹${(stats?.avg_order_value || 0).toLocaleString()}`,
+      icon: <TrendingUp />,
+      color: 'success.main',
+      bgColor: 'success.50',
+      change: '+12.5%',
+      changeType: 'positive'
+    },
+    {
+      title: 'Table Occupancy Rate',
+      value: `${stats?.table_occupancy_rate || 0}%`,
+      icon: <BarChart />,
+      color: 'primary.main',
+      bgColor: 'primary.50',
+      change: '+8.3%',
+      changeType: 'positive'
+    },
+    {
+      title: 'Active Venues',
+      value: data?.system_stats?.total_active_venues || 1,
+      icon: <ShowChart />,
+      color: 'warning.main',
+      bgColor: 'warning.50',
+      change: '+2',
+      changeType: 'positive'
+    },
+    {
+      title: 'Active Orders',
+      value: stats?.active_orders || 0,
+      icon: <BarChart />,
+      color: 'info.main',
+      bgColor: 'info.50',
+      change: '-5.2%',
+      changeType: 'negative'
+    }
+  ];
+
+  return (
+    <Card sx={{ 
+      borderRadius: 3,
+      boxShadow: theme.shadows[2],
+      border: '1px solid',
+      borderColor: 'divider',
+      height: '100%'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, color: 'text.primary' }}>
+          Performance Metrics
+        </Typography>
+        
+        <Grid container spacing={3}>
+          {metrics.map((metric, index) => (
+            <Grid item xs={12} sm={6} key={index}>
+              <Box sx={{ 
+                p: 2.5, 
+                backgroundColor: metric.bgColor,
+                borderRadius: 2,
+                border: '1px solid',
+                borderColor: metric.color,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: theme.shadows[4]
+                }
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Box sx={{ 
+                    p: 1, 
+                    borderRadius: 1.5, 
+                    backgroundColor: metric.color,
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}>
+                    {React.cloneElement(metric.icon, { fontSize: 'small' })}
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {metric.changeType === 'positive' ? (
+                      <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />
+                    ) : (
+                      <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />
+                    )}
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: metric.changeType === 'positive' ? 'success.main' : 'error.main',
+                        fontWeight: 600
+                      }}
+                    >
+                      {metric.change}
+                    </Typography>
+                  </Box>
+                </Box>
+                
+                <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
+                  {metric.value}
+                </Typography>
+                
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                  {metric.title}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
+        </Grid>
+      </CardContent>
+    </Card>
+  );
+};
+
+export const EnhancedPerformanceChart: React.FC<EnhancedPerformanceChartProps> = ({ data, stats }) => {
+  const theme = useTheme();
+
+  const performanceData = data?.analytics?.revenue_by_venue ? 
+    Object.entries(data.analytics.revenue_by_venue)
+      .filter(([_, revenue]) => (revenue as number) > 0)
+      .map(([venue, revenue], index) => ({
+        name: venue,
+        value: revenue as number,
+        color: `rgba(${76 + index * 30}, ${175 - index * 20}, ${80 + index * 25}, 0.8)`
+      })) : [];
+
+  const totalRevenue = performanceData.reduce((sum, item) => sum + item.value, 0);
+
+  return (
+    <Card sx={{ 
+      borderRadius: 3,
+      boxShadow: theme.shadows[2],
+      border: '1px solid',
+      borderColor: 'divider',
+      height: '100%'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <BarChart sx={{ color: 'primary.main', fontSize: 28 }} />
+            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+              Revenue by Category
+            </Typography>
+          </Box>
+          <Chip 
+            label={`₹${totalRevenue.toLocaleString()}`} 
+            color="success" 
+            variant="outlined"
+            size="small"
+          />
+        </Box>
+
+        <Box sx={{ height: 350 }}>
+          {performanceData.length > 0 ? (
+            <SimpleBarChart data={performanceData} height={350} />
+          ) : (
+            <Box sx={{ 
+              height: '100%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              backgroundColor: 'grey.50',
+              borderRadius: 2,
+              border: '2px dashed',
+              borderColor: 'grey.300'
+            }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <BarChart sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
+                <Typography variant="h6" color="text.secondary">No Performance Data</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Revenue breakdown will appear here
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 

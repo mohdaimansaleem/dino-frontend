@@ -8,6 +8,10 @@ import {
   Button,
   Chip,
   useTheme,
+  Avatar,
+  Stack,
+  Divider,
+  LinearProgress,
 } from '@mui/material';
 import {
   Add,
@@ -17,6 +21,9 @@ import {
   Schedule,
   Warning,
   Error,
+  AccessTime,
+  TrendingUp,
+  Assessment,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { usePermissions } from '../../../RoleBasedComponent';
@@ -58,27 +65,50 @@ const TablesOrdersTab: React.FC<TablesOrdersTabProps> = ({ tableStatuses }) => {
     }
   };
 
+  // Calculate table analytics
+  const totalTables = tableStatuses.length;
+  const occupiedTables = tableStatuses.filter(table => table.status === 'occupied').length;
+  const availableTables = tableStatuses.filter(table => table.status === 'available').length;
+  const reservedTables = tableStatuses.filter(table => table.status === 'reserved').length;
+  const cleaningTables = tableStatuses.filter(table => table.status === 'cleaning').length;
+  const occupancyRate = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
+  const avgOccupancyTime = tableStatuses
+    .filter(table => table.occupancy_time)
+    .reduce((sum, table) => sum + (table.occupancy_time || 0), 0) / 
+    Math.max(tableStatuses.filter(table => table.occupancy_time).length, 1);
+
+  const statusStats = [
+    { label: 'Available', count: availableTables, color: '#4CAF50', icon: <CheckCircle /> },
+    { label: 'Occupied', count: occupiedTables, color: '#F44336', icon: <People /> },
+    { label: 'Reserved', count: reservedTables, color: '#FF9800', icon: <Schedule /> },
+    { label: 'Cleaning', count: cleaningTables, color: '#9E9E9E', icon: <Warning /> },
+  ];
+
   return (
     <Grid container spacing={3}>
+      {/* Table Analytics Overview */}
       <Grid item xs={12}>
         <Card sx={{ 
-          borderRadius: 2,
-          boxShadow: theme.shadows[1],
+          borderRadius: 3,
+          boxShadow: theme.shadows[2],
           border: '1px solid',
           borderColor: 'divider'
         }}>
-          <CardContent>
+          <CardContent sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                Table Status & Management
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Assessment sx={{ color: 'primary.main', fontSize: 28 }} />
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  Table Management Overview
+                </Typography>
+              </Box>
               {canManageTables() && (
                 <Button
                   variant="contained"
                   startIcon={<Add />}
                   onClick={() => navigate('/admin/tables')}
                   sx={{
-                    borderRadius: 1,
+                    borderRadius: 2,
                     fontWeight: 600,
                     textTransform: 'none',
                     boxShadow: 'none',
@@ -92,29 +122,186 @@ const TablesOrdersTab: React.FC<TablesOrdersTabProps> = ({ tableStatuses }) => {
               )}
             </Box>
 
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ 
+                  p: 2.5, 
+                  backgroundColor: 'primary.50',
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'primary.200',
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                    {totalTables}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Total Tables</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ 
+                  p: 2.5, 
+                  backgroundColor: 'warning.50',
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'warning.200',
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                    {occupancyRate}%
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Occupancy Rate</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ 
+                  p: 2.5, 
+                  backgroundColor: 'info.50',
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'info.200',
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: 'info.main' }}>
+                    {Math.round(avgOccupancyTime || 0)}m
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Avg Occupancy</Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Box sx={{ 
+                  p: 2.5, 
+                  backgroundColor: 'success.50',
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: 'success.200',
+                  textAlign: 'center'
+                }}>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.main' }}>
+                    {availableTables}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">Available Now</Typography>
+                </Box>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* Status Distribution */}
+      <Grid item xs={12} md={4}>
+        <Card sx={{ 
+          borderRadius: 3,
+          boxShadow: theme.shadows[2],
+          border: '1px solid',
+          borderColor: 'divider',
+          height: '100%'
+        }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, color: 'text.primary' }}>
+              Status Distribution
+            </Typography>
+            
+            <Stack spacing={2.5}>
+              {statusStats.map((stat, index) => (
+                <Box key={stat.label} sx={{ 
+                  p: 2.5, 
+                  backgroundColor: `${stat.color}15`,
+                  borderRadius: 2,
+                  border: '1px solid',
+                  borderColor: `${stat.color}40`
+                }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar sx={{ 
+                        backgroundColor: stat.color,
+                        width: 32,
+                        height: 32
+                      }}>
+                        {React.cloneElement(stat.icon, { fontSize: 'small' })}
+                      </Avatar>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                        {stat.label}
+                      </Typography>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: stat.color }}>
+                      {stat.count}
+                    </Typography>
+                  </Box>
+                  
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={totalTables > 0 ? (stat.count / totalTables) * 100 : 0} 
+                    sx={{ 
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: 'rgba(255,255,255,0.5)',
+                      '& .MuiLinearProgress-bar': {
+                        borderRadius: 3,
+                        backgroundColor: stat.color
+                      }
+                    }}
+                  />
+                  
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    {totalTables > 0 ? Math.round((stat.count / totalTables) * 100) : 0}% of total tables
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      {/* Table Grid */}
+      <Grid item xs={12} md={8}>
+        <Card sx={{ 
+          borderRadius: 3,
+          boxShadow: theme.shadows[2],
+          border: '1px solid',
+          borderColor: 'divider',
+          height: '100%'
+        }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 3, color: 'text.primary' }}>
+              Table Status Grid
+            </Typography>
+
             {tableStatuses.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '3rem' }}>
-                <TableRestaurant sx={{ fontSize: 48, color: 'text.secondary' }} />
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                gap: 2, 
+                py: 8,
+                backgroundColor: 'grey.50',
+                borderRadius: 2,
+                border: '2px dashed',
+                borderColor: 'grey.300'
+              }}>
+                <TableRestaurant sx={{ fontSize: 64, color: 'grey.400' }} />
                 <Typography variant="h6" color="text.secondary">No Table Data Available</Typography>
                 <Typography variant="body2" color="text.secondary" textAlign="center">
                   Table status information will appear here once tables are configured.
                 </Typography>
-              </div>
+              </Box>
             ) : (
-              <Grid container spacing={2}>
+              <Grid container spacing={2} sx={{ maxHeight: 500, overflow: 'auto' }}>
                 {tableStatuses.map((table) => (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={table.id}>
+                  <Grid item xs={12} sm={6} lg={4} key={table.id}>
                     <Card sx={{ 
                       border: '2px solid',
                       borderColor: getTableStatusColor(table.status),
                       borderRadius: 2,
+                      transition: 'all 0.3s ease',
                       '&:hover': {
-                        boxShadow: theme.shadows[4]
+                        boxShadow: theme.shadows[4],
+                        transform: 'translateY(-2px)'
                       }
                     }}>
-                      <CardContent sx={{ p: 2 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="h6" fontWeight="600">
+                      <CardContent sx={{ p: 2.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 700 }}>
                             {table.table_number}
                           </Typography>
                           <Chip
@@ -131,16 +318,38 @@ const TablesOrdersTab: React.FC<TablesOrdersTabProps> = ({ tableStatuses }) => {
                             }}
                           />
                         </Box>
-                        {table.current_order_id && (
-                          <Typography variant="body2" color="text.secondary">
-                            Order: {table.current_order_id}
-                          </Typography>
-                        )}
-                        {table.occupancy_time && (
-                          <Typography variant="body2" color="text.secondary">
-                            Occupied: {table.occupancy_time} min
-                          </Typography>
-                        )}
+                        
+                        <Stack spacing={1}>
+                          {table.current_order_id && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant="caption" color="text.secondary">Order:</Typography>
+                              <Chip 
+                                label={table.current_order_id} 
+                                size="small" 
+                                variant="outlined"
+                                color="primary"
+                              />
+                            </Box>
+                          )}
+                          
+                          {table.occupancy_time && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <AccessTime sx={{ fontSize: 14, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                Occupied: {table.occupancy_time} minutes
+                              </Typography>
+                            </Box>
+                          )}
+                          
+                          {table.status === 'available' && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <CheckCircle sx={{ fontSize: 14, color: 'success.main' }} />
+                              <Typography variant="body2" color="success.main" sx={{ fontWeight: 600 }}>
+                                Ready for guests
+                              </Typography>
+                            </Box>
+                          )}
+                        </Stack>
                       </CardContent>
                     </Card>
                   </Grid>

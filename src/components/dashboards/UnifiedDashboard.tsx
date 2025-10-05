@@ -99,49 +99,28 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({ className }) => {
       setLoading(true);
       setError(null);
       
-      console.log('🔄 Loading unified dashboard data...');
-      console.log('👤 User:', user);
-      console.log('🏢 Current venue:', currentVenue);
-      
       // Get role using the same approach as control panel
       const backendRole = PermissionService.getBackendRole();
       const detectedRole = backendRole?.name || user?.role || 'unknown';
-      
-      console.log('🔍 Role Detection Debug:', {
-        'backendRole': backendRole,
-        'detectedRole': detectedRole,
-        'user?.role': user?.role,
-        'isSuperAdmin()': isSuperAdmin(),
-        'isAdmin()': isAdmin(),
-        'isOperator()': isOperator()
-      });
       
       let data;
       
       // Use backend role for dashboard selection
       if (detectedRole === 'superadmin' || detectedRole === 'super_admin') {
-        console.log('✅ Loading SuperAdmin dashboard data...');
         data = await dashboardService.getSuperAdminDashboard();
       } else if (detectedRole === 'admin') {
-        console.log('✅ Loading Admin dashboard data...');
         data = await dashboardService.getAdminDashboard();
       } else if (detectedRole === 'operator') {
-        console.log('✅ Loading Operator dashboard data...');
         data = await dashboardService.getOperatorDashboard();
       } else {
         // Fallback based on permission hooks
-        console.log('⚠️ Backend role unknown, using permission hooks...');
         if (isSuperAdmin()) {
-          console.log('✅ Permission hook detected SuperAdmin');
           data = await dashboardService.getSuperAdminDashboard();
         } else if (isAdmin()) {
-          console.log('✅ Permission hook detected Admin');
           data = await dashboardService.getAdminDashboard();
         } else if (isOperator()) {
-          console.log('✅ Permission hook detected Operator');
           data = await dashboardService.getOperatorDashboard();
         } else {
-          console.log('⚠️ No role detected, defaulting to admin dashboard');
           data = await dashboardService.getAdminDashboard();
         }
       }
@@ -270,7 +249,6 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({ className }) => {
       }
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to load dashboard data';
-      console.error('❌ Dashboard loading failed:', errorMessage);
       
       if (errorMessage.includes('No venue assigned')) {
         setError(null);
@@ -291,26 +269,16 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({ className }) => {
   };
 
   useEffect(() => {
-    console.log('🔄 UnifiedDashboard useEffect triggered', {
-      user: !!user,
-      canViewDashboard: canViewDashboard(),
-      currentVenue: !!currentVenue?.id,
-      isSuperAdmin: isSuperAdmin()
-    });
-
     // Only proceed if we have a user
     if (!user) {
-      console.log('⏳ No user yet, keeping loading state');
       setLoading(true);
       return;
     }
 
-    // For now, let's simplify and always try to load dashboard data for authenticated users
+    // Load dashboard data for authenticated users
     if (currentVenue?.id || isSuperAdmin()) {
-      console.log('✅ Loading dashboard data...');
       loadDashboardData();
     } else {
-      console.log('⚠️ No venue or not superadmin, stopping loading');
       setLoading(false);
     }
     
@@ -354,37 +322,10 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({ className }) => {
     );
   }
 
-  console.log('🚀 UnifiedDashboard: RENDERING UNIFIED DASHBOARD COMPONENT');
+
 
   return (
     <VenueAssignmentCheck showFullPage={!isSuperAdmin()}>
-
-      {/* ROLE DEBUG INDICATOR */}
-      <Box sx={{ 
-        position: 'fixed', 
-        top: 40, 
-        right: 10, 
-        zIndex: 9999, 
-        backgroundColor: (() => {
-          const backendRole = PermissionService.getBackendRole();
-          const detectedRole = backendRole?.name || user?.role || 'unknown';
-          if (detectedRole === 'superadmin' || detectedRole === 'super_admin') return 'purple';
-          if (detectedRole === 'admin') return 'blue';
-          if (detectedRole === 'operator') return 'orange';
-          return 'gray';
-        })(), 
-        color: 'white', 
-        padding: '4px 8px', 
-        borderRadius: '4px',
-        fontSize: '10px',
-        fontWeight: 'bold'
-      }}>
-        ROLE: {(() => {
-          const backendRole = PermissionService.getBackendRole();
-          const detectedRole = backendRole?.name || user?.role || 'unknown';
-          return detectedRole.toUpperCase();
-        })()}
-      </Box>
 
       <Box
         className={className}
