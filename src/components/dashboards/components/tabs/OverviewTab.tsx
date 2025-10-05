@@ -28,6 +28,8 @@ import {
   EnhancedOrderStatusChart, 
   EnhancedSalesMetrics 
 } from '../../../charts/ChartComponents';
+import { useDashboardFlags } from '../../../../flags/FlagContext';
+import { FlagGate } from '../../../../flags/FlagComponent';
 
 interface VenueDashboardStats {
   total_orders: number;
@@ -54,129 +56,143 @@ interface OverviewTabProps {
 
 const OverviewTab: React.FC<OverviewTabProps> = ({ dashboardData, stats }) => {
   const theme = useTheme();
+  const dashboardFlags = useDashboardFlags();
 
   return (
     <Grid container spacing={3}>
       {/* Enhanced Revenue Chart - Full Width */}
-      <Grid item xs={12}>
-        <EnhancedRevenueChart data={dashboardData} stats={stats} />
-      </Grid>
+      <FlagGate flag="dashboard.showRevenueChart">
+        <Grid item xs={12}>
+          <EnhancedRevenueChart data={dashboardData} stats={stats} />
+        </Grid>
+      </FlagGate>
 
       {/* Order Status Chart and Sales Metrics */}
-      <Grid item xs={12} lg={6}>
-        <EnhancedOrderStatusChart data={dashboardData} stats={stats} />
-      </Grid>
+      <FlagGate flag="dashboard.showOrderStatusChart">
+        <Grid item xs={12} lg={6}>
+          <EnhancedOrderStatusChart data={dashboardData} stats={stats} />
+        </Grid>
+      </FlagGate>
+
+      {/* Sales Metrics */}
+      <FlagGate flag="dashboard.showSalesMetrics">
+        <Grid item xs={12} lg={6}>
+          <EnhancedSalesMetrics data={dashboardData} stats={stats} />
+        </Grid>
+      </FlagGate>
 
 
       {/* Recent Activity */}
-      <Grid item xs={12} md={6}>
-        <Card sx={{ 
-          borderRadius: 3,
-          boxShadow: theme.shadows[2],
-          border: '1px solid',
-          borderColor: 'divider',
-          height: '100%'
-        }}>
-          <CardContent sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                Recent Activity
-              </Typography>
-              <Chip 
-                label="Live" 
-                color="success" 
-                size="small"
-                sx={{ animation: 'pulse 2s infinite' }}
-              />
-            </Box>
-            
-            {dashboardData?.recent_activity && dashboardData.recent_activity.length > 0 ? (
-              <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-                {dashboardData.recent_activity.slice(0, 6).map((activity: any, index: number) => (
-                  <ListItem 
-                    key={activity.id || index} 
-                    divider={index < dashboardData.recent_activity.length - 1}
-                    sx={{ 
-                      px: 0,
-                      '&:hover': {
-                        backgroundColor: 'action.hover',
-                        borderRadius: 1
-                      }
-                    }}
-                  >
-                    <ListItemIcon>
-                      <Avatar sx={{ 
-                        backgroundColor: 'primary.main', 
-                        width: 36, 
-                        height: 36 
-                      }}>
-                        <ShoppingCart sx={{ fontSize: 20 }} />
-                      </Avatar>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                            Order #{activity.order_number}
-                          </Typography>
-                          <Chip 
-                            label={activity.status} 
-                            size="small"
-                            color={
-                              activity.status === 'completed' ? 'success' :
-                              activity.status === 'pending' ? 'warning' :
-                              activity.status === 'preparing' ? 'info' : 'default'
-                            }
-                            variant="outlined"
-                          />
-                        </Box>
-                      }
-                      secondary={
-                        <Box sx={{ mt: 0.5 }}>
-                          <Typography variant="caption" display="block" color="text.secondary">
-                            {activity.venue_name} {activity.table_number ? `• Table ${activity.table_number}` : ''}
-                          </Typography>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
-                              ₹{activity.total_amount}
+      <FlagGate flag="dashboard.showRecentActivity">
+        <Grid item xs={12} md={6}>
+          <Card sx={{ 
+            borderRadius: 3,
+            boxShadow: theme.shadows[2],
+            border: '1px solid',
+            borderColor: 'divider',
+            height: '100%'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                  Recent Activity
+                </Typography>
+                <Chip 
+                  label="Live" 
+                  color="success" 
+                  size="small"
+                  sx={{ animation: 'pulse 2s infinite' }}
+                />
+              </Box>
+              
+              {dashboardData?.recent_activity && dashboardData.recent_activity.length > 0 ? (
+                <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+                  {dashboardData.recent_activity.slice(0, 6).map((activity: any, index: number) => (
+                    <ListItem 
+                      key={activity.id || index} 
+                      divider={index < dashboardData.recent_activity.length - 1}
+                      sx={{ 
+                        px: 0,
+                        '&:hover': {
+                          backgroundColor: 'action.hover',
+                          borderRadius: 1
+                        }
+                      }}
+                    >
+                      <ListItemIcon>
+                        <Avatar sx={{ 
+                          backgroundColor: 'primary.main', 
+                          width: 36, 
+                          height: 36 
+                        }}>
+                          <ShoppingCart sx={{ fontSize: 20 }} />
+                        </Avatar>
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                              Order #{activity.order_number}
                             </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <AccessTime sx={{ fontSize: 14, color: 'text.secondary' }} />
-                              <Typography variant="caption" color="text.secondary">
-                                {new Date(activity.created_at).toLocaleTimeString()}
+                            <Chip 
+                              label={activity.status} 
+                              size="small"
+                              color={
+                                activity.status === 'completed' ? 'success' :
+                                activity.status === 'pending' ? 'warning' :
+                                activity.status === 'preparing' ? 'info' : 'default'
+                              }
+                              variant="outlined"
+                            />
+                          </Box>
+                        }
+                        secondary={
+                          <Box sx={{ mt: 0.5 }}>
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              {activity.venue_name} {activity.table_number ? `• Table ${activity.table_number}` : ''}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 0.5 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
+                                ₹{activity.total_amount}
                               </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <AccessTime sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary">
+                                  {new Date(activity.created_at).toLocaleTimeString()}
+                                </Typography>
+                              </Box>
                             </Box>
                           </Box>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                flexDirection: 'column', 
-                py: 6,
-                backgroundColor: 'grey.50',
-                borderRadius: 2,
-                border: '2px dashed',
-                borderColor: 'grey.300'
-              }}>
-                <ShoppingCart sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No Recent Activity
-                </Typography>
-                <Typography variant="body2" color="text.secondary" textAlign="center">
-                  Recent system activity will appear here once orders start coming in
-                </Typography>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Grid>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              ) : (
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  flexDirection: 'column', 
+                  py: 6,
+                  backgroundColor: 'grey.50',
+                  borderRadius: 2,
+                  border: '2px dashed',
+                  borderColor: 'grey.300'
+                }}>
+                  <ShoppingCart sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
+                  <Typography variant="h6" color="text.secondary" gutterBottom>
+                    No Recent Activity
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" textAlign="center">
+                    Recent system activity will appear here once orders start coming in
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </FlagGate>
     </Grid>
   );
 };

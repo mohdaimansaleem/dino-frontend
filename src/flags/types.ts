@@ -29,6 +29,12 @@ export interface DashboardFlags extends BaseFlags {
   showRecentActivity: boolean;
   showPerformanceCharts: boolean;
   
+  // Individual chart controls
+  showRevenueChart: boolean;
+  showOrderStatusChart: boolean;
+  showSalesMetrics: boolean;
+  showAnalyticsCharts: boolean;
+  
   // Dashboard features
   enableDataExport: boolean;
   enableAdvancedFilters: boolean;

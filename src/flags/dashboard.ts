@@ -27,6 +27,12 @@ export const dashboardFlags: DashboardFlags = {
   showRecentActivity: true,        // Shows recent activity feed
   showPerformanceCharts: true,     // Shows performance charts and graphs
 
+  // Individual chart controls - Control specific charts and visualizations
+  showRevenueChart: true,          // Shows revenue and orders analytics chart
+  showOrderStatusChart: true,      // Shows order status distribution pie chart
+  showSalesMetrics: false,          // Shows sales performance metrics cards
+  showAnalyticsCharts: true,       // Shows detailed analytics charts
+
   // Dashboard features - Advanced functionality
   enableDataExport: true,          // Allows exporting dashboard data to CSV/PDF
   enableAdvancedFilters: true,     // Shows advanced filtering options
