@@ -6,7 +6,7 @@ import {
   UserCreate,
   MenuItemCreate,
   ApiResponse
-} from '../types/api';
+} from '../../types/api';
 
 class ValidationService {
   // =============================================================================

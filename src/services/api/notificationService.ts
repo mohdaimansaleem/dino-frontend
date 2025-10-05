@@ -102,15 +102,21 @@ class NotificationService {
   private handleNotification(payload: any) {
     const notification: AppNotification = {
       id: payload.id || Date.now().toString(),
-      recipientId: payload.recipientId,
-      recipientType: payload.recipientType || 'user',
-      notificationType: payload.notificationType,
-      title: payload.title,
-      message: payload.message,
+      recipient_id: payload.recipientId || payload.recipient_id || 'unknown',
+      recipient_type: payload.recipientType || payload.recipient_type || 'user',
+      notification_type: payload.notificationType || payload.notification_type || 'system_alert',
+      title: payload.title || 'Notification',
+      message: payload.message || '',
       data: payload.data,
-      isRead: false,
+      is_read: false,
       priority: payload.priority || 'normal',
-      createdAt: new Date(payload.createdAt || Date.now()),
+      created_at: new Date().toISOString(),
+      // Legacy camelCase properties for compatibility
+      recipientId: payload.recipientId || payload.recipient_id || 'unknown',
+      recipientType: payload.recipientType || payload.recipient_type || 'user',
+      notificationType: payload.notificationType || payload.notification_type || 'system_alert',
+      isRead: false,
+      createdAt: new Date(),
     };
 
     this.notifyCallbacks(notification);
@@ -120,14 +126,20 @@ class NotificationService {
   private handleOrderUpdate(payload: any) {
     const notification: AppNotification = {
       id: Date.now().toString(),
-      recipientId: payload.cafeId,
-      recipientType: 'venue',
-      notificationType: 'order_placed' as NotificationTypeEnum,
+      recipient_id: payload.cafeId,
+      recipient_type: 'venue',
+      notification_type: 'order_placed' as NotificationTypeEnum,
       title: 'New Order',
       message: `Order #${payload.orderNumber} has been ${payload.status}`,
       data: payload,
-      isRead: false,
+      is_read: false,
       priority: 'high',
+      created_at: new Date().toISOString(),
+      // Legacy camelCase properties for compatibility
+      recipientId: payload.cafeId,
+      recipientType: 'venue',
+      notificationType: 'order_placed' as NotificationTypeEnum,
+      isRead: false,
       createdAt: new Date(),
     };
 
@@ -140,14 +152,20 @@ class NotificationService {
   private handleCafeStatusUpdate(payload: any) {
     const notification: AppNotification = {
       id: Date.now().toString(),
-      recipientId: payload.cafeId,
-      recipientType: 'venue',
-      notificationType: 'system_alert' as NotificationTypeEnum,
+      recipient_id: payload.cafeId,
+      recipient_type: 'venue',
+      notification_type: 'system_alert' as NotificationTypeEnum,
       title: 'Cafe Status Update',
       message: `Cafe is now ${payload.isOpen ? 'open' : 'closed'}`,
       data: payload,
-      isRead: false,
+      is_read: false,
       priority: 'normal',
+      created_at: new Date().toISOString(),
+      // Legacy camelCase properties for compatibility
+      recipientId: payload.cafeId,
+      recipientType: 'venue',
+      notificationType: 'system_alert' as NotificationTypeEnum,
+      isRead: false,
       createdAt: new Date(),
     };
 
@@ -266,14 +284,20 @@ class NotificationService {
   ) {
     const notification: AppNotification = {
       id: Date.now().toString(),
-      recipientId: 'local',
-      recipientType: 'user',
-      notificationType: type,
+      recipient_id: 'local',
+      recipient_type: 'user',
+      notification_type: type,
       title,
       message,
       data,
-      isRead: false,
+      is_read: false,
       priority: 'normal',
+      created_at: new Date().toISOString(),
+      // Legacy camelCase properties for compatibility
+      recipientId: 'local',
+      recipientType: 'user',
+      notificationType: type,
+      isRead: false,
       createdAt: new Date(),
     };
 

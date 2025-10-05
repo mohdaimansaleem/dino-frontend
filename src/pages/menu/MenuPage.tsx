@@ -49,7 +49,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useTheme } from '@mui/material/styles';
 import { useVenueTheme } from '../../contexts/VenueThemeContext';
 
-import { MenuItem } from '../../types/api';
+// MenuItem type is handled by the cart context
 import CustomerNavbar from '../../components/CustomerNavbar';
 import VenueNotAcceptingOrdersPage from '../../components/VenueNotAcceptingOrdersPage';
 import { SmartLoading } from '../../components/ui/LoadingStates';
@@ -385,7 +385,8 @@ const MenuPage: React.FC = () => {
   };
 
   const handleAddToCart = (item: MenuItemType) => {
-    const cartItem: MenuItem = {
+    // Convert MenuItemType to the cart's expected MenuItem format (from types/index.ts)
+    const cartItem = {
       id: item.id,
       name: item.name,
       description: item.description,
@@ -397,6 +398,7 @@ const MenuPage: React.FC = () => {
       preparationTime: item.preparationTime,
       venueId: venueId || 'venue',
       ingredients: [],
+      allergens: [],
       order: 0,
     };
     addItem(cartItem, 1);

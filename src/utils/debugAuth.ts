@@ -73,7 +73,7 @@ if (typeof window !== 'undefined') {
   (window as any).testDashboard = async () => {
     console.group('🧪 Testing Dashboard Service');
     try {
-      const { dashboardService } = await import('../services/dashboardService');
+      const { dashboardService } = await import('../services/business/dashboardService');
       console.log('📞 Calling dashboardService.getSuperAdminDashboard()...');
       const result = await dashboardService.getSuperAdminDashboard();
       console.log('✅ Dashboard service successful:', result);

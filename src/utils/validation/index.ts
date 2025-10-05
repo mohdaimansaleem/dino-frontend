@@ -5,10 +5,22 @@
  * All form validations should use these standardized validators to ensure consistency.
  */
 
-import type { ValidationResult } from './passwordSecurity';
-
-// Re-export ValidationResult for external use
-export type { ValidationResult };
+// Define ValidationResult for validation compatibility
+export interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+  score?: number;
+  strength?: 'weak' | 'fair' | 'good' | 'strong' | 'very-strong';
+  feedback?: string[];
+  requirements?: {
+    minLength: boolean;
+    hasUppercase: boolean;
+    hasLowercase: boolean;
+    hasNumbers: boolean;
+    hasSpecialChars: boolean;
+    noCommonPatterns: boolean;
+  };
+}
 
 export type ValidationRule<T = any> = (value: T) => ValidationResult;
 export type ValidationRules<T extends Record<string, any>> = {
@@ -403,16 +415,15 @@ export const formatValidationErrors = (errors: Record<string, string>): string[]
  */
 export const VALIDATION_PATTERNS = {
   EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-  PHONE: /^\d{10}$/,
+  PHONE: /^\\d{10}$/,
   URL: /^https?:\/\/.+/,
   ALPHANUMERIC: /^[a-zA-Z0-9]+$/,
   ALPHA_ONLY: /^[a-zA-Z]+$/,
-  NUMERIC_ONLY: /^\d+$/,
+  NUMERIC_ONLY: /^\\d+$/,
 } as const;
 
 // Re-export specialized validation modules
 export * from './registrationValidation';
-export * from './passwordSecurity';
 
 /**
  * Common validation limits
@@ -426,7 +437,3 @@ export const VALIDATION_LIMITS = {
   PHONE_LENGTH: 10,
   FILE_MAX_SIZE: 5 * 1024 * 1024, // 5MB
 } as const;
-
-// Re-export specialized validation modules
-export * from './registrationValidation';
-export * from './passwordSecurity';

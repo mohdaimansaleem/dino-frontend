@@ -1,6 +1,9 @@
 // Re-export all API types
 export * from '../utils/api';
 
+// Re-export specific types from api.ts for compatibility
+export type { UserProfile } from './api';
+
 export interface UserAddress {
   id?: string;
   label: string;
@@ -248,30 +251,7 @@ export interface MenuFilters {
   searchQuery?: string;
 }
 
-// Enhanced Notification Types
-export interface AppNotification {
-  id: string;
-  recipientId: string;
-  recipientType: 'user' | 'venue' | 'admin';
-  notificationType: NotificationTypeEnum;
-  title: string;
-  message: string;
-  data?: Record<string, any>;
-  isRead: boolean;
-  priority: 'low' | 'normal' | 'high' | 'urgent';
-  createdAt: Date;
-  readAt?: Date;
-}
-
-export type NotificationTypeEnum = 
-  | 'order_placed'
-  | 'order_confirmed' 
-  | 'order_ready'
-  | 'order_delivered'
-  | 'payment_received'
-  | 'system_alert';
-
-export type NotificationType = NotificationTypeEnum;
+// Notification types are now imported from api.ts
 
 // Enhanced Transaction Types
 export interface Transaction {

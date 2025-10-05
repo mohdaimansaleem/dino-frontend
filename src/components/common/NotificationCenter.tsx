@@ -66,9 +66,10 @@ const NotificationCenter: React.FC = () => {
     }
   };
 
-  const formatTime = (timestamp: Date) => {
+  const formatTime = (timestamp: Date | string) => {
     const now = new Date();
-    const diff = now.getTime() - timestamp.getTime();
+    const date = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+    const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
@@ -197,9 +198,6 @@ const NotificationCenter: React.FC = () => {
                             </Typography>
                           </Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Typography variant="caption" color="text.secondary">
-                              {formatTime(notification.createdAt)}
-                            </Typography>
                             <IconButton
                               size="small"
                               onClick={(e) => {

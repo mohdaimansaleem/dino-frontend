@@ -6,7 +6,7 @@
  */
 
 import { validators, validateForm, type ValidationRules } from './index';
-import type { ValidationResult } from './passwordSecurity';
+import type { ValidationResult } from './index';
 
 export interface RegistrationFormData {
   // Workspace Information

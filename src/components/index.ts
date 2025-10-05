@@ -28,7 +28,16 @@ export * from './menu';
 export * from './orders';
 
 // Dashboard components (specific exports to avoid conflicts)
-export { DashboardComponents } from './dashboards';
+export {
+  StatsCard,
+  ChartCard,
+  SectionHeader,
+  EmptyState,
+  DashboardHero,
+  getStatusColor,
+  getTableStatusColor,
+  getOrderStatusColor,
+} from './dashboards/DashboardComponents';
 export { UnifiedDashboard } from './dashboards';
 export { UserDataDashboard } from './dashboards';
 

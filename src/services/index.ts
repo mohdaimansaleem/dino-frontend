@@ -10,4 +10,4 @@ export * from './auth';
 export * from './business';
 
 // API services
-export * from '../../utils/api';
+export * from '../utils/api';
