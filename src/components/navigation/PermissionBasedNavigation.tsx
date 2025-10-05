@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
-import { usePermissions } from '../RoleBasedComponent';
+import { usePermissions } from '../auth';
 import { PERMISSIONS } from '../../types/auth';
 
 interface NavigationItem {

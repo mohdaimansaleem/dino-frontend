@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { userDataService, UserData } from '../services/userDataService';
+import { userDataService, UserData } from '../services/auth';
 import { useAuth } from './AuthContext';
 import { validateVenueAccess, getVenueDisplayName as getVenueDisplayNameUtil } from '../utils/venueUtils';
-import StorageManager from '../utils/storageManager';
+import StorageManager from '../utils/storage';
 
 interface UserDataContextType {
   // Current data

@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWebSocket } from '../components/realtime/WebSocketProvider';
 import { useAuth } from '../contexts/AuthContext';
-import { dashboardService } from '../services/dashboardService';
-import { orderService } from '../services/orderService';
-import { tableService } from '../services/tableService';
+import { dashboardService } from '../services/business';
+import { orderService } from '../services/business';
+import { tableService } from '../services/business';
 
 // Generic real-time data hook
 export const useRealTimeData = <T>(

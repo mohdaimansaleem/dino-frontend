@@ -71,7 +71,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useVenueTheme } from '../../contexts/VenueThemeContext';
 import { useUserData } from '../../contexts/UserDataContext';
 import { PERMISSIONS } from '../../types/auth';
-import { venueService } from '../../services/venueService';
+import { venueService } from '../../services/business';
 import { PriceRange } from '../../types/api';
 
 import { DeleteConfirmationModal } from '../../components/modals';

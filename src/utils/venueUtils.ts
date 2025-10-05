@@ -6,7 +6,7 @@
  */
 
 import { UserProfile } from '../types/api';
-import { UserData } from '../services/userDataService';
+import { UserData } from '../services/auth';
 
 export interface VenueValidationResult {
   hasVenue: boolean;

@@ -374,25 +374,25 @@ export const LazyComponents = {
 
   // Customer Pages
   MenuPage: lazyManager.createLazyComponent(
-    () => import('../../pages/MenuPage'),
+    () => import('../../pages/menu/MenuPage'),
     'MenuPage',
     { preload: true, skeleton: PageSkeleton }
   ),
   
   CheckoutPage: lazyManager.createLazyComponent(
-    () => import('../../pages/CheckoutPage'),
+    () => import('../../pages/menu/CheckoutPage'),
     'CheckoutPage',
     { skeleton: PageSkeleton }
   ),
   
   OrderTrackingPage: lazyManager.createLazyComponent(
-    () => import('../../pages/OrderTrackingPage'),
+    () => import('../../pages/menu/OrderTrackingPage'),
     'OrderTrackingPage',
     { skeleton: PageSkeleton }
   ),
 
   RegistrationPage: lazyManager.createLazyComponent(
-    () => import('../../pages/RegistrationPage'),
+    () => import('../../pages/auth/RegistrationPage'),
     'RegistrationPage',
     { skeleton: PageSkeleton }
   ),

@@ -26,7 +26,7 @@ import {
   Assessment,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { usePermissions } from '../../../RoleBasedComponent';
+import { usePermissions } from '../../../auth';
 
 interface TableStatus {
   id: string;

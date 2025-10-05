@@ -31,7 +31,7 @@ import {
   Kitchen,
   Done,
 } from '@mui/icons-material';
-import { orderService, OrderStatus } from '../../services/orderService';
+import { orderService, OrderStatus } from '../../services/business';
 
 interface OrderStatusUpdateProps {
   orderId: string;

@@ -1,5 +1,5 @@
 // Re-export all API types
-export * from './api';
+export * from '../utils/api';
 
 export interface UserAddress {
   id?: string;

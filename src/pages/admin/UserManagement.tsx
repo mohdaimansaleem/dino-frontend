@@ -61,13 +61,13 @@ import { useUserData } from '../../contexts/UserDataContext';
 import { useErrorHandler } from '../../hooks/useErrorHandler';
 import { useNavigate } from 'react-router-dom';
 import { ROLES, PERMISSIONS } from '../../types/auth';
-import PasswordUpdateDialog from '../../components/PasswordUpdateDialog';
-import { userService, User, UserCreate, UserUpdate } from '../../services/userService';
+import { PasswordUpdateDialog } from '../../components/auth';
+import { userService, User, UserCreate, UserUpdate } from '../../services/auth';
 import { VenueUser } from '../../types/api';
 import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
 import { PageLoadingSkeleton, EmptyState } from '../../components/ui/LoadingStates';
-import { hashPassword, getFixedSalt } from '../../utils/passwordHashing';
-import { validatePlainTextPassword } from '../../utils/validation/passwordSecurity';
+import { hashPassword, getFixedSalt } from '../../utils/security';
+import { validatePlainTextPassword } from '../../utils/security';
 import { DeleteConfirmationModal } from '../../components/modals';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
 

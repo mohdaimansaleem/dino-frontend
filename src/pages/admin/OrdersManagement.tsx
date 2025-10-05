@@ -59,7 +59,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
 import { PERMISSIONS } from '../../types/auth';
-import { orderService, Order, OrderStatus, PaymentStatus, PaymentMethod } from '../../services/orderService';
+import { orderService, Order, OrderStatus, PaymentStatus, PaymentMethod } from '../../services/business';
 import {
   ORDER_STATUS,
   STATUS_COLORS,

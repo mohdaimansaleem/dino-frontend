@@ -3,7 +3,7 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { useRealTimeEvents } from '../../hooks/useRealTimeData';
 import { useToast } from '../../contexts/ToastContext';
-import { dashboardService } from '../../services/dashboardService';
+import { dashboardService } from '../../services/business';
 
 interface ActivityItem {
   id: string;

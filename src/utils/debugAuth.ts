@@ -2,8 +2,8 @@
  * Debug utility to check authentication state and token handling
  */
 
-import { authService } from '../services/authService';
-import { apiService } from '../services/api';
+import { authService } from '../services/auth';
+import { apiService } from './api';
 
 export function debugAuthenticationState(): void {
   console.group('🔍 Authentication Debug');

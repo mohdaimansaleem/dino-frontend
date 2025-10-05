@@ -3,7 +3,7 @@
  * Automatically refreshes tokens before they expire
  */
 
-import { authService } from '../services/authService';
+import { authService } from '../services/auth';
 
 class TokenRefreshScheduler {
   private refreshInterval: NodeJS.Timeout | null = null;

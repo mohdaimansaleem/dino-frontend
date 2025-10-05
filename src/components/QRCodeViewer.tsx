@@ -36,7 +36,7 @@ import {
   ContentCopy,
   Launch,
 } from '@mui/icons-material';
-import { QRCodeData, qrService } from '../services/qrService';
+import { QRCodeData, qrService } from '../services/api';
 
 interface QRCodeViewerProps {
   open: boolean;

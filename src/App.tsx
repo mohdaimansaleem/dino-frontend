@@ -16,20 +16,16 @@ import { VenueThemeProvider } from './contexts/VenueThemeContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { DinoAvatarProvider } from './contexts/DinoAvatarContext';
 import { TourProvider } from './contexts/TourContext';
-import { validatePasswordHashingSetup } from './utils/validation/passwordSecurity';
+import { validatePasswordHashingSetup } from './utils/security';
 
 // Public Pages
-import HomePage from './pages/HomePage';
+import { HomePage } from './pages/public';
 
-// RegistrationPage now imported from LazyComponents
-import LoginPage from './pages/LoginPage';
+// Authentication Pages
+import { LoginPage } from './pages/auth';
 
-// Import customer pages directly to test
-import MenuPage from './pages/MenuPage';
-import CheckoutPage from './pages/CheckoutPage';
-import OrderTrackingPage from './pages/OrderTrackingPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
-import OrderStatusDemo from './pages/OrderStatusDemo';
+// Menu Pages
+import { MenuPage, CheckoutPage, OrderTrackingPage, OrderSuccessPage, OrderStatusDemo } from './pages/menu';
 
 
 
@@ -39,21 +35,17 @@ import { Suspense } from 'react';
 import { CircularProgress, Box } from '@mui/material';
 
 // Components
-import ProtectedRoute from './components/ProtectedRoute';
-import RoleProtectedRoute from './components/RoleProtectedRoute';
-import Layout from './components/Layout';
-import UserProfile from './components/UserProfile';
-import PermissionSync from './components/PermissionSync';
-import ErrorBoundary from './components/ErrorBoundary';
-import NotFoundPage from './pages/NotFoundPage';
+import { ProtectedRoute, RoleProtectedRoute, UserProfile, PermissionSync } from './components/auth';
+import { Layout, ErrorBoundary, AppInitializer } from './components/common';
+import { NotFoundPage } from './pages/public';
 import DashboardRouter from './components/dashboards/DashboardRouter';
 import { PERMISSIONS } from './types/auth';
-import AppInitializer from './components/AppInitializer';
+
 import { logger } from './utils/logger';
 import { RUNTIME_CONFIG as config, isDevelopment } from './config/runtime';
-import StorageCleanup from './utils/storageCleanup';
+import { StorageCleanup } from './utils/storage';
 import { tokenRefreshScheduler } from './utils/tokenRefreshScheduler';
-import { apiService } from './services/api';
+import { apiService } from './utils/api';
 import { initializePerformanceMonitoring } from './utils/performance';
 
 // Debug configuration in development

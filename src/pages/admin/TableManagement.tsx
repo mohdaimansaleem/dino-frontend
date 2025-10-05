@@ -27,7 +27,7 @@ import {
 } from '@mui/icons-material';
 import QRCodeViewer from '../../components/QRCodeViewer';
 import QRCodeManager from '../../components/QRCodeManager';
-import { tableService, Table } from '../../services/tableService';
+import { tableService, Table } from '../../services/business';
 import { useUserData } from '../../contexts/UserDataContext';
 import { DeleteConfirmationModal } from '../../components/modals';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';

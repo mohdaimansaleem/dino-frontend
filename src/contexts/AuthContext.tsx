@@ -1,16 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback, useRef } from 'react';
 import { UserProfile, UserRegistration } from '../types/api';
 import { User as AuthUser, ROLES, PermissionName, RoleName } from '../types/auth';
-import { authService } from '../services/authService';
-import PermissionService from '../services/permissionService';
-import { userCache, CacheKeys, cacheUtils } from '../services/cacheService';
+import { authService, PermissionService } from '../services/auth';
+import { userCache, CacheKeys, cacheUtils } from '../utils/storage';
 import { preloadCriticalComponents } from '../components/lazy';
 import { STORAGE_KEYS } from '../constants/app';
-import StorageManager from '../utils/storageManager';
+import { StorageManager } from '../utils/storage';
 import { USER_ROLES as ROLE_NAMES } from '../constants/app';
 import { tokenRefreshScheduler } from '../utils/tokenRefreshScheduler';
 
-import { apiService } from '../services/api';
+import { apiService } from '../utils/api';
 // Password hashing is now handled by authService
 
 interface AuthContextType {

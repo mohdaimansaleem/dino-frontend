@@ -21,7 +21,7 @@ import {
   Store,
   CachedOutlined,
 } from '@mui/icons-material';
-import { menuService } from '../../services/menuService';
+import { menuService } from '../../services/business';
 import { useUserData } from '../../contexts/UserDataContext';
 import { DeleteConfirmationModal } from '../../components/modals';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';

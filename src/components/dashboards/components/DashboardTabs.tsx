@@ -11,8 +11,8 @@ import {
   TableRestaurant,
   Payment,
 } from '@mui/icons-material';
-import { usePermissions } from '../../RoleBasedComponent';
-import PermissionService from '../../../services/permissionService';
+import { usePermissions } from '../../auth';
+import PermissionService from '../../../services/auth';
 
 interface DashboardTabsProps {
   currentTab: number;

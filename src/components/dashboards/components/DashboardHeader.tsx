@@ -14,8 +14,8 @@ import {
 import { useAuth } from '../../../contexts/AuthContext';
 import { getUserFirstName } from '../../../utils/userUtils';
 import AnimatedBackground from '../../ui/AnimatedBackground';
-import { usePermissions } from '../../RoleBasedComponent';
-import PermissionService from '../../../services/permissionService';
+import { usePermissions } from '../../auth';
+import PermissionService from '../../../services/auth';
 
 interface DashboardHeaderProps {
   loading: boolean;

@@ -215,16 +215,16 @@ export const FeatureFlagDebug: React.FC<FeatureFlagDebugProps> = ({
   const isDebugMode = useFeatureFlag('debugMode');
   const isDevelopment = process.env.NODE_ENV === 'development';
   
-  if (!show || (!isDebugMode && !isDevelopment)) {
-    return null;
-  }
-  
   const flagsToShow = flags || [
     'themeToggle', 'darkMode', 'newDashboard', 'analytics', 'notifications',
     'qrCodes', 'coupons', 'debugMode', 'betaFeatures'
   ] as (keyof FeatureFlags)[];
   
   const featureFlags = useFeatureFlags(flagsToShow);
+  
+  if (!show || (!isDebugMode && !isDevelopment)) {
+    return null;
+  }
   
   const positionStyles = {
     'top-left': { top: 10, left: 10 },

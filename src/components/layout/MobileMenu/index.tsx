@@ -41,10 +41,10 @@ import DinoLogo from '../../DinoLogo';
 import { getUserFirstName } from '../../../utils/userUtils';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useDinoAvatar } from '../../../contexts/DinoAvatarContext';
-import PermissionService from '../../../services/permissionService';
+import { PermissionService } from '../../../services/auth';
 import { useUserData } from '../../../contexts/UserDataContext';
-import { venueService } from '../../../services/venueService';
-import { usePermissionCheck } from '../../PermissionGate';
+import { venueService } from '../../../services/business';
+import { usePermissionCheck } from '../../common/PermissionWrapper';
 import { PERMISSIONS } from '../../../types/auth';
 import { LogoutConfirmationModal } from '../../modals';
 

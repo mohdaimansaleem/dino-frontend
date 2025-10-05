@@ -70,10 +70,10 @@ import {
   Refresh,
   Store,
 } from '@mui/icons-material';
-import { venueService } from '../../services/venueService';
+import { venueService } from '../../services/business';
 import { useUserData } from '../../contexts/UserDataContext';
 import { CircularProgress } from '@mui/material';
-import StorageManager from '../../utils/storageManager';
+import StorageManager from '../../utils/storage';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
 
 interface VenueSettings {

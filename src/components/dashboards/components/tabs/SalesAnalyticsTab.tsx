@@ -23,7 +23,7 @@ import {
   LocalOffer,
 } from '@mui/icons-material';
 import { EnhancedPerformanceChart, SimpleBarChart } from '../../../charts/ChartComponents';
-import { usePermissions } from '../../../RoleBasedComponent';
+import { usePermissions } from '../../../auth';
 
 interface VenueDashboardStats {
   total_orders: number;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
-import { usePermissions } from '../RoleBasedComponent';
+import { usePermissions } from '../auth';
 import UnifiedDashboard from './UnifiedDashboard';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 

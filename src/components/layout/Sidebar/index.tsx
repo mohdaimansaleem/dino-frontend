@@ -33,8 +33,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useUserData } from '../../../contexts/UserDataContext';
 import { useSidebar } from '../../../contexts/SidebarContext';
-import { venueService } from '../../../services/venueService';
-import PermissionService from '../../../services/permissionService';
+import { venueService } from '../../../services/business';
+import PermissionService from '../../../services/auth';
 import { PERMISSIONS } from '../../../types/auth';
 
 

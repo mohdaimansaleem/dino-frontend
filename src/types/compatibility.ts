@@ -17,7 +17,7 @@ import type {
   OrderStatus as ApiOrderStatus,
   PaymentStatus as ApiPaymentStatus,
   UserRole as ApiUserRole
-} from './api';
+} from '../utils/api';
 
 import type {
   UserProfile as LegacyUserProfile,

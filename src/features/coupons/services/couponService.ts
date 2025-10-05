@@ -4,7 +4,7 @@
  * Handles all API interactions for coupon management
  */
 
-import { apiService } from '../../../services/api';
+import { apiService } from '../../../utils/api';
 import { 
   Coupon, 
   CouponCreate, 

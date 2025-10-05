@@ -9,12 +9,12 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
 import { PERMISSIONS, UserRole } from '../../types/auth';
-import { dashboardService } from '../../services/dashboardService';
+import { dashboardService } from '../../services/business';
 import { AdminDashboardResponse, SuperAdminDashboardResponse, OperatorDashboardResponse } from '../../types/dashboard';
 import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
 import DashboardTour from '../tour/DashboardTour';
-import { usePermissions } from '../RoleBasedComponent';
-import PermissionService from '../../services/permissionService';
+import { usePermissions } from '../auth';
+import PermissionService from '../../services/auth';
 
 // Import modular components
 import DashboardHeader from './components/DashboardHeader';

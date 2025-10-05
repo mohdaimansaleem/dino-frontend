@@ -27,7 +27,7 @@ import {
   CheckCircle
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
-import { storageService, UploadResponse } from '../services/storageService';
+import { storageService, UploadResponse } from '../utils/storage';
 
 interface ImageUploadProps {
   onUpload?: (response: UploadResponse) => void;

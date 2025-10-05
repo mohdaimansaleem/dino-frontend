@@ -20,8 +20,8 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useUserData } from '../contexts/UserDataContext';
 import { PERMISSIONS } from '../types/auth';
-import { venueService } from '../services/venueService';
-import StorageManager from '../utils/storageManager';
+import { venueService } from '../services/business';
+import StorageManager from '../utils/storage';
 
 interface VenueStatusControlProps {}
 

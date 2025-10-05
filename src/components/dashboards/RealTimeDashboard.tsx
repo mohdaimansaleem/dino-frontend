@@ -5,8 +5,8 @@ import { useRealTimeLiveOrders, useRealTimeLiveTables, useRealTimeDashboard } fr
 import { useToastActions } from '../../contexts/ToastContext';
 import { ConnectionStatus, LiveDataIndicator, OrderStatusIndicator, TableStatusIndicator } from '../realtime/StatusIndicators';
 import ActivityFeed from '../realtime/ActivityFeed';
-import RoleBasedComponent from '../RoleBasedComponent';
-import PermissionGate from '../PermissionGate';
+import { RoleBasedComponent } from '../auth';
+import { PermissionGate } from '../auth';
 import { PERMISSIONS } from '../../types/auth';
 
 interface RealTimeDashboardProps {

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { tourService, TourStatus } from '../services/tourService';
+import { tourService, TourStatus } from '../services/api';
 import { useAuth } from './AuthContext';
 
 export interface TourStep {

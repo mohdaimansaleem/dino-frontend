@@ -14,8 +14,8 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import { useUserData } from '../contexts/UserDataContext';
-import { venueService } from '../services/venueService';
-import StorageManager from '../utils/storageManager';
+import { venueService } from '../services/business';
+import StorageManager from '../utils/storage';
 
 const VenueStatusDebug: React.FC = () => {
   const { userData, refreshUserData } = useUserData();

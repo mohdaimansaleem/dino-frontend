@@ -1,33 +1,17 @@
 /**
- * Common Components Barrel Export
- * 
- * Centralized exports for common reusable components
+ * Common components index
+ * Centralized exports for all common/shared components
  */
 
-// Permission Components
-export { default as PermissionWrapper } from './PermissionWrapper';
-export {
-  CanViewDashboard,
-  CanManageOrders,
-  CanManageMenu,
-  CanManageTables,
-  CanManageUsers,
-  CanManageVenues,
-  CanViewSettings,
-  SuperAdminOnly,
-  AdminOnly,
-  OperatorOnly,
-  AdminOrAbove,
-  OperatorOrAbove,
-  withPermissions,
-  usePermissionCheck,
-} from './PermissionWrapper';
+export { default as AppInitializer } from './AppInitializer';
+export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as ErrorPage } from './ErrorPage';
+export { default as Layout, default } from './Layout';
+export { default as ThemeToggle } from './ThemeToggle';
+export { default as NotificationCenter } from './NotificationCenter';
 
-// Feature Flag Component
-export { default as FeatureFlag } from './FeatureFlag';
-
-// Venue Assignment Check
-export { default as VenueAssignmentCheck } from './VenueAssignmentCheck';
-
-// Workspace Error Boundary
-export { default as WorkspaceErrorBoundary } from './WorkspaceErrorBoundary';
+// Re-export from existing common folder
+export * from '../common/FeatureFlag';
+export * from '../common/PermissionWrapper';
+export * from '../common/VenueAssignmentCheck';
+export * from '../common/WorkspaceErrorBoundary';

@@ -31,15 +31,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useDinoAvatar } from '../../../contexts/DinoAvatarContext';
 import DinoLogo from '../../DinoLogo';
-import NotificationCenter from '../../NotificationCenter';
-import ThemeToggle from '../../ThemeToggle';
+import { NotificationCenter, ThemeToggle } from '../../common';
 import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 import MobileMenu from '../MobileMenu';
 import { NAVIGATION, COMPANY_INFO } from '../../../data/info';
 import { getUserFirstName } from '../../../utils/userUtils';
 import { isAdminLevel } from '../../../constants/roles';
 import { useUserData } from '../../../contexts/UserDataContext';
-import { venueService } from '../../../services/venueService';
+import { venueService } from '../../../services/business';
 import { LogoutConfirmationModal } from '../../modals';
 
 interface AppHeaderProps {

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { menuService } from '../services/menuService';
-import { venueService } from '../services/venueService';
-import { tableService } from '../services/tableService';
+import { menuService } from '../services/business';
+import { venueService } from '../services/business';
+import { tableService } from '../services/business';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserData } from '../contexts/UserDataContext';
 import { canUserAccessVenue, debugVenueAssignment } from '../utils/venueUtils';

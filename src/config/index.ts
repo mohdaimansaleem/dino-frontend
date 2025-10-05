@@ -19,14 +19,10 @@ export {
 // API configuration
 export {
   getApiBaseUrl,
-  getWebSocketUrl,
-  getBaseUrl,
-  getBackendUrl,
-  getEnvironment,
-  logApiConfig,
-  validateApiConfig,
-  API_CONFIG
-} from './api';
+  createApiUrl,
+  getDefaultFetchOptions,
+  getAuthenticatedFetchOptions
+} from '../utils/api';
 
 // Default export for convenience
 export { RUNTIME_CONFIG as default } from './runtime';

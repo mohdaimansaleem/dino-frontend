@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Workspace } from '../types/auth';
 import { Venue, PriceRange } from '../types/api';
-import { workspaceService } from '../services/workspaceService';
+import { workspaceService } from '../services/business';
 import { useAuth } from './AuthContext';
 
 

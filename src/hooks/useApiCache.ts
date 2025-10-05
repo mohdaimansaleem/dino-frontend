@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { apiCache, userCache } from '../services/cacheService';
+import { apiCache, userCache } from '../utils/storage';
 import { useAuth } from '../contexts/AuthContext';
 import { logger } from '../utils/logger';
 

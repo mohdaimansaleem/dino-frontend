@@ -51,7 +51,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
-import PermissionService from '../../services/permissionService';
+import PermissionService from '../../services/auth';
 import { PERMISSIONS, ROLES } from '../../types/auth';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
 

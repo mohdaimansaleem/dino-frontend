@@ -31,7 +31,7 @@ import {
   Settings,
   TableRestaurant,
 } from '@mui/icons-material';
-import { QRCodeData, qrService, QRGenerationRequest } from '../services/qrService';
+import { QRCodeData, qrService, QRGenerationRequest } from '../services/api';
 import { TemplateRenderer, templateConfigs } from './templates';
 import TemplatePreview from './templates/TemplatePreview';
 

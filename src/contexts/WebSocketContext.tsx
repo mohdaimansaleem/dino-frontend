@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { websocketService, WebSocketEventHandlers } from '../services/websocketService';
+import { websocketService, WebSocketEventHandlers } from '../services/api';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 

@@ -32,7 +32,7 @@ import {
   Assessment,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { usePermissions } from '../../../RoleBasedComponent';
+import { usePermissions } from '../../../auth';
 
 interface MenuItemPerformance {
   id: string;

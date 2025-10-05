@@ -8,7 +8,7 @@
 import React from 'react';
 import { Alert, Box, Typography } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
-import { usePermissions } from '../RoleBasedComponent';
+import { usePermissions } from '../auth';
 import { PermissionName, RoleName } from '../../types/auth';
 
 interface PermissionWrapperProps {
@@ -177,90 +177,66 @@ export default PermissionWrapper;
 
 // Convenience components for common permission patterns
 
-export const CanViewDashboard: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { canViewDashboard } = usePermissions();
-    return canViewDashboard();
-  }} />
-);
+export const CanViewDashboard: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { canViewDashboard } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => canViewDashboard()} />;
+};
 
-export const CanManageOrders: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { canManageOrders } = usePermissions();
-    return canManageOrders();
-  }} />
-);
+export const CanManageOrders: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { canManageOrders } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => canManageOrders()} />;
+};
 
-export const CanManageMenu: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { canManageMenu } = usePermissions();
-    return canManageMenu();
-  }} />
-);
+export const CanManageMenu: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { canManageMenu } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => canManageMenu()} />;
+};
 
-export const CanManageTables: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { canManageTables } = usePermissions();
-    return canManageTables();
-  }} />
-);
+export const CanManageTables: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { canManageTables } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => canManageTables()} />;
+};
 
-export const CanManageUsers: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { canManageUsers } = usePermissions();
-    return canManageUsers();
-  }} />
-);
+export const CanManageUsers: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { canManageUsers } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => canManageUsers()} />;
+};
 
-export const CanManageVenues: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { canManageVenues } = usePermissions();
-    return canManageVenues();
-  }} />
-);
+export const CanManageVenues: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { canManageVenues } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => canManageVenues()} />;
+};
 
-export const CanViewSettings: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { canViewSettings } = usePermissions();
-    return canViewSettings();
-  }} />
-);
+export const CanViewSettings: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { canViewSettings } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => canViewSettings()} />;
+};
 
 // Role-based convenience components
-export const SuperAdminOnly: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { isSuperAdmin } = usePermissions();
-    return isSuperAdmin();
-  }} />
-);
+export const SuperAdminOnly: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { isSuperAdmin } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => isSuperAdmin()} />;
+};
 
-export const AdminOnly: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { isAdmin } = usePermissions();
-    return isAdmin();
-  }} />
-);
+export const AdminOnly: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { isAdmin } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => isAdmin()} />;
+};
 
-export const OperatorOnly: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { isOperator } = usePermissions();
-    return isOperator();
-  }} />
-);
+export const OperatorOnly: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { isOperator } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => isOperator()} />;
+};
 
-export const AdminOrAbove: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { isSuperAdmin, isAdmin } = usePermissions();
-    return isSuperAdmin() || isAdmin();
-  }} />
-);
+export const AdminOrAbove: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { isSuperAdmin, isAdmin } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => isSuperAdmin() || isAdmin()} />;
+};
 
-export const OperatorOrAbove: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => (
-  <PermissionWrapper {...props} customCheck={() => {
-    const { isSuperAdmin, isAdmin, isOperator } = usePermissions();
-    return isSuperAdmin() || isAdmin() || isOperator();
-  }} />
-);
+export const OperatorOrAbove: React.FC<Omit<PermissionWrapperProps, 'customCheck'>> = (props) => {
+  const { isSuperAdmin, isAdmin, isOperator } = usePermissions();
+  return <PermissionWrapper {...props} customCheck={() => isSuperAdmin() || isAdmin() || isOperator()} />;
+};
 
 // Higher-order component for wrapping entire components with permission checks
 export const withPermissions = <P extends object>(

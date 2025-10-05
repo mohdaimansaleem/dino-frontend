@@ -4,9 +4,9 @@
  */
 
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useMemo } from 'react';
-import { optimizedApiService } from '../services/optimizedApiService';
-import { performanceService } from '../services/performanceService';
-import StorageManager from '../utils/storageManager';
+import { optimizedApiService } from '../utils/api';
+import { performanceService } from '../utils/performance';
+import StorageManager from '../utils/storage';
 
 // Types
 interface User {
