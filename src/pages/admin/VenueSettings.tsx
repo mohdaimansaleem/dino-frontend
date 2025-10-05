@@ -673,6 +673,7 @@ const VenueSettings: React.FC = () => {
                 borderRadius: 2,
                 border: '1px solid',
                 borderColor: 'rgba(255, 193, 7, 0.3)',
+                marginTop:3
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -691,8 +692,8 @@ const VenueSettings: React.FC = () => {
                   variant="outlined" 
                   onClick={handleReset}
                   sx={{
-                    borderColor: '#ed6c02',
-                    color: '#ed6c02',
+                    borderColor: '#fafafaff',
+                    color: '#eae7e5ff',
                     '&:hover': {
                       borderColor: '#d32f2f',
                       backgroundColor: 'rgba(255, 193, 7, 0.1)',

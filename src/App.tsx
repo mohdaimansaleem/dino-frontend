@@ -12,6 +12,7 @@ import { UserDataProvider } from './contexts/UserDataContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { VenueThemeProvider } from './contexts/VenueThemeContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { DinoAvatarProvider } from './contexts/DinoAvatarContext';
 import { TourProvider } from './contexts/TourContext';
@@ -130,21 +131,32 @@ function App() {
                 <Route path="/" element={<Layout><HomePage /></Layout>} />
                 <Route path="/home" element={<Layout><HomePage /></Layout>} />
 
-                <Route path="/register" element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    {React.createElement(LazyComponents.RegistrationPage.component)}
-                  </Suspense>
-                } /> 
+                <Route
+                  path="/register"
+                  element={
+                    <Suspense fallback={<LoadingFallback />}>
+                      {React.createElement(LazyComponents.RegistrationPage.component)}
+                    </Suspense>
+                  } />
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/menu/:venueId/:tableId" element={<Layout><MenuPage /></Layout>} />
-                <Route path="/checkout/:venueId/:tableId" element={<Layout><CheckoutPage /></Layout>} />
-                <Route path="/order-tracking/:orderId" element={<Layout><OrderTrackingPage /></Layout>} />
-                <Route path="/order/:orderId" element={<Layout><OrderTrackingPage /></Layout>} />
-                <Route path="/order-success/:orderId" element={<OrderSuccessPage />} />
-                <Route path="/order-status-demo" element={<OrderStatusDemo />} />
-                
-
-
+                <Route
+                  path="/menu/:venueId/:tableId"
+                  element={<VenueThemeProvider><Layout><MenuPage /></Layout></VenueThemeProvider>} />
+                <Route
+                  path="/checkout/:venueId/:tableId"
+                  element={<VenueThemeProvider><Layout><CheckoutPage /></Layout></VenueThemeProvider>} />
+                <Route
+                  path="/order-tracking/:orderId"
+                  element={<VenueThemeProvider><Layout><OrderTrackingPage /></Layout></VenueThemeProvider>} />
+                <Route
+                  path="/order/:orderId"
+                  element={<VenueThemeProvider><Layout><OrderTrackingPage /></Layout></VenueThemeProvider>} />
+                <Route
+                  path="/order-success/:orderId"
+                  element={<VenueThemeProvider><OrderSuccessPage /></VenueThemeProvider>} />
+                <Route
+                  path="/order-status-demo"
+                  element={<VenueThemeProvider><OrderStatusDemo /></VenueThemeProvider>} />
                 
                 {/* Protected User Routes */}
                 <Route path="/profile" element={

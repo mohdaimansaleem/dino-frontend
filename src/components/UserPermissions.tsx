@@ -38,51 +38,68 @@ const UserPermissions: React.FC = () => {
       name: 'Dashboard',
       icon: <Business />,
       color: '#1976d2',
-      permissions: permissions.filter(p => p.resource === 'dashboard')
+      permissions: permissions.filter(p => p.resource === 'dashboard' || p.name?.includes('dashboard'))
     },
     {
       name: 'Orders',
       icon: <ShoppingCart />,
       color: '#388e3c',
-      permissions: permissions.filter(p => p.resource === 'orders')
+      permissions: permissions.filter(p => p.resource === 'order' || p.resource === 'orders' || p.name?.includes('order'))
     },
     {
       name: 'Menu',
       icon: <MenuBook />,
       color: '#f57c00',
-      permissions: permissions.filter(p => p.resource === 'menu')
+      permissions: permissions.filter(p => p.resource === 'menu' || p.name?.includes('menu'))
+    },
+    {
+      name: 'Coupons',
+      icon: <MenuBook />,
+      color: '#e91e63',
+      permissions: permissions.filter(p => p.resource === 'coupon' || p.name?.includes('coupon'))
     },
     {
       name: 'Tables',
       icon: <TableRestaurant />,
       color: '#7b1fa2',
-      permissions: permissions.filter(p => p.resource === 'tables')
+      permissions: permissions.filter(p => p.resource === 'table' || p.resource === 'tables' || p.name?.includes('table'))
     },
     {
       name: 'Settings',
       icon: <Settings />,
       color: '#d32f2f',
-      permissions: permissions.filter(p => p.resource === 'settings')
+      permissions: permissions.filter(p => p.resource === 'settings' || p.name?.includes('settings'))
     },
     {
       name: 'Users',
       icon: <People />,
       color: '#0288d1',
-      permissions: permissions.filter(p => p.resource === 'users')
+      permissions: permissions.filter(p => p.resource === 'user' || p.resource === 'users' || p.name?.includes('user'))
     },
     {
       name: 'Workspace',
       icon: <Business />,
       color: '#5d4037',
-      permissions: permissions.filter(p => p.resource === 'workspace')
+      permissions: permissions.filter(p => p.resource === 'workspace' || p.name?.includes('workspace'))
     },
     {
-      name: 'Cafe Management',
+      name: 'Venue Management',
       icon: <Restaurant />,
       color: '#00796b',
-      permissions: permissions.filter(p => p.resource === 'cafe')
+      permissions: permissions.filter(p => p.resource === 'venue' || p.resource === 'cafe' || p.name?.includes('venue'))
     }
   ];
+
+  // Debug: Log permission structure for troubleshooting
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 UserPermissions Debug:', {
+      permissionsCount: permissions.length,
+      categoriesWithPermissions: permissionCategories.filter(cat => cat.permissions.length > 0).length,
+      role: typeof role === 'string' ? role : role?.name,
+      allPermissions: permissions.map(p => ({ id: p.id, name: p.name, resource: p.resource, action: p.action })),
+      duplicateIds: permissions.map(p => p.id).filter((id, index, arr) => arr.indexOf(id) !== index)
+    });
+  }
 
   const getActionIcon = (action: string) => {
     switch (action) {
@@ -271,11 +288,19 @@ const UserPermissions: React.FC = () => {
         <Typography variant="subtitle2" gutterBottom fontWeight="600">
           Permission Summary
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          You have access to {permissions.length} specific permissions across{' '}
-          {permissionCategories.filter(cat => cat.permissions.length > 0).length} categories.
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          You have access to <strong>{permissions.length}</strong> specific permissions across{' '}
+          <strong>{permissionCategories.filter(cat => cat.permissions.length > 0).length}</strong> categories.
           {permissions.length === 0 && ' Contact your administrator to request additional access.'}
         </Typography>
+        {permissionCategories.filter(cat => cat.permissions.length > 0).length > 0 && (
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            Categories: {permissionCategories
+              .filter(cat => cat.permissions.length > 0)
+              .map(cat => `${cat.name} (${cat.permissions.length})`)
+              .join(', ')}
+          </Typography>
+        )}
       </Paper>
     </Box>
   );

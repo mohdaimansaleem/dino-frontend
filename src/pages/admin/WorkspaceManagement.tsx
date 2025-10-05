@@ -69,6 +69,7 @@ import {
   Map,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+import { useVenueTheme } from '../../contexts/VenueThemeContext';
 import { useUserData } from '../../contexts/UserDataContext';
 import { PERMISSIONS } from '../../types/auth';
 import { venueService } from '../../services/venueService';
@@ -166,6 +167,7 @@ interface VenueFormData {
   email: string;
   priceRange: string;
   isActive: boolean;
+  theme: string;
   isOpen: boolean;
 }
 
@@ -184,6 +186,7 @@ const WorkspaceManagement: React.FC = () => {
   const { hasPermission, isSuperAdmin } = useAuth();
   const { userData, loading: userDataLoading } = useUserData(); // Removed refreshUserData to prevent API calls
   const location = useLocation();
+  const { setTheme } = useVenueTheme();
   const theme = useTheme();
   
   // State management
@@ -248,6 +251,7 @@ const WorkspaceManagement: React.FC = () => {
     priceRange: 'mid_range',
     isActive: true,
     isOpen: true,
+    theme: 'pet', // Default to pet theme as requested
   });
 
   // Load workspace venues directly (no caching) - ONLY calls venues API
@@ -1071,20 +1075,6 @@ const WorkspaceManagement: React.FC = () => {
                       )}
                     </Box>
                   </Box>
-
-                  {/* Footer */}
-                  <Box sx={{ p: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'rgba(0, 0, 0, 0.02)' }}>
-                    <Typography 
-                      variant="caption" 
-                      color="text.secondary"
-                      sx={{ 
-                        fontSize: '0.8rem',
-                        fontWeight: 400,
-                      }}
-                    >
-                      ID: {venue.id?.slice(-6) || 'N/A'}
-                    </Typography>
-                  </Box>
                 </Box>
               </Card>
             </Grid>
@@ -1223,6 +1213,7 @@ const WorkspaceManagement: React.FC = () => {
             priceRange: 'mid_range',
             isActive: true,
             isOpen: true,
+            theme: 'pet',
           });
         }}
         maxWidth="md"
@@ -1324,6 +1315,20 @@ const WorkspaceManagement: React.FC = () => {
               />
             </Grid>
             
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Theme</InputLabel>
+                <Select
+                  value={venueFormData.theme}
+                  label="Theme"
+                  onChange={(e) => setVenueFormData(prev => ({ ...prev, theme: e.target.value }))}
+                >
+                  <MenuItem value="default">Default Theme</MenuItem>
+                  <MenuItem value="pet">Pet Theme (Cats & Dogs)</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
             {/* Location Information */}
             <Grid item xs={12}>
               <Divider sx={{ my: 2 }} />
@@ -1578,6 +1583,7 @@ const WorkspaceManagement: React.FC = () => {
                   cuisine_types: [venueFormData.venueType], // Default to venue type as cuisine
                   is_active: venueFormData.isActive,
                   is_open: venueFormData.isOpen,
+                  theme: venueFormData.theme,
                   workspace_id: workspaceId
                 };
 
@@ -1592,6 +1598,7 @@ const WorkspaceManagement: React.FC = () => {
                     price_range: venueFormData.priceRange as PriceRange,
                     is_active: venueFormData.isActive,
                     is_open: venueFormData.isOpen,
+                    theme: venueFormData.theme,
                   };
                   await venueService.updateVenue(editingVenue.id, updateData);
                   setSnackbar({
@@ -1630,6 +1637,7 @@ const WorkspaceManagement: React.FC = () => {
                   priceRange: 'mid_range',
                   isActive: true,
                   isOpen: true,
+                  theme: 'pet',
                 });
                 
                 // Close dialog
@@ -1689,6 +1697,7 @@ const WorkspaceManagement: React.FC = () => {
                 priceRange: selectedItem.price_range || 'mid_range',
                 isActive: selectedItem.is_active ?? true,
                 isOpen: selectedItem.is_open ?? true,
+                theme: selectedItem.theme || 'pet', // Default to pet theme
               });
               setEditingVenue(selectedItem);
               setOpenVenueDialog(true);

@@ -179,6 +179,7 @@ export interface Venue {
   owner_id?: string; // Added for compatibility
   operating_hours?: OperatingHours[];
   subscription_status?: string;
+  theme?: string; // Venue theme (e.g., 'pet', 'default')
   created_at: string;
   updated_at?: string;
   createdAt?: string; // Legacy compatibility
@@ -238,6 +239,7 @@ export interface VenueUpdate {
   is_active?: boolean;
   is_open?: boolean;
   status?: string;
+  theme?: string;
 }
 
 export interface VenueAnalytics {

@@ -37,7 +37,7 @@ import EnhancedSidebar from './layout/EnhancedSidebar';
 // import VenueStatusControl from './VenueStatusControl'; // Unused
 // import DinoLogo from './DinoLogo'; // Unused
 import { getUserFirstName } from '../utils/userUtils';
-import { LogoutConfirmationModal } from './modals';
+
 
 interface LayoutProps {
   children: ReactNode;
@@ -55,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [venueOpen, setVenueOpen] = useState(true);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  // const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   
   // Feature flags
   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
@@ -71,14 +71,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isCustomerFacingRoute = isPublicMenuRoute || isCheckoutRoute || isOrderTrackingRoute;
 
   const handleLogout = () => {
-    setLogoutModalOpen(true);
-  };
-
-  const confirmLogout = () => {
     logout();
     navigate('/');
     setMobileDrawerOpen(false);
-    setLogoutModalOpen(false);
   };
 
   const handleMobileDrawerToggle = () => {
@@ -367,212 +362,202 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <>
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', minHeight: '100vh', margin: 0, padding: 0, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
-        {/* Enhanced AppHeader - Hidden for customer facing pages and mobile admin routes */}
-        {!isCustomerFacingRoute && !(isAdminRoute && isMobile) && (
-          <AppHeader />
-        )}
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', minHeight: '100vh', margin: 0, padding: 0, width: '100%', maxWidth: '100%', overflow: 'hidden' }}>
+      {/* Enhanced AppHeader - Hidden for customer facing pages and mobile admin routes */}
+      {!isCustomerFacingRoute && !(isAdminRoute && isMobile) && (
+        <AppHeader />
+      )}
 
-        {/* Admin Layout with Responsive Sidebar */}
-        {isAdminRoute && user ? (
-          <Box sx={{ display: 'flex', minHeight: isMobile ? '100vh' : 'calc(100vh - 70px)', position: 'relative', height: isMobile ? '100vh' : 'calc(100vh - 70px)', margin: 0, padding: 0, width: '100%', maxWidth: '100%' }}>
-            {/* Enhanced Desktop Sidebar Navigation */}
-            {!isMobile && (
-              <EnhancedSidebar isTablet={isTablet} />
-            )}
-
+      {/* Admin Layout with Responsive Sidebar */}
+      {isAdminRoute && user ? (
+        <Box sx={{ display: 'flex', minHeight: isMobile ? '100vh' : 'calc(100vh - 70px)', position: 'relative', height: isMobile ? '100vh' : 'calc(100vh - 70px)', margin: 0, padding: 0, width: '100%', maxWidth: '100%' }}>
+          {/* Enhanced Desktop Sidebar Navigation */}
+          {!isMobile && (
+            <EnhancedSidebar isTablet={isTablet} />
+          )}
 
 
-            {/* Main Content */}
-            <Box
-              component="main"
-              className={isMobile ? "admin-main-content" : ""}
-              sx={{
-                flex: 1,
-                backgroundColor: 'background.default',
-                minHeight: isMobile ? '100vh' : 'calc(100vh - 70px)',
-                height: isMobile ? '100vh' : 'calc(100vh - 70px)',
-                marginLeft: isMobile ? 0 : `${getSidebarWidth(isTablet)}px`,
-                marginTop: isMobile ? 0 : '70px',
-                marginRight: 0,
-                paddingRight: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
-                overflow: isMobile ? 'visible' : 'auto',
-                width: isMobile ? '100%' : `calc(100% - ${getSidebarWidth(isTablet)}px)`,
-                maxWidth: '100%',
-              }}
-            >
-              {/* Mobile Header for Admin - Now uses MobileMenu */}
-              {isMobile && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    p: 2,
-                    backgroundColor: 'background.paper',
-                    borderBottom: '1px solid',
-                    borderColor: 'divider',
-                    position: 'sticky',
-                    top: 0,
-                    zIndex: 1000,
-                    flexShrink: 0,
-                    minHeight: '64px', // Fixed height
-                    maxHeight: '64px',
-                  }}
-                >
-                  {/* Title only */}
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
-                      {isOperator() ? 'Operator Panel' : 'Admin Panel'}
-                    </Typography>
-                  </Box>
-                  
-                  {/* Hamburger menu on the right */}
-                  <IconButton
-                    onClick={handleMobileDrawerToggle}
-                    sx={{
-                      color: 'text.primary',
-                      minWidth: 44,
-                      minHeight: 44,
-                      '&:hover': {
-                        backgroundColor: 'action.hover',
-                      },
-                      '&:active': {
-                        backgroundColor: 'action.selected',
-                      },
-                    }}
-                  >
-                    <MenuIcon sx={{ fontSize: 24 }} />
-                  </IconButton>
-                </Box>
-              )}
 
-              <Box 
-                sx={{ 
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'visible',
-                  height: 'auto',
-                  minHeight: 'auto',
-                }}
-              >
-                <Fade in timeout={300}>
-                  <Box 
-                    sx={{ 
-                      flex: 1,
-                      p: 0,
-                      overflow: 'visible',
-                      minHeight: 'auto',
-                      height: 'auto',
-                    }}
-                  >
-                    {children}
-                  </Box>
-                </Fade>
-                
-                {/* Footer for Admin Routes */}
-                <Box 
-                  sx={{ 
-                    flexShrink: 0,
-                    textAlign: 'center',
-                    py: { xs: 1, lg: 1 },
-                    px: { xs: 2, lg: 1 },
-                    borderTop: '1px solid',
-                    borderColor: 'divider',
-                    backgroundColor: 'background.paper',
-                    mt: 'auto',
-                  }}
-                >
-                <Typography 
-                  variant="body2" 
-                  color="text.secondary"
-                  sx={{ 
-                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                    fontWeight: 500 
-                  }}
-                >
-                  © 2025 Dino. All rights reserved.
-                </Typography>
-                <Typography 
-                  variant="caption" 
-                  color="text.secondary"
-                  sx={{ 
-                    fontSize: { xs: '0.65rem', sm: '0.75rem' },
-                    display: 'block',
-                    mt: 0.5
-                  }}
-                >
-                  Digital Menu Revolution
-                </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Mobile Menu for Admin Routes */}
-            {isMobile && (
-              <MobileMenu
-                open={mobileDrawerOpen}
-                onClose={() => setMobileDrawerOpen(false)}
-                homeNavItems={[]}
-                activeSection=""
-                onSectionClick={() => {}}
-                user={user}
-                onLogout={handleLogout}
-                onNavigate={(path) => {
-                  navigate(path);
-                  setMobileDrawerOpen(false);
-                }}
-                isHomePage={false}
-                isAdminRoute={true}
-              />
-            )}
-          </Box>
-        ) : (
-          /* Non-admin routes */
+          {/* Main Content */}
           <Box
             component="main"
+            className={isMobile ? "admin-main-content" : ""}
             sx={{
-              flexGrow: 1,
+              flex: 1,
               backgroundColor: 'background.default',
-              minHeight: '100vh',
-              pt: isCustomerFacingRoute ? 0 : { xs: 8, sm: 9 }, // Responsive top padding for sticky navbar
-              transition: 'padding-top 0.3s ease-in-out',
-              // Smooth scrolling
-              scrollBehavior: 'smooth',
-              width: '100%',
+              minHeight: isMobile ? '100vh' : 'calc(100vh - 70px)',
+              height: isMobile ? '100vh' : 'calc(100vh - 70px)',
+              marginLeft: isMobile ? 0 : `${getSidebarWidth(isTablet)}px`,
+              marginTop: isMobile ? 0 : '70px',
+              marginRight: 0,
+              paddingRight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative',
+              overflow: isMobile ? 'visible' : 'auto',
+              width: isMobile ? '100%' : `calc(100% - ${getSidebarWidth(isTablet)}px)`,
               maxWidth: '100%',
-              overflow: 'auto',
-              WebkitOverflowScrolling: 'touch', // Enable momentum scrolling on iOS
             }}
           >
-            <Fade in timeout={300}>
-              <Box 
-                sx={{ 
-                  width: '100%',
-                  maxWidth: '100%',
-                  overflow: 'auto',
+            {/* Mobile Header for Admin - Now uses MobileMenu */}
+            {isMobile && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  backgroundColor: 'background.paper',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  position: 'sticky',
+                  top: 0,
+                  zIndex: 1000,
+                  flexShrink: 0,
+                  minHeight: '64px', // Fixed height
+                  maxHeight: '64px',
                 }}
               >
-                {children}
+                {/* Title only */}
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                    {isOperator() ? 'Operator Panel' : 'Admin Panel'}
+                  </Typography>
+                </Box>
+                
+                {/* Hamburger menu on the right */}
+                <IconButton
+                  onClick={handleMobileDrawerToggle}
+                  sx={{
+                    color: 'text.primary',
+                    minWidth: 44,
+                    minHeight: 44,
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                    },
+                    '&:active': {
+                      backgroundColor: 'action.selected',
+                    },
+                  }}
+                >
+                  <MenuIcon sx={{ fontSize: 24 }} />
+                </IconButton>
               </Box>
-            </Fade>
-          </Box>
-        )}
-      </Box>
+            )}
 
-      {/* Logout Confirmation Modal */}
-      <LogoutConfirmationModal
-        open={logoutModalOpen}
-        onClose={() => setLogoutModalOpen(false)}
-        onConfirm={confirmLogout}
-        userName={getUserFirstName(user) || user?.email}
-      />
-    </>
+            <Box 
+              sx={{ 
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'visible',
+                height: 'auto',
+                minHeight: 'auto',
+              }}
+            >
+              <Fade in timeout={300}>
+                <Box 
+                  sx={{ 
+                    flex: 1,
+                    p: 0,
+                    overflow: 'visible',
+                    minHeight: 'auto',
+                    height: 'auto',
+                  }}
+                >
+                  {children}
+                </Box>
+              </Fade>
+              
+              {/* Footer for Admin Routes */}
+              <Box 
+                sx={{ 
+                  flexShrink: 0,
+                  textAlign: 'center',
+                  py: { xs: 1, lg: 1 },
+                  px: { xs: 2, lg: 1 },
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                  backgroundColor: 'background.paper',
+                  mt: 'auto',
+                }}
+              >
+              <Typography 
+                variant="body2" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  fontWeight: 500 
+                }}
+              >
+                © 2025 Dino. All rights reserved.
+              </Typography>
+              <Typography 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                  display: 'block',
+                  mt: 0.5
+                }}
+              >
+                Digital Menu Revolution
+              </Typography>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Mobile Menu for Admin Routes */}
+          {isMobile && (
+            <MobileMenu
+              open={mobileDrawerOpen}
+              onClose={() => setMobileDrawerOpen(false)}
+              homeNavItems={[]}
+              activeSection=""
+              onSectionClick={() => {}}
+              user={user}
+              onLogout={handleLogout}
+              onNavigate={(path) => {
+                navigate(path);
+                setMobileDrawerOpen(false);
+              }}
+              isHomePage={false}
+              isAdminRoute={true}
+            />
+          )}
+        </Box>
+      ) : (
+        /* Non-admin routes */
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            backgroundColor: 'background.default',
+            minHeight: '100vh',
+            pt: isCustomerFacingRoute ? 0 : { xs: 8, sm: 9 }, // Responsive top padding for sticky navbar
+            transition: 'padding-top 0.3s ease-in-out',
+            // Smooth scrolling
+            scrollBehavior: 'smooth',
+            width: '100%',
+            maxWidth: '100%',
+            overflow: 'auto',
+            WebkitOverflowScrolling: 'touch', // Enable momentum scrolling on iOS
+          }}
+        >
+          <Fade in timeout={300}>
+            <Box 
+              sx={{ 
+                width: '100%',
+                maxWidth: '100%',
+                overflow: 'auto',
+              }}
+            >
+              {children}
+            </Box>
+          </Fade>
+        </Box>
+      )}
+    </Box>
   );
 };
 

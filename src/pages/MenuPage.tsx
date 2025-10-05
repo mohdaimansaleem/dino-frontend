@@ -48,6 +48,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useTheme } from '@mui/material/styles';
+import { useVenueTheme } from '../contexts/VenueThemeContext';
 
 import { MenuItem } from '../types';
 import CustomerNavbar from '../components/CustomerNavbar';
@@ -55,6 +56,20 @@ import VenueNotAcceptingOrdersPage from '../components/VenueNotAcceptingOrdersPa
 import { SmartLoading } from '../components/ui/LoadingStates';
 import { MenuError } from '../components/ErrorStates';
 import { useMenuData as useMenuData, type MenuItemType } from '../hooks/useMenuData';
+
+// --- Mock Data and Assets for Theming ---
+const petThemeImages = {
+  'Espresso': 'https://images.unsplash.com/photo-1559190394-df57786147c2?q=80&w=1974', // Cat with coffee
+  'Cappuccino': 'https://images.unsplash.com/photo-1580477851693-4623a2d3435a?q=80&w=2070', // Dog with coffee
+  'Croissant': 'https://images.unsplash.com/photo-1622022999054-99349a882476?q=80&w=2070', // Cat looking at food
+  'Avocado Toast': 'https://images.unsplash.com/photo-1548681528-6a5c45b66b42?q=80&w=1974', // Cat with glasses
+};
+
+const defaultThemeImages = {
+  'Espresso': 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?q=80&w=1974',
+  'Cappuccino': 'https://images.unsplash.com/photo-1572442388796-11668a65343d?q=80&w=1974',
+  'Croissant': 'https://images.unsplash.com/photo-1530610476181-d83430b64dcd?q=80&w=2070',
+};
 
 // Enhanced interfaces - now imported from the hook
 
@@ -145,6 +160,7 @@ const MenuPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { theme: venueTheme, setTheme: setVenueTheme } = useVenueTheme();
   const { addItem, items: cartItems, getTotalItems } = useCart();
 
   // Use the new menu data hook
@@ -175,6 +191,22 @@ const MenuPage: React.FC = () => {
   // Refs
   const categoryRefs = useRef<Record<string, HTMLElement | null>>({});
   const menuContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // When restaurant data is available, set the theme from the backend.
+  useEffect(() => {
+    if (restaurant?.theme) {
+      setVenueTheme(restaurant.theme);
+    }
+    // If no theme is in the backend, it will keep the default 'pet' theme from the context.
+  }, [restaurant, setVenueTheme]);
+
+  const getMenuItemImage = (item: MenuItemType) => {
+    if (venueTheme === 'pet') {
+      // Use pet theme image if available, otherwise fallback to default, then to item's own image
+      return petThemeImages[item.name as keyof typeof petThemeImages] || defaultThemeImages[item.name as keyof typeof defaultThemeImages] || item.image;
+    }
+    return item.image || defaultThemeImages[item.name as keyof typeof defaultThemeImages];
+  };
 
   // Desktop restriction check - more lenient for tablets
   const isDesktopRestricted = useMediaQuery(theme.breakpoints.up('xl')); // Only restrict on very large screens
@@ -858,6 +890,7 @@ const MenuPage: React.FC = () => {
                   <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
                     <EnhancedMenuItemCard 
                       item={item} 
+                  imageOverride={getMenuItemImage(item)}
                       onAddToCart={handleAddToCart}
                       onToggleFavorite={toggleFavorite}
                       isFavorite={favorites.has(item.id)}
@@ -889,7 +922,7 @@ const MenuPage: React.FC = () => {
               <Grid container spacing={{ xs: 2, sm: 3 }}>
                 {menuItems.map((item) => (
                   <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
-                    <EnhancedMenuItemCard 
+                    <EnhancedMenuItemCard
                       item={item} 
                       onAddToCart={handleAddToCart}
                       onToggleFavorite={toggleFavorite}
@@ -954,11 +987,12 @@ const MenuPage: React.FC = () => {
 const EnhancedMenuItemCard: React.FC<{
   item: MenuItemType;
   onAddToCart: (item: MenuItemType) => void;
+  imageOverride?: string;
   onToggleFavorite: (itemId: string) => void;
   isFavorite: boolean;
   quantityInCart: number;
   isMobile?: boolean;
-}> = React.memo(({ item, onAddToCart, onToggleFavorite, isFavorite, quantityInCart, isMobile = false }) => {
+}> = React.memo(({ item, onAddToCart, imageOverride, onToggleFavorite, isFavorite, quantityInCart, isMobile = false }) => {
   const { updateQuantity, removeItem } = useCart();
   const theme = useTheme();
 
@@ -1016,10 +1050,10 @@ const EnhancedMenuItemCard: React.FC<{
         height: { xs: 200, sm: 220 }, // Fixed height for top half
         backgroundColor: 'grey.50'
       }}>
-        {item.image ? (
+        {imageOverride || item.image ? (
           <CardMedia
             component="img"
-            image={item.image}
+            image={imageOverride || item.image}
             alt={item.name}
             className="menu-item-image"
             sx={{ 

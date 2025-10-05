@@ -38,6 +38,7 @@ export interface UserData {
     website?: string;
     is_active: boolean;
     is_open: boolean;
+    theme?: string; // Venue theme (e.g., 'pet', 'default')
     created_at: string;
     updated_at?: string;
     // Compatibility fields
@@ -204,7 +205,8 @@ class UserDataService {
             name: userData.venue.name || 'Unknown Venue',
             description: userData.venue.description || '',
             phone: userData.venue.phone || '',
-            email: userData.venue.email || ''
+            email: userData.venue.email || '',
+            theme: userData.venue.theme || (userData.venue as any).theme || 'pet' // Default to pet theme
           };
           
           // Set status field separately to avoid TypeScript issues

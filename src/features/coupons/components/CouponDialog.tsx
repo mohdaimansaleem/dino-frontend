@@ -82,13 +82,19 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const isEditing = !!coupon;
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+
   
   const [formData, setFormData] = useState<CouponFormData>({
     code: '',
     discountType: 'percentage',
     discountValue: '',
     startDate: new Date().toISOString().split('T')[0],
-    expiryDate: '',
+    expiryDate: nextMonth.toISOString().split('T')[0],
     minOrderAmount: '',
     maxClaims: '',
     isActive: true,
@@ -606,12 +612,11 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
             <Grid item xs={12} md={6}>
               <DatePicker
                 label="Start Date"
-                value={formData.startDate ? new Date(formData.startDate) : null}
+                value={new Date(formData.startDate)}
                 onChange={(date) => handleChange('startDate', date?.toISOString().split('T')[0] || '')}
                 slotProps={{
                   textField: {
                     fullWidth: true,
-                    placeholder: "Select start date",
                     error: !!validation.errors.find(e => e.includes('Start date')),
                     helperText: validation.errors.find(e => e.includes('Start date'))
                   }
@@ -622,12 +627,11 @@ const CouponDialog: React.FC<CouponDialogProps> = ({
             <Grid item xs={12} md={6}>
               <DatePicker
                 label="Expiry Date"
-                value={formData.expiryDate ? new Date(formData.expiryDate) : null}
+                value={new Date(formData.expiryDate)}
                 onChange={(date) => handleChange('expiryDate', date?.toISOString().split('T')[0] || '')}
                 slotProps={{
                   textField: {
                     fullWidth: true,
-                    placeholder: "Select expiry date",
                     error: !!validation.errors.find(e => e.includes('Expiry date')),
                     helperText: validation.errors.find(e => e.includes('Expiry date'))
                   }
