@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React, { useRef, useMemo, useCallback } from 'react';
 import {
   Box,

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React, { useEffect } from 'react';
 import { Card } from '../ui/Card';
 import { useAuth } from '../../contexts/AuthContext';
