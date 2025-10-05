@@ -18,6 +18,8 @@ import {
 } from '@mui/material';
 import { Add, Restaurant, Search, Clear, FilterList } from '@mui/icons-material';
 import MenuItemCard from './MenuItemCard';
+import { useMenuFlags } from '../../flags/FlagContext';
+import { FlagGate } from '../../flags/FlagComponent';
 
 interface MenuItemsGridProps {
   filteredItems: any[];
@@ -68,6 +70,7 @@ const MenuItemsGrid: React.FC<MenuItemsGridProps> = ({
   setShowFilters
 }) => {
   const theme = useTheme();
+  const menuFlags = useMenuFlags();
 
   return (
     <Box sx={{ 
@@ -102,35 +105,38 @@ const MenuItemsGrid: React.FC<MenuItemsGridProps> = ({
             </Box>
             
             {/* Add Menu Item Button */}
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={onAddItem}
-              sx={{ 
-                borderRadius: 2,
-                px: 3,
-                py: 1.5,
-                fontWeight: 700,
-                fontSize: '0.875rem',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                '&:hover': {
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
-                  transform: 'translateY(-1px)',
-                }
-              }}
-            >
-              Add Menu Item
-            </Button>
+            <FlagGate flag="menu.showAddMenuItem">
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={onAddItem}
+                sx={{ 
+                  borderRadius: 2,
+                  px: 3,
+                  py: 1.5,
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  '&:hover': {
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+                    transform: 'translateY(-1px)',
+                  }
+                }}
+              >
+                Add Menu Item
+              </Button>
+            </FlagGate>
           </Box>
 
           {/* Filters Row */}
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 2,
-            alignItems: { xs: 'stretch', sm: 'center' },
-            justifyContent: 'flex-end'
-          }}>
+          <FlagGate flag="menu.showMenuFilters">
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 2,
+              alignItems: { xs: 'stretch', sm: 'center' },
+              justifyContent: 'flex-end'
+            }}>
             {/* Search Bar */}
             <TextField
               size="small"
@@ -240,7 +246,8 @@ const MenuItemsGrid: React.FC<MenuItemsGridProps> = ({
                 </IconButton>
               )}
             </Stack>
-          </Box>
+            </Box>
+          </FlagGate>
 
           {/* Advanced Filters */}
           {setShowFilters && (

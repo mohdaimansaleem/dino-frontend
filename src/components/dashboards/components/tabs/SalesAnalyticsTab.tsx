@@ -24,6 +24,8 @@ import {
 } from '@mui/icons-material';
 import { EnhancedPerformanceChart, SimpleBarChart } from '../../../charts/ChartComponents';
 import { usePermissions } from '../../../auth';
+import { useDashboardFlags } from '../../../../flags/FlagContext';
+import { FlagGate } from '../../../../flags/FlagComponent';
 
 interface VenueDashboardStats {
   total_orders: number;
@@ -51,15 +53,18 @@ interface SalesAnalyticsTabProps {
 const SalesAnalyticsTab: React.FC<SalesAnalyticsTabProps> = ({ dashboardData, stats }) => {
   const theme = useTheme();
   const { isSuperAdmin } = usePermissions();
+  const dashboardFlags = useDashboardFlags();
 
 
 
   return (
     <Grid container spacing={3}>
       {/* Enhanced Performance Chart */}
-      <Grid item xs={12} lg={8}>
-        <EnhancedPerformanceChart data={dashboardData} stats={stats} />
-      </Grid>
+      <FlagGate flag="dashboard.showAnalyticsCharts">
+        <Grid item xs={12} lg={8}>
+          <EnhancedPerformanceChart data={dashboardData} stats={stats} />
+        </Grid>
+      </FlagGate>
 
       {/* Top Menu Items */}
       <Grid item xs={12} lg={4}>

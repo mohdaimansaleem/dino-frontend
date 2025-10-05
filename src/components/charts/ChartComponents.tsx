@@ -28,6 +28,8 @@ import {
   BarChart,
 } from '@mui/icons-material';
 import { getConfigValue } from '../../config/runtime';
+import { useDashboardFlags } from '../../flags/FlagContext';
+import { FlagGate } from '../../flags/FlagComponent';
 
 // Register Chart.js components
 ChartJS.register(
@@ -477,6 +479,7 @@ interface EnhancedPerformanceChartProps {
 
 export const EnhancedRevenueChart: React.FC<EnhancedRevenueChartProps> = ({ data, stats }) => {
   const theme = useTheme();
+  const dashboardFlags = useDashboardFlags();
 
   const revenueData = data?.venue_performance?.map((venue: any) => ({
     day: venue.name,
@@ -489,90 +492,92 @@ export const EnhancedRevenueChart: React.FC<EnhancedRevenueChartProps> = ({ data
   const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
   return (
-    <Card sx={{ 
-      borderRadius: 3,
-      boxShadow: theme.shadows[2],
-      border: '1px solid',
-      borderColor: 'divider',
-      height: '100%'
-    }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <ShowChart sx={{ color: 'primary.main', fontSize: 28 }} />
-            <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-              Revenue & Orders Analytics
-            </Typography>
+    <FlagGate flag="dashboard.showRevenueChart">
+      <Card sx={{ 
+        borderRadius: 3,
+        boxShadow: theme.shadows[2],
+        border: '1px solid',
+        borderColor: 'divider',
+        height: '100%'
+      }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <ShowChart sx={{ color: 'primary.main', fontSize: 28 }} />
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                Revenue & Orders Analytics
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <Chip 
+                label={`₹${totalRevenue.toLocaleString()}`} 
+                color="success" 
+                variant="outlined"
+                size="small"
+              />
+              <Chip 
+                label={`${totalOrders} orders`} 
+                color="primary" 
+                variant="outlined"
+                size="small"
+              />
+            </Stack>
           </Box>
-          <Stack direction="row" spacing={1}>
-            <Chip 
-              label={`₹${totalRevenue.toLocaleString()}`} 
-              color="success" 
-              variant="outlined"
-              size="small"
-            />
-            <Chip 
-              label={`${totalOrders} orders`} 
-              color="primary" 
-              variant="outlined"
-              size="small"
-            />
-          </Stack>
-        </Box>
 
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={4}>
-            <Box sx={{ textAlign: 'center', p: 1.5, backgroundColor: 'success.50', borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
-                ₹{totalRevenue.toLocaleString()}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">Total Revenue</Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={4}>
-            <Box sx={{ textAlign: 'center', p: 1.5, backgroundColor: 'primary.50', borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-                {totalOrders}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">Total Orders</Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={4}>
-            <Box sx={{ textAlign: 'center', p: 1.5, backgroundColor: 'warning.50', borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                ₹{Math.round(avgOrderValue)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">Avg Order</Typography>
-            </Box>
-          </Grid>
-        </Grid>
-
-        <Box sx={{ height: 400 }}>
-          {revenueData.length > 0 ? (
-            <WeeklyRevenueChart data={revenueData} height={400} />
-          ) : (
-            <Box sx={{ 
-              height: '100%', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              backgroundColor: 'grey.50',
-              borderRadius: 2,
-              border: '2px dashed',
-              borderColor: 'grey.300'
-            }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <ShowChart sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
-                <Typography variant="h6" color="text.secondary">No Revenue Data</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Revenue trends will appear here once data is available
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={4}>
+              <Box sx={{ textAlign: 'center', p: 1.5, backgroundColor: 'success.50', borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                  ₹{totalRevenue.toLocaleString()}
                 </Typography>
+                <Typography variant="caption" color="text.secondary">Total Revenue</Typography>
               </Box>
-            </Box>
-          )}
-        </Box>
-      </CardContent>
-    </Card>
+            </Grid>
+            <Grid item xs={4}>
+              <Box sx={{ textAlign: 'center', p: 1.5, backgroundColor: 'primary.50', borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                  {totalOrders}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">Total Orders</Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={4}>
+              <Box sx={{ textAlign: 'center', p: 1.5, backgroundColor: 'warning.50', borderRadius: 2 }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                  ₹{Math.round(avgOrderValue)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">Avg Order</Typography>
+              </Box>
+            </Grid>
+          </Grid>
+
+          <Box sx={{ height: 400 }}>
+            {revenueData.length > 0 ? (
+              <WeeklyRevenueChart data={revenueData} height={400} />
+            ) : (
+              <Box sx={{ 
+                height: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                backgroundColor: 'grey.50',
+                borderRadius: 2,
+                border: '2px dashed',
+                borderColor: 'grey.300'
+              }}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <ShowChart sx={{ fontSize: 48, color: 'grey.400', mb: 1 }} />
+                  <Typography variant="h6" color="text.secondary">No Revenue Data</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Revenue trends will appear here once data is available
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+    </FlagGate>
   );
 };
 

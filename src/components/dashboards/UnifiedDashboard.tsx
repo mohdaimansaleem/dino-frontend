@@ -15,6 +15,7 @@ import VenueAssignmentCheck from '../common/VenueAssignmentCheck';
 import DashboardTour from '../tour/DashboardTour';
 import { usePermissions } from '../auth';
 import PermissionService from '../../services/auth';
+import { useDashboardFlags } from '../../flags/FlagContext';
 
 // Import modular components
 import DashboardHeader from './components/DashboardHeader';
@@ -70,6 +71,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({ className }) => {
   const { user, hasPermission, hasBackendPermission, userPermissions } = useAuth();
   const { userData } = useUserData();
   const currentVenue = userData?.venue;
+  const dashboardFlags = useDashboardFlags();
   
   // Permission hooks
   const {

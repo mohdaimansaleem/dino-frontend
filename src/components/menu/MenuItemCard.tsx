@@ -20,6 +20,8 @@ import {
   Upload,
   Restaurant
 } from '@mui/icons-material';
+import { useMenuFlags } from '../../flags/FlagContext';
+import { FlagGate } from '../../flags/FlagComponent';
 
 interface MenuItemCardProps {
   item: any;
@@ -41,6 +43,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
   onDeleteItem
 }) => {
   const theme = useTheme();
+  const menuFlags = useMenuFlags();
 
   const VegNonVegIcon = ({ isVeg }: { isVeg: boolean }) => (
     <Box
@@ -158,43 +161,45 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
         </Box>
 
         {/* Quick Actions */}
-        <Box sx={{
-          position: 'absolute',
-          top: 12,
-          right: 12,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 0.5,
-        }}>
-          <Tooltip title="Upload Image">
-            <IconButton 
-              size="small" 
-              component="label"
-              sx={{ 
-                backgroundColor: alpha(theme.palette.background.paper, 0.95),
-                backdropFilter: 'blur(8px)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                '&:hover': { 
-                  backgroundColor: theme.palette.background.paper,
-                  transform: 'scale(1.1)',
-                }
-              }}
-            >
-              <Upload fontSize="small" />
-              <input
-                type="file"
-                hidden
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    onQuickImageUpload(item.id, file);
+        <FlagGate flag="menu.showQuickImageUpload">
+          <Box sx={{
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0.5,
+          }}>
+            <Tooltip title="Upload Image">
+              <IconButton 
+                size="small" 
+                component="label"
+                sx={{ 
+                  backgroundColor: alpha(theme.palette.background.paper, 0.95),
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  '&:hover': { 
+                    backgroundColor: theme.palette.background.paper,
+                    transform: 'scale(1.1)',
                   }
                 }}
-              />
-            </IconButton>
-          </Tooltip>
-        </Box>
+              >
+                <Upload fontSize="small" />
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      onQuickImageUpload(item.id, file);
+                    }
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </FlagGate>
 
         {/* Preparation Time */}
         <Box
@@ -305,56 +310,62 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
           alignItems: 'center'
         }}>
           <Stack direction="row" spacing={1}>
-            <Tooltip title={(item.available ?? item.isAvailable) ? 'Mark Unavailable' : 'Mark Available'}>
-              <IconButton 
-                size="small" 
-                onClick={() => onToggleAvailability(item.id)}
-                sx={{ 
-                  backgroundColor: alpha(theme.palette.grey[100], 0.8),
-                  '&:hover': { 
-                    backgroundColor: (item.available ?? item.isAvailable) ? 
-                      alpha(theme.palette.error.main, 0.1) : 
-                      alpha(theme.palette.success.main, 0.1),
-                    color: (item.available ?? item.isAvailable) ? 'error.main' : 'success.main'
+            <FlagGate flag="menu.showMenuItemAvailability">
+              <Tooltip title={(item.available ?? item.isAvailable) ? 'Mark Unavailable' : 'Mark Available'}>
+                <IconButton 
+                  size="small" 
+                  onClick={() => onToggleAvailability(item.id)}
+                  sx={{ 
+                    backgroundColor: alpha(theme.palette.grey[100], 0.8),
+                    '&:hover': { 
+                      backgroundColor: (item.available ?? item.isAvailable) ? 
+                        alpha(theme.palette.error.main, 0.1) : 
+                        alpha(theme.palette.success.main, 0.1),
+                      color: (item.available ?? item.isAvailable) ? 'error.main' : 'success.main'
+                    }
+                  }}
+                >
+                  {(item.available ?? item.isAvailable) ? 
+                    <VisibilityOff fontSize="small" /> : 
+                    <Visibility fontSize="small" />
                   }
-                }}
-              >
-                {(item.available ?? item.isAvailable) ? 
-                  <VisibilityOff fontSize="small" /> : 
-                  <Visibility fontSize="small" />
-                }
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Edit Item">
-              <IconButton 
-                size="small" 
-                onClick={() => onEditItem(item)}
-                sx={{ 
-                  backgroundColor: alpha(theme.palette.grey[100], 0.8),
-                  '&:hover': { 
-                    backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                    color: 'primary.main'
-                  }
-                }}
-              >
-                <Edit fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete Item">
-              <IconButton 
-                size="small" 
-                onClick={() => onDeleteItem(item.id)}
-                sx={{ 
-                  backgroundColor: alpha(theme.palette.grey[100], 0.8),
-                  '&:hover': { 
-                    backgroundColor: alpha(theme.palette.error.main, 0.1),
-                    color: 'error.main'
-                  }
-                }}
-              >
-                <Delete fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                </IconButton>
+              </Tooltip>
+            </FlagGate>
+            <FlagGate flag="menu.showEditMenuItem">
+              <Tooltip title="Edit Item">
+                <IconButton 
+                  size="small" 
+                  onClick={() => onEditItem(item)}
+                  sx={{ 
+                    backgroundColor: alpha(theme.palette.grey[100], 0.8),
+                    '&:hover': { 
+                      backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                      color: 'primary.main'
+                    }
+                  }}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </FlagGate>
+            <FlagGate flag="menu.showDeleteMenuItem">
+              <Tooltip title="Delete Item">
+                <IconButton 
+                  size="small" 
+                  onClick={() => onDeleteItem(item.id)}
+                  sx={{ 
+                    backgroundColor: alpha(theme.palette.grey[100], 0.8),
+                    '&:hover': { 
+                      backgroundColor: alpha(theme.palette.error.main, 0.1),
+                      color: 'error.main'
+                    }
+                  }}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </FlagGate>
           </Stack>
         </Box>
       </Box>

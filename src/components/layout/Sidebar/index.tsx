@@ -39,6 +39,8 @@ import { PERMISSIONS } from '../../../types/auth';
 
 
 import { getUserFirstName } from '../../../utils/userUtils';
+import { useSidebarFlags } from '../../../flags/FlagContext';
+import { FlagGate } from '../../../flags/FlagComponent';
 import './Sidebar.css';
 
 interface NavigationItem {
@@ -48,6 +50,7 @@ interface NavigationItem {
   permission: string;
   roles: string[];
   badge?: string | number;
+  flagKey?: string;
 }
 
 interface SidebarProps {
@@ -61,6 +64,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isTablet = false }) => {
   const { user, hasPermission } = useAuth();
   const { userData, refreshUserData } = useUserData();
   const { isCollapsed, toggleCollapsed, getSidebarWidth } = useSidebar();
+  const sidebarFlags = useSidebarFlags();
   
   const [statusLoading, setStatusLoading] = useState(false);
 
@@ -74,68 +78,82 @@ const Sidebar: React.FC<SidebarProps> = ({ isTablet = false }) => {
       path: '/admin', 
       icon: <Dashboard />, 
       permission: PERMISSIONS.DASHBOARD_VIEW,
-      roles: ['admin'] 
+      roles: ['admin'],
+      flagKey: 'showDashboardNav'
     },
     { 
       label: 'Orders', 
       path: '/admin/orders', 
       icon: <Assignment />, 
       permission: PERMISSIONS.ORDERS_VIEW,
-      roles: ['admin', 'operator'] 
+      roles: ['admin', 'operator'],
+      flagKey: 'showOrdersNav'
     },
     { 
       label: 'Menu', 
       path: '/admin/menu', 
       icon: <Restaurant />, 
       permission: PERMISSIONS.MENU_VIEW,
-      roles: ['admin'] 
+      roles: ['admin'],
+      flagKey: 'showMenuNav'
     },
     { 
       label: 'Tables', 
       path: '/admin/tables', 
       icon: <TableRestaurant />, 
       permission: PERMISSIONS.TABLES_VIEW,
-      roles: ['admin'] 
+      roles: ['admin'],
+      flagKey: 'showTablesNav'
     },
     { 
       label: 'Coupons', 
       path: '/admin/coupons', 
       icon: <LocalOffer />, 
       permission: PERMISSIONS.TABLES_VIEW,
-      roles: ['admin', 'superadmin'] 
+      roles: ['admin', 'superadmin'],
+      flagKey: 'showCouponsNav'
     },
     { 
       label: 'Users', 
       path: '/admin/users', 
       icon: <People />, 
       permission: PERMISSIONS.USERS_VIEW,
-      roles: ['admin', 'superadmin'] 
+      roles: ['admin', 'superadmin'],
+      flagKey: 'showUsersNav'
     },
     { 
       label: 'Permissions', 
       path: '/admin/permissions', 
       icon: <Security />, 
       permission: PERMISSIONS.USERS_VIEW,
-      roles: ['admin', 'superadmin'] 
+      roles: ['admin', 'superadmin'],
+      flagKey: 'showPermissionsNav'
     },
     { 
       label: 'Settings', 
       path: '/admin/settings', 
       icon: <Settings />, 
       permission: PERMISSIONS.SETTINGS_VIEW,
-      roles: ['admin'] 
+      roles: ['admin'],
+      flagKey: 'showSettingsNav'
     },
     { 
       label: 'Workspace', 
       path: '/admin/workspace', 
       icon: <Business />, 
       permission: PERMISSIONS.WORKSPACE_VIEW,
-      roles: ['superadmin'] 
+      roles: ['superadmin'],
+      flagKey: 'showWorkspaceNav'
     },
   ];
 
-  // Filter navigation items based on permissions
+  // Filter navigation items based on permissions and feature flags
   const adminNavItems = allAdminNavItems.filter(item => {
+    // Check feature flag first
+    if (item.flagKey && !sidebarFlags[item.flagKey as keyof typeof sidebarFlags]) {
+      return false;
+    }
+    
     const backendRole = PermissionService.getBackendRole();
     const userRole = backendRole?.name || user?.role || 'unknown';
     
@@ -268,43 +286,45 @@ const Sidebar: React.FC<SidebarProps> = ({ isTablet = false }) => {
         )}
         
         {/* Expand/Collapse Button */}
-        <Tooltip title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} placement="right">
-          <Button
-            onClick={toggleCollapsed}
-            sx={{
-              justifyContent: 'center',
-              minWidth: showExpanded ? 48 : '100%',
-              width: showExpanded ? 48 : '100%',
-              height: 48,
-              borderRadius: 2,
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: 'text.primary',
-              backgroundColor: 'transparent',
-              border: '1px solid transparent',
-              transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-              '&:hover': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.1),
-                borderColor: alpha(theme.palette.primary.main, 0.2),
-                color: 'black',
-                transform: 'translateX(2px)',
-              },
-              '&:active': {
-                transform: 'translateX(1px)',
-              },
-              '& .MuiButton-startIcon': {
-                mr: 0,
-                color: 'inherit',
-                fontSize: '1.25rem',
-              },
-            }}
-            startIcon={isCollapsed ? <ChevronRight /> : <ChevronLeft />}
-          />
-        </Tooltip>
+        <FlagGate flag="sidebar.enableSidebarCollapse">
+          <Tooltip title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} placement="right">
+            <Button
+              onClick={toggleCollapsed}
+              sx={{
+                justifyContent: 'center',
+                minWidth: showExpanded ? 48 : '100%',
+                width: showExpanded ? 48 : '100%',
+                height: 48,
+                borderRadius: 2,
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                color: 'text.primary',
+                backgroundColor: 'transparent',
+                border: '1px solid transparent',
+                transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  borderColor: alpha(theme.palette.primary.main, 0.2),
+                  color: 'black',
+                  transform: 'translateX(2px)',
+                },
+                '&:active': {
+                  transform: 'translateX(1px)',
+                },
+                '& .MuiButton-startIcon': {
+                  mr: 0,
+                  color: 'inherit',
+                  fontSize: '1.25rem',
+                },
+              }}
+              startIcon={isCollapsed ? <ChevronRight /> : <ChevronLeft />}
+            />
+          </Tooltip>
+        </FlagGate>
       </Box>
 
       {/* User Info Section */}
-      {user && (
+      {user && sidebarFlags.showUserProfile && (
         <Box
           sx={{
             p: 2,
@@ -377,7 +397,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isTablet = false }) => {
       )}
 
       {/* Venue Status */}
-      {venueStatus && showExpanded && (
+      {venueStatus && showExpanded && sidebarFlags.showVenueStatus && (
         <Box
           sx={{
             p: 2,
@@ -454,7 +474,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isTablet = false }) => {
       )}
 
       {/* Collapsed Venue Status Indicator */}
-      {venueStatus && !showExpanded && (
+      {venueStatus && !showExpanded && sidebarFlags.showVenueStatus && (
         <Box
           sx={{
             p: 1,

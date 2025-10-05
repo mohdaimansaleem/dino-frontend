@@ -21,6 +21,8 @@ import {
 import { Coupon, CouponFilters as CouponFiltersType } from '../types/coupon';
 import CouponCard from './CouponCard';
 import CouponFiltersComponent from './CouponFilters';
+import { useCouponFlags } from '../../../flags/FlagContext';
+import { FlagGate } from '../../../flags/FlagComponent';
 
 interface CouponListProps {
   coupons: Coupon[];
@@ -53,6 +55,7 @@ const CouponList: React.FC<CouponListProps> = ({
   onToggleStatus,
   onRefresh,
 }) => {
+  const couponFlags = useCouponFlags();
   const [filters, setFilters] = useState<CouponFiltersType>({
     searchQuery: '',
     status: undefined,
@@ -88,14 +91,16 @@ const CouponList: React.FC<CouponListProps> = ({
   return (
     <Box>
       {/* Enhanced Filters */}
-      <CouponFiltersComponent
-        filters={filters}
-        onFiltersChange={handleFilterChange}
-        onCreateCoupon={onCreateCoupon}
-        onRefresh={onRefresh}
-        loading={loading}
-        totalCoupons={total}
-      />
+      <FlagGate flag="coupons.showCouponFilters">
+        <CouponFiltersComponent
+          filters={filters}
+          onFiltersChange={handleFilterChange}
+          onCreateCoupon={onCreateCoupon}
+          onRefresh={onRefresh}
+          loading={loading}
+          totalCoupons={total}
+        />
+      </FlagGate>
 
       {/* Error Display */}
       {error && (
@@ -124,9 +129,11 @@ const CouponList: React.FC<CouponListProps> = ({
             }
           </Typography>
           {!hasActiveFilters && (
-            <Button variant="contained" onClick={onCreateCoupon} startIcon={<Add />}>
-              Create Your First Coupon
-            </Button>
+            <FlagGate flag="coupons.showAddCoupon">
+              <Button variant="contained" onClick={onCreateCoupon} startIcon={<Add />}>
+                Create Your First Coupon
+              </Button>
+            </FlagGate>
           )}
         </Box>
       )}
@@ -166,19 +173,21 @@ const CouponList: React.FC<CouponListProps> = ({
       )}
 
       {/* Floating Action Button for Mobile */}
-      <Fab
-        color="primary"
-        aria-label="create coupon"
-        onClick={onCreateCoupon}
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          display: { xs: 'flex', sm: 'none' },
-        }}
-      >
-        <Add />
-      </Fab>
+      <FlagGate flag="coupons.showAddCoupon">
+        <Fab
+          color="primary"
+          aria-label="create coupon"
+          onClick={onCreateCoupon}
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            display: { xs: 'flex', sm: 'none' },
+          }}
+        >
+          <Add />
+        </Fab>
+      </FlagGate>
     </Box>
   );
 };

@@ -31,6 +31,8 @@ import { tableService, Table } from '../../services/business';
 import { useUserData } from '../../contexts/UserDataContext';
 import { DeleteConfirmationModal } from '../../components/modals';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
+import { useTableFlags } from '../../flags/FlagContext';
+import { FlagGate } from '../../flags/FlagComponent';
 
 // Table Components
 import TableStats from '../../components/tables/TableStats';
@@ -57,6 +59,7 @@ interface TableArea {
 
 const TableManagement = () => {
   const { getVenue, getVenueDisplayName, userData, loading: userDataLoading } = useUserData();
+  const tableFlags = useTableFlags();
   const [tables, setTables] = useState<Table[]>([]);
   const [areas, setAreas] = useState<TableArea[]>([]);
   const [selectedArea, setSelectedArea] = useState<string>('all');
@@ -619,34 +622,36 @@ const TableManagement = () => {
                 alignItems: 'center',
               }}
             >
-              <Button
-                variant="outlined"
-                startIcon={<QrCodeScanner />}
-                onClick={handleBulkQRGeneration}
-                size="medium"
-                sx={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(0, 0, 0, 0.1)',
-                  color: 'text.primary',
-                  fontWeight: 600,
-                  px: 3,
-                  py: 1,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '0.875rem',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 1)',
-                    borderColor: 'primary.main',
-                    color: 'primary.main',
-                    transform: 'translateY(-1px)',
-                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
-                  },
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                }}
-              >
-                QR Manager
-              </Button>
+              <FlagGate flag="tables.showTableQRCode">
+                <Button
+                  variant="outlined"
+                  startIcon={<QrCodeScanner />}
+                  onClick={handleBulkQRGeneration}
+                  size="medium"
+                  sx={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(0, 0, 0, 0.1)',
+                    color: 'text.primary',
+                    fontWeight: 600,
+                    px: 3,
+                    py: 1,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '0.875rem',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 1)',
+                      borderColor: 'primary.main',
+                      color: 'primary.main',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  QR Manager
+                </Button>
+              </FlagGate>
 
 
 
@@ -692,24 +697,28 @@ const TableManagement = () => {
           margin: 0,
         }}
       >
-        <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
-          <TableStats tables={tables} areas={areas} />
-        </Box>
+        <FlagGate flag="tables.showTableStats">
+          <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
+            <TableStats tables={tables} areas={areas} />
+          </Box>
+        </FlagGate>
         
 
 
         {/* Spacing between sections */}
         <Box sx={{ height: { xs: 16, sm: 24 } }} />
 
-        <Box sx={{ px: { xs: 3, sm: 4 }, mb: 4 }}>
-          <TableAreas
-            areas={areas}
-            tables={tables}
-            onEditArea={handleEditArea}
-            onDeleteArea={handleDeleteArea}
-            onAddArea={handleAddArea}
-          />
-        </Box>
+        <FlagGate flag="tables.showTableAreas">
+          <Box sx={{ px: { xs: 3, sm: 4 }, mb: 4 }}>
+            <TableAreas
+              areas={areas}
+              tables={tables}
+              onEditArea={handleEditArea}
+              onDeleteArea={handleDeleteArea}
+              onAddArea={handleAddArea}
+            />
+          </Box>
+        </FlagGate>
 
         <Box sx={{ px: { xs: 3, sm: 4 }, pb: 4 }}>
           <TablesGrid

@@ -29,6 +29,8 @@ import {
   VisibilityOff,
   Clear
 } from '@mui/icons-material';
+import { useTableFlags } from '../../flags/FlagContext';
+import { FlagGate } from '../../flags/FlagComponent';
 
 interface TablesGridProps {
   filteredTables: any[];
@@ -67,6 +69,8 @@ const TablesGrid: React.FC<TablesGridProps> = ({
   onAddTable,
   isMobile = false
 }) => {
+  const tableFlags = useTableFlags();
+  
   const getStatusColor2 = (status: string) => {
     switch (status) {
       case 'available': return '#48bb78';
@@ -122,28 +126,30 @@ const TablesGrid: React.FC<TablesGridProps> = ({
             
             {/* Add Table Button and Filter */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={onAddTable}
-                size="medium"
-                sx={{
-                  borderRadius: 2,
-                  backgroundColor: 'primary.main',
-                  color: 'white',
-                  fontWeight: 600,
-                  px: 3,
-                  py: 1,
-                  '&:hover': {
-                    backgroundColor: 'primary.dark',
-                    transform: 'translateY(-1px)',
-                    boxShadow: '0 8px 25px rgba(25, 118, 210, 0.4)'
-                  },
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
-              >
-                Add Table
-              </Button>
+              <FlagGate flag="tables.showAddTable">
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  onClick={onAddTable}
+                  size="medium"
+                  sx={{
+                    borderRadius: 2,
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    fontWeight: 600,
+                    px: 3,
+                    py: 1,
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                      transform: 'translateY(-1px)',
+                      boxShadow: '0 8px 25px rgba(25, 118, 210, 0.4)'
+                    },
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }}
+                >
+                  Add Table
+                </Button>
+              </FlagGate>
               
               <Box sx={{ width: { xs: '200px', md: '250px' } }}>
                 <FormControl fullWidth>
@@ -416,43 +422,47 @@ const TablesGrid: React.FC<TablesGridProps> = ({
                           </IconButton>
                         </Tooltip>
                         
-                        <Tooltip title="Edit Table">
-                          <IconButton 
-                            size="medium" 
-                            onClick={() => onEditTable(table)}
-                            sx={{ 
-                              backgroundColor: 'grey.100',
-                              color: 'text.secondary',
-                              '&:hover': { 
-                                backgroundColor: 'warning.50',
-                                color: 'warning.main',
-                                transform: 'scale(1.05)'
-                              },
-                              transition: 'all 0.2s ease-in-out'
-                            }}
-                          >
-                            <Edit fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        <FlagGate flag="tables.showEditTable">
+                          <Tooltip title="Edit Table">
+                            <IconButton 
+                              size="medium" 
+                              onClick={() => onEditTable(table)}
+                              sx={{ 
+                                backgroundColor: 'grey.100',
+                                color: 'text.secondary',
+                                '&:hover': { 
+                                  backgroundColor: 'warning.50',
+                                  color: 'warning.main',
+                                  transform: 'scale(1.05)'
+                                },
+                                transition: 'all 0.2s ease-in-out'
+                              }}
+                            >
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </FlagGate>
                         
-                        <Tooltip title="Delete Table">
-                          <IconButton 
-                            size="medium" 
-                            onClick={() => onDeleteTable(table.id)}
-                            sx={{ 
-                              backgroundColor: 'grey.100',
-                              color: 'text.secondary',
-                              '&:hover': { 
-                                backgroundColor: 'error.50',
-                                color: 'error.main',
-                                transform: 'scale(1.05)'
-                              },
-                              transition: 'all 0.2s ease-in-out'
-                            }}
-                          >
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        <FlagGate flag="tables.showDeleteTable">
+                          <Tooltip title="Delete Table">
+                            <IconButton 
+                              size="medium" 
+                              onClick={() => onDeleteTable(table.id)}
+                              sx={{ 
+                                backgroundColor: 'grey.100',
+                                color: 'text.secondary',
+                                '&:hover': { 
+                                  backgroundColor: 'error.50',
+                                  color: 'error.main',
+                                  transform: 'scale(1.05)'
+                                },
+                                transition: 'all 0.2s ease-in-out'
+                              }}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </FlagGate>
                       </Stack>
                     </Stack>
                   </ListItem>

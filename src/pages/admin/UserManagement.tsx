@@ -70,6 +70,8 @@ import { hashPassword, getFixedSalt } from '../../utils/security';
 import { validatePlainTextPassword } from '../../utils/security';
 import { DeleteConfirmationModal } from '../../components/modals';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
+import { useUserFlags } from '../../flags/FlagContext';
+import { FlagGate } from '../../flags/FlagComponent';
 
 // Simple password validation function
 const validatePasswordStrength = (password: string) => {
@@ -103,6 +105,7 @@ const spin = keyframes`
 
 const UserManagement: React.FC = () => {
   const { hasPermission, isSuperAdmin, isAdmin } = useAuth();
+  const userFlags = useUserFlags();
   const { currentWorkspace, currentVenue, venues } = useWorkspace();
   const { 
     userData, 
@@ -852,31 +855,33 @@ const UserManagement: React.FC = () => {
               }}
             >
               {canCreateUsers && (
-                <Button
-                  variant="contained"
-                  startIcon={<Add />}
-                  onClick={() => handleOpenDialog()}
-                  size="medium"
-                  sx={{
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    fontWeight: 600,
-                    px: 3,
-                    py: 1,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '0.875rem',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                      transform: 'translateY(-1px)',
-                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
-                    },
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                >
-                  Add New User
-                </Button>
+                <FlagGate flag="users.showAddUser">
+                  <Button
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => handleOpenDialog()}
+                    size="medium"
+                    sx={{
+                      backgroundColor: 'primary.main',
+                      color: 'white',
+                      fontWeight: 600,
+                      px: 3,
+                      py: 1,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontSize: '0.875rem',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                      '&:hover': {
+                        backgroundColor: 'primary.dark',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
+                      },
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                  >
+                    Add New User
+                  </Button>
+                </FlagGate>
               )}
 
               <IconButton
@@ -925,7 +930,8 @@ const UserManagement: React.FC = () => {
         <Box sx={{ px: { xs: 3, sm: 4 }, pt: { xs: 3, sm: 4 }, pb: 4 }}>
 
           {/* Statistics Cards */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
+          <FlagGate flag="users.showUserStats">
+            <Grid container spacing={3} sx={{ mb: 4 }}>
             {[
               {
                 label: 'Total Users',
@@ -1030,10 +1036,12 @@ const UserManagement: React.FC = () => {
                 </Card>
               </Grid>
             ))}
-          </Grid>
+            </Grid>
+          </FlagGate>
 
           {/* Filters and Search */}
-          <Card sx={{ mb: 4, borderRadius: 2 }}>
+          <FlagGate flag="users.showUserFilters">
+            <Card sx={{ mb: 4, borderRadius: 2 }}>
             <CardContent>
               <Grid container spacing={3} alignItems="center">
                 <Grid item xs={12} md={4}>
@@ -1080,6 +1088,7 @@ const UserManagement: React.FC = () => {
               </Grid>
             </CardContent>
           </Card>
+          </FlagGate>
 
           {/* Users Table */}
           <Card 
@@ -1266,50 +1275,58 @@ const UserManagement: React.FC = () => {
         onClose={handleMenuClose}
       >
         {canEditUsers && (
-          <MenuItem onClick={() => {
-            handleOpenDialog(selectedUser!);
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              <Edit fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Edit User</ListItemText>
-          </MenuItem>
+          <FlagGate flag="users.showEditUser">
+            <MenuItem onClick={() => {
+              handleOpenDialog(selectedUser!);
+              handleMenuClose();
+            }}>
+              <ListItemIcon>
+                <Edit fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Edit User</ListItemText>
+            </MenuItem>
+          </FlagGate>
         )}
         {canUpdatePasswords && selectedUser && (
-          <MenuItem onClick={() => {
-            setPasswordDialogOpen(true);
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              <Lock fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Update Password</ListItemText>
-          </MenuItem>
+          <FlagGate flag="users.showUserPasswordUpdate">
+            <MenuItem onClick={() => {
+              setPasswordDialogOpen(true);
+              handleMenuClose();
+            }}>
+              <ListItemIcon>
+                <Lock fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Update Password</ListItemText>
+            </MenuItem>
+          </FlagGate>
         )}
         {selectedUser && (
-          <MenuItem onClick={() => {
-            handleToggleUserStatus(selectedUser.id, selectedUser.is_active);
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              {selectedUser.is_active ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
-            </ListItemIcon>
-            <ListItemText>
-              {selectedUser.is_active ? 'Deactivate' : 'Activate'}
-            </ListItemText>
-          </MenuItem>
+          <FlagGate flag="users.showUserStatusToggle">
+            <MenuItem onClick={() => {
+              handleToggleUserStatus(selectedUser.id, selectedUser.is_active);
+              handleMenuClose();
+            }}>
+              <ListItemIcon>
+                {selectedUser.is_active ? <Block fontSize="small" /> : <CheckCircle fontSize="small" />}
+              </ListItemIcon>
+              <ListItemText>
+                {selectedUser.is_active ? 'Deactivate' : 'Activate'}
+              </ListItemText>
+            </MenuItem>
+          </FlagGate>
         )}
         {canDeleteUsers && selectedUser && (
-          <MenuItem onClick={() => {
-            handleDeleteUser(selectedUser.id);
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              <Delete fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>Delete User</ListItemText>
-          </MenuItem>
+          <FlagGate flag="users.showDeleteUser">
+            <MenuItem onClick={() => {
+              handleDeleteUser(selectedUser.id);
+              handleMenuClose();
+            }}>
+              <ListItemIcon>
+                <Delete fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Delete User</ListItemText>
+            </MenuItem>
+          </FlagGate>
         )}
       </Menu>
 

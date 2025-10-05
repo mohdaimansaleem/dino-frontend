@@ -31,6 +31,8 @@ import {
   Percent
 } from '@mui/icons-material';
 import { CouponFilters, COUPON_STATUS_OPTIONS, DISCOUNT_TYPES } from '../types/coupon';
+import { useCouponFlags } from '../../../flags/FlagContext';
+import { FlagGate } from '../../../flags/FlagComponent';
 
 // Fallback constants in case imports fail
 const FALLBACK_STATUS_OPTIONS = [
@@ -64,6 +66,7 @@ const CouponFiltersComponent: React.FC<CouponFiltersProps> = ({
   isMobile = false,
   totalCoupons
 }) => {
+  const couponFlags = useCouponFlags();
   // Use fallback constants if imports fail
   const statusOptions = COUPON_STATUS_OPTIONS || FALLBACK_STATUS_OPTIONS;
   const discountTypes = DISCOUNT_TYPES || FALLBACK_DISCOUNT_TYPES;
@@ -263,27 +266,29 @@ const CouponFiltersComponent: React.FC<CouponFiltersProps> = ({
           >
 
             
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={onCreateCoupon}
-              size="medium"
-              sx={{
-                borderRadius: 2,
-                backgroundColor: 'primary.main',
-                color: 'white',
-                fontWeight: 600,
-                minWidth: 140,
-                '&:hover': {
-                  backgroundColor: 'primary.dark',
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 8px 25px rgba(25, 118, 210, 0.4)'
-                },
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-            >
-              Create Coupon
-            </Button>
+            <FlagGate flag="coupons.showAddCoupon">
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={onCreateCoupon}
+                size="medium"
+                sx={{
+                  borderRadius: 2,
+                  backgroundColor: 'primary.main',
+                  color: 'white',
+                  fontWeight: 600,
+                  minWidth: 140,
+                  '&:hover': {
+                    backgroundColor: 'primary.dark',
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 8px 25px rgba(25, 118, 210, 0.4)'
+                  },
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                Create Coupon
+              </Button>
+            </FlagGate>
             
             <IconButton
               onClick={onRefresh}

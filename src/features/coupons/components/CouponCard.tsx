@@ -36,6 +36,8 @@ import {
 } from '@mui/icons-material';
 import { Coupon, COUPON_STATUS_OPTIONS } from '../types/coupon';
 import { isCouponValid } from '../utils/couponValidation';
+import { useCouponFlags } from '../../../flags/FlagContext';
+import { FlagGate } from '../../../flags/FlagComponent';
 
 interface CouponCardProps {
   coupon: Coupon;
@@ -54,6 +56,7 @@ const CouponCard: React.FC<CouponCardProps> = ({
   onViewDetails,
   loading = false,
 }) => {
+  const couponFlags = useCouponFlags();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -316,21 +319,23 @@ const CouponCard: React.FC<CouponCardProps> = ({
 
           {/* Active Status Toggle */}
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={coupon.isActive}
-                  onChange={(e) => onToggleStatus(coupon, e.target.checked)}
-                  size="small"
-                  disabled={loading}
-                />
-              }
-              label={
-                <Typography variant="body2" fontWeight={500}>
-                  {coupon.isActive ? 'Active' : 'Inactive'}
-                </Typography>
-              }
-            />
+            <FlagGate flag="coupons.showCouponActivation">
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={coupon.isActive}
+                    onChange={(e) => onToggleStatus(coupon, e.target.checked)}
+                    size="small"
+                    disabled={loading}
+                  />
+                }
+                label={
+                  <Typography variant="body2" fontWeight={500}>
+                    {coupon.isActive ? 'Active' : 'Inactive'}
+                  </Typography>
+                }
+              />
+            </FlagGate>
             
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               {validity.isValid ? (
@@ -355,26 +360,32 @@ const CouponCard: React.FC<CouponCardProps> = ({
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         {onViewDetails && (
-          <MenuItem onClick={() => { onViewDetails(coupon); handleMenuClose(); }}>
-            <Visibility sx={{ mr: 1, fontSize: 18 }} />
-            View Details
-          </MenuItem>
+          <FlagGate flag="coupons.showCouponPreview">
+            <MenuItem onClick={() => { onViewDetails(coupon); handleMenuClose(); }}>
+              <Visibility sx={{ mr: 1, fontSize: 18 }} />
+              View Details
+            </MenuItem>
+          </FlagGate>
         )}
-        <MenuItem onClick={() => { onEdit(coupon); handleMenuClose(); }}>
-          <Edit sx={{ mr: 1, fontSize: 18 }} />
-          Edit
-        </MenuItem>
+        <FlagGate flag="coupons.showEditCoupon">
+          <MenuItem onClick={() => { onEdit(coupon); handleMenuClose(); }}>
+            <Edit sx={{ mr: 1, fontSize: 18 }} />
+            Edit
+          </MenuItem>
+        </FlagGate>
         <MenuItem onClick={handleCopyCode}>
           <ContentCopy sx={{ mr: 1, fontSize: 18 }} />
           Copy Code
         </MenuItem>
-        <MenuItem 
-          onClick={() => { onDelete(coupon); handleMenuClose(); }}
-          sx={{ color: 'error.main' }}
-        >
-          <Delete sx={{ mr: 1, fontSize: 18 }} />
-          Delete
-        </MenuItem>
+        <FlagGate flag="coupons.showDeleteCoupon">
+          <MenuItem 
+            onClick={() => { onDelete(coupon); handleMenuClose(); }}
+            sx={{ color: 'error.main' }}
+          >
+            <Delete sx={{ mr: 1, fontSize: 18 }} />
+            Delete
+          </MenuItem>
+        </FlagGate>
       </Menu>
     </Card>
   );

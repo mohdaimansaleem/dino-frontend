@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import { usePermissions } from '../../auth';
 import PermissionService from '../../../services/auth';
+import { useDashboardFlags } from '../../../flags/FlagContext';
 
 interface VenueDashboardStats {
   total_orders: number;
@@ -47,6 +48,12 @@ interface DashboardStatsProps {
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
   const { isSuperAdmin, isAdmin, isOperator, user } = usePermissions();
+  const dashboardFlags = useDashboardFlags();
+
+  // Don't render if flag is disabled
+  if (!dashboardFlags.showDashboardStats) {
+    return null;
+  }
 
   // SuperAdmin Stats
   const superAdminStats = [

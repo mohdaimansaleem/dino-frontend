@@ -25,6 +25,8 @@ import { menuService } from '../../services/business';
 import { useUserData } from '../../contexts/UserDataContext';
 import { DeleteConfirmationModal } from '../../components/modals';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
+import { useMenuFlags } from '../../flags/FlagContext';
+import { FlagGate } from '../../flags/FlagComponent';
 
 // Menu Components
 import MenuStats from '../../components/menu/MenuStats';
@@ -80,6 +82,7 @@ interface CategoryType {
 
 const MenuManagement: React.FC = () => {
   const { getVenue, getVenueDisplayName, userData, loading: userDataLoading } = useUserData();
+  const menuFlags = useMenuFlags();
   const [menuItems, setMenuItems] = useState<MenuItemType[]>([]);
   const [categories, setCategories] = useState<CategoryType[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -755,9 +758,11 @@ const MenuManagement: React.FC = () => {
           margin: 0,
         }}
       >
-        <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
-          <MenuStats menuItems={menuItems} categories={categories} />
-        </Box>
+        <FlagGate flag="menu.showMenuStats">
+          <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
+            <MenuStats menuItems={menuItems} categories={categories} />
+          </Box>
+        </FlagGate>
         
         <Box sx={{ px: { xs: 3, sm: 4 }, mb: 4 }}>
           <MenuCategories

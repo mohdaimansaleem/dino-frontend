@@ -69,6 +69,8 @@ import {
   PLACEHOLDERS,
 } from '../../constants';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
+import { useOrderFlags } from '../../flags/FlagContext';
+import { FlagGate } from '../../flags/FlagComponent';
 
 // Animation for refresh icon
 const spin = keyframes`
@@ -116,6 +118,7 @@ const OrdersManagement: React.FC = () => {
     getVenueDisplayName,
     refreshUserData 
   } = useUserData();
+  const orderFlags = useOrderFlags();
   const [tabValue, setTabValue] = useState(0);
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -572,63 +575,67 @@ const OrdersManagement: React.FC = () => {
             >
               {/* View button only for admin */}
               {isAdmin() && (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => handleViewOrder(order)}
-                  startIcon={<Visibility />}
-                  className="btn-responsive"
-                  fullWidth={isMobile}
-                  sx={{ 
-                    flex: { xs: 'none', sm: isOperator() ? 0 : 1 },
-                    borderColor: 'divider',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      backgroundColor: 'primary.50'
-                    }
-                  }}
-                >
-                  View
-                </Button>
-              )}
-              {order.status !== 'served' && (
-                <FormControl 
-                  size="small" 
-                  className="input-responsive"
-                  sx={{ flex: { xs: 'none', sm: 1 }, width: { xs: '100%', sm: 'auto' } }}
-                >
-                  <Select
-                    value={order.status}
-                    onChange={(e) => handleStatusUpdate(order.id, e.target.value as OrderStatus)}
+                <FlagGate flag="orders.showOrderDetails">
+                  <Button
                     size="small"
-                    disabled={!hasPermission(PERMISSIONS.ORDERS_UPDATE)}
-                    sx={{
-                      '& .MuiSelect-select': {
-                        backgroundColor: getStatusColor(order.status),
-                        color: 'white',
-                        fontWeight: 600,
-                        '&:focus': {
-                          backgroundColor: getStatusColor(order.status),
-                        }
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: getStatusColor(order.status),
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: getStatusColor(order.status),
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: getStatusColor(order.status),
+                    variant="outlined"
+                    onClick={() => handleViewOrder(order)}
+                    startIcon={<Visibility />}
+                    className="btn-responsive"
+                    fullWidth={isMobile}
+                    sx={{ 
+                      flex: { xs: 'none', sm: isOperator() ? 0 : 1 },
+                      borderColor: 'divider',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        backgroundColor: 'primary.50'
                       }
                     }}
                   >
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="confirmed">Confirmed</MenuItem>
-                    <MenuItem value="preparing">Preparing</MenuItem>
-                    <MenuItem value="ready">Ready</MenuItem>
-                    <MenuItem value="served">Served</MenuItem>
-                  </Select>
-                </FormControl>
+                    View
+                  </Button>
+                </FlagGate>
+              )}
+              {order.status !== 'served' && (
+                <FlagGate flag="orders.showOrderStatusUpdate">
+                  <FormControl 
+                    size="small" 
+                    className="input-responsive"
+                    sx={{ flex: { xs: 'none', sm: 1 }, width: { xs: '100%', sm: 'auto' } }}
+                  >
+                    <Select
+                      value={order.status}
+                      onChange={(e) => handleStatusUpdate(order.id, e.target.value as OrderStatus)}
+                      size="small"
+                      disabled={!hasPermission(PERMISSIONS.ORDERS_UPDATE)}
+                      sx={{
+                        '& .MuiSelect-select': {
+                          backgroundColor: getStatusColor(order.status),
+                          color: 'white',
+                          fontWeight: 600,
+                          '&:focus': {
+                            backgroundColor: getStatusColor(order.status),
+                          }
+                        },
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: getStatusColor(order.status),
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: getStatusColor(order.status),
+                        },
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: getStatusColor(order.status),
+                        }
+                      }}
+                    >
+                      <MenuItem value="pending">Pending</MenuItem>
+                      <MenuItem value="confirmed">Confirmed</MenuItem>
+                      <MenuItem value="preparing">Preparing</MenuItem>
+                      <MenuItem value="ready">Ready</MenuItem>
+                      <MenuItem value="served">Served</MenuItem>
+                    </Select>
+                  </FormControl>
+                </FlagGate>
               )}
             </Stack>
           </Box>
@@ -914,155 +921,159 @@ const OrdersManagement: React.FC = () => {
         }}
       >
         {/* Kitchen Statistics */}
-        <Box sx={{ mb: 4, px: { xs: 3, sm: 4 }, py: 2 }}>
-          <Grid container spacing={{ xs: 2, sm: 3 }}>
-            {[
-              { 
-                label: 'Total Orders Today', 
-                value: orders.length, 
-                color: '#2196F3', 
-                icon: <Assignment />,
-                description: 'All orders received'
-              },
-              { 
-                label: 'Active Orders', 
-                value: getActiveOrders().length, 
-                color: '#FF9800', 
-                icon: <Restaurant />,
-                description: 'Currently processing'
-              },
-              { 
-                label: 'Ready to Serve', 
-                value: orders.filter(o => o.status === 'ready').length, 
-                color: '#4CAF50', 
-                icon: <CheckCircle />,
-                description: 'Awaiting pickup'
-              },
-              { 
-                label: 'Urgent Orders', 
-                value: getUrgentOrders().length, 
-                color: '#F44336', 
-                icon: <Timer />,
-                description: 'Over 30 minutes'
-              },
-            ].map((stat, index) => (
-              <Grid item xs={6} md={3} key={index}>
-                <Card
-                  sx={{
-                    p: { xs: 2.5, sm: 3 },
-                    borderRadius: 2,
-                    backgroundColor: `${stat.color}08`,
-                    border: `1px solid ${stat.color}33`,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: `0 8px 25px ${stat.color}33`,
-                      backgroundColor: `${stat.color}12`,
-                    },
-                  }}
-                >
-                  <Stack direction="row" alignItems="center" spacing={2}>
-                    {/* Icon on the left */}
-                    <Box
-                      sx={{
-                        width: { xs: 40, sm: 48 },
-                        height: { xs: 40, sm: 48 },
-                        borderRadius: 2,
-                        backgroundColor: stat.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {React.cloneElement(stat.icon, { 
-                        fontSize: isMobile ? 'medium' : 'large' 
-                      })}
-                    </Box>
-                    
-                    {/* Text content on the right */}
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography 
-                        variant={isMobile ? "h6" : "h4"} 
-                        fontWeight="700" 
-                        color="text.primary"
-                        sx={{ 
-                          fontSize: { xs: '1.25rem', sm: '2rem' },
-                          lineHeight: 1.2,
-                          mb: 0.5
+        <FlagGate flag="orders.showOrderStats">
+          <Box sx={{ mb: 4, px: { xs: 3, sm: 4 }, py: 2 }}>
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+              {[
+                { 
+                  label: 'Total Orders Today', 
+                  value: orders.length, 
+                  color: '#2196F3', 
+                  icon: <Assignment />,
+                  description: 'All orders received'
+                },
+                { 
+                  label: 'Active Orders', 
+                  value: getActiveOrders().length, 
+                  color: '#FF9800', 
+                  icon: <Restaurant />,
+                  description: 'Currently processing'
+                },
+                { 
+                  label: 'Ready to Serve', 
+                  value: orders.filter(o => o.status === 'ready').length, 
+                  color: '#4CAF50', 
+                  icon: <CheckCircle />,
+                  description: 'Awaiting pickup'
+                },
+                { 
+                  label: 'Urgent Orders', 
+                  value: getUrgentOrders().length, 
+                  color: '#F44336', 
+                  icon: <Timer />,
+                  description: 'Over 30 minutes'
+                },
+              ].map((stat, index) => (
+                <Grid item xs={6} md={3} key={index}>
+                  <Card
+                    sx={{
+                      p: { xs: 2.5, sm: 3 },
+                      borderRadius: 2,
+                      backgroundColor: `${stat.color}08`,
+                      border: `1px solid ${stat.color}33`,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: `0 8px 25px ${stat.color}33`,
+                        backgroundColor: `${stat.color}12`,
+                      },
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                      {/* Icon on the left */}
+                      <Box
+                        sx={{
+                          width: { xs: 40, sm: 48 },
+                          height: { xs: 40, sm: 48 },
+                          borderRadius: 2,
+                          backgroundColor: stat.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          flexShrink: 0,
                         }}
                       >
-                        {stat.value}
-                      </Typography>
-                      <Typography 
-                        variant="body2" 
-                        color="text.secondary"
-                        fontWeight="600"
-                        sx={{ 
-                          fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                          lineHeight: 1.2,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {stat.label}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
+                        {React.cloneElement(stat.icon, { 
+                          fontSize: isMobile ? 'medium' : 'large' 
+                        })}
+                      </Box>
+                      
+                      {/* Text content on the right */}
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography 
+                          variant={isMobile ? "h6" : "h4"} 
+                          fontWeight="700" 
+                          color="text.primary"
+                          sx={{ 
+                            fontSize: { xs: '1.25rem', sm: '2rem' },
+                            lineHeight: 1.2,
+                            mb: 0.5
+                          }}
+                        >
+                          {stat.value}
+                        </Typography>
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          fontWeight="600"
+                          sx={{ 
+                            fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                            lineHeight: 1.2,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}
+                        >
+                          {stat.label}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        </FlagGate>
 
         {/* Enhanced Controls */}
-        <Paper 
-          sx={{ 
-            p: 3, 
-            mb: 4, 
-            border: '1px solid', 
-            borderColor: 'divider',
-            backgroundColor: 'background.paper',
-            mx: { xs: 3, sm: 4 }
-          }}
-        >
-          <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                className="input-responsive"
-                placeholder={isMobile ? "Search orders..." : "Search orders by ID, table, or items..."}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                size={isMobile ? "medium" : "medium"}
-                InputProps={{
-                  startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
-                }}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth className="input-responsive">
-                <InputLabel>Filter by Status</InputLabel>
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  label="Filter by Status"
+        <FlagGate flag="orders.showOrderFilters">
+          <Paper 
+            sx={{ 
+              p: 3, 
+              mb: 4, 
+              border: '1px solid', 
+              borderColor: 'divider',
+              backgroundColor: 'background.paper',
+              mx: { xs: 3, sm: 4 }
+            }}
+          >
+            <Grid container spacing={{ xs: 2, sm: 3 }} alignItems="center">
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  className="input-responsive"
+                  placeholder={isMobile ? "Search orders..." : "Search orders by ID, table, or items..."}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   size={isMobile ? "medium" : "medium"}
-                >
-                  <MenuItem value="all">All Orders</MenuItem>
-                  <MenuItem value="pending">Pending</MenuItem>
-                  <MenuItem value="confirmed">Confirmed</MenuItem>
-                  <MenuItem value="preparing">Preparing</MenuItem>
-                  <MenuItem value="ready">Ready</MenuItem>
-                  <MenuItem value="served">Served</MenuItem>
-                </Select>
-              </FormControl>
+                  InputProps={{
+                    startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth className="input-responsive">
+                  <InputLabel>Filter by Status</InputLabel>
+                  <Select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    label="Filter by Status"
+                    size={isMobile ? "medium" : "medium"}
+                  >
+                    <MenuItem value="all">All Orders</MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="confirmed">Confirmed</MenuItem>
+                    <MenuItem value="preparing">Preparing</MenuItem>
+                    <MenuItem value="ready">Ready</MenuItem>
+                    <MenuItem value="served">Served</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
             </Grid>
-          </Grid>
-        </Paper>
+          </Paper>
+        </FlagGate>
 
         {/* Tabs */}
         <Paper sx={{ 

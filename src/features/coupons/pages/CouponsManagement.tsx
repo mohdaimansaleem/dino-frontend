@@ -34,6 +34,8 @@ import CouponDialog from '../components/CouponDialog';
 import { CouponStatsComponent } from '../components';
 import { DeleteConfirmationModal } from '../../../components/modals';
 import AnimatedBackground from '../../../components/ui/AnimatedBackground';
+import { useCouponFlags } from '../../../flags/FlagContext';
+import { FlagGate } from '../../../flags/FlagComponent';
 
 // Animation for refresh icon
 const spin = keyframes`
@@ -44,6 +46,7 @@ const spin = keyframes`
 const CouponsManagement: React.FC = () => {
   const { user, hasPermission } = useAuth();
   const { getVenue, getVenueDisplayName, loading: userDataLoading } = useUserData();
+  const couponFlags = useCouponFlags();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -369,16 +372,18 @@ const CouponsManagement: React.FC = () => {
         }}
       >
         {/* Stats Section */}
-        <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
-          <CouponStatsComponent 
-            stats={stats || {
-              totalCoupons: coupons.length,
-              activeCoupons: coupons.filter(c => c.isActive).length,
-              totalClaims: coupons.reduce((sum, c) => sum + c.currentClaims, 0),
-              totalDiscountGiven: 0
-            }} 
-          />
-        </Box>
+        <FlagGate flag="coupons.showCouponStats">
+          <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
+            <CouponStatsComponent 
+              stats={stats || {
+                totalCoupons: coupons.length,
+                activeCoupons: coupons.filter(c => c.isActive).length,
+                totalClaims: coupons.reduce((sum, c) => sum + c.currentClaims, 0),
+                totalDiscountGiven: 0
+              }} 
+            />
+          </Box>
+        </FlagGate>
 
         {/* Error Alert */}
         {error && (

@@ -16,6 +16,7 @@ import { VenueThemeProvider } from './contexts/VenueThemeContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { DinoAvatarProvider } from './contexts/DinoAvatarContext';
 import { TourProvider } from './contexts/TourContext';
+import { FlagProvider } from './flags/FlagContext';
 import { validatePasswordHashingSetup } from './utils/security';
 
 // Public Pages
@@ -105,17 +106,18 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider>
-        <ToastProvider>
-          <SidebarProvider defaultCollapsed={false}>
-            <DinoAvatarProvider>
-              <AuthProvider>
-                <TourProvider>
-                  <PermissionSync autoRefreshInterval={0} showSyncStatus={false}>
-                    <UserDataProvider>
-                      <AppInitializer>
-                        <WorkspaceProvider>
-                          <NotificationProvider>
+      <FlagProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <SidebarProvider defaultCollapsed={false}>
+              <DinoAvatarProvider>
+                <AuthProvider>
+                  <TourProvider>
+                    <PermissionSync autoRefreshInterval={0} showSyncStatus={false}>
+                      <UserDataProvider>
+                        <AppInitializer>
+                          <WorkspaceProvider>
+                            <NotificationProvider>
                             {/* Temporarily disabled WebSocket to prevent connection loops */}
                             {/* <WebSocketProvider> */}
                             <CartProvider>
@@ -248,17 +250,18 @@ function App() {
               </Routes>
                             </CartProvider>
                             {/* </WebSocketProvider> */}
-                          </NotificationProvider>
-                        </WorkspaceProvider>
-                      </AppInitializer>
-                    </UserDataProvider>
-                  </PermissionSync>
-                </TourProvider>
-              </AuthProvider>
-            </DinoAvatarProvider>
-          </SidebarProvider>
-        </ToastProvider>
-      </ThemeProvider>
+                            </NotificationProvider>
+                          </WorkspaceProvider>
+                        </AppInitializer>
+                      </UserDataProvider>
+                    </PermissionSync>
+                  </TourProvider>
+                </AuthProvider>
+              </DinoAvatarProvider>
+            </SidebarProvider>
+          </ToastProvider>
+        </ThemeProvider>
+      </FlagProvider>
     </ErrorBoundary>
   );
 }
