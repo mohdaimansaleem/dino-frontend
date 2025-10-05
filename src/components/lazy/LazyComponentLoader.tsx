@@ -321,17 +321,7 @@ export const LazyComponents = {
     { preload: true, skeleton: DashboardSkeleton }
   ),
   
-  SuperAdminDashboard: lazyManager.createLazyComponent(
-    () => import('../dashboards/SuperAdminDashboard'),
-    'SuperAdminDashboard',
-    { skeleton: DashboardSkeleton }
-  ),
-  
-  OperatorDashboard: lazyManager.createLazyComponent(
-    () => import('../dashboards/OperatorDashboard'),
-    'OperatorDashboard',
-    { skeleton: DashboardSkeleton }
-  ),
+  // Legacy dashboard components removed - now using UnifiedDashboard for all roles
 
   // Admin Management Pages
   WorkspaceManagement: lazyManager.createLazyComponent(

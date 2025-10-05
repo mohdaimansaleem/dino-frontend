@@ -46,6 +46,7 @@ import UserProfile from './components/UserProfile';
 import PermissionSync from './components/PermissionSync';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFoundPage from './pages/NotFoundPage';
+import DashboardRouter from './components/dashboards/DashboardRouter';
 import { PERMISSIONS } from './types/auth';
 import AppInitializer from './components/AppInitializer';
 import { logger } from './utils/logger';
@@ -171,9 +172,7 @@ function App() {
                 <Route path="/admin" element={
                   <Layout>
                     <RoleProtectedRoute requiredPermissions={[PERMISSIONS.DASHBOARD_VIEW]}>
-                      <Suspense fallback={<LoadingFallback />}>
-                        {React.createElement(LazyComponents.AdminDashboard.component)}
-                      </Suspense>
+                      <DashboardRouter />
                     </RoleProtectedRoute>
                   </Layout>
                 } />

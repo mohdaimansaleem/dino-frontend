@@ -2,10 +2,7 @@ import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserData } from '../../contexts/UserDataContext';
 import { usePermissions } from '../RoleBasedComponent';
-import SuperAdminDashboard from './SuperAdminDashboard';
-import AdminDashboard from './AdminDashboard';
-import OperatorDashboard from './OperatorDashboard';
-import UserDataDashboard from './UserDataDashboard';
+import UnifiedDashboard from './UnifiedDashboard';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface DashboardRouterProps {
@@ -48,43 +45,20 @@ const DashboardRouter: React.FC<DashboardRouterProps> = ({ className }) => {
     );
   }
 
-  // Check user roles and render appropriate dashboard
-  const superAdminCheck = isSuperAdmin();
-  const adminCheck = isAdmin();
-  const operatorCheck = isOperator();
+  // Debug: Log the role checks
+  console.log('🔍 DashboardRouter - Role checks:', {
+    user: user,
+    userRole: user?.role,
+    isSuperAdmin: isSuperAdmin(),
+    isAdmin: isAdmin(),
+    isOperator: isOperator()
+  });
 
-  // Route to appropriate dashboard based on user role
-  if (superAdminCheck) {
-    return <SuperAdminDashboard className={className} />;
-  }
-  
-  if (adminCheck) {
-    return <AdminDashboard className={className} />;
-  }
-  
-  if (operatorCheck) {
-    return <OperatorDashboard className={className} />;
-  }
+  console.log('🚀 DashboardRouter: Rendering UnifiedDashboard');
 
-  // Fallback for users without recognized roles
-  return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-      <div className="flex items-center">
-        <svg className="w-6 h-6 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <div>
-          <h3 className="text-red-800 font-medium">Access Denied</h3>
-          <p className="text-red-700 mt-1">
-            Your account doesn't have the necessary permissions to access this dashboard.
-          </p>
-          <p className="text-red-600 text-sm mt-2">
-            Current role: {user?.role || 'Unknown'}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+  // For now, let's allow all authenticated users to access the dashboard
+  // The UnifiedDashboard will handle role-based content rendering
+  return <UnifiedDashboard className={className} />;
 };
 
 export default DashboardRouter;
