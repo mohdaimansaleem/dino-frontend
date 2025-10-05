@@ -360,7 +360,7 @@ const UnifiedDashboard: React.FC<UnifiedDashboardProps> = ({ className }) => {
           }}
         >
           {/* Dashboard Content Container */}
-          <Box sx={{ px: { xs: 3, sm: 4 }, py: 2 }}>
+          <Box sx={{ px: { xs: 3, sm: 4 }, py: 2, pb: { xs: 6, sm: 8 } }}>
             
             {/* Dashboard Tour */}
             <DashboardTour />

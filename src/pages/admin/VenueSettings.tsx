@@ -290,6 +290,14 @@ const VenueSettings: React.FC = () => {
     setHasChanges(true);
   };
 
+  const handleDirectSettingChange = (field: keyof VenueSettings, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      [field]: value,
+    }));
+    setHasChanges(true);
+  };
+
   const handleSave = async () => {
     const venue = getVenue();
     console.log('Saving venue settings for venue:', venue);
@@ -798,7 +806,7 @@ const VenueSettings: React.FC = () => {
                           fullWidth
                           label="Venue Name"
                           value={settings.name}
-                          onChange={(e) => handleSettingChange('name' as any, '', e.target.value)}
+                          onChange={(e) => handleDirectSettingChange('name', e.target.value)}
                           sx={{
                             '& .MuiInputLabel-root': {
                               fontSize: '1rem',
@@ -817,7 +825,7 @@ const VenueSettings: React.FC = () => {
                           multiline
                           rows={3}
                           value={settings.description}
-                          onChange={(e) => handleSettingChange('description' as any, '', e.target.value)}
+                          onChange={(e) => handleDirectSettingChange('description', e.target.value)}
                           sx={{
                             '& .MuiInputLabel-root': {
                               fontSize: '1rem',
@@ -834,7 +842,7 @@ const VenueSettings: React.FC = () => {
                           fullWidth
                           label="Address"
                           value={settings.address}
-                          onChange={(e) => handleSettingChange('address' as any, '', e.target.value)}
+                          onChange={(e) => handleDirectSettingChange('address', e.target.value)}
                           sx={{
                             '& .MuiInputLabel-root': {
                               fontSize: '1rem',
@@ -851,7 +859,7 @@ const VenueSettings: React.FC = () => {
                           fullWidth
                           label="Phone"
                           value={settings.phone}
-                          onChange={(e) => handleSettingChange('phone' as any, '', e.target.value)}
+                          onChange={(e) => handleDirectSettingChange('phone', e.target.value)}
                           sx={{
                             '& .MuiInputLabel-root': {
                               fontSize: '1rem',
@@ -869,7 +877,7 @@ const VenueSettings: React.FC = () => {
                           label="Email"
                           type="email"
                           value={settings.email}
-                          onChange={(e) => handleSettingChange('email' as any, '', e.target.value)}
+                          onChange={(e) => handleDirectSettingChange('email', e.target.value)}
                           sx={{
                             '& .MuiInputLabel-root': {
                               fontSize: '1rem',

@@ -222,13 +222,15 @@ function App() {
                   </Layout>
                 } />
                 <Route path="/admin/workspace" element={
-                  <Layout>
-                    <RoleProtectedRoute requiredPermissions={[PERMISSIONS.WORKSPACE_VIEW]}>
-                      <Suspense fallback={<LoadingFallback />}>
-                        {React.createElement(LazyComponents.WorkspaceManagement.component)}
-                      </Suspense>
-                    </RoleProtectedRoute>
-                  </Layout>
+                  <VenueThemeProvider>
+                    <Layout>
+                      <RoleProtectedRoute requiredPermissions={[PERMISSIONS.WORKSPACE_VIEW]}>
+                        <Suspense fallback={<LoadingFallback />}>
+                          {React.createElement(LazyComponents.WorkspaceManagement.component)}
+                        </Suspense>
+                      </RoleProtectedRoute>
+                    </Layout>
+                  </VenueThemeProvider>
                 } />
                 <Route path="/admin/permissions" element={
                   <Layout>
