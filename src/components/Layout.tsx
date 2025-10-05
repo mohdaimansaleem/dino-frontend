@@ -33,7 +33,7 @@ import { useFeatureFlag } from '../hooks/useFeatureFlag';
 import { useSidebar } from '../contexts/SidebarContext';
 import AppHeader from './layout/AppHeader';
 import MobileMenu from './layout/MobileMenu';
-import EnhancedSidebar from './layout/EnhancedSidebar';
+import Sidebar from './layout/Sidebar';
 // import VenueStatusControl from './VenueStatusControl'; // Unused
 // import DinoLogo from './DinoLogo'; // Unused
 import { getUserFirstName } from '../utils/userUtils';
@@ -373,7 +373,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <Box sx={{ display: 'flex', minHeight: isMobile ? '100vh' : 'calc(100vh - 70px)', position: 'relative', height: isMobile ? '100vh' : 'calc(100vh - 70px)', margin: 0, padding: 0, width: '100%', maxWidth: '100%' }}>
           {/* Enhanced Desktop Sidebar Navigation */}
           {!isMobile && (
-            <EnhancedSidebar isTablet={isTablet} />
+            <Sidebar isTablet={isTablet} />
           )}
 
 

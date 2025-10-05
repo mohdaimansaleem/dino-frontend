@@ -55,7 +55,6 @@ import { useUserData } from '../../contexts/UserDataContext';
 import PermissionService from '../../services/permissionService';
 import { PERMISSIONS, ROLES } from '../../types/auth';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
-import PermissionDebug from '../../components/debug/PermissionDebug';
 
 const UserPermissionsDashboard: React.FC = () => {
   const { user, getUserWithRole, hasPermission, isSuperAdmin } = useAuth();

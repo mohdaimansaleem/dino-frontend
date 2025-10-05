@@ -68,7 +68,7 @@ import { VenueUser } from '../../types/api';
 import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
 import { PageLoadingSkeleton, EmptyState } from '../../components/ui/LoadingStates';
 import { hashPassword, getFixedSalt } from '../../utils/passwordHashing';
-import { validatePlainTextPassword } from '../../utils/passwordValidation';
+import { validatePlainTextPassword } from '../../utils/validation/passwordSecurity';
 import { DeleteConfirmationModal } from '../../components/modals';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
 

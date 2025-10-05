@@ -16,7 +16,7 @@ import { VenueThemeProvider } from './contexts/VenueThemeContext';
 import { SidebarProvider } from './contexts/SidebarContext';
 import { DinoAvatarProvider } from './contexts/DinoAvatarContext';
 import { TourProvider } from './contexts/TourContext';
-import { validatePasswordHashingSetup } from './utils/passwordValidation';
+import { validatePasswordHashingSetup } from './utils/validation/passwordSecurity';
 
 // Public Pages
 import HomePage from './pages/HomePage';

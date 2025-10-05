@@ -1,16 +1,73 @@
 /**
- * Feature Flag Hook
+ * Enhanced Feature Flag Hooks
  * 
- * This hook provides a convenient way to check feature flags throughout
- * the application and enables conditional rendering based on runtime
- * configuration.
+ * This module provides comprehensive feature flag functionality with improved
+ * type safety, performance, and developer experience.
  */
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
+import { isFeatureEnabled, getFeatureFlagsSubset, type FeatureFlags } from '../config/featureFlags';
 import { getConfigValue, getRuntimeConfig } from '../config/runtime';
 
-// Feature flag mapping
-type FeatureFlagKey = 
+/**
+ * Hook to check if a feature flag is enabled
+ * @param flagName - The name of the feature flag to check
+ * @returns boolean indicating if the feature is enabled
+ */
+export const useFeatureFlag = (flagName: keyof FeatureFlags): boolean => {
+  return useMemo(() => isFeatureEnabled(flagName), [flagName]);
+};
+
+/**
+ * Hook to get multiple feature flags at once
+ * @param flagNames - Array of feature flag names to check
+ * @returns object with feature flag names as keys and boolean values
+ */
+export const useFeatureFlags = (flagNames: (keyof FeatureFlags)[]): Partial<FeatureFlags> => {
+  return useMemo(() => getFeatureFlagsSubset(flagNames), [flagNames]);
+};
+
+/**
+ * Hook to conditionally render components based on feature flags
+ * @param flagName - The name of the feature flag to check
+ * @returns object with render functions for enabled/disabled states
+ */
+export const useFeatureToggle = (flagName: keyof FeatureFlags) => {
+  const isEnabled = useFeatureFlag(flagName);
+  
+  const renderIfEnabled = useCallback((component: React.ReactNode) => {
+    return isEnabled ? component : null;
+  }, [isEnabled]);
+  
+  const renderIfDisabled = useCallback((component: React.ReactNode) => {
+    return !isEnabled ? component : null;
+  }, [isEnabled]);
+  
+  return {
+    isEnabled,
+    renderIfEnabled,
+    renderIfDisabled,
+  };
+};
+
+/**
+ * Hook for feature flag with fallback component
+ * @param flagName - The name of the feature flag to check
+ * @param enabledComponent - Component to render when feature is enabled
+ * @param disabledComponent - Component to render when feature is disabled (optional)
+ * @returns the appropriate component based on feature flag state
+ */
+export const useFeatureFlagComponent = (
+  flagName: keyof FeatureFlags,
+  enabledComponent: React.ReactNode,
+  disabledComponent?: React.ReactNode
+): React.ReactNode => {
+  const isEnabled = useFeatureFlag(flagName);
+  return isEnabled ? enabledComponent : (disabledComponent || null);
+};
+
+// Legacy support for backward compatibility
+type LegacyFeatureFlagKey = 
   | 'themeToggle'
   | 'analytics'
   | 'qrCodes'
@@ -20,7 +77,7 @@ type FeatureFlagKey =
   | 'imageOptimization'
   | 'serviceWorker';
 
-const FEATURE_FLAG_MAP: Record<FeatureFlagKey, string> = {
+const LEGACY_FEATURE_FLAG_MAP: Record<LegacyFeatureFlagKey, string> = {
   themeToggle: 'ENABLE_THEME_TOGGLE',
   analytics: 'ENABLE_ANALYTICS',
   qrCodes: 'ENABLE_QR_CODES',
@@ -32,59 +89,27 @@ const FEATURE_FLAG_MAP: Record<FeatureFlagKey, string> = {
 };
 
 /**
- * Hook to check if a specific feature is enabled
- * 
- * @param featureName - The name of the feature to check
- * @returns boolean indicating if the feature is enabled
- * 
- * @example
- * ```tsx
- * const MyComponent = () => {
- *   const isThemeToggleEnabled = useFeatureFlag('themeToggle');
- *   
- *   return (
- *     <div>
- *       {isThemeToggleEnabled && <ThemeToggle />}
- *     </div>
- *   );
- * };
- * ```
+ * Legacy hook for backward compatibility
+ * @deprecated Use useFeatureFlag with new FeatureFlags type instead
  */
-export const useFeatureFlag = (featureName: FeatureFlagKey): boolean => {
+export const useLegacyFeatureFlag = (featureName: LegacyFeatureFlagKey): boolean => {
   return useMemo(() => {
-    const configKey = FEATURE_FLAG_MAP[featureName];
+    const configKey = LEGACY_FEATURE_FLAG_MAP[featureName];
     return getConfigValue(configKey as any) as boolean;
   }, [featureName]);
 };
 
 /**
- * Hook to get multiple feature flags at once
- * 
- * @param featureNames - Array of feature names to check
- * @returns Object with feature names as keys and boolean values
- * 
- * @example
- * ```tsx
- * const MyComponent = () => {
- *   const features = useFeatureFlags(['themeToggle', 'analytics', 'qrCodes']);
- *   
- *   return (
- *     <div>
- *       {features.themeToggle && <ThemeToggle />}
- *       {features.analytics && <AnalyticsPanel />}
- *       {features.qrCodes && <QRCodeGenerator />}
- *     </div>
- *   );
- * };
- * ```
+ * Legacy hook for multiple feature flags
+ * @deprecated Use useFeatureFlags with new FeatureFlags type instead
  */
-export const useFeatureFlags = (
-  featureNames: FeatureFlagKey[]
+export const useLegacyFeatureFlags = (
+  featureNames: LegacyFeatureFlagKey[]
 ): Record<string, boolean> => {
   return useMemo(() => {
     const flags: Record<string, boolean> = {};
     featureNames.forEach(featureName => {
-      const configKey = FEATURE_FLAG_MAP[featureName];
+      const configKey = LEGACY_FEATURE_FLAG_MAP[featureName];
       flags[featureName] = getConfigValue(configKey as any) as boolean;
     });
     return flags;
@@ -92,32 +117,13 @@ export const useFeatureFlags = (
 };
 
 /**
- * Hook to get all feature flags
- * 
- * @returns Object with all feature flags and their current state
- * 
- * @example
- * ```tsx
- * const AdminPanel = () => {
- *   const allFeatures = useAllFeatureFlags();
- *   
- *   return (
- *     <div>
- *       <h3>Feature Flags Status</h3>
- *       {Object.entries(allFeatures).map(([feature, enabled]) => (
- *         <div key={feature}>
- *           {feature}: {enabled ? 'Enabled' : 'Disabled'}
- *         </div>
- *       ))}
- *     </div>
- *   );
- * };
- * ```
+ * Hook to get all legacy feature flags
+ * @deprecated Use the new feature flag system instead
  */
-export const useAllFeatureFlags = (): Record<string, boolean> => {
+export const useAllLegacyFeatureFlags = (): Record<string, boolean> => {
   return useMemo(() => {
     const flags: Record<string, boolean> = {};
-    Object.entries(FEATURE_FLAG_MAP).forEach(([featureName, configKey]) => {
+    Object.entries(LEGACY_FEATURE_FLAG_MAP).forEach(([featureName, configKey]) => {
       flags[featureName] = getConfigValue(configKey as any) as boolean;
     });
     return flags;
@@ -126,20 +132,7 @@ export const useAllFeatureFlags = (): Record<string, boolean> => {
 
 /**
  * Hook to get application configuration
- * 
  * @returns The complete application configuration object
- * 
- * @example
- * ```tsx
- * const ApiService = () => {
- *   const appConfig = useAppConfig();
- *   
- *   const apiUrl = appConfig.API_BASE_URL;
- *   const timeout = appConfig.API_TIMEOUT;
- *   
- *   // Use configuration values...
- * };
- * ```
  */
 export const useAppConfig = () => {
   return useMemo(() => getRuntimeConfig(), []);
@@ -147,7 +140,6 @@ export const useAppConfig = () => {
 
 /**
  * Hook to check if the application is in development mode
- * 
  * @returns boolean indicating if the app is in development mode
  */
 export const useIsDevelopment = (): boolean => {
@@ -156,7 +148,6 @@ export const useIsDevelopment = (): boolean => {
 
 /**
  * Hook to check if the application is in production mode
- * 
  * @returns boolean indicating if the app is in production mode
  */
 export const useIsProduction = (): boolean => {
@@ -165,7 +156,6 @@ export const useIsProduction = (): boolean => {
 
 /**
  * Hook to check if debug mode is enabled
- * 
  * @returns boolean indicating if debug mode is enabled
  */
 export const useIsDebugMode = (): boolean => {

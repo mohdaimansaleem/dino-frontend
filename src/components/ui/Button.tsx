@@ -7,10 +7,11 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
+import { useFeatureFlag } from '../../hooks/useFeatureFlag';
 
 // Enhanced Button interface with professional variants and responsive features
 interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
-  variant?: 'contained' | 'outlined' | 'text' | 'soft' | 'gradient';
+  variant?: 'contained' | 'outlined' | 'text' | 'soft' | 'gradient' | 'danger' | 'success';
   size?: 'small' | 'medium' | 'large';
   loading?: boolean;
   loadingText?: string;
@@ -19,6 +20,7 @@ interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size'> {
   fullWidth?: boolean;
   professional?: boolean;
   responsive?: boolean; // Auto-adjust size on mobile
+  animated?: boolean; // Enable/disable animations based on feature flag
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -32,11 +34,16 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   professional = true,
   responsive = true,
+  animated,
   sx = {},
   ...props
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const animationsEnabled = useFeatureFlag('animatedComponents');
+  
+  // Use feature flag for animations unless explicitly overridden
+  const shouldAnimate = animated !== undefined ? animated : animationsEnabled;
   
   // Responsive size adjustment
   const getResponsiveSize = () => {
@@ -56,14 +63,14 @@ export const Button: React.FC<ButtonProps> = ({
       fontWeight: professional ? 600 : 500,
       textTransform: 'none' as const,
       borderRadius: professional ? 2 : 1,
-      transition: 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+      transition: shouldAnimate ? 'all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
       letterSpacing: professional ? '0.02em' : 'normal',
       '&:hover': {
-        transform: professional ? 'translateY(-1px)' : 'none',
+        transform: professional && shouldAnimate ? 'translateY(-1px)' : 'none',
         boxShadow: professional ? theme.shadows[4] : undefined,
       },
       '&:active': {
-        transform: professional ? 'translateY(0)' : 'none',
+        transform: professional && shouldAnimate ? 'translateY(0)' : 'none',
       },
       '&:disabled': {
         transform: 'none',
@@ -117,7 +124,7 @@ export const Button: React.FC<ButtonProps> = ({
           '&:hover': {
             backgroundColor: 'primary.100',
             borderColor: 'primary.300',
-            transform: 'translateY(-1px)',
+            transform: shouldAnimate ? 'translateY(-1px)' : 'none',
           },
         };
       case 'gradient':
@@ -126,7 +133,25 @@ export const Button: React.FC<ButtonProps> = ({
           color: 'white',
           '&:hover': {
             background: 'linear-gradient(45deg, #0d47a1 30%, #1565c0 90%)',
-            transform: 'translateY(-1px)',
+            transform: shouldAnimate ? 'translateY(-1px)' : 'none',
+          },
+        };
+      case 'danger':
+        return {
+          backgroundColor: 'error.main',
+          color: 'error.contrastText',
+          '&:hover': {
+            backgroundColor: 'error.dark',
+            transform: shouldAnimate ? 'translateY(-1px)' : 'none',
+          },
+        };
+      case 'success':
+        return {
+          backgroundColor: 'success.main',
+          color: 'success.contrastText',
+          '&:hover': {
+            backgroundColor: 'success.dark',
+            transform: shouldAnimate ? 'translateY(-1px)' : 'none',
           },
         };
       default:
@@ -138,7 +163,7 @@ export const Button: React.FC<ButtonProps> = ({
   const variantStyles = getVariantStyles();
 
   // Convert custom variants to Material-UI variants
-  const muiVariant = variant === 'soft' || variant === 'gradient' ? 'contained' : variant;
+  const muiVariant = ['soft', 'gradient', 'danger', 'success'].includes(variant) ? 'contained' : variant as 'contained' | 'outlined' | 'text';
 
   // Loading state content
   const loadingContent = (

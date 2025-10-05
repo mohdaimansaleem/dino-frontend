@@ -45,6 +45,10 @@ export { dashboardService } from './dashboardService';
 // Validation services
 export { validationService } from './validationService';
 
+// Export new centralized validation system
+export * from '../utils/validation';
+export { useFormValidation } from '../hooks/useFormValidation';
+
 // Legacy services (for backward compatibility)
 export { analyticsService } from './analyticsService';
 export { notificationService } from './notificationService';

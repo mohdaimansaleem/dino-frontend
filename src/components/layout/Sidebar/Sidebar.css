@@ -1,17 +1,17 @@
 /* Enhanced Sidebar Animations */
-.enhanced-sidebar {
+.sidebar {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.enhanced-sidebar-collapsed {
+.sidebar-collapsed {
   width: 72px !important;
 }
 
-.enhanced-sidebar-expanded {
+.sidebar-expanded {
   width: 280px !important;
 }
 
-.enhanced-sidebar-tablet {
+.sidebar-tablet {
   width: 200px !important;
 }
 
@@ -72,13 +72,13 @@
 
 /* Responsive adjustments */
 @media (max-width: 1024px) {
-  .enhanced-sidebar-expanded {
+  .sidebar-expanded {
     width: 200px !important;
   }
 }
 
 @media (max-width: 768px) {
-  .enhanced-sidebar {
+  .sidebar {
     display: none !important;
   }
 }

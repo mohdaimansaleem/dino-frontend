@@ -39,7 +39,7 @@ import { PERMISSIONS } from '../../../types/auth';
 
 
 import { getUserFirstName } from '../../../utils/userUtils';
-import './EnhancedSidebar.css';
+import './Sidebar.css';
 
 interface NavigationItem {
   label: string;
@@ -50,11 +50,11 @@ interface NavigationItem {
   badge?: string | number;
 }
 
-interface EnhancedSidebarProps {
+interface SidebarProps {
   isTablet?: boolean;
 }
 
-const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isTablet = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -188,7 +188,7 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
 
   return (
     <Box
-      className={`enhanced-sidebar sidebar-glass ${isCollapsed ? 'enhanced-sidebar-collapsed' : isTablet ? 'enhanced-sidebar-tablet' : 'enhanced-sidebar-expanded'}`}
+      className={`sidebar sidebar-glass ${isCollapsed ? 'sidebar-collapsed' : isTablet ? 'sidebar-tablet' : 'sidebar-expanded'}`}
       sx={{
         position: 'fixed',
         top: 70,
@@ -653,4 +653,4 @@ const EnhancedSidebar: React.FC<EnhancedSidebarProps> = ({ isTablet = false }) =
   );
 };
 
-export default EnhancedSidebar;
+export default Sidebar;
