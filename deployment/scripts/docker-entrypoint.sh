@@ -89,7 +89,7 @@ http {
         }
         
         location /api/ {
-            proxy_pass ${BACKEND_URL}/;
+            proxy_pass ${BACKEND_URL}/api/;
             proxy_set_header Host dino-backend-api-867506203789.us-central1.run.app;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;

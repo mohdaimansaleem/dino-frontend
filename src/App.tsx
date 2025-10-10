@@ -4,13 +4,21 @@ import './utils/immediateCleanup';
 import './utils/debugAuth';
 
 import React, { useEffect } from 'react';
+
 import { Routes, Route } from 'react-router-dom';
+
 import { AuthProvider } from './contexts/AuthContext';
+
 import { CartProvider } from './contexts/CartContext';
+
 import { WorkspaceProvider } from './contexts/WorkspaceContext';
+
 import { UserDataProvider } from './contexts/UserDataContext';
+
 import { NotificationProvider } from './contexts/NotificationContext';
+
 import { ThemeProvider } from './contexts/ThemeContext';
+
 import { ToastProvider } from './contexts/ToastContext';
 import { VenueThemeProvider } from './contexts/VenueThemeContext';
 import { SidebarProvider } from './contexts/SidebarContext';
@@ -18,6 +26,8 @@ import { DinoAvatarProvider } from './contexts/DinoAvatarContext';
 import { TourProvider } from './contexts/TourContext';
 import { FlagProvider } from './flags/FlagContext';
 import { isPasswordHashingSupported } from './utils/security';
+
+
 
 // Public Pages
 import { HomePage } from './pages/public';
@@ -30,10 +40,17 @@ import { MenuPage, CheckoutPage, OrderTrackingPage, OrderSuccessPage, OrderStatu
 
 
 
+
+
+
+
 // Lazy-loaded components for better performance
 import { LazyComponents } from './components/lazy';
 import { Suspense } from 'react';
+
 import { CircularProgress, Box } from '@mui/material';
+
+
 
 // Components
 import { ProtectedRoute, RoleProtectedRoute, UserProfile, PermissionSync } from './components/auth';
@@ -49,24 +66,45 @@ import { tokenRefreshScheduler } from './utils/tokenRefreshScheduler';
 import { apiService } from './utils/api';
 import { initializePerformanceMonitoring } from './utils/performance';
 
+
+
 // Debug configuration in development
+
 if (isDevelopment()) {
-  logger.debug('Development mode enabled');
+
+ logger.debug('Development mode enabled');
+
 }
 
+
+
 // Simple loading fallback for lazy components
+
 const LoadingFallback = () => (
-  <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    minHeight="200px"
-    flexDirection="column"
-    gap={2}
-  >
-    <CircularProgress size={40} />
-  </Box>
+
+ <Box
+
+  display="flex"
+
+  justifyContent="center"
+
+  alignItems="center"
+
+  minHeight="200px"
+
+  flexDirection="column"
+
+  gap={2}
+
+ >
+
+  <CircularProgress size={40} />
+
+ </Box>
+
 );
+
+
 
 function App() {
   // Validate password hashing setup and cleanup storage on app startup
@@ -268,5 +306,7 @@ function App() {
     </ErrorBoundary>
   );
 }
+
+
 
 export default App;
