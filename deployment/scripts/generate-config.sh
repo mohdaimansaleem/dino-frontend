@@ -33,8 +33,8 @@ print_error() {
 }
 
 # Default values
-DEFAULT_BACKEND_URL="https://dino-backend-api-867506203789.us-central1.run.app"
-DEFAULT_WS_URL="wss://dino-backend-api-867506203789.us-central1.run.app"
+DEFAULT_BACKEND_URL="https://dino-backend-867506203789.us-central1.run.app"
+DEFAULT_WS_URL="wss://dino-backend-867506203789.us-central1.run.app"
 
 # Set defaults if not provided
 export BACKEND_URL="${BACKEND_URL:-$DEFAULT_BACKEND_URL}"

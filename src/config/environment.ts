@@ -63,7 +63,7 @@ const DEFAULT_CONFIG: AppConfig = {
   // API Configuration - Use relative URLs for nginx proxy
   API_BASE_URL: '/api/v1',
   WS_URL: '/ws',
-  BACKEND_URL: 'https://dino-backend-api-867506203789.us-central1.run.app',
+  BACKEND_URL: 'https://dino-backend-867506203789.us-central1.run.app',
   API_TIMEOUT: 30000,
   
   // Authentication

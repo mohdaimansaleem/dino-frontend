@@ -34,7 +34,7 @@ echo ""
 echo "🔧 Processing nginx configuration template..."
 
 # Set default backend URL if not provided
-export BACKEND_URL="${BACKEND_URL:-https://dino-backend-api-867506203789.us-central1.run.app}"
+export BACKEND_URL="${BACKEND_URL:-https://dino-backend-867506203789.us-central1.run.app}"
 echo "🔗 Using Backend URL: ${BACKEND_URL}"
 
 if [ -f "/etc/nginx/nginx.conf.template" ]; then
@@ -90,7 +90,7 @@ http {
         
         location /api/ {
             proxy_pass ${BACKEND_URL}/api/;
-            proxy_set_header Host dino-backend-api-867506203789.us-central1.run.app;
+            proxy_set_header Host dino-backend-867506203789.us-central1.run.app;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
@@ -125,7 +125,7 @@ http {
             proxy_http_version 1.1;
             proxy_set_header Upgrade \$http_upgrade;
             proxy_set_header Connection "upgrade";
-            proxy_set_header Host dino-backend-api-867506203789.us-central1.run.app;
+            proxy_set_header Host dino-backend-867506203789.us-central1.run.app;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
@@ -175,7 +175,7 @@ http {
         
         location /api/ {
             proxy_pass ${BACKEND_URL};
-            proxy_set_header Host dino-backend-api-867506203789.us-central1.run.app;
+            proxy_set_header Host dino-backend-867506203789.us-central1.run.app;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
@@ -233,7 +233,7 @@ http {
         
         location /api/ {
             proxy_pass ${BACKEND_URL}/;
-            proxy_set_header Host dino-backend-api-867506203789.us-central1.run.app;
+            proxy_set_header Host dino-backend-867506203789.us-central1.run.app;
             proxy_set_header X-Real-IP \$remote_addr;
             proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto \$scheme;
@@ -283,7 +283,7 @@ echo ""
 echo "📋 Key Configuration"
 echo "$(printf '─%.0s' {1..40})"
 echo "🌍 Environment: ${APP_ENV:-production}"
-echo "🔗 Backend URL: ${BACKEND_URL:-https://dino-backend-api-867506203789.us-central1.run.app}"
+echo "🔗 Backend URL: ${BACKEND_URL:-https://dino-backend-867506203789.us-central1.run.app}"
 echo "🐛 Debug Mode: ${DEBUG_MODE:-false}"
 echo "📊 Console Logging: ${ENABLE_CONSOLE_LOGGING:-false}"
 

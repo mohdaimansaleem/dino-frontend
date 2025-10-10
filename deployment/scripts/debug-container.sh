@@ -194,7 +194,7 @@ if command -v curl >/dev/null 2>&1; then
 
     echo "⚠️ BACKEND_URL not set, testing default"
 
-    curl -s -w "HTTP Status: %{http_code}\nTime: %{time_total}s\n" "https://dino-backend-api-867506203789.us-central1.run.app/api/health" -o /dev/null || echo "❌ Connection failed"
+    curl -s -w "HTTP Status: %{http_code}\nTime: %{time_total}s\n" "https://dino-backend-867506203789.us-central1.run.app/api/health" -o /dev/null || echo "❌ Connection failed"
 
   fi
 

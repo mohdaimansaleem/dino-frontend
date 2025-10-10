@@ -126,9 +126,11 @@ export const getRuntimeConfig = (): RuntimeConfig => {
   // In development, prioritize process.env over window.APP_CONFIG
   // This allows .env files to work properly in development
   if (process.env.NODE_ENV === 'development') {
+    console.log(DEFAULT_CONFIG.API_BASE_URL);
     return {
       ...DEFAULT_CONFIG,
       API_BASE_URL: process.env.REACT_APP_API_BASE_URL || DEFAULT_CONFIG.API_BASE_URL,
+      
       WS_URL: process.env.REACT_APP_WS_URL || DEFAULT_CONFIG.WS_URL,
       BACKEND_URL: process.env.REACT_APP_BACKEND_URL || DEFAULT_CONFIG.BACKEND_URL,
       APP_NAME: process.env.REACT_APP_NAME || DEFAULT_CONFIG.APP_NAME,

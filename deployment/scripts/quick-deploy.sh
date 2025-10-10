@@ -69,7 +69,7 @@ fi
 print_status "Validating environment configuration..."
 if [ -f "scripts/validate-env.sh" ]; then
     # Set minimal required environment for validation
-    export BACKEND_URL="${BACKEND_URL:-https://dino-backend-api-867506203789.us-central1.run.app}"
+    export BACKEND_URL="${BACKEND_URL:-https://dino-backend-867506203789.us-central1.run.app}"
     export APP_ENV="production"
     
     if ./scripts/validate-env.sh; then
