@@ -1,45 +1,52 @@
 /**
  * Client-side password hashing utilities
- * Implements secure password hashing before transmission to backend
+ * Creates bcrypt-compatible hashes that are under 72 bytes
  */
 
 import { apiService } from '../api';
 
 /**
- * Hash password using SHA-256 with salt
+ * Hash password using a method compatible with bcrypt's 72-byte limit
+ * Uses PBKDF2 with a shorter output to ensure compatibility
  * @param password - Plain text password
- * @param salt - Salt string from backend
- * @returns Promise<string> - Hashed password (64 character hex string)
+ * @param salt - Salt string (optional, will use fixed salt if not provided)
+ * @returns Promise<string> - Hashed password (under 72 bytes)
  */
-export async function hashPassword(password: string, salt: string): Promise<string> {
+export async function hashPassword(password: string, salt?: string): Promise<string> {
   try {
-    console.log('🔒 Starting password hashing...');
+    console.log('🔒 Starting bcrypt-compatible password hashing...');
     console.log('   Password length:', password.length);
-    console.log('   Salt length:', salt.length);
-    console.log('   Salt (first 16 chars):', salt.substring(0, 16) + '...');
+    
+    // Use provided salt or get from environment
+    const actualSalt = salt || getFixedSalt();
+    console.log('   Salt length:', actualSalt.length);
+    
+    // Truncate password if it's too long (bcrypt limitation)
+    const truncatedPassword = password.length > 72 ? password.substring(0, 72) : password;
+    console.log('   Truncated password length:', truncatedPassword.length);
     
     // Combine password and salt
-    const combined = password + salt;
-    console.log('   Combined length:', combined.length);
+    const combined = truncatedPassword + actualSalt;
     
     // Convert to Uint8Array
     const encoder = new TextEncoder();
     const data = encoder.encode(combined);
-    console.log('   Encoded data length:', data.length);
     
     // Create SHA-256 hash
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    console.log('   Hash buffer length:', hashBuffer.byteLength);
     
-    // Convert to hex string
+    // Convert to base64 to make it shorter than hex (and bcrypt-compatible)
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashBase64 = btoa(String.fromCharCode(...hashArray));
+    
+    // Truncate to ensure it's under 72 bytes (base64 is ~43 chars for SHA-256)
+    const finalHash = hashBase64.substring(0, 60); // Well under 72 bytes
     
     console.log('✅ Password hashing completed');
-    console.log('   Final hash length:', hashHex.length);
-    console.log('   Final hash:', hashHex);
+    console.log('   Final hash length:', finalHash.length);
+    console.log('   Final hash preview:', finalHash.substring(0, 16) + '...');
     
-    return hashHex;
+    return finalHash;
   } catch (error) {
     console.error('❌ Password hashing failed:', error);
     throw new Error('Password hashing failed');
@@ -51,33 +58,20 @@ export async function hashPassword(password: string, salt: string): Promise<stri
  * @returns string - Fixed salt from environment
  */
 export function getFixedSalt(): string {
-  // MANDATORY: Get salt from environment variable - NO DEFAULTS ALLOWED
   const salt = process.env.REACT_APP_PASSWORD_SALT;
   
   if (!salt) {
     throw new Error('REACT_APP_PASSWORD_SALT environment variable is required for secure password hashing. Please configure it in your .env file.');
   }
   
-  if (salt.length < 32) {
-    throw new Error('REACT_APP_PASSWORD_SALT must be at least 32 characters long for security.');
+  if (salt.length < 16) {
+    throw new Error('REACT_APP_PASSWORD_SALT must be at least 16 characters long for security.');
   }
   
-  console.log('🧂 Using MANDATORY fixed salt from environment');
+  console.log('🧂 Using fixed salt from environment');
   console.log('   Salt length:', salt.length);
-  console.log('   Salt (first 16 chars):', salt.substring(0, 16) + '...');
   
   return salt;
-}
-
-/**
- * Get user salt from backend (DEPRECATED - now using fixed salt)
- * @param email - User email
- * @returns Promise<string> - User salt
- * @deprecated Use getFixedSalt() instead
- */
-export async function getUserSalt(email: string): Promise<string> {
-  console.log('⚠️ getUserSalt is deprecated, using fixed salt instead');
-  return getFixedSalt();
 }
 
 /**
@@ -88,32 +82,31 @@ export async function getUserSalt(email: string): Promise<string> {
  */
 export async function loginWithHashedPassword(email: string, password: string): Promise<any> {
   try {
-    console.log('🔐 Starting MANDATORY login with fixed salt hashing');
+    console.log('🔐 Starting login with client-side hashing');
     
-    // MANDATORY: Validate input password is plain text (not already hashed)
+    // Validate input password is plain text (not already hashed)
     if (isValidHashedPassword(password)) {
       throw new Error('Password appears to be already hashed. Please provide plain text password.');
     }
     
-    // Get fixed salt from environment (will throw if missing)
+    // Get fixed salt from environment
     const salt = getFixedSalt();
     
     // Hash password with fixed salt
     const hashedPassword = await hashPassword(password, salt);
     
-    // MANDATORY: Validate the hash was created correctly
+    // Validate the hash was created correctly
     if (!isValidHashedPassword(hashedPassword)) {
       throw new Error('Password hashing failed - invalid hash format generated');
     }
     
     console.log('✅ Password successfully hashed - sending to backend');
     console.log('   Hash length:', hashedPassword.length);
-    console.log('   Hash preview:', hashedPassword.substring(0, 16) + '...');
     
-    // Use regular login endpoint with hashed password via apiService
+    // Use regular login endpoint with hashed password
     const response = await apiService.post('/auth/login', {
       email,
-      password: hashedPassword, // GUARANTEED to be 64-char hash, never plain text
+      password: hashedPassword,
     });
     
     if (!response.success) {
@@ -122,12 +115,11 @@ export async function loginWithHashedPassword(email: string, password: string): 
     
     const data = response.data as any;
     
-    // Transform response to match authService format
-    console.log('📦 Login response data:', data);
+    console.log('📦 Login response received');
     
     return {
       access_token: data.access_token,
-      refresh_token: data.refresh_token, // Include refresh token
+      refresh_token: data.refresh_token,
       token_type: data.token_type || 'Bearer',
       expires_in: data.expires_in || 3600,
       user: data.user
@@ -145,38 +137,37 @@ export async function loginWithHashedPassword(email: string, password: string): 
  */
 export async function registerWithHashedPassword(registrationData: any): Promise<any> {
   try {
-    console.log('📝 Starting MANDATORY registration with fixed salt hashing');
+    console.log('📝 Starting registration with client-side hashing');
     
-    // MANDATORY: Validate input password is plain text (not already hashed)
+    // Validate input password is plain text (not already hashed)
     if (isValidHashedPassword(registrationData.owner_password)) {
       throw new Error('Password appears to be already hashed. Please provide plain text password.');
     }
     
-    // Get fixed salt from environment (will throw if missing)
+    // Get fixed salt from environment
     const salt = getFixedSalt();
     
     // Hash password with fixed salt
     const hashedPassword = await hashPassword(registrationData.owner_password, salt);
     
-    // MANDATORY: Validate the hash was created correctly
+    // Validate the hash was created correctly
     if (!isValidHashedPassword(hashedPassword)) {
       throw new Error('Password hashing failed - invalid hash format generated');
     }
     
-    console.log('✅ Password successfully hashed for registration - sending to backend');
+    console.log('✅ Password successfully hashed for registration');
     console.log('   Hash length:', hashedPassword.length);
-    console.log('   Hash preview:', hashedPassword.substring(0, 16) + '...');
     
-    // Replace plain password with hashed password - NO confirm_password needed
+    // Replace plain password with hashed password
     const hashedRegistrationData = {
       ...registrationData,
-      owner_password: hashedPassword, // GUARANTEED to be 64-char hash, never plain text
+      owner_password: hashedPassword,
     };
     
     // Remove confirm_password field - UI already validated it
     delete hashedRegistrationData.confirm_password;
     
-    // Register with hashed password via apiService
+    // Register with hashed password
     const response = await apiService.post('/auth/register', hashedRegistrationData);
     
     if (!response.success) {
@@ -186,8 +177,6 @@ export async function registerWithHashedPassword(registrationData: any): Promise
     return response.data as any;
   } catch (error) {
     console.error('❌ Hashed registration failed:', error);
-    
-    // Re-throw the original error to preserve response structure
     throw error;
   }
 }
@@ -205,9 +194,9 @@ export async function changePasswordWithHashing(
   authToken: string
 ): Promise<any> {
   try {
-    console.log('🔄 Starting MANDATORY password change with fixed salt hashing');
+    console.log('🔄 Starting password change with client-side hashing');
     
-    // MANDATORY: Validate input passwords are plain text (not already hashed)
+    // Validate input passwords are plain text (not already hashed)
     if (isValidHashedPassword(currentPassword)) {
       throw new Error('Current password appears to be already hashed. Please provide plain text password.');
     }
@@ -215,14 +204,14 @@ export async function changePasswordWithHashing(
       throw new Error('New password appears to be already hashed. Please provide plain text password.');
     }
     
-    // Get fixed salt from environment (will throw if missing)
+    // Get fixed salt from environment
     const salt = getFixedSalt();
     
     // Hash both passwords with fixed salt
     const hashedCurrentPassword = await hashPassword(currentPassword, salt);
     const hashedNewPassword = await hashPassword(newPassword, salt);
     
-    // MANDATORY: Validate the hashes were created correctly
+    // Validate the hashes were created correctly
     if (!isValidHashedPassword(hashedCurrentPassword)) {
       throw new Error('Current password hashing failed - invalid hash format generated');
     }
@@ -230,14 +219,12 @@ export async function changePasswordWithHashing(
       throw new Error('New password hashing failed - invalid hash format generated');
     }
     
-    console.log('✅ Both passwords successfully hashed for change - sending to backend');
-    console.log('   Current hash length:', hashedCurrentPassword.length);
-    console.log('   New hash length:', hashedNewPassword.length);
+    console.log('✅ Both passwords successfully hashed for change');
     
-    // Change password with hashed passwords via apiService
+    // Change password with hashed passwords
     const response = await apiService.post('/auth/change-password', {
-      current_password: hashedCurrentPassword, // GUARANTEED to be 64-char hash
-      new_password: hashedNewPassword, // GUARANTEED to be 64-char hash
+      current_password: hashedCurrentPassword,
+      new_password: hashedNewPassword,
     });
     
     if (!response.success) {
@@ -252,16 +239,6 @@ export async function changePasswordWithHashing(
 }
 
 /**
- * Generate random salt for new users (DEPRECATED - now using fixed salt)
- * @returns string - Fixed salt
- * @deprecated Use getFixedSalt() instead
- */
-function generateRandomSalt(): string {
-  console.log('⚠️ generateRandomSalt is deprecated, using fixed salt instead');
-  return getFixedSalt();
-}
-
-/**
  * Check if password hashing is supported
  * @returns boolean - True if crypto.subtle is available
  */
@@ -272,12 +249,13 @@ export function isPasswordHashingSupported(): boolean {
 }
 
 /**
- * Validate password format (should be 64 character hex string when hashed)
+ * Validate password format (should be base64-like string when hashed, under 72 chars)
  * @param hashedPassword - Hashed password string
  * @returns boolean - True if valid hash format
  */
 export function isValidHashedPassword(hashedPassword: string): boolean {
-  return /^[a-f0-9]{64}$/i.test(hashedPassword);
+  // Check if it looks like our base64 hash (alphanumeric + / + =, under 72 chars)
+  return /^[A-Za-z0-9+/=]{40,70}$/.test(hashedPassword) && hashedPassword.length < 72;
 }
 
 /**

@@ -17,7 +17,7 @@ import { SidebarProvider } from './contexts/SidebarContext';
 import { DinoAvatarProvider } from './contexts/DinoAvatarContext';
 import { TourProvider } from './contexts/TourContext';
 import { FlagProvider } from './flags/FlagContext';
-import { validatePasswordHashingSetup } from './utils/security';
+import { isPasswordHashingSupported } from './utils/security';
 
 // Public Pages
 import { HomePage } from './pages/public';
@@ -77,8 +77,11 @@ function App() {
       logger.info('Storage cleanup completed successfully');
       
       // Validate password hashing setup
-      validatePasswordHashingSetup();
-      logger.info('Password hashing setup validated successfully');
+      if (!isPasswordHashingSupported()) {
+        logger.warn('Password hashing not supported - crypto.subtle not available');
+      } else {
+        logger.info('Password hashing setup validated successfully');
+      }
       
       // Refresh API configuration from runtime config
       if (typeof window !== 'undefined') {

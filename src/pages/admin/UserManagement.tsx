@@ -66,8 +66,7 @@ import { userService, User, UserCreate, UserUpdate } from '../../services/auth';
 import { VenueUser } from '../../types/api';
 import { ROLE_NAMES, getRoleDisplayName } from '../../constants/roles';
 import { PageLoadingSkeleton, EmptyState } from '../../components/ui/LoadingStates';
-import { hashPassword, getFixedSalt } from '../../utils/security';
-import { validatePlainTextPassword } from '../../utils/security';
+import { hashPassword, getFixedSalt, isValidHashedPassword } from '../../utils/security';
 import { DeleteConfirmationModal } from '../../components/modals';
 import AnimatedBackground from '../../components/ui/AnimatedBackground';
 import { useUserFlags } from '../../flags/FlagContext';
@@ -367,12 +366,10 @@ const UserManagement: React.FC = () => {
         }
         
         // Validate password is plain text (not already hashed)
-        try {
-          validatePlainTextPassword(formData.password);
-        } catch (error: any) {
+        if (isValidHashedPassword(formData.password)) {
           setSnackbar({ 
             open: true, 
-            message: error.message, 
+            message: 'Password appears to be already hashed. Please provide plain text password.', 
             severity: 'error' 
           });
           return;

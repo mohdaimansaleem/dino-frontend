@@ -17,14 +17,14 @@ class AuthService {
 
   async login(email: string, password: string, rememberMe: boolean = false): Promise<AuthToken> {
     try {
-      // MANDATORY: Check if password hashing is supported
+      // Check if password hashing is supported
       if (!isPasswordHashingSupported()) {
         throw new Error('Password hashing is not supported in this browser. Please use a modern browser with crypto.subtle support.');
       }
 
       logger.authEvent("Starting client-side password hashing for login");
       
-      // ALWAYS hash password - NO FALLBACKS
+      // Hash password before sending
       const authToken = await loginWithHashedPassword(email, password);
       
       this.setTokens(authToken);
@@ -51,14 +51,14 @@ class AuthService {
 
   async registerWorkspace(workspaceData: WorkspaceRegistration): Promise<ApiResponse<any>> {
     try {
-      // MANDATORY: Check if password hashing is supported
+      // Check if password hashing is supported
       if (!isPasswordHashingSupported()) {
         throw new Error('Password hashing is not supported in this browser. Please use a modern browser with crypto.subtle support.');
       }
 
       logger.authEvent("Starting client-side password hashing for registration");
       
-      // ALWAYS hash password - NO FALLBACKS
+      // Hash password before sending
       const hashedResponse = await registerWithHashedPassword(workspaceData);
       return {
         success: true,
@@ -171,7 +171,7 @@ class AuthService {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     try {
-      // MANDATORY: Check if password hashing is supported
+      // Check if password hashing is supported
       if (!isPasswordHashingSupported()) {
         throw new Error('Password hashing is not supported in this browser. Please use a modern browser with crypto.subtle support.');
       }
@@ -183,7 +183,7 @@ class AuthService {
         throw new Error('No authentication token found');
       }
       
-      // ALWAYS hash passwords - NO FALLBACKS
+      // Hash passwords before sending
       await changePasswordWithHashing(currentPassword, newPassword, token);
     } catch (error: any) {
       logger.error('Password change failed:', error);

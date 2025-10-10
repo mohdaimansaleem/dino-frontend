@@ -45,7 +45,7 @@ export const isValidPhone = (phone: string): boolean => {
 export const validatePasswordStrength = (password: string): {
   isValid: boolean;
   score: number;
-  feedback: string[];
+  errors: string[];
 } => {
   const feedback: string[] = [];
   let score = 0;
@@ -83,8 +83,30 @@ export const validatePasswordStrength = (password: string): {
   return {
     isValid: score >= 4,
     score,
-    feedback,
+    errors: feedback,
   };
+};
+
+// Get password strength description
+export const getPasswordStrengthText = (score: number): {
+  text: string;
+  color: 'error' | 'warning' | 'info' | 'success';
+} => {
+  switch (score) {
+    case 0:
+    case 1:
+      return { text: 'Very Weak', color: 'error' };
+    case 2:
+      return { text: 'Weak', color: 'error' };
+    case 3:
+      return { text: 'Fair', color: 'warning' };
+    case 4:
+      return { text: 'Good', color: 'info' };
+    case 5:
+      return { text: 'Strong', color: 'success' };
+    default:
+      return { text: 'Unknown', color: 'error' };
+  }
 };
 
 // XSS prevention for user input
