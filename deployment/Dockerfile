@@ -4,7 +4,7 @@ FROM node:18-alpine as build
 WORKDIR /app
 
 # Copy package files and npm config
-COPY package*.json .npmrc ./
+COPY ../package*.json ../.npmrc ./
 
 # Install all dependencies (including dev dependencies for build)
 RUN npm ci --legacy-peer-deps
